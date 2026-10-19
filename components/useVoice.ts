@@ -53,9 +53,11 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
   const unlock = useCallback(() => {
     try {
       const a = audioEl.current;
-      if (a && !a.dataset.unlocked) {
+      // Play a moment of silence inside the tap so the phone allows the real reply to play later.
+      if (a && !a.dataset.unlocked && !speakDone.current) {
+        a.dataset.unlocked = '1';
         a.src = silentWav();
-        a.play().then(() => { a.pause(); a.dataset.unlocked = '1'; }).catch(() => {});
+        a.play().catch(() => { delete a.dataset.unlocked; });
       }
       if (!ctxRef.current) {
         const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -167,7 +169,8 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
 
   // Resolves when the speech finishes (or is stopped). Returns false if it could not play.
   const speak = useCallback(async (text: string): Promise<boolean> => {
-    stopSpeaking();
+    // Finish any earlier reply, but keep the same audio element (resetting it would undo the phone's permission).
+    if (speakDone.current) { audioEl.current?.pause(); speakDone.current(); speakDone.current = null; }
     setState('speaking');
     try {
       const res = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, sessionId: optsRef.current.sessionId() }) });

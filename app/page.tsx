@@ -41,8 +41,9 @@ export default function Home() {
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
+  const spokeLast = useRef(false);
   const voice = useVoice({
-    onText: (t) => send(t),
+    onText: (t) => { spokeLast.current = true; send(t); },
     onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); setConvoMode(false); },
     sessionId: () => sessionIdRef.current,
   });
@@ -183,7 +184,8 @@ export default function Home() {
       case 'mode': setSettings((s) => ({ ...s, ...e.settings })); break;
       case 'reply':
         setItems((it) => [...it, { kind: 'assistant', text: e.text, model: e.model }]);
-        if (convoRef.current || settingsRef.current.autoSpeak) sayAloud(e.text);
+        if (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current) sayAloud(e.text);
+        spokeLast.current = false;
         break;
       case 'cost':
         setSessionUsd(e.sessionUsd);
@@ -375,7 +377,7 @@ export default function Home() {
               placeholder={voice.state === 'listening' ? 'Listening…' : voice.state === 'transcribing' ? 'Writing down what you said…' : 'Your answer or question…'}
               value={input}
               onChange={(e) => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && isWide) { e.preventDefault(); send(input); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && isWide) { e.preventDefault(); spokeLast.current = false; voice.unlock(); send(input); } }}
               dir="auto"
             />
             {voice.supported && !convo && (
@@ -391,7 +393,7 @@ export default function Home() {
                   : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>}
               </button>
             )}
-            <button className="send" disabled={!input.trim() || busy} onClick={() => send(input)} aria-label="Send">
+            <button className="send" disabled={!input.trim() || busy} onClick={() => { spokeLast.current = false; voice.unlock(); send(input); }} aria-label="Send">
               {look === 'daf' ? 'שלח' : look === 'techelet' ? 'Send' : (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
               )}
