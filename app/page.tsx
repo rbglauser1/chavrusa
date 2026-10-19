@@ -45,7 +45,11 @@ export default function Home() {
 
   // ---------- Load ----------
   useEffect(() => {
-    fetch('/api/settings').then((r) => r.json()).then((s) => { if (!s.error) setSettings(s); setLoaded(true); });
+    fetch('/api/settings').then((r) => r.json()).then((s) => {
+      if (s && !s.error) setSettings(s);
+      else setItems([{ kind: 'error', text: `Could not reach the database: ${s?.error ?? 'unknown error'}` }]);
+      setLoaded(true);
+    }).catch((e) => { setItems([{ kind: 'error', text: `Could not load settings: ${String(e)}` }]); setLoaded(true); });
     refreshSessions();
     const mq = window.matchMedia('(min-width: 1000px)');
     const on = () => setIsWide(mq.matches);

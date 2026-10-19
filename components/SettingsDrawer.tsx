@@ -18,10 +18,17 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [newMem, setNewMem] = useState('');
   const [costs, setCosts] = useState<{ totalUsd: number; byModel: Record<string, { exchanges: number; usd: number }> } | null>(null);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    fetch('/api/memory').then((r) => r.json()).then((d) => setMemories(Array.isArray(d) ? d : []));
-    fetch('/api/costs').then((r) => r.json()).then(setCosts).catch(() => {});
+    fetch('/api/memory').then((r) => r.json()).then((d) => {
+      setMemories(Array.isArray(d) ? d : []);
+      if (d?.error) setLoadError(d.error);
+    }).catch((e) => { setMemories([]); setLoadError(String(e)); });
+    fetch('/api/costs').then((r) => r.json()).then((d) => {
+      if (d && d.byModel && typeof d.totalUsd === 'number') setCosts(d);
+      else { setCosts({ totalUsd: 0, byModel: {} }); if (d?.error) setLoadError(d.error); }
+    }).catch((e) => { setCosts({ totalUsd: 0, byModel: {} }); setLoadError(String(e)); });
   }, []);
 
   async function removeMem(id: string) {
@@ -42,6 +49,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
       <div className="drawer right" role="dialog" aria-label="Settings">
         <div className="drawer-head"><h2>Settings</h2><button className="icon-btn" onClick={onClose} aria-label="Close">✕</button></div>
         <div className="drawer-body">
+          {loadError && <div className="error">Could not reach the database: {loadError}</div>}
           <div className="section">
             <h3>Learning style</h3>
             <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Or just tell your chavrusa: “be gentler,” “quiz me,” “go deeper.” <a href="#" onClick={(e) => { e.preventDefault(); onHelp(); }}>What can I ask for?</a></p>
