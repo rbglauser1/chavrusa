@@ -7,6 +7,7 @@ import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
+import { useVoice } from '@/components/useVoice';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -33,6 +34,30 @@ export default function Home() {
   const [pinCollapsed, setPinCollapsed] = useState(false);
   const [seenDisclaimer, setSeenDisclaimer] = useState(false);
   const [quick, setQuick] = useState<'style' | 'model' | null>(null);
+  const [convo, setConvo] = useState(false);
+  const convoRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
+  const settingsRef = useRef<Settings>(DEFAULT_SETTINGS);
+  useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  const voice = useVoice({
+    onText: (t) => send(t),
+    onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); setConvoMode(false); },
+    sessionId: () => sessionIdRef.current,
+  });
+
+  function setConvoMode(on: boolean) {
+    convoRef.current = on;
+    setConvo(on);
+    if (on) { voice.unlock(); voice.listen(); }
+    else voice.stopAll();
+  }
+
+  async function sayAloud(text: string) {
+    const ok = await voice.speak(text);
+    if (ok && convoRef.current) voice.listen();
+  }
   const [pulse, setPulse] = useState(false);
   const [drawer, setDrawer] = useState<'sessions' | 'settings' | null>(null);
   const [help, setHelp] = useState(false);
@@ -115,7 +140,7 @@ export default function Home() {
     setBusy(true); setStatus('Thinking…');
 
     try {
-      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId }) });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId, voice: convoRef.current }) });
       if (res.status === 401) { window.location.href = '/login'; return; }
       if (!res.body) throw new Error('No response from server.');
       const reader = res.body.getReader();
@@ -156,7 +181,10 @@ export default function Home() {
         break;
       case 'memory': setItems((it) => [...it, { kind: 'event', text: `Remembered: ${e.text}` }]); break;
       case 'mode': setSettings((s) => ({ ...s, ...e.settings })); break;
-      case 'reply': setItems((it) => [...it, { kind: 'assistant', text: e.text, model: e.model }]); break;
+      case 'reply':
+        setItems((it) => [...it, { kind: 'assistant', text: e.text, model: e.model }]);
+        if (convoRef.current || settingsRef.current.autoSpeak) sayAloud(e.text);
+        break;
       case 'cost':
         setSessionUsd(e.sessionUsd);
         if (settings.costWarnUsd && e.sessionUsd > settings.costWarnUsd && !warned.current) {
@@ -164,7 +192,10 @@ export default function Home() {
           setItems((it) => [...it, { kind: 'event', text: `This session has passed $${settings.costWarnUsd}.` }]);
         }
         break;
-      case 'error': setItems((it) => [...it, { kind: 'error', text: e.text }]); break;
+      case 'error':
+        setItems((it) => [...it, { kind: 'error', text: e.text }]);
+        if (convoRef.current) setConvoMode(false);
+        break;
     }
   }
 
@@ -210,6 +241,12 @@ export default function Home() {
           <button className="chip" onClick={() => updateSettings({ nusach: settings.nusach === 'ashkenaz' ? 'sephardi' : 'ashkenaz' })}>
             {settings.nusach === 'ashkenaz' ? 'Ashkenaz' : 'Sephardi'}
           </button>
+          {voice.supported && (
+            <button className={`chip talk ${convo ? 'live' : ''}`} onClick={() => setConvoMode(!convo)} aria-pressed={convo}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+              {convo ? 'End talk' : 'Talk'}
+            </button>
+          )}
           <span className="spacer" />
           <span className="cost" title="Cost of this session so far">${sessionUsd.toFixed(sessionUsd < 1 ? 3 : 2)}</span>
         </div>
@@ -298,6 +335,12 @@ export default function Home() {
                     <div>
                       <div className="name">{me ? 'You' : 'Chavrusa'}</div>
                       <div className="say"><Formatted text={it.text} /></div>
+                      {!me && voice.supported && (
+                        <button className="listen" onClick={() => { voice.unlock(); sayAloud(it.text); }} aria-label="Listen to this reply">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /></svg>
+                          Listen
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -309,17 +352,45 @@ export default function Home() {
           </div>
         </div>
 
+        {convo && (
+          <div className="voicebar" role="status">
+            <span className={`orb ${voice.state}`} style={{ ['--lvl' as string]: String(voice.level) }} aria-hidden="true" />
+            <span className="vtext">
+              {voice.state === 'listening' ? 'Listening… just talk, I’ll answer when you pause'
+                : voice.state === 'transcribing' ? 'Got it…'
+                : voice.state === 'speaking' ? 'Speaking… tap to interrupt'
+                : busy ? (status || 'Thinking…') : 'Ready'}
+            </span>
+            {voice.state === 'speaking' && <button className="btn" onClick={() => { voice.stopSpeaking(); voice.listen(); }}>Interrupt</button>}
+            {voice.state === 'idle' && !busy && <button className="btn" onClick={() => voice.listen()}>Speak</button>}
+            <button className="btn" onClick={() => setConvoMode(false)}>End</button>
+          </div>
+        )}
+
         <div className="composer">
           <div className="composer-inner">
             <textarea
               ref={inputRef}
               rows={1}
-              placeholder="Your answer or question…"
+              placeholder={voice.state === 'listening' ? 'Listening…' : voice.state === 'transcribing' ? 'Writing down what you said…' : 'Your answer or question…'}
               value={input}
               onChange={(e) => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && isWide) { e.preventDefault(); send(input); } }}
               dir="auto"
             />
+            {voice.supported && !convo && (
+              <button
+                className={`mic ${voice.state}`}
+                onClick={() => { voice.unlock(); if (voice.state === 'listening') voice.stopListening(); else if (voice.state === 'idle') voice.listen(); }}
+                disabled={voice.state === 'transcribing' || busy}
+                aria-label={voice.state === 'listening' ? 'Stop recording' : 'Speak'}
+                style={{ ['--lvl' as string]: String(voice.level) }}
+              >
+                {voice.state === 'listening'
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" /></svg>
+                  : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>}
+              </button>
+            )}
             <button className="send" disabled={!input.trim() || busy} onClick={() => send(input)} aria-label="Send">
               {look === 'daf' ? 'שלח' : look === 'techelet' ? 'Send' : (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>

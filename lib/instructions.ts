@@ -65,7 +65,7 @@ function pronunciation(s: Settings): string {
     : 'The learner is Sephardi. When writing Hebrew terms in English letters, use Sephardi transliteration (Shabbat, Tosafot, mitzvot, kashrut, emet, brit). When a halachic path is relevant, lead toward Sephardi poskim (Shulchan Aruch as the primary ruling, Ben Ish Chai, Kaf HaChaim, and later Sephardi poskim such as Yalkut Yosef where available).';
 }
 
-export function buildSystemPrompt(s: Settings, memories: Memory[], sessionSources: string[], today: string): string {
+export function buildSystemPrompt(s: Settings, memories: Memory[], sessionSources: string[], today: string, spoken = false): string {
   const style = styleById(s.style);
   const blend = s.blend ? styleById(s.blend) : null;
   const memLines = memories.length
@@ -82,6 +82,7 @@ Who leads: ${s.leads === 'learner'
     ? 'The LEARNER reads and explains first. After bringing a source, ask them to explain it before you say anything about its content.'
     : 'YOU explain first, briefly, then ask the learner a question to check and deepen understanding.'}
 ${pronunciation(s)}
+${spoken ? 'The learner is TALKING with you out loud right now, and your reply will be spoken aloud. Keep each reply to one to three short spoken sentences, end with one question, and use no lists, headings, bold, or line numbers. Quote at most a few words of Hebrew at a time.' : ''}
 ${s.display === 'off' ? 'The learner has text display turned off and is learning by listening/conversation only. Read short key phrases aloud in your message (in Hebrew letters) since they cannot see the text.' : ''}
 
 # What you remember about this learner

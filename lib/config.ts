@@ -116,6 +116,9 @@ export interface Settings {
   enSize: number;           // px
   costWarnUsd: number | null;
   disclaimerAccepted: boolean;
+  voice: string;            // voice the Chavrusa speaks with
+  autoSpeak: boolean;       // read every reply aloud
+  speechRate: number;       // 0.8 – 1.3
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -132,6 +135,9 @@ export const DEFAULT_SETTINGS: Settings = {
   enSize: 16,
   costWarnUsd: null,
   disclaimerAccepted: false,
+  voice: 'ash',
+  autoSpeak: false,
+  speechRate: 1,
 };
 
 // Works composed in or after this year must be on the approved list to be quoted.
@@ -140,3 +146,23 @@ export const CLASSIC_CUTOFF_YEAR = 1900;
 
 // For now there is one learner. Later this becomes the logged-in user's ID.
 export const OWNER_ID = 'owner';
+
+// ---------- Voice (phase 1: OpenAI). Later another provider such as ElevenLabs can be added here. ----------
+export const VOICE = {
+  // Tried in order; the first one the account can use wins.
+  transcribeModels: ['gpt-transcribe', 'gpt-4o-transcribe', 'whisper-1'],
+  speechModels: ['gpt-4o-mini-tts', 'tts-1'],
+  // Estimated prices for cost logging. Verify on OpenAI's pricing page.
+  transcribeUsdPerMinute: 0.006,
+  speechUsdPerMinute: 0.015,
+  charsPerMinute: 900,
+};
+
+export const VOICES: { id: string; name: string }[] = [
+  { id: 'ash', name: 'Ash (warm, male)' },
+  { id: 'onyx', name: 'Onyx (deep, male)' },
+  { id: 'echo', name: 'Echo (clear, male)' },
+  { id: 'sage', name: 'Sage (calm)' },
+  { id: 'coral', name: 'Coral (bright, female)' },
+  { id: 'shimmer', name: 'Shimmer (soft, female)' },
+];

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
+import { MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS, VOICES } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 
@@ -111,6 +111,25 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
               <label>English text size</label>
               <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
             </div>
+          </div>
+
+          <div className="section">
+            <h3>Voice</h3>
+            <div className="field">
+              <label htmlFor="voice-pick">Chavrusa’s voice</label>
+              <select id="voice-pick" value={s.voice} onChange={(e) => onChange({ voice: e.target.value })}>
+                {VOICES.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Read every reply aloud</label>
+              <Seg value={s.autoSpeak ? 'on' : 'off'} options={[['off', 'Only when I tap Listen or Talk'], ['on', 'Always']]} onPick={(v) => onChange({ autoSpeak: v === 'on' })} />
+            </div>
+            <div className="field">
+              <label>Speaking speed</label>
+              <div className="range"><input type="range" min={0.8} max={1.3} step={0.05} value={s.speechRate} onChange={(e) => onChange({ speechRate: Number(e.target.value) })} /><span style={{ fontVariantNumeric: 'tabular-nums' }}>{s.speechRate.toFixed(2)}×</span></div>
+            </div>
+            <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
           </div>
 
           <div className="section">

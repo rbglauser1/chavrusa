@@ -239,6 +239,26 @@ a { color: var(--accent); }
 [data-look='techelet'] .composer textarea::placeholder { color: rgba(255, 255, 255, 0.65); }
 [data-look='techelet'] .send { background: #fff; color: #183563; }
 
+/* ---------- Voice ---------- */
+.chip.talk { border-color: var(--accent); color: var(--accent); }
+.chip.talk.live { background: var(--accent); color: var(--accent-ink); }
+.mic { height: 42px; width: 42px; border-radius: 50%; border: 1px solid var(--rule); background: transparent; color: var(--accent); display: grid; place-items: center; flex-shrink: 0; position: relative; }
+.mic.listening { background: var(--danger); border-color: var(--danger); color: #fff; box-shadow: 0 0 0 calc(var(--lvl, 0) * 10px) color-mix(in srgb, var(--danger) 30%, transparent); }
+.mic.transcribing { opacity: 0.5; }
+.mic:disabled { opacity: 0.4; cursor: default; }
+[data-look='techelet'] .mic { border-color: rgba(255, 255, 255, 0.35); color: #fff; }
+.voicebar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); border-top: 1px solid var(--rule); font-family: var(--f-ui); font-size: 14px; background: var(--accent-soft); }
+.voicebar .vtext { flex: 1; min-width: 0; color: var(--ink); }
+.voicebar .btn { padding: 6px 12px; font-size: 13px; }
+.orb { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); flex-shrink: 0; transform: scale(calc(0.7 + var(--lvl, 0) * 0.8)); transition: transform 0.08s linear; }
+.orb.listening { background: var(--danger); }
+.orb.speaking { animation: breathe 1.4s ease-in-out infinite; }
+.orb.transcribing, .orb.idle { opacity: 0.6; }
+@keyframes breathe { 50% { transform: scale(1.25); } }
+.listen { margin-top: 6px; display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 2px 0; color: var(--soft); font-size: 13px; font-family: var(--f-ui); }
+.listen:hover { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .orb.speaking { animation: none; } }
+
 /* ---------- Sefer panel ---------- */
 .sefer { width: 44%; max-width: 620px; min-width: 380px; border-left: 1px solid var(--rule); background: var(--surface); display: flex; flex-direction: column; }
 [data-look='shtender'] .sefer { background: var(--src-bg); color: var(--src-ink); --soft: #7a6448; --rule: rgba(120, 80, 30, 0.25); --accent: #7a5a2c; --accent-soft: rgba(122, 90, 44, 0.12); --ink: #2a1c16; }

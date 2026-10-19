@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const message: string = String(body.message ?? '').trim();
   let sessionId: string | null = body.sessionId ?? null;
+  const spoken = body.voice === true;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
         const model = MODELS[settings.provider][settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
-        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today);
+        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken);
 
         const emit = (e: ToolEvent) => send(e);
         const execute = makeExecutor({
