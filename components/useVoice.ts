@@ -41,6 +41,20 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
   const streamRef = useRef<MediaStream | null>(null);
   const recRef = useRef<MediaRecorder | null>(null);
   const timers = useRef<{ raf?: number; max?: number }>({});
+  const releaseTimer = useRef<number | undefined>(undefined);
+  const IDLE_RELEASE_MS = 120_000; // turn the microphone off after 2 minutes unused
+
+  // Keep one microphone stream open and reuse it, so the browser only asks for permission once.
+  const releaseMic = useCallback(() => {
+    if (releaseTimer.current) clearTimeout(releaseTimer.current);
+    releaseTimer.current = undefined;
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
+  const scheduleRelease = useCallback(() => {
+    if (releaseTimer.current) clearTimeout(releaseTimer.current);
+    releaseTimer.current = window.setTimeout(() => { if (!recRef.current) releaseMic(); }, IDLE_RELEASE_MS);
+  }, [releaseMic]);
   const speakDone = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -71,22 +85,24 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
     if (timers.current.raf) cancelAnimationFrame(timers.current.raf);
     if (timers.current.max) clearTimeout(timers.current.max);
     timers.current = {};
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
     setLevel(0);
-  }, []);
+    scheduleRelease();
+  }, [scheduleRelease]);
 
   const listen = useCallback(async () => {
     if (recRef.current) return;
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-    } catch {
-      optsRef.current.onError('Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.');
-      setState('idle');
-      return;
+    if (releaseTimer.current) { clearTimeout(releaseTimer.current); releaseTimer.current = undefined; }
+    let stream = streamRef.current;
+    if (!stream || !stream.getAudioTracks().some((t) => t.readyState === 'live')) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      } catch {
+        optsRef.current.onError('Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.');
+        setState('idle');
+        return;
+      }
+      streamRef.current = stream;
     }
-    streamRef.current = stream;
     const mime = pickMime();
     const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
     const chunks: Blob[] = [];
@@ -199,7 +215,7 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
     }
   }, [stopSpeaking]);
 
-  const stopAll = useCallback(() => { cancelListening(); stopSpeaking(); }, [cancelListening, stopSpeaking]);
+  const stopAll = useCallback(() => { cancelListening(); stopSpeaking(); releaseMic(); }, [cancelListening, stopSpeaking, releaseMic]);
 
   const supported = typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
 
