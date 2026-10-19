@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
           tools: TOOLS,
           execute,
           effort: model.effort,
+          onText: (d) => send({ type: 'delta', text: d }),
         });
 
         const reply = result.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';

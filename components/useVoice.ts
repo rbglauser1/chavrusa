@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // Microphone recording (with automatic stop after a pause) and spoken replies.
 export type VoiceState = 'idle' | 'listening' | 'transcribing' | 'speaking';
 
-const SILENCE_MS = 1600;     // stop after this much quiet once you've started talking
+const SILENCE_MS = 1200;     // stop after this much quiet once you've started talking
 const MAX_MS = 90_000;       // never record longer than this
 const LEVEL = 0.01;          // minimum loudness that can count as speech
 
@@ -22,6 +22,27 @@ function silentWav(): string {
   let bin = '';
   new Uint8Array(buf).forEach((b) => { bin += String.fromCharCode(b); });
   return `data:audio/wav;base64,${btoa(bin)}`;
+}
+
+// Split text into speakable sentences. Returns finished sentences and the unfinished remainder.
+// The first sentence is allowed to be short so speech starts quickly; later ones are grouped.
+export function splitSentences(text: string, final = false): { sentences: string[]; rest: string } {
+  const clean = text.replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '');
+  const parts: string[] = [];
+  const re = /[^.!?…:;\n]+(?:[.!?…:;]+["'”’)\]]*|\n+)/g;
+  let m: RegExpExecArray | null;
+  let last = 0;
+  while ((m = re.exec(clean))) { parts.push(m[0]); last = re.lastIndex; }
+  let rest = clean.slice(last);
+  if (final && rest.trim()) { parts.push(rest); rest = ''; }
+  const sentences: string[] = [];
+  let cur = '';
+  for (const p of parts) {
+    cur += p;
+    if (cur.trim().length >= 40 || (sentences.length === 0 && cur.trim().length >= 12)) { sentences.push(cur.trim()); cur = ''; }
+  }
+  if (cur.trim()) { if (final) sentences.push(cur.trim()); else rest = cur + rest; }
+  return { sentences, rest };
 }
 
 function pickMime(): string {
@@ -189,53 +210,124 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
     setState('idle');
   }, [cleanupRecording]);
 
-  const stopSpeaking = useCallback(() => {
-    const a = audioEl.current;
-    if (a) { a.pause(); a.removeAttribute('src'); a.load(); }
-    speakDone.current?.();
-    speakDone.current = null;
-    setState((s) => (s === 'speaking' ? 'idle' : s));
+  // ---------- Speaking: a queue of sentences ----------
+  // Each sentence is turned into audio as soon as it's queued (in parallel), and played in order,
+  // so the first words start while later sentences are still being prepared.
+  const queue = useRef<Promise<string | null>[]>([]);
+  const playing = useRef(false);
+  const ended = useRef(true);          // no more sentences are coming for this reply
+  const generation = useRef(0);        // bumps on stop, to cancel anything in flight
+  const drainWaiters = useRef<((ok: boolean) => void)[]>([]);
+  const hadError = useRef(false);
+
+  const finishDrain = useCallback((ok: boolean) => {
+    const w = drainWaiters.current;
+    drainWaiters.current = [];
+    w.forEach((f) => f(ok));
   }, []);
 
-  // Resolves when the speech finishes (or is stopped). Returns false if it could not play.
-  const speak = useCallback(async (text: string): Promise<boolean> => {
-    // Finish any earlier reply, but keep the same audio element (resetting it would undo the phone's permission).
-    if (speakDone.current) { audioEl.current?.pause(); speakDone.current(); speakDone.current = null; }
-    // An open microphone switches phones into call-quality audio, which makes playback crackle.
-    // Release it (and pause the level meter) while the Chavrusa speaks; listen() reopens it.
-    if (!recRef.current) releaseMic();
-    ctxRef.current?.suspend().catch(() => {});
-    setState('speaking');
+  const fetchAudio = useCallback(async (text: string, gen: number): Promise<string | null> => {
     try {
       const res = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, sessionId: optsRef.current.sessionId() }) });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? `status ${res.status}`);
       }
-      const url = URL.createObjectURL(await res.blob());
-      const a = audioEl.current ?? new Audio();
-      audioEl.current = a;
-      a.src = url;
-      await new Promise<void>((resolve, reject) => {
-        speakDone.current = resolve;
-        a.onended = () => resolve();
-        a.onerror = () => reject(new Error('The audio could not play.'));
-        a.play().catch(reject);
-      });
-      URL.revokeObjectURL(url);
-      speakDone.current = null;
-      setState('idle');
-      return true;
+      const blob = await res.blob();
+      if (gen !== generation.current) return null;
+      return URL.createObjectURL(blob);
     } catch (e) {
-      setState('idle');
-      optsRef.current.onError(`Could not play the reply: ${(e as Error).message}`);
-      return false;
+      if (gen === generation.current && !hadError.current) {
+        hadError.current = true;
+        optsRef.current.onError(`Could not play the reply: ${(e as Error).message}`);
+      }
+      return null;
     }
-  }, [releaseMic]);
+  }, []);
+
+  const playUrl = useCallback((url: string) => new Promise<void>((resolve) => {
+    const a = audioEl.current ?? new Audio();
+    audioEl.current = a;
+    a.src = url;
+    const done = () => { speakDone.current = null; URL.revokeObjectURL(url); resolve(); };
+    speakDone.current = done;
+    a.onended = done;
+    a.onerror = done;
+    a.play().catch(done);
+  }), []);
+
+  const runQueue = useCallback(async () => {
+    if (playing.current) return;
+    playing.current = true;
+    const gen = generation.current;
+    // An open microphone switches phones into call-quality audio, which makes playback crackle.
+    if (!recRef.current) releaseMic();
+    ctxRef.current?.suspend().catch(() => {});
+    setState('speaking');
+    while (queue.current.length && gen === generation.current) {
+      const url = await queue.current.shift()!;
+      if (gen !== generation.current) break;
+      if (url) await playUrl(url);
+    }
+    playing.current = false;
+    if (gen !== generation.current) return;
+    if (ended.current) {
+      setState('idle');
+      finishDrain(!hadError.current);
+    }
+    // If more sentences are still coming, enqueue() restarts the loop.
+  }, [finishDrain, playUrl, releaseMic]);
+
+  // Start a new spoken reply (stops anything playing).
+  const beginSpeech = useCallback(() => {
+    generation.current++;
+    if (speakDone.current) { audioEl.current?.pause(); speakDone.current(); }
+    queue.current = [];
+    playing.current = false;
+    ended.current = false;
+    hadError.current = false;
+    finishDrain(false);
+  }, [finishDrain]);
+
+  const enqueue = useCallback((text: string) => {
+    const t = text.trim();
+    if (!t || !/[\p{L}\p{N}]/u.test(t)) return;
+    queue.current.push(fetchAudio(t, generation.current));
+    runQueue();
+  }, [fetchAudio, runQueue]);
+
+  // No more sentences for this reply. Resolves true when everything has been spoken.
+  const endSpeech = useCallback((): Promise<boolean> => {
+    ended.current = true;
+    return new Promise<boolean>((resolve) => {
+      if (!playing.current && queue.current.length === 0) { setState((st) => (st === 'speaking' ? 'idle' : st)); resolve(!hadError.current); return; }
+      drainWaiters.current.push(resolve);
+    });
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    generation.current++;
+    queue.current = [];
+    playing.current = false;
+    ended.current = true;
+    const a = audioEl.current;
+    if (a) a.pause();
+    speakDone.current?.();
+    speakDone.current = null;
+    finishDrain(false);
+    setState((st) => (st === 'speaking' ? 'idle' : st));
+  }, [finishDrain]);
+
+  // Speak a whole text at once (used by the Listen button).
+  const speak = useCallback(async (text: string): Promise<boolean> => {
+    beginSpeech();
+    for (const part of splitSentences(text, true).sentences) enqueue(part);
+    return endSpeech();
+  }, [beginSpeech, enqueue, endSpeech]);
 
   const stopAll = useCallback(() => { cancelListening(); stopSpeaking(); releaseMic(); }, [cancelListening, stopSpeaking, releaseMic]);
 
   const supported = typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
 
-  return { state, level, supported, unlock, listen, stopListening, cancelListening, speak, stopSpeaking, stopAll };
+  return { state, level, supported, unlock, listen, stopListening, cancelListening, speak, beginSpeech, enqueue, endSpeech, stopSpeaking, stopAll };
 }

@@ -7,7 +7,7 @@ import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
-import { useVoice } from '@/components/useVoice';
+import { splitSentences, useVoice } from '@/components/useVoice';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -42,6 +42,10 @@ export default function Home() {
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
   const spokeLast = useRef(false);
+  const liveIdx = useRef<number | null>(null);   // the reply currently being written
+  const liveText = useRef('');
+  const speakTurn = useRef(false);               // speak this reply as it streams in
+  const speechBuf = useRef('');
   const voice = useVoice({
     onText: (t) => { spokeLast.current = true; send(t); },
     onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); setConvoMode(false); },
@@ -139,6 +143,12 @@ export default function Home() {
     setInput('');
     setItems((it) => [...it, { kind: 'user', text: msg }]);
     setBusy(true); setStatus('Thinking…');
+    liveIdx.current = null;
+    liveText.current = '';
+    speechBuf.current = '';
+    speakTurn.current = convoRef.current || settingsRef.current.autoSpeak || spokeLast.current;
+    spokeLast.current = false;
+    if (speakTurn.current) voice.beginSpeech();
 
     try {
       const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId, voice: convoRef.current }) });
@@ -182,11 +192,43 @@ export default function Home() {
         break;
       case 'memory': setItems((it) => [...it, { kind: 'event', text: `Remembered: ${e.text}` }]); break;
       case 'mode': setSettings((s) => ({ ...s, ...e.settings })); break;
-      case 'reply':
-        setItems((it) => [...it, { kind: 'assistant', text: e.text, model: e.model }]);
-        if (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current) sayAloud(e.text);
-        spokeLast.current = false;
+      case 'delta': {
+        liveText.current += e.text;
+        const full = liveText.current;
+        setItems((it) => {
+          if (liveIdx.current === null || liveIdx.current >= it.length) { liveIdx.current = it.length; return [...it, { kind: 'assistant', text: full }]; }
+          const copy = it.slice();
+          copy[liveIdx.current] = { kind: 'assistant', text: full };
+          return copy;
+        });
+        if (speakTurn.current) {
+          speechBuf.current += e.text;
+          const { sentences, rest } = splitSentences(speechBuf.current);
+          sentences.forEach((x) => voice.enqueue(x));
+          speechBuf.current = rest;
+        }
+        setStatus('');
         break;
+      }
+      case 'reply': {
+        const finalText: string = e.text;
+        const streamed = liveText.current.length > 0;
+        setItems((it) => {
+          if (liveIdx.current === null || liveIdx.current >= it.length) return [...it, { kind: 'assistant', text: finalText, model: e.model }];
+          const copy = it.slice();
+          copy[liveIdx.current] = { kind: 'assistant', text: finalText, model: e.model };
+          return copy;
+        });
+        liveIdx.current = null;
+        if (speakTurn.current) {
+          const leftover = streamed ? speechBuf.current : finalText;
+          splitSentences(leftover, true).sentences.forEach((x) => voice.enqueue(x));
+          speechBuf.current = '';
+          speakTurn.current = false;
+          voice.endSpeech().then((ok) => { if (ok && convoRef.current) voice.listen(); });
+        }
+        break;
+      }
       case 'cost':
         setSessionUsd(e.sessionUsd);
         if (settings.costWarnUsd && e.sessionUsd > settings.costWarnUsd && !warned.current) {
@@ -195,6 +237,7 @@ export default function Home() {
         }
         break;
       case 'error':
+        if (speakTurn.current) { speakTurn.current = false; voice.stopSpeaking(); }
         setItems((it) => [...it, { kind: 'error', text: e.text }]);
         if (convoRef.current) setConvoMode(false);
         break;

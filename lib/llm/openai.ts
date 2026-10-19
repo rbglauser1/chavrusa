@@ -1,7 +1,8 @@
 import 'server-only';
+import { readSSE } from './sse';
 import { RunOptions, RunResult } from './types';
 
-// OpenAI Responses API with a function-calling loop (GPT-6 tools require the Responses API).
+// OpenAI Responses API, streamed, with a function-calling loop (GPT-6 tools require the Responses API).
 export async function runOpenAI(o: RunOptions): Promise<RunResult> {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('OPENAI_API_KEY is not set.');
@@ -10,10 +11,10 @@ export async function runOpenAI(o: RunOptions): Promise<RunResult> {
   let input: unknown[] = o.history.map((t) => ({ role: t.role, content: t.content }));
   let previous: string | undefined;
   let inputTokens = 0, outputTokens = 0;
-  let finalText = '';
+  const texts: string[] = [];
 
   for (let step = 0; step < (o.maxSteps ?? 10); step++) {
-    const body: Record<string, unknown> = { model: o.model, instructions: o.system, input };
+    const body: Record<string, unknown> = { model: o.model, instructions: o.system, input, stream: true };
     if (tools.length) body.tools = tools;
     if (o.effort) body.reasoning = { effort: o.effort };
     if (previous) body.previous_response_id = previous;
@@ -23,20 +24,38 @@ export async function runOpenAI(o: RunOptions): Promise<RunResult> {
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const data: any = await res.json();
-    if (!res.ok) throw new Error(`OpenAI error ${res.status}: ${data?.error?.message ?? JSON.stringify(data).slice(0, 300)}`);
+    if (!res.ok) {
+      const data: any = await res.json().catch(() => ({}));
+      throw new Error(`OpenAI error ${res.status}: ${data?.error?.message ?? 'request failed'}`);
+    }
 
-    inputTokens += data.usage?.input_tokens ?? 0;
-    outputTokens += data.usage?.output_tokens ?? 0;
+    let final: any = null;
+    let stepText = '';
+    for await (const { event, data } of readSSE(res)) {
+      const type = data?.type ?? event;
+      if (type === 'response.output_text.delta' && typeof data.delta === 'string') {
+        stepText += data.delta;
+        o.onText?.(data.delta);
+      } else if (type === 'response.completed' || type === 'response.incomplete') {
+        final = data.response;
+      } else if (type === 'response.failed' || type === 'error') {
+        throw new Error(`OpenAI error: ${data?.response?.error?.message ?? data?.message ?? data?.error?.message ?? 'stream failed'}`);
+      }
+    }
+    if (!final) throw new Error('OpenAI stream ended without a response.');
 
-    const output: any[] = Array.isArray(data.output) ? data.output : [];
+    inputTokens += final.usage?.input_tokens ?? 0;
+    outputTokens += final.usage?.output_tokens ?? 0;
+    const output: any[] = Array.isArray(final.output) ? final.output : [];
     const calls = output.filter((i) => i.type === 'function_call');
-    const text = output.filter((i) => i.type === 'message')
-      .flatMap((m) => (Array.isArray(m.content) ? m.content : []))
-      .filter((c: any) => c.type === 'output_text').map((c: any) => c.text).join('\n').trim();
+    if (!stepText) {
+      stepText = output.filter((i) => i.type === 'message').flatMap((m) => (Array.isArray(m.content) ? m.content : []))
+        .filter((c: any) => c.type === 'output_text').map((c: any) => c.text).join('\n');
+    }
+    if (stepText.trim()) texts.push(stepText.trim());
+    if (calls.length === 0) break;
 
-    if (calls.length === 0) { finalText = text || data.output_text || ''; break; }
-
+    if (stepText.trim()) o.onText?.('\n\n');
     const outputs: unknown[] = [];
     for (const c of calls) {
       let args: Record<string, unknown> = {};
@@ -46,9 +65,9 @@ export async function runOpenAI(o: RunOptions): Promise<RunResult> {
       catch (e) { out = `Error: ${(e as Error).message}`; }
       outputs.push({ type: 'function_call_output', call_id: c.call_id, output: out });
     }
-    previous = data.id;
+    previous = final.id;
     input = outputs;
   }
 
-  return { text: finalText, inputTokens, outputTokens };
+  return { text: texts.join('\n\n'), inputTokens, outputTokens };
 }

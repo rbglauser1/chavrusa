@@ -22,4 +22,5 @@ export interface RunOptions {
   execute: ToolExecutor;
   effort?: string;
   maxSteps?: number;
+  onText?: (delta: string) => void; // called with each piece of text as it is written
 }

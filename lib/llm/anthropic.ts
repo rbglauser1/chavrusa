@@ -1,7 +1,8 @@
 import 'server-only';
+import { readSSE } from './sse';
 import { RunOptions, RunResult } from './types';
 
-// Claude Messages API with a tool-use loop.
+// Claude Messages API, streamed, with a tool-use loop. Text is passed to onText as it arrives.
 export async function runAnthropic(o: RunOptions): Promise<RunResult> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set.');
@@ -19,27 +20,60 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
       body: JSON.stringify({
         model: o.model,
         max_tokens: 4000,
+        stream: true,
         system: [{ type: 'text', text: o.system, cache_control: { type: 'ephemeral' } }],
         ...(tools.length ? { tools } : {}),
         messages,
       }),
     });
-    const data: any = await res.json();
-    if (!res.ok) throw new Error(`Claude error ${res.status}: ${data?.error?.message ?? JSON.stringify(data).slice(0, 300)}`);
-
-    const u = data.usage ?? {};
-    inputTokens += (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0);
-    outputTokens += u.output_tokens ?? 0;
-
-    const content: any[] = Array.isArray(data.content) ? data.content : [];
-    const stepText = content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
-    const calls = content.filter((b) => b.type === 'tool_use');
-
-    if (data.stop_reason !== 'tool_use' || calls.length === 0) {
-      if (stepText) texts.push(stepText);
-      break;
+    if (!res.ok) {
+      const data: any = await res.json().catch(() => ({}));
+      throw new Error(`Claude error ${res.status}: ${data?.error?.message ?? 'request failed'}`);
     }
-    // Text written alongside tool calls is usually a short "let me look that up"; keep only the final answer.
+
+    // Rebuild the content blocks from the stream.
+    const blocks: any[] = [];
+    let stopReason = '';
+    for await (const { event, data } of readSSE(res)) {
+      if (event === 'message_start') {
+        const u = data.message?.usage ?? {};
+        inputTokens += (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0);
+        outputTokens += u.output_tokens ?? 0;
+      } else if (event === 'content_block_start') {
+        const b = { ...data.content_block };
+        if (b.type === 'tool_use') b._json = '';
+        if (b.type === 'text') b.text = b.text ?? '';
+        blocks[data.index] = b;
+      } else if (event === 'content_block_delta') {
+        const b = blocks[data.index];
+        if (!b) continue;
+        if (data.delta?.type === 'text_delta') { b.text += data.delta.text; o.onText?.(data.delta.text); }
+        else if (data.delta?.type === 'input_json_delta') b._json += data.delta.partial_json ?? '';
+      } else if (event === 'message_delta') {
+        stopReason = data.delta?.stop_reason ?? stopReason;
+        outputTokens += data.usage?.output_tokens ?? 0;
+      } else if (event === 'error') {
+        throw new Error(`Claude error: ${data.error?.message ?? 'stream failed'}`);
+      }
+    }
+
+    const content = blocks.filter(Boolean).map((b) => {
+      if (b.type === 'tool_use') {
+        let input = {};
+        try { input = b._json ? JSON.parse(b._json) : {}; } catch { /* leave empty */ }
+        return { type: 'tool_use', id: b.id, name: b.name, input };
+      }
+      if (b.type === 'text') return { type: 'text', text: b.text };
+      return b;
+    });
+    const stepText = content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('').trim();
+    if (stepText) texts.push(stepText);
+    const calls = content.filter((b: any) => b.type === 'tool_use') as { id: string; name: string; input: Record<string, unknown> }[];
+
+    if (stopReason !== 'tool_use' || calls.length === 0) break;
+
+    // Keep spoken/visible text separated between steps.
+    if (stepText) o.onText?.('\n\n');
     messages.push({ role: 'assistant', content });
     const results: unknown[] = [];
     for (const c of calls) {
