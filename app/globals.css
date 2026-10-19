@@ -142,6 +142,20 @@ a { color: var(--accent); }
 [data-look='daf'] .chip { border-radius: 2px; font-style: italic; }
 .cost { font-variant-numeric: tabular-nums; }
 
+/* Quick menus under the mode bar */
+.chip.open { background: var(--accent-soft); }
+.quick { border-bottom: 1px solid var(--rule); background: var(--surface); padding: 10px 16px 12px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); max-height: 55vh; overflow-y: auto; font-family: var(--f-ui); box-shadow: var(--shadow); position: relative; z-index: 5; }
+.quick-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.quick-opt { flex: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--rule); background: transparent; font-size: 14px; color: var(--soft); }
+.quick-opt.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.quick-list { display: grid; }
+.quick-item { display: grid; gap: 1px; text-align: left; padding: 9px 6px; border: 0; border-bottom: 1px solid var(--rule); background: transparent; color: var(--ink); }
+.quick-item:last-child { border-bottom: 0; }
+.quick-item b { font-weight: 600; font-size: 15px; }
+.quick-item span { font-size: 13px; color: var(--soft); }
+.quick-item.on b { color: var(--accent); }
+.quick-item.on b::after { content: '  ✓'; }
+
 /* ---------- Pinned source (the daf in front of you) ---------- */
 .pin { flex-shrink: 0; border-bottom: 1px solid var(--rule); }
 .pin-head { display: flex; align-items: baseline; gap: 10px; padding: 10px 18px 0; }

@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_SETTINGS, Look, MODELS, Settings, styleById, TIER_LABELS } from '@/lib/config';
+import { DEFAULT_SETTINGS, Look, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import SeferPanel from '@/components/SeferPanel';
@@ -32,6 +32,7 @@ export default function Home() {
   const [seferOpen, setSeferOpen] = useState(false);
   const [pinCollapsed, setPinCollapsed] = useState(false);
   const [seenDisclaimer, setSeenDisclaimer] = useState(false);
+  const [quick, setQuick] = useState<'style' | 'model' | null>(null);
   const [pulse, setPulse] = useState(false);
   const [drawer, setDrawer] = useState<'sessions' | 'settings' | null>(null);
   const [help, setHelp] = useState(false);
@@ -202,16 +203,49 @@ export default function Home() {
         </header>
 
         <div className="modebar">
-          <button className="chip accent" onClick={() => setDrawer('settings')}>
+          <button className={`chip accent ${quick === 'style' ? 'open' : ''}`} aria-expanded={quick === 'style'} onClick={() => setQuick((q) => (q === 'style' ? null : 'style'))}>
             {style.short}{blend ? ` + ${blend.short}` : ''} · {settings.leads === 'learner' ? 'You lead' : 'Chavrusa leads'}
           </button>
-          <button className="chip" onClick={() => setDrawer('settings')}>{TIER_LABELS[settings.tier]} · {model.label}</button>
+          <button className={`chip ${quick === 'model' ? 'open' : ''}`} aria-expanded={quick === 'model'} onClick={() => setQuick((q) => (q === 'model' ? null : 'model'))}>{TIER_LABELS[settings.tier]} · {model.label}</button>
           <button className="chip" onClick={() => updateSettings({ nusach: settings.nusach === 'ashkenaz' ? 'sephardi' : 'ashkenaz' })}>
             {settings.nusach === 'ashkenaz' ? 'Ashkenaz' : 'Sephardi'}
           </button>
           <span className="spacer" />
           <span className="cost" title="Cost of this session so far">${sessionUsd.toFixed(sessionUsd < 1 ? 3 : 2)}</span>
         </div>
+
+        {quick === 'model' && (
+          <div className="quick" role="dialog" aria-label="Choose model">
+            <div className="quick-row">
+              {(['anthropic', 'openai'] as Provider[]).map((p) => (
+                <button key={p} className={`quick-opt ${settings.provider === p ? 'on' : ''}`} onClick={() => updateSettings({ provider: p })}>{p === 'anthropic' ? 'Claude' : 'OpenAI'}</button>
+              ))}
+            </div>
+            <div className="quick-list">
+              {(['basic', 'middle', 'top'] as Tier[]).map((t) => (
+                <button key={t} className={`quick-item ${settings.tier === t ? 'on' : ''}`} onClick={() => { updateSettings({ tier: t }); setQuick(null); }}>
+                  <b>{TIER_LABELS[t]}</b>
+                  <span>{MODELS[settings.provider][t].label} · {t === 'basic' ? 'quick review, lowest cost' : t === 'middle' ? 'everyday learning' : 'iyun and long reasoning, highest cost'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {quick === 'style' && (
+          <div className="quick" role="dialog" aria-label="Choose style">
+            <div className="quick-row">
+              <button className={`quick-opt ${settings.leads === 'learner' ? 'on' : ''}`} onClick={() => updateSettings({ leads: 'learner' })}>I explain first</button>
+              <button className={`quick-opt ${settings.leads === 'chavrusa' ? 'on' : ''}`} onClick={() => updateSettings({ leads: 'chavrusa' })}>Chavrusa explains first</button>
+            </div>
+            <div className="quick-list">
+              {STYLES.map((st) => (
+                <button key={st.id} className={`quick-item ${settings.style === st.id ? 'on' : ''}`} onClick={() => { updateSettings({ style: st.id, blend: null }); setQuick(null); }}>
+                  <b>{st.name}</b><span>{st.blurb}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {showPin && (
           <section className={`pin ${pinCollapsed ? 'collapsed' : ''}`} aria-label="Current source">
