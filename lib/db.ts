@@ -6,7 +6,9 @@ let client: SupabaseClient | null = null;
 
 export function db(): SupabaseClient {
   if (!client) {
-    const url = process.env.SUPABASE_URL;
+    // Accept the URL however it was copied (e.g. with /rest/v1/ or a trailing slash): keep only https://<project>.supabase.co
+    const raw = (process.env.SUPABASE_URL ?? '').trim();
+    const url = raw ? (() => { try { return new URL(raw).origin; } catch { return raw; } })() : '';
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !key) throw new Error('Supabase is not configured: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
     client = createClient(url, key, { auth: { persistSession: false } });
