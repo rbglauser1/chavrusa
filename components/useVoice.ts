@@ -201,6 +201,10 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
   const speak = useCallback(async (text: string): Promise<boolean> => {
     // Finish any earlier reply, but keep the same audio element (resetting it would undo the phone's permission).
     if (speakDone.current) { audioEl.current?.pause(); speakDone.current(); speakDone.current = null; }
+    // An open microphone switches phones into call-quality audio, which makes playback crackle.
+    // Release it (and pause the level meter) while the Chavrusa speaks; listen() reopens it.
+    if (!recRef.current) releaseMic();
+    ctxRef.current?.suspend().catch(() => {});
     setState('speaking');
     try {
       const res = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, sessionId: optsRef.current.sessionId() }) });
@@ -227,7 +231,7 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
       optsRef.current.onError(`Could not play the reply: ${(e as Error).message}`);
       return false;
     }
-  }, [stopSpeaking]);
+  }, [releaseMic]);
 
   const stopAll = useCallback(() => { cancelListening(); stopSpeaking(); releaseMic(); }, [cancelListening, stopSpeaking, releaseMic]);
 

@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
 
   let lastError = '';
   for (const model of VOICE.speechModels) {
-    const body: Record<string, unknown> = { model, voice: s.voice, input, response_format: 'mp3', speed: s.speechRate };
+    const body: Record<string, unknown> = { model, voice: s.voice, input, response_format: 'mp3' };
+    // Only change speed when asked: time-stretching can add artifacts.
+    if (Math.abs((s.speechRate ?? 1) - 1) > 0.01) body.speed = s.speechRate;
     if (!model.startsWith('tts-')) body.instructions = speechInstructions(s.nusach);
     const res = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
