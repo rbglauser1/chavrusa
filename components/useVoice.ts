@@ -6,7 +6,7 @@ export type VoiceState = 'idle' | 'listening' | 'transcribing' | 'speaking';
 
 const SILENCE_MS = 1600;     // stop after this much quiet once you've started talking
 const MAX_MS = 90_000;       // never record longer than this
-const LEVEL = 0.018;         // loudness that counts as speech
+const LEVEL = 0.01;          // minimum loudness that can count as speech
 
 // A valid, very short silent WAV, used to unlock audio playback on phones.
 function silentWav(): string {
@@ -40,7 +40,7 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
   const ctxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recRef = useRef<MediaRecorder | null>(null);
-  const timers = useRef<{ raf?: number; max?: number }>({});
+  const timers = useRef<{ raf?: number; max?: number; interval?: number }>({});
   const releaseTimer = useRef<number | undefined>(undefined);
   const IDLE_RELEASE_MS = 120_000; // turn the microphone off after 2 minutes unused
 
@@ -83,6 +83,7 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
 
   const cleanupRecording = useCallback(() => {
     if (timers.current.raf) cancelAnimationFrame(timers.current.raf);
+    if (timers.current.interval) clearInterval(timers.current.interval);
     if (timers.current.max) clearTimeout(timers.current.max);
     timers.current = {};
     setLevel(0);
@@ -135,30 +136,43 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
     rec.start(250);
     setState('listening');
 
-    // Stop automatically after a pause in speech.
-    const ctx = ctxRef.current;
+    // Stop automatically after a pause. The thresholds adapt to the room: we track the background
+    // noise level and treat speech as clearly louder than that, and a pause as falling back near it.
+    let ctx = ctxRef.current;
+    if (!ctx) {
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AC) { ctx = new AC(); ctxRef.current = ctx; }
+    }
+    if (ctx && ctx.state !== 'running') { try { await ctx.resume(); } catch { /* ignore */ } }
     if (ctx) {
       const src = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
       src.connect(analyser);
       const buf = new Float32Array(analyser.fftSize);
-      let heard = false, quietSince = 0;
-      const tick = () => {
+      let heard = false, quietSince = 0, smooth = 0, floor = -1, loudest = 0;
+      const t0 = Date.now();
+      const id = window.setInterval(() => {
+        if (rec.state !== 'recording') { clearInterval(id); return; }
         analyser.getFloatTimeDomainData(buf);
         let sum = 0;
         for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
         const rms = Math.sqrt(sum / buf.length);
-        setLevel(Math.min(1, rms * 12));
+        smooth = smooth ? smooth * 0.7 + rms * 0.3 : rms;
+        // Background noise: starts from the first reading, drifts down quickly and up slowly.
+        floor = floor < 0 ? smooth : smooth < floor ? floor * 0.8 + smooth * 0.2 : floor * 0.995 + smooth * 0.005;
+        loudest = Math.max(loudest, smooth);
+        setLevel(Math.min(1, smooth * 12));
+        const speakAt = Math.max(LEVEL, floor * 2.5);
+        const quietAt = Math.max(LEVEL * 0.5, floor * 1.6, loudest * 0.18);
         const now = Date.now();
-        if (rms > LEVEL) { heard = true; quietSince = 0; }
-        else if (heard) {
+        if (smooth > speakAt && now - t0 > 250) { heard = true; quietSince = 0; }
+        else if (heard && smooth < quietAt) {
           if (!quietSince) quietSince = now;
-          else if (now - quietSince > SILENCE_MS) { if (rec.state === 'recording') rec.stop(); return; }
-        }
-        timers.current.raf = requestAnimationFrame(tick);
-      };
-      timers.current.raf = requestAnimationFrame(tick);
+          else if (now - quietSince > SILENCE_MS) { clearInterval(id); rec.stop(); }
+        } else if (heard) quietSince = 0;
+      }, 60);
+      timers.current.interval = id;
     }
     timers.current.max = window.setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, MAX_MS);
   }, [cleanupRecording]);

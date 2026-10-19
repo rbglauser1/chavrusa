@@ -358,11 +358,12 @@ export default function Home() {
           <div className="voicebar" role="status">
             <span className={`orb ${voice.state}`} style={{ ['--lvl' as string]: String(voice.level) }} aria-hidden="true" />
             <span className="vtext">
-              {voice.state === 'listening' ? 'Listening… just talk, I’ll answer when you pause'
+              {voice.state === 'listening' ? 'Listening… pause or tap Done when you finish'
                 : voice.state === 'transcribing' ? 'Got it…'
                 : voice.state === 'speaking' ? 'Speaking… tap to interrupt'
                 : busy ? (status || 'Thinking…') : 'Ready'}
             </span>
+            {voice.state === 'listening' && <button className="btn primary" onClick={() => voice.stopListening()}>Done</button>}
             {voice.state === 'speaking' && <button className="btn" onClick={() => { voice.stopSpeaking(); voice.listen(); }}>Interrupt</button>}
             {voice.state === 'idle' && !busy && <button className="btn" onClick={() => voice.listen()}>Speak</button>}
             <button className="btn" onClick={() => setConvoMode(false)}>End</button>
