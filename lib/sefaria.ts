@@ -1,0 +1,190 @@
+import 'server-only';
+import { ApprovedEntry, IndexInfo, judgeWork, parseYear, translationApproved, Verdict } from './approval';
+import { SourceData } from './db';
+
+const BASE = 'https://www.sefaria.org';
+const enc = (ref: string) => encodeURIComponent(ref.trim().replace(/ /g, '_')).replace(/%2C/g, ',').replace(/%3A/g, ':');
+
+async function getJson(url: string, init?: RequestInit, timeoutMs = 12_000): Promise<any> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: ctrl.signal, headers: { Accept: 'application/json', ...(init?.headers ?? {}) } });
+    if (!res.ok) throw new Error(`Sefaria returned ${res.status} for ${url.replace(BASE, '')}`);
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// Flatten Sefaria's nested text arrays into a list of lines.
+export function flatten(text: unknown): string[] {
+  if (typeof text === 'string') return text.trim() ? [text] : [];
+  if (Array.isArray(text)) return text.flatMap(flatten);
+  return [];
+}
+
+export function stripHtml(s: string): string {
+  return s.replace(/<sup[^>]*>.*?<\/sup>/gi, '').replace(/<i class="footnote">.*?<\/i>/gi, '')
+    .replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
+}
+
+// ---------- Index metadata (for approval) ----------
+const indexCache = new Map<string, IndexInfo>();
+
+export function bookTitleFromRef(ref: string): string {
+  // "Rashi on Berakhot 2a:1:1" -> "Rashi on Berakhot"; "Shulchan Arukh, Orach Chayim 1:1" -> "Shulchan Arukh, Orach Chayim"
+  return ref.replace(/[_]/g, ' ').replace(/\s+\d+[ab]?(?:[:.]\d+)*(?:-\S+)?\s*$/i, '').trim();
+}
+
+export async function indexInfo(title: string): Promise<IndexInfo> {
+  const cached = indexCache.get(title);
+  if (cached) return cached;
+  let data: any;
+  try {
+    data = await getJson(`${BASE}/api/v2/raw/index/${enc(title)}`);
+  } catch {
+    data = await getJson(`${BASE}/api/v2/index/${enc(title)}`);
+  }
+  const authors: string[] = [];
+  for (const a of Array.isArray(data?.authors) ? data.authors : []) {
+    if (typeof a === 'string') authors.push(a.replace(/-/g, ' '));
+    else if (a && typeof a === 'object') { if (a.en) authors.push(a.en); if (a.slug) authors.push(String(a.slug).replace(/-/g, ' ')); }
+  }
+  const info: IndexInfo = {
+    title: data?.title ?? title,
+    categories: Array.isArray(data?.categories) ? data.categories : [],
+    authors,
+    year: parseYear(data?.compDate) ?? parseYear(data?.pubDate),
+  };
+  indexCache.set(title, info);
+  return info;
+}
+
+export async function judgeRef(ref: string, list: ApprovedEntry[], indexTitle?: string): Promise<Verdict & { title: string }> {
+  const title = indexTitle ?? bookTitleFromRef(ref);
+  try {
+    const info = await indexInfo(title);
+    return { ...judgeWork(info, list), title: info.title };
+  } catch {
+    // If we cannot read metadata, only allow it when the title itself is on the approved list.
+    return { ...judgeWork({ title, categories: [], authors: [], year: null }, list), title };
+  }
+}
+
+// ---------- Texts ----------
+interface V3Version { text: unknown; language?: string; actualLanguage?: string; versionTitle?: string; direction?: string }
+
+function pick(versions: V3Version[], lang: 'he' | 'en'): V3Version | undefined {
+  return versions.find((v) => (lang === 'he'
+    ? (v.direction === 'rtl' || v.language === 'he' || v.actualLanguage === 'he' || v.actualLanguage === 'arc')
+    : (v.language === 'en' || v.actualLanguage === 'en')));
+}
+
+export async function getText(ref: string, list: ApprovedEntry[]): Promise<SourceData & { verdict: Verdict }> {
+  const r = enc(ref);
+  const first = await getJson(`${BASE}/api/v3/texts/${r}?version=source&version=english&return_format=text_only`);
+  const versions: V3Version[] = Array.isArray(first?.versions) ? first.versions : [];
+  const heV = pick(versions, 'he') ?? versions.find((v) => v.versionTitle && !pick([v], 'en'));
+  let enV = pick(versions, 'en');
+
+  // Use the English only if it is an approved translation; otherwise look for one that is.
+  if (!translationApproved(enV?.versionTitle, list)) {
+    enV = undefined;
+    const available: { versionTitle?: string; language?: string; actualLanguage?: string }[] = Array.isArray(first?.available_versions) ? first.available_versions : [];
+    const candidate = available.find((v) => (v.language === 'en' || v.actualLanguage === 'en') && translationApproved(v.versionTitle, list));
+    if (candidate?.versionTitle) {
+      try {
+        const second = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${candidate.versionTitle}`)}&return_format=text_only`);
+        enV = pick(Array.isArray(second?.versions) ? second.versions : [], 'en');
+      } catch { /* fall back to no translation */ }
+    }
+  }
+
+  const canonical: string = first?.ref ?? ref;
+  const verdict = await judgeRef(canonical, list, first?.indexTitle ?? first?.book);
+  return {
+    ref: canonical,
+    heRef: first?.heRef ?? canonical,
+    he: flatten(heV?.text).map(stripHtml),
+    en: enV ? flatten(enV.text).map(stripHtml) : [],
+    translation: enV?.versionTitle ?? null,
+    url: `${BASE}/${enc(canonical)}`,
+    verdict,
+  };
+}
+
+// ---------- Connections ----------
+export interface LinkItem { ref: string; category: string; title: string }
+
+export async function getLinks(ref: string, list: ApprovedEntry[], categories?: string[]): Promise<{ allowed: LinkItem[]; excluded: string[] }> {
+  const data = await getJson(`${BASE}/api/links/${enc(ref)}?with_text=0`);
+  const raw: any[] = Array.isArray(data) ? data : [];
+  let items: LinkItem[] = raw.map((l) => ({
+    ref: String(l.ref ?? l.sourceRef ?? ''),
+    category: String(l.category ?? ''),
+    title: String(l.collectiveTitle?.en ?? l.index_title ?? ''),
+    index: String(l.index_title ?? ''),
+  })).filter((l) => l.ref) as (LinkItem & { index: string })[];
+  if (categories?.length) {
+    const want = categories.map((c) => c.toLowerCase());
+    items = items.filter((l) => want.some((c) => l.category.toLowerCase().includes(c)));
+  }
+
+  // Judge each distinct book once (in parallel), drop anything not approved.
+  const books = [...new Set(items.map((l) => (l as any).index || bookTitleFromRef(l.ref)))].slice(0, 40);
+  const verdicts = new Map<string, boolean>();
+  await Promise.all(books.map(async (b) => verdicts.set(b, (await judgeRef(`${b} 1`, list, b)).allowed)));
+  const allowed: LinkItem[] = [];
+  const excluded = new Set<string>();
+  for (const l of items) {
+    const b = (l as any).index || bookTitleFromRef(l.ref);
+    if (verdicts.get(b) === true) allowed.push({ ref: l.ref, category: l.category, title: l.title });
+    else excluded.add(b);
+  }
+  return { allowed: allowed.slice(0, 80), excluded: [...excluded] };
+}
+
+// ---------- Search ----------
+export async function search(query: string, list: ApprovedEntry[], size = 12): Promise<{ ref: string; snippet: string }[]> {
+  const data = await getJson(`${BASE}/api/search-wrapper`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, type: 'text', size: size * 2, field: 'naive_lemmatizer', source_proj: true, filters: [], filter_fields: [] }),
+  });
+  const hits: any[] = data?.hits?.hits ?? [];
+  const seen = new Set<string>();
+  const out: { ref: string; snippet: string; book: string }[] = [];
+  for (const h of hits) {
+    const ref = h?._source?.ref;
+    if (!ref || seen.has(ref)) continue;
+    seen.add(ref);
+    const hl = h?.highlight ? Object.values(h.highlight).flat()[0] : '';
+    out.push({ ref, snippet: stripHtml(String(hl ?? '')).slice(0, 200), book: h?._source?.index_title ?? bookTitleFromRef(ref) });
+  }
+  const results: { ref: string; snippet: string }[] = [];
+  for (const r of out) {
+    if (results.length >= size) break;
+    if ((await judgeRef(r.ref, list, r.book)).allowed) results.push({ ref: r.ref, snippet: r.snippet });
+  }
+  return results;
+}
+
+// ---------- Resolve a name to a ref ----------
+export async function resolveName(q: string): Promise<{ isRef: boolean; ref?: string; suggestions: string[] }> {
+  const data = await getJson(`${BASE}/api/name/${encodeURIComponent(q)}?limit=8`);
+  return {
+    isRef: !!data?.is_ref,
+    ref: data?.ref,
+    suggestions: (Array.isArray(data?.completions) ? data.completions : []).slice(0, 8),
+  };
+}
+
+// ---------- Today's learning (Daf Yomi, parsha, etc.) ----------
+export async function todaysLearning(): Promise<{ title: string; display: string; ref: string }[]> {
+  const data = await getJson(`${BASE}/api/calendars`);
+  return (data?.calendar_items ?? []).map((c: any) => ({
+    title: c?.title?.en ?? '', display: c?.displayValue?.en ?? '', ref: c?.ref ?? '',
+  })).filter((c: { ref: string }) => c.ref);
+}

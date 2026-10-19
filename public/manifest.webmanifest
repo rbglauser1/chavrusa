@@ -1,0 +1,9 @@
+{
+  "name": "Chavrusa",
+  "short_name": "Chavrusa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e131d",
+  "theme_color": "#0e131d",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
