@@ -1,11 +1,12 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_SETTINGS, MODELS, Settings, styleById, TIER_LABELS } from '@/lib/config';
+import { DEFAULT_SETTINGS, Look, MODELS, Settings, styleById, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { Disclaimer, Help } from '@/components/Modals';
+import { stripNikud } from '@/lib/hebrew';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -14,10 +15,10 @@ type Item =
   | { kind: 'error'; text: string };
 
 const STARTERS = [
-  { title: "Today's Daf Yomi", sub: 'Learn the daf together', prompt: "Let's learn today's Daf Yomi." },
-  { title: 'Suggest a topic', sub: 'Your chavrusa picks a sugya', prompt: 'Pick a good sugya for us to learn today, and tell me in one line why.' },
-  { title: 'This week’s parsha', sub: 'A question on the parsha', prompt: "Let's learn something on this week's parsha." },
-  { title: 'I have a topic', sub: 'Type it below', prompt: '' },
+  { title: "Today's Daf Yomi", sub: 'Learn the daf together', he: 'דף', prompt: "Let's learn today's Daf Yomi." },
+  { title: 'Suggest a sugya', sub: 'Your chavrusa picks one and tells you why', he: 'סוגיא', prompt: 'Pick a good sugya for us to learn today, and tell me in one line why.' },
+  { title: 'This week’s parsha', sub: 'Start from a question on the parsha', he: 'פרשה', prompt: "Let's learn something on this week's parsha." },
+  { title: 'I have a topic', sub: 'Type it below', he: 'נושא', prompt: '' },
 ];
 
 export default function Home() {
@@ -29,6 +30,7 @@ export default function Home() {
   const [sources, setSources] = useState<SourceData[]>([]);
   const [selected, setSelected] = useState(0);
   const [seferOpen, setSeferOpen] = useState(false);
+  const [pinCollapsed, setPinCollapsed] = useState(false);
   const [pulse, setPulse] = useState(false);
   const [drawer, setDrawer] = useState<'sessions' | 'settings' | null>(null);
   const [help, setHelp] = useState(false);
@@ -54,7 +56,7 @@ export default function Home() {
   // Apply theme and text sizes.
   useEffect(() => {
     const root = document.documentElement;
-    root.dataset.theme = settings.theme;
+    root.dataset.look = settings.theme;
     root.style.setProperty('--he-size', `${settings.heSize}px`);
     root.style.setProperty('--en-size', `${settings.enSize}px`);
   }, [settings.theme, settings.heSize, settings.enSize]);
@@ -163,6 +165,10 @@ export default function Home() {
   const blend = settings.blend ? styleById(settings.blend) : null;
   const model = MODELS[settings.provider][settings.tier];
   const showSefer = settings.display !== 'off' && seferOpen;
+  const current = sources[selected];
+  const look: Look = settings.theme;
+  const showPin = settings.display !== 'off' && !!current && !(isWide && showSefer);
+  const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
   return (
     <div className="app">
@@ -181,8 +187,12 @@ export default function Home() {
             </button>
           )}
           <button className="icon-btn" onClick={() => setDrawer('settings')} aria-label="Settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
           </button>
+          <div className="hero-ref" aria-hidden={!current}>
+            <div className="big">{current ? current.heRef : 'חברותא'}</div>
+            <div className="sub">{current ? current.ref : 'Your learning partner'}</div>
+          </div>
         </header>
 
         <div className="modebar">
@@ -194,28 +204,64 @@ export default function Home() {
             {settings.nusach === 'ashkenaz' ? 'Ashkenaz' : 'Sephardi'}
           </button>
           <span className="spacer" />
-          <span title="Cost of this session so far">${sessionUsd.toFixed(sessionUsd < 1 ? 3 : 2)}</span>
+          <span className="cost" title="Cost of this session so far">${sessionUsd.toFixed(sessionUsd < 1 ? 3 : 2)}</span>
         </div>
+
+        {showPin && (
+          <section className={`pin ${pinCollapsed ? 'collapsed' : ''}`} aria-label="Current source">
+            <div className="pin-inner">
+              <div className="pin-head">
+                <span className="ref">{current.heRef}</span>
+                <span className="en-ref">{current.ref}</span>
+                <button onClick={() => setPinCollapsed((v) => !v)}>{pinCollapsed ? 'Show text' : 'Hide'}</button>
+                <button onClick={() => setSeferOpen(true)}>Open</button>
+              </div>
+              <div className="pin-text">
+                <div className={`he ${isCommentary(current.ref) ? 'rashi' : ''}`}>
+                  {current.he.map((line, i) => {
+                    const t = settings.nikud ? line : stripNikud(line);
+                    if (i === 0 && look === 'daf') {
+                      const sp = t.indexOf(' ');
+                      return <span key={i}><span className="first">{sp > 0 ? t.slice(0, sp) : t}</span>{sp > 0 ? t.slice(sp) : ''} </span>;
+                    }
+                    return <span key={i}>{t} </span>;
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         <div className="thread" ref={threadRef}>
           <div className="thread-inner">
             {items.length === 0 && (
               <div className="welcome">
-                <h1>שלום</h1>
-                <p>What would you like to learn? Pick a starting point or just type. You can change style anytime by telling your chavrusa.</p>
+                <div className="shalom">שלום</div>
+                <p>What would you like to learn? Pick a starting point or just type. You can change how your chavrusa learns with you at any time, just by asking.</p>
                 <div className="starters">
                   {STARTERS.map((s) => (
                     <button key={s.title} className="starter" onClick={() => (s.prompt ? send(s.prompt) : inputRef.current?.focus())}>
-                      <b>{s.title}</b><span>{s.sub}</span>
+                      <b>{s.title}</b><span>{s.sub}</span><i>{s.he}</i>
                     </button>
                   ))}
                 </div>
-                <p style={{ marginTop: 18, fontSize: 13 }}><a href="#" onClick={(e) => { e.preventDefault(); setHelp(true); }}>What can I ask for?</a></p>
+                <p style={{ fontSize: 14 }}><a href="#" onClick={(e) => { e.preventDefault(); setHelp(true); }}>What can I ask for?</a></p>
               </div>
             )}
             {items.map((it, i) => {
-              if (it.kind === 'user') return <div key={i} className="msg user"><Formatted text={it.text} /></div>;
-              if (it.kind === 'assistant') return <div key={i} className="msg assistant"><Formatted text={it.text} /></div>;
+              if (it.kind === 'user' || it.kind === 'assistant') {
+                const me = it.kind === 'user';
+                return (
+                  <div key={i} className={`turn ${me ? 'me' : 'them'}`}>
+                    <span className="bar" aria-hidden="true" />
+                    <span className="letter" aria-hidden="true">{me ? 'א' : 'ח'}</span>
+                    <div>
+                      <div className="name">{me ? 'You' : 'Chavrusa'}</div>
+                      <div className="say"><Formatted text={it.text} /></div>
+                    </div>
+                  </div>
+                );
+              }
               if (it.kind === 'event') return <div key={i} className="event">{it.text}</div>;
               return <div key={i} className="error">{it.text}</div>;
             })}
@@ -228,14 +274,16 @@ export default function Home() {
             <textarea
               ref={inputRef}
               rows={1}
-              placeholder="Ask, answer, or say what to learn…"
+              placeholder="Your answer or question…"
               value={input}
               onChange={(e) => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && isWide) { e.preventDefault(); send(input); } }}
               dir="auto"
             />
             <button className="send" disabled={!input.trim() || busy} onClick={() => send(input)} aria-label="Send">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+              {look === 'daf' ? 'שלח' : look === 'techelet' ? 'Send' : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+              )}
             </button>
           </div>
         </div>
@@ -258,12 +306,12 @@ export default function Home() {
               <button className="btn primary" style={{ width: '100%', margin: '8px 0 12px' }} onClick={newSession}>+ New session</button>
               {sessions.length === 0 && <div className="muted" style={{ fontSize: 14 }}>No sessions yet.</div>}
               {sessions.map((s) => (
-                <div key={s.id} className={`session-item ${s.id === sessionId ? 'on' : ''}`}>
-                  <button className="session-item" style={{ padding: 0 }} onClick={() => openSession(s.id)}>
+                <div key={s.id} className={`session-row ${s.id === sessionId ? 'on' : ''}`}>
+                  <button className="session-item" onClick={() => openSession(s.id)}>
                     <span className="t" dir="auto">{s.title}</span>
                     <span className="d">{new Date(s.updated_at).toLocaleDateString()}</span>
                   </button>
-                  <button className="mem x" style={{ border: 0, background: 'none', color: 'var(--muted)', fontSize: 18 }} onClick={() => deleteSessionById(s.id)} aria-label="Delete">×</button>
+                  <button className="icon-btn" style={{ color: 'var(--soft)', fontSize: 18 }} onClick={() => deleteSessionById(s.id)} aria-label="Delete session">×</button>
                 </div>
               ))}
             </div>
@@ -273,7 +321,7 @@ export default function Home() {
 
       {drawer === 'settings' && <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setDrawer(null)} onHelp={() => setHelp(true)} />}
       {help && <Help onClose={() => setHelp(false)} />}
-      {loaded && !settings.disclaimerAccepted && <Disclaimer onAccept={() => updateSettings({ disclaimerAccepted: true })} />}
+      {loaded && !settings.disclaimerAccepted && <Disclaimer look={settings.theme} onLook={(l) => updateSettings({ theme: l })} onAccept={() => updateSettings({ disclaimerAccepted: true })} />}
     </div>
   );
 }

@@ -86,6 +86,22 @@ export function styleById(id: string | undefined): Style {
   return STYLES.find((s) => s.id === id) ?? STYLES[0];
 }
 
+export type Look = 'daf' | 'shtender' | 'techelet';
+
+export const LOOKS: { id: Look; name: string; blurb: string }[] = [
+  { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
+  { id: 'shtender', name: 'Shtender at night', blurb: 'Warm wood and lamplight, easy on the eyes at night' },
+  { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
+];
+
+// Older saved values from the first version map onto the new looks.
+export function normalizeLook(v: unknown): Look {
+  if (v === 'daf' || v === 'shtender' || v === 'techelet') return v;
+  if (v === 'dark') return 'shtender';
+  if (v === 'light') return 'techelet';
+  return 'daf';
+}
+
 export interface Settings {
   provider: Provider;
   tier: Tier;
@@ -95,7 +111,7 @@ export interface Settings {
   nusach: 'ashkenaz' | 'sephardi';
   display: 'toggle' | 'original' | 'off';  // off = voice/listen-only, no text shown
   nikud: boolean;
-  theme: 'dark' | 'light' | 'parchment';
+  theme: Look;
   heSize: number;           // px
   enSize: number;           // px
   costWarnUsd: number | null;
@@ -111,7 +127,7 @@ export const DEFAULT_SETTINGS: Settings = {
   nusach: 'ashkenaz',
   display: 'toggle',
   nikud: true,
-  theme: 'dark',
+  theme: 'daf',
   heSize: 22,
   enSize: 16,
   costWarnUsd: null,

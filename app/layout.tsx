@@ -1,26 +1,29 @@
 import type { Metadata, Viewport } from 'next';
-import { Frank_Ruhl_Libre, Inter } from 'next/font/google';
 import './globals.css';
-
-const he = Frank_Ruhl_Libre({ subsets: ['hebrew', 'latin'], weight: ['400', '500', '700'], variable: '--font-he' });
-const ui = Inter({ subsets: ['latin'], variable: '--font-ui' });
 
 export const metadata: Metadata = {
   title: 'Chavrusa',
   description: 'An AI learning partner for Torah study',
   manifest: '/manifest.webmanifest',
   icons: { icon: '/icon.svg', apple: '/icon.svg' },
-  appleWebApp: { capable: true, title: 'Chavrusa', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Chavrusa', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
   width: 'device-width', initialScale: 1, viewportFit: 'cover',
-  themeColor: '#0e131d',
 };
+
+const FONTS = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Noto+Rashi+Hebrew:wght@400;500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=David+Libre:wght@400;500;700&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Rubik:wght@300;400;500;600;700&display=swap';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${he.variable} ${ui.variable}`}>
+    <html lang="en" data-look="daf">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link rel="stylesheet" href={FONTS} />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { DEFAULT_SETTINGS, OWNER_ID, Settings } from './config';
+import { DEFAULT_SETTINGS, normalizeLook, OWNER_ID, Settings } from './config';
 
 let client: SupabaseClient | null = null;
 
@@ -22,7 +22,9 @@ function check<T>(res: { data: T; error: { message: string } | null }): T {
 // ---------- Settings ----------
 export async function getSettings(userId = OWNER_ID): Promise<Settings> {
   const row = check(await db().from('settings').select('data').eq('user_id', userId).maybeSingle());
-  return { ...DEFAULT_SETTINGS, ...((row as { data?: Partial<Settings> } | null)?.data ?? {}) };
+  const s = { ...DEFAULT_SETTINGS, ...((row as { data?: Partial<Settings> } | null)?.data ?? {}) };
+  s.theme = normalizeLook(s.theme);
+  return s;
 }
 
 export async function saveSettings(patch: Partial<Settings>, userId = OWNER_ID): Promise<Settings> {

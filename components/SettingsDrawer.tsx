@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
+import { LookPicker } from './Modals';
 
 interface Props { settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void }
 
@@ -83,8 +84,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
           <div className="section">
             <h3>Display</h3>
             <div className="field">
-              <label>Theme</label>
-              <Seg value={s.theme} options={[['dark', 'Dark'], ['light', 'Light'], ['parchment', 'Parchment']]} onPick={(v) => onChange({ theme: v })} />
+              <label>Look</label>
+              <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>
             <div className="field">
               <label>Source text</label>

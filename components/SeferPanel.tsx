@@ -24,6 +24,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useEffect(() => { setOpen(new Set()); setShowAll(false); }, [selected, src?.ref]);
 
   const canTranslate = settings.display === 'toggle';
+  const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
@@ -81,7 +82,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const key = `${src.ref}#${i}`;
               return (
                 <div key={i} className={`line ${open.has(i) ? 'open' : ''}`} onClick={() => toggleLine(i)}>
-                  <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                  <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                   {isOpen && (
                     <div className="en" onClick={(e) => e.stopPropagation()}>
                       {en ? en : aiText[key] ? (
