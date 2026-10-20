@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { VOICE_SAMPLE } from '@/lib/config';
+import { silentWav } from './useVoice';
 
 // A list of voices, each with a play button to hear a short sample before choosing.
 // kind "basic": a sample from the text-to-speech voice (costs a fraction of a cent).
@@ -32,8 +33,8 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
       url = URL.createObjectURL(await res.blob());
       cache.current[id] = url;
     }
-    const a = audio.current ?? new Audio();
-    audio.current = a;
+    const a = audio.current ?? blessPlayer();
+    a.srcObject = null;
     a.src = url;
     stopRef.current = () => a.pause();
     a.onended = () => setPlaying(null);
@@ -44,19 +45,16 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
     const pc = new RTCPeerConnection();
     pc.addTransceiver('audio', { direction: 'sendrecv' });
     const dc = pc.createDataChannel('oai-events');
-    const el = document.createElement('audio');
+    const el = audio.current ?? blessPlayer(); // the player already unlocked during the tap
     el.autoplay = true;
-    el.setAttribute('playsinline', '');
-    el.style.display = 'none';
-    document.body.appendChild(el);
-    pc.ontrack = (ev) => { el.srcObject = ev.streams[0]; el.play().catch(() => {}); };
+    pc.ontrack = (ev) => { el.removeAttribute('src'); el.srcObject = ev.streams[0]; el.play().catch(() => {}); };
     const started = Date.now();
     let ended = false;
     const end = () => {
       if (ended) return;
       ended = true;
       try { if (dc.readyState === 'open') dc.send(JSON.stringify({ type: 'session.close', event_id: `evt_${Date.now()}` })); } catch { /* ignore */ }
-      setTimeout(() => { try { pc.close(); } catch { /* ignore */ } el.remove(); }, 300);
+      setTimeout(() => { try { pc.close(); } catch { /* ignore */ } el.pause(); el.srcObject = null; }, 300);
       const secs = Math.max(15, (Date.now() - started) / 1000); // a Live session bills at least 15 seconds
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: secs }) }).catch(() => {});
       setPlaying((p) => (p === id ? null : p));
@@ -75,10 +73,28 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
     setTimeout(end, 10_000);
   }
 
+  // iPhones only allow sound that starts during a tap. Play a moment of silence right now, inside the tap,
+  // on the same player the sample will use, so the real sample is allowed to play when it arrives.
+  function blessPlayer(): HTMLAudioElement {
+    let a = audio.current;
+    if (!a) {
+      a = document.createElement('audio');
+      a.setAttribute('playsinline', '');
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      audio.current = a;
+    }
+    a.srcObject = null;
+    a.src = silentWav();
+    a.play().catch(() => {});
+    return a;
+  }
+
   async function play(id: string) {
     if (playing === id) { stop(); return; }
     stop();
     setMsg('');
+    blessPlayer();
     setPlaying(id);
     try { await (kind === 'basic' ? playBasic(id) : playLive(id)); }
     catch (e) { setMsg((e as Error).message); setPlaying(null); }

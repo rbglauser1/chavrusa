@@ -9,7 +9,7 @@ const MAX_MS = 90_000;       // never record longer than this
 const LEVEL = 0.01;          // minimum loudness that can count as speech
 
 // A valid, very short silent WAV, used to unlock audio playback on phones.
-function silentWav(): string {
+export function silentWav(): string {
   const samples = 800, rate = 8000;
   const buf = new ArrayBuffer(44 + samples);
   const v = new DataView(buf);
