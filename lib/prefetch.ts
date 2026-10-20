@@ -1,7 +1,7 @@
 import 'server-only';
 import { ApprovedEntry } from './approval';
 import { SourceData } from './db';
-import { getText, resolveName, todaysLearning } from './sefaria';
+import { getLinks, getText, resolveName, todaysLearning } from './sefaria';
 
 // When the learner names a source ("Bava Metzia 21a") or asks for today's daf or this week's parsha,
 // open it right away so the text appears instantly and the AI doesn't need an extra round trip to fetch it.
@@ -55,4 +55,23 @@ export async function prefetchSource(message: string, approved: ApprovedEntry[])
     const { verdict, ...source } = s;
     return source;
   })(), TIMEOUT_MS);
+}
+
+// The main commentaries most sugyos go to first. Fetching their list now saves the AI a lookup step,
+// and loading their text in the background makes later lookups nearly instant (it's cached for a week).
+const FIRST_COMMENTARIES = /^(Rashi|Tosafot|Rashbam|Ran|Rosh|Ramban|Ibn Ezra|Sforno|Rashbatz|Bartenura|Tosafot Yom Tov|Mishnah Berurah|Magen Avraham|Taz|Shakh|Be'er Heitev)/i;
+
+export async function prepareCommentaries(ref: string, approved: ApprovedEntry[]): Promise<{ list: string; refs: string[] } | null> {
+  const res = await withTimeout(getLinks(ref, approved, ['Commentary']), 3000);
+  if (!res || !res.allowed.length) return null;
+  const preferred = res.allowed.filter((l) => FIRST_COMMENTARIES.test(l.title || l.ref));
+  const chosen = (preferred.length ? preferred : res.allowed).slice(0, 24);
+  const byTitle: Record<string, string[]> = {};
+  for (const l of chosen) (byTitle[l.title || 'Commentary'] ??= []).push(l.ref);
+  const list = Object.entries(byTitle).map(([t, refs]) => `${t}: ${refs.slice(0, 8).join('; ')}`).join('\n');
+  return { list, refs: chosen.map((l) => l.ref) };
+}
+
+export function warmTexts(refs: string[], approved: ApprovedEntry[]): Promise<unknown> {
+  return Promise.allSettled(refs.slice(0, 8).map((r) => getText(r, approved)));
 }

@@ -84,6 +84,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
               </div>
             </div>
             <div className="field">
+              <label>Quick replies (“OK,” “got it,” “thanks”)</label>
+              <Seg value={s.quickReplies ? 'cheap' : 'full'} options={[['cheap', 'Use the cheaper model'], ['full', 'Always use my chosen depth']]} onPick={(v) => onChange({ quickReplies: v === 'cheap' })} />
+            </div>
+            <div className="field">
               <label>Warn me when a session costs more than (USD, blank for never)</label>
               <input type="number" min={0} step={0.1} value={s.costWarnUsd ?? ''} onChange={(e) => onChange({ costWarnUsd: e.target.value === '' ? null : Number(e.target.value) })} />
             </div>

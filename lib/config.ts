@@ -130,6 +130,7 @@ export interface Settings {
   liveVoice: string;        // voice for Live mode
   liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
   liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
+  quickReplies: boolean;    // answer short acknowledgments ("ok", "got it") with the cheaper model
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
 }
@@ -153,6 +154,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveVoice: 'meridian',
   liveIdleSec: 60,
   liveWake: true,
+  quickReplies: true,
   autoSpeak: false,
   speechRate: 1,
 };
@@ -205,3 +207,11 @@ export const LIVE_VOICES: { id: string; name: string }[] = [
   { id: 'delta', name: 'Delta' },
   { id: 'cinder', name: 'Cinder' },
 ];
+
+// Short acknowledgments that don't need the deep model. "Next", "yes" and "no" are NOT included:
+// those usually move the learning forward and get the full model.
+export function isQuickReply(message: string): boolean {
+  const m = message.toLowerCase().replace(/[^a-z\u05D0-\u05EA' ]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!m || m.split(' ').length > 5) return false;
+  return /^(?:(?:ok|okay|oh|ah|alright|all right) )?(ok|okay|k|alright|got it|i got it|gotcha|thanks|thank you|thank you very much|makes sense|that makes sense|right|i see|uh huh|mhm|mm|hmm|cool|great|good|nice|interesting|wow|understood|i understand|ah|oh|yasher koach|yashar koach|תודה|הבנתי|אוקיי)$/.test(m);
+}

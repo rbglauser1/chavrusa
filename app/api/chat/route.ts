@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { costUsd, MODELS } from '@/lib/config';
+import { costUsd, isQuickReply, MODELS } from '@/lib/config';
 import {
   addMessage, approvedList, createSession, getSession, getSettings, listMemories, listMessages, listSources,
   logCost, saveSettings, sessionCost, touchSession,
@@ -8,7 +8,8 @@ import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
-import { prefetchSource } from '@/lib/prefetch';
+import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
+import { after } from 'next/server';
 import { addSource } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -44,6 +45,12 @@ export async function POST(req: NextRequest) {
           listMemories(), listMessages(sid, 24), listSources(sid), approvedP,
         ]);
         const pre = await prefetchP;
+        // Prepare the sugya: list the main commentaries now, and load their texts in the background.
+        const prepared = pre ? await prepareCommentaries(pre.ref, approved).catch(() => null) : null;
+        if (prepared) {
+          try { after(() => warmTexts(prepared.refs, approved)); }
+          catch { void warmTexts(prepared.refs, approved); } // background warm-up is optional
+        }
         if (pre && !sources.some((x) => x.ref === pre.ref)) {
           send({ type: 'source', source: pre });
           await addSource(sid, pre);
@@ -51,7 +58,9 @@ export async function POST(req: NextRequest) {
         }
         await addMessage(sid, 'user', message);
 
-        const model = MODELS[settings.provider][settings.tier];
+        // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
+        const quick = settings.quickReplies !== false && isQuickReply(message) && !pre;
+        const model = MODELS[settings.provider][quick ? 'basic' : settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
         const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken);
 
@@ -71,7 +80,7 @@ export async function POST(req: NextRequest) {
           history: [
             ...history.map((m) => ({ role: m.role, content: m.content })),
             { role: 'user' as const, content: pre
-              ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre)}`
+              ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre)}${prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : ''}`
               : message },
           ],
           tools: TOOLS,
