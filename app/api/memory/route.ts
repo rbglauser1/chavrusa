@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addMemory, forgetMemory, listMemories, updateMemory } from '@/lib/db';
+import { addMemory, forgetMemory, listSavedMemories, updateMemory } from '@/lib/db';
 
 const fail = (e: unknown) => NextResponse.json({ error: (e as Error).message }, { status: 500 });
 
 export async function GET() {
-  try { return NextResponse.json(await listMemories()); } catch (e) { return fail(e); }
+  try { return NextResponse.json(await listSavedMemories()); } catch (e) { return fail(e); }
 }
 
 export async function POST(req: NextRequest) {

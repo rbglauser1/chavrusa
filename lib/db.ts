@@ -48,6 +48,15 @@ export async function addMemory(m: { kind: Memory['kind']; content: string; scop
     .select('id, kind, content, scope, created_at').single()) as Memory;
 }
 
+export async function listSavedMemories(userId = OWNER_ID): Promise<Memory[]> {
+  return (await listMemories(userId)).filter((m) => !m.scope?.startsWith('session:'));
+}
+
+export async function listSessionRequests(sessionId: string, userId = OWNER_ID): Promise<Memory[]> {
+  return check(await db().from('memories').select('id, kind, content, scope, created_at')
+    .eq('user_id', userId).eq('active', true).eq('scope', `session:${sessionId}`).order('created_at')) as Memory[];
+}
+
 export async function forgetMemory(id: string, userId = OWNER_ID): Promise<void> {
   check(await db().from('memories').update({ active: false }).eq('id', id).eq('user_id', userId));
 }

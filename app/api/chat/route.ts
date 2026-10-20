@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre;
         const model = MODELS[settings.provider][quick ? 'basic' : settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
-        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken);
+        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid);
 
         const emit = (e: ToolEvent) => send(e);
         const execute = makeExecutor({

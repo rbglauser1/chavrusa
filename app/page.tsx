@@ -35,6 +35,7 @@ export default function Home() {
   const [pinCollapsed, setPinCollapsed] = useState(true);
   const [seenDisclaimer, setSeenDisclaimer] = useState(false);
   const [quick, setQuick] = useState<'style' | 'model' | null>(null);
+  const [requests, setRequests] = useState<{ id: string; content: string }[]>([]); // learner's requests for this session
   const [convo, setConvo] = useState(false);
   const convoRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
@@ -157,12 +158,13 @@ export default function Home() {
     setSources(d.sources);
     setSelected(Math.max(0, d.sources.length - 1));
     setSessionUsd(d.sessionUsd ?? 0);
+    setRequests(Array.isArray(d.requests) ? d.requests : []);
     setSeferOpen(isWide && d.sources.length > 0);
     warned.current = false;
   }
 
   function newSession() {
-    setDrawer(null); setSessionId(null); setItems([]); setSources([]); setSelected(0); setSessionUsd(0);
+    setDrawer(null); setSessionId(null); setItems([]); setSources([]); setSelected(0); setSessionUsd(0); setRequests([]);
     warned.current = false;
     setTimeout(() => inputRef.current?.focus(), 50);
   }
@@ -253,6 +255,7 @@ export default function Home() {
         break;
       case 'memory': setItems((it) => [...it, { kind: 'event', text: `Remembered: ${e.text}` }]); break;
       case 'mode': setSettings((s) => ({ ...s, ...e.settings })); break;
+      case 'requests': setRequests(e.items ?? []); break;
       case 'delta': {
         liveText.current += e.text;
         const full = liveText.current;
@@ -358,6 +361,21 @@ export default function Home() {
           <span className="spacer" />
           <span className="cost" title="Cost of this session so far">${sessionUsd.toFixed(sessionUsd < 1 ? 3 : 2)}</span>
         </div>
+
+        {requests.length > 0 && (
+          <div className="reqbar" aria-label="Your requests for this session">
+            <span className="req-label">This session:</span>
+            {requests.map((r) => (
+              <span key={r.id} className="req" title={r.content}>
+                <span className="req-text">{r.content}</span>
+                <button aria-label={`Cancel: ${r.content}`} onClick={async () => {
+                  setRequests((list) => list.filter((x) => x.id !== r.id));
+                  await fetch(`/api/memory?id=${r.id}`, { method: 'DELETE' });
+                }}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
 
         {quick === 'model' && (
           <div className="quick" role="dialog" aria-label="Choose model">

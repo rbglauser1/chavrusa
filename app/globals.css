@@ -142,6 +142,13 @@ a { color: var(--accent); }
 [data-look='daf'] .chip { border-radius: 2px; font-style: italic; }
 .cost { font-variant-numeric: tabular-nums; }
 
+/* The learner's requests for this session */
+.reqbar { display: flex; align-items: center; gap: 6px; padding: 6px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); overflow-x: auto; border-bottom: 1px solid var(--rule); font-family: var(--f-ui); font-size: 12px; }
+.req-label { color: var(--soft); white-space: nowrap; }
+.req { display: inline-flex; align-items: center; gap: 2px; max-width: 260px; padding: 2px 4px 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); white-space: nowrap; }
+.req-text { overflow: hidden; text-overflow: ellipsis; }
+.req button { border: 0; background: none; color: var(--soft); font-size: 15px; line-height: 1; padding: 2px 6px; }
+
 /* Quick menus under the mode bar */
 .chip.open { background: var(--accent-soft); }
 .quick { border-bottom: 1px solid var(--rule); background: var(--surface); padding: 10px 16px 12px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); max-height: 55vh; overflow-y: auto; font-family: var(--f-ui); box-shadow: var(--shadow); position: relative; z-index: 5; }

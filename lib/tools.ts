@@ -1,7 +1,7 @@
 import 'server-only';
 import { ApprovedEntry } from './approval';
 import { Settings, STYLES, styleById } from './config';
-import { addMemory, addSource, forgetMemory, SourceData } from './db';
+import { addMemory, addSource, forgetMemory, listSessionRequests, SourceData } from './db';
 import { getLinks, getText, resolveName, search, todaysLearning } from './sefaria';
 import { stripNikud } from './hebrew';
 import { ToolDef } from './llm/types';
@@ -53,6 +53,19 @@ export const TOOLS: ToolDef[] = [
     },
   },
   {
+    name: 'adjust',
+    description: 'Record (or cancel) a request from the learner about HOW to learn, for the rest of this session: pace, depth, length, language, method, format, translation, who explains, and so on. These requests take priority over the style and default rules. Use remember instead if the learner says it should apply always.',
+    parameters: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['add', 'remove'] },
+        instruction: { type: 'string', description: 'For add: a short, clear instruction in the third person, e.g. "Explain fully; no length limit."' },
+        id: { type: 'string', description: 'For remove: the id of the request to cancel.' },
+      },
+      required: ['action'],
+    },
+  },
+  {
     name: 'forget',
     description: 'Delete a saved memory by its id when the learner asks you to forget it.',
     parameters: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
@@ -89,7 +102,8 @@ export type ToolEvent =
   | { type: 'status'; text: string }
   | { type: 'source'; source: SourceData }
   | { type: 'memory'; text: string }
-  | { type: 'mode'; settings: Partial<Settings> };
+  | { type: 'mode'; settings: Partial<Settings> }
+  | { type: 'requests'; items: { id: string; content: string }[] };
 
 // The learner sees the full text; the AI gets a lean copy (no vowels, capped length) to save cost and time.
 const MAX_HE_CHARS = 3500;
@@ -156,6 +170,16 @@ export function makeExecutor(ctx: {
         const m = await addMemory({ kind, content: String(args.content ?? ''), scope: args.scope ? String(args.scope) : null });
         ctx.emit({ type: 'memory', text: m.content });
         return `Saved (id ${m.id}).`;
+      }
+      case 'adjust': {
+        if (args.action === 'remove' && args.id) {
+          await forgetMemory(String(args.id));
+        } else if (args.action === 'add' && args.instruction) {
+          await addMemory({ kind: 'instruction', content: String(args.instruction), scope: `session:${ctx.sessionId}` });
+        } else return 'Nothing changed: give action "add" with an instruction, or "remove" with an id.';
+        const items = (await listSessionRequests(ctx.sessionId)).map((m) => ({ id: m.id, content: m.content }));
+        ctx.emit({ type: 'requests', items });
+        return `Done. Requests for this session now: ${items.map((i) => `${i.content} (id ${i.id})`).join('; ') || 'none'}. Follow them over the style and defaults.`;
       }
       case 'forget': {
         await forgetMemory(String(args.id ?? ''));
