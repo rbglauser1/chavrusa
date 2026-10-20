@@ -76,6 +76,7 @@ export interface SourceRow { id: string; ref: string; he_ref: string | null; dat
 export interface SourceData {
   ref: string; heRef: string; he: string[]; en: string[];
   translation: string | null;   // approved translation version title, or null
+  archaic?: boolean;             // the translation uses old-fashioned English (thou, hath…)
   url: string;
 }
 

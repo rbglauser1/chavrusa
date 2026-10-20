@@ -1,5 +1,5 @@
 import 'server-only';
-import { ApprovedEntry, IndexInfo, judgeWork, parseYear, translationApproved, Verdict } from './approval';
+import { ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationApproved, translationRank, Verdict } from './approval';
 import { SourceData } from './db';
 
 const BASE = 'https://www.sefaria.org';
@@ -98,17 +98,18 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
   const heV = pick(versions, 'he') ?? versions.find((v) => v.versionTitle && !pick([v], 'en'));
   let enV = pick(versions, 'en');
 
-  // Use the English only if it is an approved translation; otherwise look for one that is.
-  if (!translationApproved(enV?.versionTitle, list)) {
-    enV = undefined;
-    const available: { versionTitle?: string; language?: string; actualLanguage?: string }[] = Array.isArray(first?.available_versions) ? first.available_versions : [];
-    const candidate = available.find((v) => (v.language === 'en' || v.actualLanguage === 'en') && translationApproved(v.versionTitle, list));
-    if (candidate?.versionTitle) {
-      try {
-        const second = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${candidate.versionTitle}`)}&return_format=text_only`);
-        enV = pick(Array.isArray(second?.versions) ? second.versions : [], 'en');
-      } catch { /* fall back to no translation */ }
-    }
+  // Use only an approved translation, and among those prefer plain modern English (e.g. Metsudah over
+  // the "thou / hath" style of the Koren Jerusalem Bible).
+  if (!translationApproved(enV?.versionTitle, list)) enV = undefined;
+  const available: { versionTitle?: string; language?: string; actualLanguage?: string }[] = Array.isArray(first?.available_versions) ? first.available_versions : [];
+  const best = available
+    .filter((v) => (v.language === 'en' || v.actualLanguage === 'en') && translationApproved(v.versionTitle, list))
+    .sort((a, b) => translationRank(a.versionTitle) - translationRank(b.versionTitle))[0];
+  if (best?.versionTitle && best.versionTitle !== enV?.versionTitle && translationRank(best.versionTitle) < translationRank(enV?.versionTitle)) {
+    try {
+      const second = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${best.versionTitle}`)}&return_format=text_only`);
+      enV = pick(Array.isArray(second?.versions) ? second.versions : [], 'en') ?? enV;
+    } catch { /* keep what we have */ }
   }
 
   const canonical: string = first?.ref ?? ref;
@@ -121,6 +122,7 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
     he: flatten(heV?.text).map(stripHtml),
     en: enV ? flatten(enV.text).map(stripHtml) : [],
     translation: enV?.versionTitle ?? null,
+    archaic: enV ? isArchaic(flatten(enV.text).slice(0, 40).join(' ')) : false,
     url: `${BASE}/${enc(canonical)}`,
     verdict,
   };

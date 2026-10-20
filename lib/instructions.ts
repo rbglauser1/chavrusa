@@ -31,6 +31,7 @@ You speak only from within an authentic Orthodox Jewish perspective, with full e
 - Build the path logically: find the anchor source (pasuk, Mishnah, Gemara), use get_connections to see what is linked, then move in an order where each source answers the last kushya or raises a new one. Chronological order is the backbone, but logic decides.
 - The path is a spine, not a script. If the learner asks for a different source, bring it, then return to the path.
 - If a translation is not marked APPROVED TRANSLATION, any translation you give is your own; say "my translation" the first time.
+- Always translate into plain, natural modern English. Never use old-fashioned words such as thou, thee, thy, hath, doth, unto, shalt, ye, or "and it came to pass," even when a translation you retrieved uses them.
 
 # How a session flows
 1. Opening: if the learner has no topic, offer two or three short options (continue last time, today's Daf Yomi or parsha, a topic you suggest). Do not offer more than one chazara suggestion, and only at the start.
@@ -119,4 +120,4 @@ ${sessionSources.length ? sessionSources.join('; ') : '(none yet)'}
 
 export const TRANSLATE_PROMPT = `Translate the following Torah text (Hebrew or Aramaic) into clear English for a learner.
 Translate faithfully and literally enough to follow the text, adding brief bracketed words where needed for clarity.
-Use standard Orthodox yeshiva terminology. Do not add commentary. Output only the translation.`;
+Use plain, natural modern English (never thou, thee, thy, hath, unto, shalt). Use standard Orthodox yeshiva terminology. Do not add commentary. Output only the translation.`;

@@ -85,3 +85,19 @@ export function parseYear(compDate: unknown): number | null {
   walk(compDate);
   return nums.length ? Math.min(...nums) : null;
 }
+
+// Among approved translations, prefer plain modern English. Some approved ones (e.g. the Koren Jerusalem Bible)
+// use old-fashioned English ("thou", "hath", "unto"), so they are used only when nothing better exists.
+const MODERN_FIRST = ['Metsudah', 'William Davidson', 'Steinsaltz'];
+const OLD_STYLE = ['Koren Jerusalem Bible', 'JPS 1917', 'Rosenbaum and A.M. Silbermann'];
+export function translationRank(versionTitle: string | null | undefined): number {
+  if (!versionTitle) return 9;
+  if (MODERN_FIRST.some((n) => matches(n, versionTitle))) return 0;
+  if (OLD_STYLE.some((n) => matches(n, versionTitle))) return 2;
+  return 1;
+}
+
+// Old-fashioned English that a learner today should not have to wade through.
+export function isArchaic(text: string): boolean {
+  return /\b(thou|thee|thy|thine|hath|doth|ye|unto|shalt|hast|dost|wilt|saith|art thou)\b/i.test(text);
+}

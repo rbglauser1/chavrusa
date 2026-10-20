@@ -93,7 +93,7 @@ export function textForModel(s: SourceData): string {
     `Shown to learner in the Sefer panel. Lines are numbered.`,
     `ORIGINAL:\n${he.text}${he.clipped ? '[…text continues; request a narrower ref for the rest]\n' : ''}`,
     s.translation
-      ? `APPROVED TRANSLATION (${s.translation}):\n${en.text}${en.clipped ? '[…]\n' : ''}`
+      ? `APPROVED TRANSLATION (${s.translation})${s.archaic ? ' [old-fashioned English: when you quote it, put it into plain modern English and mark it "(my translation, based on this one)"]' : ''}:\n${en.text}${en.clipped ? '[…]\n' : ''}`
       : 'No approved translation available. If you translate, say it is your own translation.',
   ].join('\n\n');
 }
