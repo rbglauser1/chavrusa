@@ -247,6 +247,14 @@ a { color: var(--accent); }
 [data-look='shtender'] .quote .q-he, [data-look='shtender'] .quote .q-en { color: #2a1c16; }
 [data-look='daf'] .quote { background: transparent; border-inline-start-width: 2px; }
 
+/* Source buttons under an answer */
+.refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ref-chip { display: inline-flex; align-items: center; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; font-family: var(--f-ui); font-size: 13px; }
+.ref-chip button { background: transparent; border: 0; padding: 4px 10px; color: var(--accent); }
+.ref-chip a { padding: 4px 10px; border-left: 1px solid var(--rule); color: var(--soft); text-decoration: none; }
+.ref-chip button:hover, .ref-chip a:hover { background: var(--accent-soft); }
+.he-mini { font-family: var(--f-he); font-size: 15px; }
+
 /* ---------- Voice ---------- */
 .chip.talk { border-color: var(--accent); color: var(--accent); }
 .chip.talk.live { background: var(--accent); color: var(--accent-ink); }
@@ -382,8 +390,8 @@ table.costs td.n, table.costs th.n { text-align: right; }
   --danger: #e2786b;
   --scrim: rgba(0, 0, 0, 0.55);
   --shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
-  --f-body: 'Source Sans 3', system-ui, sans-serif;
-  --f-ui: 'Source Sans 3', system-ui, sans-serif;
+  --f-body: 'Assistant', system-ui, sans-serif;
+  --f-ui: 'Assistant', system-ui, sans-serif;
   --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif;
   --f-brand: 'Frank Ruhl Libre', serif;
   --radius: 16px;
@@ -401,6 +409,7 @@ table.costs td.n, table.costs th.n { text-align: right; }
 [data-look='midnight'] .turn .say strong { color: var(--accent); }
 [data-look='midnight'] .turn .say p { line-height: 1.65; }
 [data-look='midnight'] .quote { background: #1a2131; border-inline-start: 4px solid var(--accent); border-radius: 0 14px 14px 0; padding: 14px 18px; }
+[data-look='midnight'] .quote { background: rgba(212, 169, 79, 0.08); border-inline-start-width: 3px; }
 [data-look='midnight'] .quote .q-he { font-size: calc(var(--he-size, 22px) - 1px); }
 [data-look='midnight'] .quote .q-en { font-family: 'Crimson Pro', Georgia, serif; font-size: 1.22em; line-height: 1.5; }
 [data-look='midnight'] .pin { background: var(--surface); }

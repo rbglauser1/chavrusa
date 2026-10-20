@@ -12,7 +12,7 @@ import { useLive } from '@/components/useLive';
 
 type Item =
   | { kind: 'user'; text: string }
-  | { kind: 'assistant'; text: string; model?: string }
+  | { kind: 'assistant'; text: string; model?: string; refs?: { ref: string; heRef: string; url: string }[] }
   | { kind: 'event'; text: string }
   | { kind: 'error'; text: string };
 
@@ -47,6 +47,7 @@ export default function Home() {
   const liveText = useRef('');
   const speakTurn = useRef(false);               // speak this reply as it streams in
   const speechBuf = useRef('');
+  const turnRefs = useRef<{ ref: string; heRef: string; url: string }[]>([]); // sources brought during this reply
   const voice = useVoice({
     onText: (t) => { spokeLast.current = true; send(t); },
     onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); setConvoMode(false); },
@@ -184,6 +185,7 @@ export default function Home() {
     liveIdx.current = null;
     liveText.current = '';
     speechBuf.current = '';
+    turnRefs.current = [];
     speakTurn.current = !opts.live && (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current);
     spokeLast.current = false;
     if (speakTurn.current) voice.beginSpeech();
@@ -222,6 +224,7 @@ export default function Home() {
       case 'session': setSessionId(e.session.id); break;
       case 'status': setStatus(e.text); break;
       case 'source':
+        if (!turnRefs.current.some((r) => r.ref === e.source.ref)) turnRefs.current.push({ ref: e.source.ref, heRef: e.source.heRef, url: e.source.url });
         setSources((s) => {
           const existing = s.findIndex((x) => x.ref === e.source.ref);
           if (existing >= 0) { setSelected(existing); return s; }
@@ -253,11 +256,12 @@ export default function Home() {
       }
       case 'reply': {
         const finalText: string = e.text;
+        const refs = turnRefs.current.slice();
         const streamed = liveText.current.length > 0;
         setItems((it) => {
-          if (liveIdx.current === null || liveIdx.current >= it.length) return [...it, { kind: 'assistant', text: finalText, model: e.model }];
+          if (liveIdx.current === null || liveIdx.current >= it.length) return [...it, { kind: 'assistant', text: finalText, model: e.model, refs }];
           const copy = it.slice();
-          copy[liveIdx.current] = { kind: 'assistant', text: finalText, model: e.model };
+          copy[liveIdx.current] = { kind: 'assistant', text: finalText, model: e.model, refs };
           return copy;
         });
         liveIdx.current = null;
@@ -422,6 +426,18 @@ export default function Home() {
                     <div>
                       <div className="name">{me ? 'You' : 'Chavrusa'}</div>
                       <div className="say"><Formatted text={it.text} /></div>
+                      {!me && it.kind === 'assistant' && !!it.refs?.length && settings.display !== 'off' && (
+                        <div className="refs">
+                          {it.refs.map((r) => (
+                            <span key={r.ref} className="ref-chip">
+                              <button onClick={() => { const idx = sources.findIndex((x) => x.ref === r.ref); if (idx >= 0) setSelected(idx); setSeferOpen(true); }}>
+                                <span className="he-mini" dir="rtl">{r.heRef}</span> · Read inside
+                              </button>
+                              <a href={r.url} target="_blank" rel="noreferrer" aria-label={`Open ${r.ref} on Sefaria`}>Sefaria ↗</a>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {!me && voice.supported && (
                         <button className="listen" onClick={() => { voice.unlock(); sayAloud(it.text); }} aria-label="Listen to this reply">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /></svg>
