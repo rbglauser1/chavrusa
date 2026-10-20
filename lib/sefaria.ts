@@ -9,7 +9,14 @@ async function getJson(url: string, init?: RequestInit, timeoutMs = 12_000): Pro
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { ...init, signal: ctrl.signal, headers: { Accept: 'application/json', ...(init?.headers ?? {}) } });
+    // Texts and book information rarely change, so plain lookups are kept in Vercel's shared cache for a week.
+    const isGet = !init?.method || init.method === 'GET';
+    const res = await fetch(url, {
+      ...init,
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', ...(init?.headers ?? {}) },
+      ...(isGet ? { next: { revalidate: url.includes('/api/calendars') ? 3600 : 604800 } } : { cache: 'no-store' as const }),
+    } as RequestInit);
     if (!res.ok) throw new Error(`Sefaria returned ${res.status} for ${url.replace(BASE, '')}`);
     return await res.json();
   } finally {
@@ -84,6 +91,8 @@ function pick(versions: V3Version[], lang: 'he' | 'en'): V3Version | undefined {
 
 export async function getText(ref: string, list: ApprovedEntry[]): Promise<SourceData & { verdict: Verdict }> {
   const r = enc(ref);
+  // Start the approval check at the same time as the text, instead of after it.
+  const earlyVerdict = judgeRef(ref, list).catch(() => null);
   const first = await getJson(`${BASE}/api/v3/texts/${r}?version=source&version=english&return_format=text_only`);
   const versions: V3Version[] = Array.isArray(first?.versions) ? first.versions : [];
   const heV = pick(versions, 'he') ?? versions.find((v) => v.versionTitle && !pick([v], 'en'));
@@ -103,7 +112,9 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
   }
 
   const canonical: string = first?.ref ?? ref;
-  const verdict = await judgeRef(canonical, list, first?.indexTitle ?? first?.book);
+  const indexTitle = first?.indexTitle ?? first?.book;
+  const early = await earlyVerdict;
+  const verdict = early && (!indexTitle || early.title === indexTitle) ? early : await judgeRef(canonical, list, indexTitle);
   return {
     ref: canonical,
     heRef: first?.heRef ?? canonical,

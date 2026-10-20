@@ -9,8 +9,18 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
 
   const messages: { role: 'user' | 'assistant'; content: unknown }[] = o.history.map((t) => ({ role: t.role, content: t.content }));
   const tools = o.tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.parameters }));
-  let inputTokens = 0, outputTokens = 0;
+  let inputTokens = 0, outputTokens = 0, cachedTokens = 0, cacheWriteTokens = 0;
   const texts: string[] = [];
+
+  // Mark the end of the conversation as cacheable, so the next step (and the next turn) re-reads it
+  // at the cache discount instead of paying full price for the whole history again.
+  const withCacheMark = () => messages.map((m, i) => {
+    if (i !== messages.length - 1) return m;
+    const blocks = typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : (m.content as Record<string, unknown>[]);
+    if (!blocks.length) return m;
+    const last = { ...blocks[blocks.length - 1], cache_control: { type: 'ephemeral' } };
+    return { ...m, content: [...blocks.slice(0, -1), last] };
+  });
 
   for (let step = 0; step < (o.maxSteps ?? 10); step++) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -23,7 +33,7 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
         stream: true,
         system: [{ type: 'text', text: o.system, cache_control: { type: 'ephemeral' } }],
         ...(tools.length ? { tools } : {}),
-        messages,
+        messages: withCacheMark(),
       }),
     });
     if (!res.ok) {
@@ -38,6 +48,8 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
       if (event === 'message_start') {
         const u = data.message?.usage ?? {};
         inputTokens += (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0);
+        cachedTokens += u.cache_read_input_tokens ?? 0;
+        cacheWriteTokens += u.cache_creation_input_tokens ?? 0;
         outputTokens += u.output_tokens ?? 0;
       } else if (event === 'content_block_start') {
         const b = { ...data.content_block };
@@ -80,15 +92,15 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
     // Keep spoken/visible text separated between steps.
     if (stepText) o.onText?.('\n\n');
     messages.push({ role: 'assistant', content });
-    const results: unknown[] = [];
-    for (const c of calls) {
+    // Run lookups in parallel.
+    const results = await Promise.all(calls.map(async (c) => {
       let out: string;
       try { out = await o.execute(c.name, c.input ?? {}); }
       catch (e) { out = `Error: ${(e as Error).message}`; }
-      results.push({ type: 'tool_result', tool_use_id: c.id, content: out });
-    }
+      return { type: 'tool_result', tool_use_id: c.id, content: out };
+    }));
     messages.push({ role: 'user', content: results });
   }
 
-  return { text: texts.join('\n\n'), inputTokens, outputTokens };
+  return { text: texts.join('\n\n'), inputTokens, outputTokens, cachedTokens, cacheWriteTokens };
 }

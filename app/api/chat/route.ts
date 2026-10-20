@@ -7,7 +7,9 @@ import {
 import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
-import { makeExecutor, ToolEvent, TOOLS } from '@/lib/tools';
+import { makeExecutor, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
+import { prefetchSource } from '@/lib/prefetch';
+import { addSource } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // deep models with several source lookups can take a while
@@ -35,9 +37,18 @@ export async function POST(req: NextRequest) {
         }
         const sid = sessionId as string;
 
+        const approvedP = approvedList();
+        // Open a named source (or today's daf) right away, in parallel with loading the session.
+        const prefetchP = approvedP.then((a) => prefetchSource(message, a)).catch(() => null);
         const [memories, history, sources, approved] = await Promise.all([
-          listMemories(), listMessages(sid, 40), listSources(sid), approvedList(),
+          listMemories(), listMessages(sid, 24), listSources(sid), approvedP,
         ]);
+        const pre = await prefetchP;
+        if (pre && !sources.some((x) => x.ref === pre.ref)) {
+          send({ type: 'source', source: pre });
+          await addSource(sid, pre);
+          sources.push({ id: 'pre', ref: pre.ref, he_ref: pre.heRef, data: pre, created_at: new Date().toISOString() });
+        }
         await addMessage(sid, 'user', message);
 
         const model = MODELS[settings.provider][settings.tier];
@@ -57,7 +68,12 @@ export async function POST(req: NextRequest) {
         const result = await run({
           model: model.id,
           system,
-          history: [...history.map((m) => ({ role: m.role, content: m.content })), { role: 'user' as const, content: message }],
+          history: [
+            ...history.map((m) => ({ role: m.role, content: m.content })),
+            { role: 'user' as const, content: pre
+              ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre)}`
+              : message },
+          ],
           tools: TOOLS,
           execute,
           effort: model.effort,
@@ -68,7 +84,7 @@ export async function POST(req: NextRequest) {
         await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend });
         send({ type: 'reply', text: reply, model: model.label });
 
-        const usd = costUsd(model, result.inputTokens, result.outputTokens);
+        const usd = costUsd(model, result.inputTokens, result.outputTokens, result.cachedTokens ?? 0, result.cacheWriteTokens ?? 0);
         await logCost({ sessionId: sid, provider: settings.provider, model: model.id, inputTokens: result.inputTokens, outputTokens: result.outputTokens, costUsd: usd });
         await touchSession(sid);
         send({ type: 'cost', usd, sessionUsd: await sessionCost(sid), inputTokens: result.inputTokens, outputTokens: result.outputTokens });

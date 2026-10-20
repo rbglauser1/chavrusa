@@ -7,6 +7,8 @@ export interface ModelInfo {
   id: string;           // API model ID
   label: string;        // shown in the app
   inputPerM: number;    // USD per million input tokens
+  cachedPerM?: number;  // USD per million input tokens read from cache (discounted)
+  cacheWriteX?: number; // multiplier for writing to cache (Claude: 1.25)
   outputPerM: number;   // USD per million output tokens
   effort?: string;      // OpenAI reasoning effort
 }
@@ -14,21 +16,27 @@ export interface ModelInfo {
 // Prices as listed October 2026. Verify on the providers' pricing pages and update when they change.
 export const MODELS: Record<Provider, Record<Tier, ModelInfo>> = {
   anthropic: {
-    top:    { id: 'claude-opus-5-5',   label: 'Claude Opus 5.5',   inputPerM: 4,    outputPerM: 20 },
-    middle: { id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', inputPerM: 2,    outputPerM: 10 },
-    basic:  { id: 'claude-haiku-5-5',  label: 'Claude Haiku 5.5',  inputPerM: 0.1,  outputPerM: 0.5 },
+    top:    { id: 'claude-opus-5-5',   label: 'Claude Opus 5.5',   inputPerM: 4,    outputPerM: 20,  cachedPerM: 0.4,  cacheWriteX: 1.25 },
+    middle: { id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', inputPerM: 2,    outputPerM: 10,  cachedPerM: 0.2,  cacheWriteX: 1.25 },
+    basic:  { id: 'claude-haiku-5-5',  label: 'Claude Haiku 5.5',  inputPerM: 0.1,  outputPerM: 0.5, cachedPerM: 0.01, cacheWriteX: 1.25 },
   },
   openai: {
-    top:    { id: 'gpt-6-astra', label: 'GPT-6 Astra', inputPerM: 10,  outputPerM: 50,  effort: 'high' },
-    middle: { id: 'gpt-6-sol',   label: 'GPT-6 Sol',   inputPerM: 2,   outputPerM: 10,  effort: 'medium' },
-    basic:  { id: 'gpt-6-luna',  label: 'GPT-6 Luna',  inputPerM: 0.1, outputPerM: 0.5, effort: 'low' },
+    top:    { id: 'gpt-6-astra', label: 'GPT-6 Astra', inputPerM: 10,  outputPerM: 50,  cachedPerM: 1,    effort: 'high' },
+    middle: { id: 'gpt-6-sol',   label: 'GPT-6 Sol',   inputPerM: 2,   outputPerM: 10,  cachedPerM: 0.1,  effort: 'medium' },
+    basic:  { id: 'gpt-6-luna',  label: 'GPT-6 Luna',  inputPerM: 0.1, outputPerM: 0.5, cachedPerM: 0.01, effort: 'low' },
   },
 };
 
 export const TIER_LABELS: Record<Tier, string> = { basic: 'Basic', middle: 'Standard', top: 'Deep' };
 
-export function costUsd(m: ModelInfo, inputTokens: number, outputTokens: number): number {
-  return (inputTokens * m.inputPerM + outputTokens * m.outputPerM) / 1_000_000;
+// inputTokens = all input tokens; cachedTokens = the part read from cache; cacheWriteTokens = the part written to cache.
+export function costUsd(m: ModelInfo, inputTokens: number, outputTokens: number, cachedTokens = 0, cacheWriteTokens = 0): number {
+  const fresh = Math.max(0, inputTokens - cachedTokens - cacheWriteTokens);
+  const usd = fresh * m.inputPerM
+    + cachedTokens * (m.cachedPerM ?? m.inputPerM)
+    + cacheWriteTokens * m.inputPerM * (m.cacheWriteX ?? 1)
+    + outputTokens * m.outputPerM;
+  return usd / 1_000_000;
 }
 
 // Learning styles. `short` appears in the mode label; `behavior` goes into the Chavrusa's instructions.

@@ -3,6 +3,7 @@ import { ApprovedEntry } from './approval';
 import { Settings, STYLES, styleById } from './config';
 import { addMemory, addSource, forgetMemory, SourceData } from './db';
 import { getLinks, getText, resolveName, search, todaysLearning } from './sefaria';
+import { stripNikud } from './hebrew';
 import { ToolDef } from './llm/types';
 
 export const TOOLS: ToolDef[] = [
@@ -70,13 +71,29 @@ export const TOOLS: ToolDef[] = [
   },
 ];
 
+// The lean copy of a source that the AI reads (the learner sees the full text).
+export function textForModel(s: SourceData): string {
+  const he = clip(s.he.map(stripNikud), MAX_HE_CHARS);
+  const en = clip(s.en, MAX_EN_CHARS);
+  return [
+    `REF: ${s.ref} (${s.heRef})`,
+    `Shown to learner in the Sefer panel. Lines are numbered.`,
+    `ORIGINAL:\n${he.text}${he.clipped ? '[…text continues; request a narrower ref for the rest]\n' : ''}`,
+    s.translation
+      ? `APPROVED TRANSLATION (${s.translation}):\n${en.text}${en.clipped ? '[…]\n' : ''}`
+      : 'No approved translation available. If you translate, say it is your own translation.',
+  ].join('\n\n');
+}
+
 export type ToolEvent =
   | { type: 'status'; text: string }
   | { type: 'source'; source: SourceData }
   | { type: 'memory'; text: string }
   | { type: 'mode'; settings: Partial<Settings> };
 
-const MAX_TEXT_CHARS = 7000;
+// The learner sees the full text; the AI gets a lean copy (no vowels, capped length) to save cost and time.
+const MAX_HE_CHARS = 3500;
+const MAX_EN_CHARS = 1500;
 
 function clip(lines: string[], max: number): { text: string; clipped: boolean } {
   let out = '';
@@ -107,16 +124,7 @@ export function makeExecutor(ctx: {
         const { verdict, ...source } = s;
         ctx.emit({ type: 'source', source });
         await addSource(ctx.sessionId, source);
-        const he = clip(s.he, MAX_TEXT_CHARS);
-        const en = clip(s.en, Math.max(0, MAX_TEXT_CHARS - he.text.length));
-        return [
-          `REF: ${s.ref} (${s.heRef})`,
-          `Shown to learner in the Sefer panel. Lines are numbered.`,
-          `ORIGINAL:\n${he.text}${he.clipped ? '[…text continues; request a narrower ref for the rest]\n' : ''}`,
-          s.translation
-            ? `APPROVED TRANSLATION (${s.translation}):\n${en.text}${en.clipped ? '[…]\n' : ''}`
-            : 'No approved translation available. If you translate, say it is your own translation.',
-        ].join('\n\n');
+        return textForModel(source);
       }
       case 'get_connections': {
         const ref = String(args.ref ?? '');

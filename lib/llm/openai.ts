@@ -10,7 +10,7 @@ export async function runOpenAI(o: RunOptions): Promise<RunResult> {
   const tools = o.tools.map((t) => ({ type: 'function', name: t.name, description: t.description, parameters: t.parameters, strict: false }));
   let input: unknown[] = o.history.map((t) => ({ role: t.role, content: t.content }));
   let previous: string | undefined;
-  let inputTokens = 0, outputTokens = 0;
+  let inputTokens = 0, outputTokens = 0, cachedTokens = 0;
   const texts: string[] = [];
 
   for (let step = 0; step < (o.maxSteps ?? 10); step++) {
@@ -45,6 +45,7 @@ export async function runOpenAI(o: RunOptions): Promise<RunResult> {
     if (!final) throw new Error('OpenAI stream ended without a response.');
 
     inputTokens += final.usage?.input_tokens ?? 0;
+    cachedTokens += final.usage?.input_tokens_details?.cached_tokens ?? 0;
     outputTokens += final.usage?.output_tokens ?? 0;
     const output: any[] = Array.isArray(final.output) ? final.output : [];
     const calls = output.filter((i) => i.type === 'function_call');
@@ -56,18 +57,18 @@ export async function runOpenAI(o: RunOptions): Promise<RunResult> {
     if (calls.length === 0) break;
 
     if (stepText.trim()) o.onText?.('\n\n');
-    const outputs: unknown[] = [];
-    for (const c of calls) {
+    // Run lookups in parallel.
+    const outputs = await Promise.all(calls.map(async (c) => {
       let args: Record<string, unknown> = {};
       try { args = JSON.parse(c.arguments || '{}'); } catch { /* leave empty */ }
       let out: string;
       try { out = await o.execute(c.name, args); }
       catch (e) { out = `Error: ${(e as Error).message}`; }
-      outputs.push({ type: 'function_call_output', call_id: c.call_id, output: out });
-    }
+      return { type: 'function_call_output', call_id: c.call_id, output: out };
+    }));
     previous = final.id;
     input = outputs;
   }
 
-  return { text: texts.join('\n\n'), inputTokens, outputTokens };
+  return { text: texts.join('\n\n'), inputTokens, outputTokens, cachedTokens };
 }
