@@ -159,6 +159,9 @@ a { color: var(--accent); }
 .voice-play { background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--accent); white-space: nowrap; }
 .voice-play:disabled { opacity: 0.4; }
 
+.designer { margin-top: 10px; padding: 12px; border: 1px dashed var(--rule); border-radius: var(--radius); }
+.designer textarea { width: 100%; padding: 9px 10px; border-radius: var(--radius); border: 1px solid var(--rule); background: var(--bg); font-family: var(--f-ui); font-size: 14px; resize: vertical; }
+
 /* Quick menus under the mode bar */
 .chip.open { background: var(--accent-soft); }
 .quick { border-bottom: 1px solid var(--rule); background: var(--surface); padding: 10px 16px 12px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); max-height: 55vh; overflow-y: auto; font-family: var(--f-ui); box-shadow: var(--shadow); position: relative; z-index: 5; }

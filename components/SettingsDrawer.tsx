@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS, VOICES } from '@/lib/config';
+import { DEFAULT_VOICE_DESIGN, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS, VOICES } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -132,7 +132,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             {s.talkMode === 'live' && (
               <div className="field">
                 <label>Live voice (tap ▶ to hear it; a sample costs about 1 cent)</label>
-                <VoicePicker kind="live" voices={LIVE_VOICES} value={s.liveVoice} onPick={(v) => onChange({ liveVoice: v })} disabled={liveActive} />
+                <VoicePicker kind="live" voices={[...(s.customVoices ?? []).map((v) => ({ id: v.id, name: `${v.name} (your design)` })), ...LIVE_VOICES]} value={s.liveVoice} onPick={(v) => onChange({ liveVoice: v })} disabled={liveActive} />
+                <VoiceDesigner onCreated={(p) => onChange(p)} hasCustom={(s.customVoices ?? []).length > 0} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
@@ -208,5 +209,46 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
         </div>
       </div>
     </>
+  );
+}
+
+// Design a Live voice from a description (OpenAI creates it in your account).
+function VoiceDesigner({ onCreated, hasCustom }: { onCreated: (p: Partial<Settings>) => void; hasCustom: boolean }) {
+  const [open, setOpen] = useState(!hasCustom);
+  const [name, setName] = useState(DEFAULT_VOICE_DESIGN.name);
+  const [prompt, setPrompt] = useState(DEFAULT_VOICE_DESIGN.prompt);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function create() {
+    setBusy(true); setMsg('');
+    try {
+      const res = await fetch('/api/live/voice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, prompt, script: DEFAULT_VOICE_DESIGN.script }) });
+      const d = await res.json();
+      if (d.error) { setMsg(d.error); return; }
+      onCreated({ customVoices: d.settings.customVoices, liveVoice: d.voice.id });
+      setMsg(`Created "${d.voice.name}" and selected it. Tap ▶ Hear to try it.`);
+      setOpen(false);
+    } catch (e) { setMsg((e as Error).message); }
+    finally { setBusy(false); }
+  }
+
+  if (!open) return (
+    <div style={{ marginTop: 8 }}>
+      <button className="btn" onClick={() => setOpen(true)}>Design another voice</button>
+      {msg && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{msg}</div>}
+    </div>
+  );
+  return (
+    <div className="designer">
+      <div className="field"><label htmlFor="vd-name">Design a voice: name</label><input id="vd-name" type="text" value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <div className="field">
+        <label htmlFor="vd-prompt">Describe how it should sound</label>
+        <textarea id="vd-prompt" rows={5} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+      </div>
+      <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Describe qualities (age, accent, pace, tone), not a real person. Works with Live only.</div>
+      <button className="btn primary" onClick={create} disabled={busy || prompt.trim().length < 20}>{busy ? 'Creating…' : 'Create voice'}</button>
+      {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
+    </div>
   );
 }

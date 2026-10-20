@@ -207,6 +207,7 @@ export interface Settings {
   liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
   liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
   quickReplies: boolean;    // answer short acknowledgments ("ok", "got it") with the cheaper model
+  customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
 }
@@ -231,6 +232,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveIdleSec: 60,
   liveWake: true,
   quickReplies: true,
+  customVoices: [],
   autoSpeak: false,
   speechRate: 1,
 };
@@ -277,6 +279,12 @@ export const LIVE_VOICES: { id: string; name: string }[] = [
   { id: 'cinder', name: 'Cinder (Southern U.S.)' },
   { id: 'beacon', name: 'Beacon (Filipino)' },
 ];
+
+export const DEFAULT_VOICE_DESIGN = {
+  name: 'Rebbi',
+  prompt: 'A middle-aged American man, a yeshiva rebbi: warm, unhurried, slightly gravelly voice, with traditional yeshivish intonation and the sing-song rise and fall of Gemara learning. Calm, thoughtful pacing with natural pauses, as if learning across a table with a talmid.',
+  script: "Nu, so let's see what the Gemara is saying here. The Mishnah starts with the evening Shema, mai taima? Think about it. If the Tanna is going according to the order of creation, vayehi erev vayehi voker, then it makes sense. But Rashi, Rashi is bothered by something else. Tell me, what's bothering Rashi?",
+};
 
 export const VOICE_SAMPLE = "Shalom! I'm your chavrusa. Let's open the Gemara together. What do you think is bothering Rashi here?";
 

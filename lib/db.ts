@@ -28,7 +28,8 @@ export async function getSettings(userId = OWNER_ID): Promise<Settings> {
   s.theme = normalizeLook(s.theme);
   // Only male voices are offered; replace any earlier choice that was removed.
   if (!VOICES.some((v) => v.id === s.voice)) s.voice = DEFAULT_SETTINGS.voice;
-  if (!LIVE_VOICES.some((v) => v.id === s.liveVoice)) s.liveVoice = DEFAULT_SETTINGS.liveVoice;
+  if (!Array.isArray(s.customVoices)) s.customVoices = [];
+  if (!LIVE_VOICES.some((v) => v.id === s.liveVoice) && !s.customVoices.some((v) => v.id === s.liveVoice)) s.liveVoice = DEFAULT_SETTINGS.liveVoice;
   return s;
 }
 

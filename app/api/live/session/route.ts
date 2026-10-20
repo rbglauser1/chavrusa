@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
   const s = await getSettings();
   const askVoice = req.nextUrl.searchParams.get('voice');
   const preview = req.nextUrl.searchParams.get('preview') === '1';
-  const voice = LIVE_VOICES.some((v) => v.id === askVoice) ? askVoice : (s.liveVoice || 'meridian');
+  const allowed = [...LIVE_VOICES.map((v) => v.id), ...(s.customVoices ?? []).map((v) => v.id)];
+  const voice = askVoice && allowed.includes(askVoice) ? askVoice : (s.liveVoice || 'meridian');
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
     method: 'POST',
