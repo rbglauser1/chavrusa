@@ -43,12 +43,16 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
         const b = { ...data.content_block };
         if (b.type === 'tool_use') b._json = '';
         if (b.type === 'text') b.text = b.text ?? '';
+        if (b.type === 'thinking') { b.thinking = b.thinking ?? ''; b.signature = b.signature ?? ''; }
         blocks[data.index] = b;
       } else if (event === 'content_block_delta') {
         const b = blocks[data.index];
         if (!b) continue;
         if (data.delta?.type === 'text_delta') { b.text += data.delta.text; o.onText?.(data.delta.text); }
         else if (data.delta?.type === 'input_json_delta') b._json += data.delta.partial_json ?? '';
+        // Claude's private reasoning must be sent back exactly as received on the next step.
+        else if (data.delta?.type === 'thinking_delta') b.thinking += data.delta.thinking ?? '';
+        else if (data.delta?.type === 'signature_delta') b.signature += data.delta.signature ?? '';
       } else if (event === 'message_delta') {
         stopReason = data.delta?.stop_reason ?? stopReason;
         outputTokens += data.usage?.output_tokens ?? 0;
@@ -64,8 +68,9 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
         return { type: 'tool_use', id: b.id, name: b.name, input };
       }
       if (b.type === 'text') return { type: 'text', text: b.text };
-      return b;
-    });
+      if (b.type === 'thinking') return { type: 'thinking', thinking: b.thinking, signature: b.signature };
+      return b; // e.g. redacted_thinking, passed back unchanged
+    }).filter((b: any) => !(b.type === 'thinking' && !b.thinking && !b.signature) && !(b.type === 'text' && !b.text));
     const stepText = content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('').trim();
     if (stepText) texts.push(stepText);
     const calls = content.filter((b: any) => b.type === 'tool_use') as { id: string; name: string; input: Record<string, unknown> }[];
