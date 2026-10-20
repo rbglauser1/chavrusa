@@ -175,6 +175,28 @@ export default function Home() {
   }
 
   // ---------- Send ----------
+  // Put a source on screen (Sefer panel and the bar at the top).
+  function showSource(src: SourceData) {
+    setSources((s) => {
+      const existing = s.findIndex((x) => x.ref === src.ref);
+      if (existing >= 0) { setSelected(existing); return s; }
+      setSelected(s.length);
+      return [...s, src];
+    });
+    if (window.matchMedia('(min-width: 1000px)').matches) setSeferOpen(true);
+    setPulse(true); setTimeout(() => setPulse(false), 2500);
+  }
+
+  // Fetch a source straight from Sefaria, without the AI. Returns an error message, or null when shown.
+  async function openRef(q: string, direct: boolean): Promise<string | null> {
+    try {
+      const res = await fetch('/api/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, direct, sessionId: sessionIdRef.current }) });
+      const d = await res.json();
+      if (d.source) { showSource(d.source); if (!direct) setPinCollapsed(false); return null; }
+      return d.message ?? null;
+    } catch (e) { return (e as Error).message; }
+  }
+
   async function send(text: string, opts: { live?: boolean } = {}) {
     const msg = text.trim();
     if (!msg || busyRef.current) return;
@@ -189,6 +211,8 @@ export default function Home() {
     speakTurn.current = !opts.live && (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current);
     spokeLast.current = false;
     if (speakTurn.current) voice.beginSpeech();
+    // Show any source the message names right away, without waiting for the AI.
+    if (/\d|daf|parsh|parash|sedra/i.test(msg)) void openRef(msg, false);
 
     try {
       const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId: sessionIdRef.current ?? sessionId, voice: convoRef.current || !!opts.live }) });
@@ -225,14 +249,7 @@ export default function Home() {
       case 'status': setStatus(e.text); break;
       case 'source':
         if (!turnRefs.current.some((r) => r.ref === e.source.ref)) turnRefs.current.push({ ref: e.source.ref, heRef: e.source.heRef, url: e.source.url });
-        setSources((s) => {
-          const existing = s.findIndex((x) => x.ref === e.source.ref);
-          if (existing >= 0) { setSelected(existing); return s; }
-          setSelected(s.length);
-          return [...s, e.source];
-        });
-        if (window.matchMedia('(min-width: 1000px)').matches) setSeferOpen(true);
-        setPulse(true); setTimeout(() => setPulse(false), 2500);
+        showSource(e.source);
         break;
       case 'memory': setItems((it) => [...it, { kind: 'event', text: `Remembered: ${e.text}` }]); break;
       case 'mode': setSettings((s) => ({ ...s, ...e.settings })); break;
@@ -527,6 +544,7 @@ export default function Home() {
           sources={sources} selected={selected} onSelect={setSelected}
           onClose={() => setSeferOpen(false)}
           settings={settings} onSettings={updateSettings} sessionId={sessionId}
+          onOpenRef={(q) => openRef(q, true)}
         />
       )}
 

@@ -29,7 +29,7 @@ export function candidateRefs(message: string): string[] {
   return out;
 }
 
-async function findRef(message: string): Promise<string | null> {
+export async function findRef(message: string, direct = false): Promise<string | null> {
   if (/daf\s*yomi|today'?s\s+daf/i.test(message)) {
     const items = await todaysLearning();
     return items.find((i) => /daf yomi/i.test(i.title))?.ref ?? null;
@@ -38,6 +38,11 @@ async function findRef(message: string): Promise<string | null> {
     const items = await todaysLearning();
     const p = items.find((i) => /parash/i.test(i.title));
     return p ? opening(p.ref) : null;
+  }
+  // When the learner typed just a reference (Go to box), try the whole text first.
+  if (direct) {
+    const r = await resolveName(message.trim()).catch(() => null);
+    if (r?.isRef && r.ref) return r.ref;
   }
   for (const cand of candidateRefs(message)) {
     const r = await resolveName(cand).catch(() => null);

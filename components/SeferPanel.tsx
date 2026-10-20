@@ -12,9 +12,21 @@ interface Props {
   settings: Settings;
   onSettings: (p: Partial<Settings>) => void;
   sessionId: string | null;
+  onOpenRef: (q: string) => Promise<string | null>; // returns an error message, or null when opened
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef }: Props) {
+  const [goto, setGoto] = useState('');
+  const [gotoBusy, setGotoBusy] = useState(false);
+  const [gotoMsg, setGotoMsg] = useState('');
+  async function submitGoto(e: React.FormEvent) {
+    e.preventDefault();
+    if (!goto.trim() || gotoBusy) return;
+    setGotoBusy(true); setGotoMsg('');
+    const err = await onOpenRef(goto.trim());
+    setGotoBusy(false);
+    if (err) setGotoMsg(err); else setGoto('');
+  }
   const src = sources[selected];
   const [open, setOpen] = useState<Set<number>>(new Set());
   const [showAll, setShowAll] = useState(false);
@@ -47,6 +59,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         {src && <a href={src.url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open on Sefaria ↗</a>}
         <button className="icon-btn" onClick={onClose} aria-label="Close sefer">✕</button>
       </div>
+
+      <form className="goto" onSubmit={submitGoto}>
+        <input id="goto-ref" value={goto} onChange={(e) => setGoto(e.target.value)} placeholder="Go to… e.g. Berachos 36a" dir="auto" aria-label="Open a source" />
+        <button className="btn" disabled={!goto.trim() || gotoBusy}>{gotoBusy ? 'Opening…' : 'Open'}</button>
+      </form>
+      {gotoMsg && <div className="goto-msg">{gotoMsg}</div>}
 
       {sources.length > 0 && (
         <div className="sefer-tabs">

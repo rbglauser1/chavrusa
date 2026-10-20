@@ -247,6 +247,12 @@ a { color: var(--accent); }
 [data-look='shtender'] .quote .q-he, [data-look='shtender'] .quote .q-en { color: #2a1c16; }
 [data-look='daf'] .quote { background: transparent; border-inline-start-width: 2px; }
 
+/* Go to box in the Sefer panel */
+.goto { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--rule); }
+.goto input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: var(--radius); border: 1px solid var(--rule); background: var(--bg); font-family: var(--f-ui); font-size: 15px; }
+[data-look='shtender'] .goto input { background: rgba(255, 255, 255, 0.5); }
+.goto-msg { padding: 6px 14px 0; font-size: 13px; color: var(--danger); font-family: var(--f-ui); }
+
 /* Source buttons under an answer */
 .refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .ref-chip { display: inline-flex; align-items: center; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; font-family: var(--f-ui); font-size: 13px; }
