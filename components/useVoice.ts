@@ -327,7 +327,18 @@ export function useVoice(opts: { onText: (text: string) => void; onError: (msg: 
 
   const stopAll = useCallback(() => { cancelListening(); stopSpeaking(); releaseMic(); }, [cancelListening, stopSpeaking, releaseMic]);
 
+  // Fully close this voice's sound system so another one (the Live call) has the phone's audio to itself.
+  // On iPhones, two sound systems running at once makes the call crackle.
+  const shutdown = useCallback(() => {
+    stopAll();
+    const a = audioEl.current;
+    if (a) { a.pause(); a.removeAttribute('src'); a.load(); delete a.dataset.unlocked; }
+    const ctx = ctxRef.current;
+    ctxRef.current = null;
+    ctx?.close().catch(() => {});
+  }, [stopAll]);
+
   const supported = typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
 
-  return { state, level, supported, unlock, listen, stopListening, cancelListening, speak, beginSpeech, enqueue, endSpeech, stopSpeaking, stopAll };
+  return { state, level, supported, unlock, listen, stopListening, cancelListening, speak, beginSpeech, enqueue, endSpeech, stopSpeaking, stopAll, shutdown };
 }

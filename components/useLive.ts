@@ -179,6 +179,7 @@ export function useLive(opts: {
         el.autoplay = true;
         el.setAttribute('playsinline', '');
         el.style.display = 'none';
+        el.volume = 1;
         document.body.appendChild(el);
         audio.current = el;
       }

@@ -80,7 +80,7 @@ export default function Home() {
   function toggleTalk() {
     if (settings.talkMode === 'live' && live.supported) {
       if (convo) setConvoMode(false);
-      if (live.active) live.stop(); else live.start();
+      if (live.active) live.stop(); else { voice.shutdown(); live.start(); }
     } else {
       if (live.active) live.stop();
       setConvoMode(!convo);
@@ -455,7 +455,7 @@ export default function Home() {
                           ))}
                         </div>
                       )}
-                      {!me && voice.supported && (
+                      {!me && voice.supported && !live.active && (
                         <button className="listen" onClick={() => { voice.unlock(); sayAloud(it.text); }} aria-label="Listen to this reply">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /></svg>
                           Listen
@@ -514,7 +514,7 @@ export default function Home() {
               placeholder={voice.state === 'listening' ? 'Listening…' : voice.state === 'transcribing' ? 'Writing down what you said…' : 'Your answer or question…'}
               value={input}
               onChange={(e) => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && isWide) { e.preventDefault(); spokeLast.current = false; voice.unlock(); send(input); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && isWide) { e.preventDefault(); spokeLast.current = false; if (!live.active) voice.unlock(); send(input); } }}
               dir="auto"
             />
             {voice.supported && !convo && (
@@ -530,7 +530,7 @@ export default function Home() {
                   : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>}
               </button>
             )}
-            <button className="send" disabled={!input.trim() || busy} onClick={() => { spokeLast.current = false; voice.unlock(); send(input); }} aria-label="Send">
+            <button className="send" disabled={!input.trim() || busy} onClick={() => { spokeLast.current = false; if (!live.active) voice.unlock(); send(input); }} aria-label="Send">
               {look === 'daf' ? 'שלח' : look === 'techelet' ? 'Send' : (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
               )}
