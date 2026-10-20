@@ -27,7 +27,7 @@ function silentWav(): string {
 // Split text into speakable sentences. Returns finished sentences and the unfinished remainder.
 // The first sentence is allowed to be short so speech starts quickly; later ones are grouped.
 export function splitSentences(text: string, final = false): { sentences: string[]; rest: string } {
-  const clean = text.replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '');
+  const clean = text.replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '');
   const parts: string[] = [];
   const re = /[^.!?…:;\n]+(?:[.!?…:;]+["'”’)\]]*|\n+)/g;
   let m: RegExpExecArray | null;

@@ -21,6 +21,7 @@ export function prepareForSpeech(text: string, nusach: 'ashkenaz' | 'sephardi'):
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
     .replace(/^\s*[-•]\s+/gm, '')
+    .replace(/^\s*>\s?/gm, '')
     .replace(/\[(\d+)\]/g, '')
     .replace(/\s+/g, ' ')
     .trim();

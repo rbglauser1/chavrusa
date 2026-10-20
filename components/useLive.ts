@@ -10,7 +10,7 @@ export type LiveState = 'off' | 'connecting' | 'listening' | 'thinking' | 'speak
 const MAX_CHARS = 1800; // the voice accepts about 500 tokens per hand-back
 
 function forSpeech(text: string): string {
-  const t = text.replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
+  const t = text.replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
   if (t.length <= MAX_CHARS) return t;
   const cut = t.slice(0, MAX_CHARS);
   const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('\n'));

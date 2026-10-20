@@ -32,7 +32,7 @@ export default function Home() {
   const [sources, setSources] = useState<SourceData[]>([]);
   const [selected, setSelected] = useState(0);
   const [seferOpen, setSeferOpen] = useState(false);
-  const [pinCollapsed, setPinCollapsed] = useState(false);
+  const [pinCollapsed, setPinCollapsed] = useState(true);
   const [seenDisclaimer, setSeenDisclaimer] = useState(false);
   const [quick, setQuick] = useState<'style' | 'model' | null>(null);
   const [convo, setConvo] = useState(false);

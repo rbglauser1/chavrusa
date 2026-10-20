@@ -27,8 +27,45 @@ function hebrewRuns(text: string, key: string): ReactNode[] {
   return out;
 }
 
+// Split text into plain parts and quote blocks (lines starting with ">").
+function segments(text: string): { quote: boolean; text: string }[] {
+  const out: { quote: boolean; text: string }[] = [];
+  for (const line of text.split('\n')) {
+    const isQ = /^\s*>/.test(line);
+    const body = isQ ? line.replace(/^\s*>\s?/, '') : line;
+    const last = out[out.length - 1];
+    if (last && last.quote === isQ) last.text += '\n' + body;
+    else out.push({ quote: isQ, text: body });
+  }
+  return out;
+}
+
+function Quote({ text }: { text: string }) {
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  return (
+    <blockquote className="quote">
+      {lines.map((l, i) => {
+        const heb = (l.match(/[\u05D0-\u05EA]/g)?.length ?? 0) > l.replace(/\s/g, '').length * 0.4;
+        return heb
+          ? <div key={i} className="q-he" dir="rtl">{l}</div>
+          : <div key={i} className="q-en" dir="auto">{inline(l, `q${i}`)}</div>;
+      })}
+    </blockquote>
+  );
+}
+
 export function Formatted({ text }: { text: string }) {
-  const blocks = text.split(/\n{2,}/);
+  return (
+    <>
+      {segments(text).map((seg, si) => seg.quote
+        ? <Quote key={si} text={seg.text} />
+        : <Plain key={si} text={seg.text} />)}
+    </>
+  );
+}
+
+function Plain({ text }: { text: string }) {
+  const blocks = text.split(/\n{2,}/).filter((b) => b.trim());
   return (
     <>
       {blocks.map((b, bi) => {
