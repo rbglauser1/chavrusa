@@ -434,6 +434,20 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .mini.midnight .m-src { background: #1a2131; border-left: 3px solid #d4a94f; }
 .mini.midnight .m-line { background: #ece8dd; opacity: 0.55; }
 
+/* ---------- Style lab ---------- */
+.lab { max-width: 1200px; margin: 0 auto; padding-block: 16px 60px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); font-family: var(--f-ui); height: 100dvh; overflow-y: auto; }
+.lab-head { display: flex; align-items: baseline; gap: 12px; }
+.lab-head h1 { margin: 0; font-size: 22px; }
+.lab-intro { max-width: 70ch; }
+.lab-form { display: grid; gap: 10px; max-width: 640px; margin-bottom: 24px; }
+.lab-styles { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+.lab-check { display: inline-flex; gap: 6px; align-items: center; }
+.lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.lab-card { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); padding: 14px 16px; min-width: 0; }
+.lab-card h2 { margin: 0 0 8px; font-size: 16px; color: var(--accent); }
+.lab-card .say p { margin: 0 0 8px; }
+.lab-stats { margin-top: 10px; font-size: 12px; color: var(--soft); font-variant-numeric: tabular-nums; }
+
 /* Narrow screens: the Sefer panel covers the screen when opened. */
 @media (max-width: 999px) {
   .sefer { position: fixed; inset: 0; z-index: 45; width: 100%; max-width: none; min-width: 0; border-left: 0; }

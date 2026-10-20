@@ -92,8 +92,13 @@ export function buildSystemPrompt(s: Settings, memories: Memory[], sessionSource
 
 # Current settings
 Today's date: ${today}.
-Style: ${style.name}. ${style.behavior}
-${blend ? `Blended with: ${blend.name}. ${blend.behavior}` : ''}
+# Learning style: ${style.name}
+${style.behavior}
+Length for this style: up to about ${style.maxWords ?? 150} words per message.
+${style.explainFirst ? 'This style explains briefly before asking (unless the learner has chosen to explain first, or asks otherwise).' : ''}
+Sample of the tone (illustration only: never quote it or treat it as a source):
+${style.example}
+${blend ? `\n# Blended with: ${blend.name}\nCombine with the above where they don't conflict; where they do, the main style wins.\n${blend.behavior}\nSample of the tone (illustration only):\n${blend.example}` : ''}
 Who leads: ${s.leads === 'learner'
     ? 'The LEARNER reads and explains first. After bringing a source, ask them to explain it before you say anything about its content.'
     : 'YOU explain first, briefly, then ask the learner a question to check and deepen understanding.'}

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { costUsd, isQuickReply, MODELS } from '@/lib/config';
+import { costUsd, isQuickReply, MODELS, styleById } from '@/lib/config';
 import {
   addMessage, approvedList, createSession, getSession, getSettings, listMemories, listMessages, listSources,
   logCost, saveSettings, sessionCost, touchSession,
@@ -13,6 +13,17 @@ import { after } from 'next/server';
 import { addSource } from '@/lib/db';
 
 export const runtime = 'nodejs';
+
+// Move the thinking level up or down, within what each model accepts.
+function shiftEffort(effort: string | undefined, delta: number, provider: string, tier: string): string | undefined {
+  if (!effort || !delta) return effort;
+  const ladder = provider === 'openai'
+    ? (tier === 'top' ? ['low', 'medium', 'high'] : ['none', 'low', 'medium', 'high'])
+    : ['low', 'medium', 'high'];
+  const i = ladder.indexOf(effort);
+  if (i < 0) return effort;
+  return ladder[Math.max(0, Math.min(ladder.length - 1, i + delta))];
+}
 export const maxDuration = 300; // deep models with several source lookups can take a while
 
 // Streams newline-delimited JSON events: status, source, memory, mode, session, reply, cost, error.
@@ -93,7 +104,8 @@ export async function POST(req: NextRequest) {
           tools: TOOLS,
           execute,
           // Spoken turns need quick answers: think one level less.
-          effort: spoken ? ({ high: 'medium', medium: 'low', low: settings.provider === 'openai' ? 'none' : 'low' } as Record<string, string>)[model.effort ?? ''] ?? model.effort : model.effort,
+          // Deep styles (Iyun, Sevara) think one level more; fast ones (Bekius, Farher) and spoken turns one level less.
+          effort: shiftEffort(model.effort, (styleById(settings.style).effortShift ?? 0) - (spoken ? 1 : 0), settings.provider, settings.tier),
           thinking: model.thinking,
           maxSteps: 5,
           onText: (d) => send({ type: 'delta', text: d }),
