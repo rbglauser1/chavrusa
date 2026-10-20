@@ -116,7 +116,9 @@ export interface Settings {
   enSize: number;           // px
   costWarnUsd: number | null;
   disclaimerAccepted: boolean;
-  voice: string;            // voice the Chavrusa speaks with
+  voice: string;            // voice for Basic talk mode (OpenAI text-to-speech)
+  talkMode: 'live' | 'basic'; // live = natural speech-to-speech (GPT-Live); basic = cheaper step-by-step voice
+  liveVoice: string;        // voice for Live mode
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
 }
@@ -136,6 +138,8 @@ export const DEFAULT_SETTINGS: Settings = {
   costWarnUsd: null,
   disclaimerAccepted: false,
   voice: 'ash',
+  talkMode: 'live',
+  liveVoice: 'meridian',
   autoSpeak: false,
   speechRate: 1,
 };
@@ -165,4 +169,26 @@ export const VOICES: { id: string; name: string }[] = [
   { id: 'sage', name: 'Sage (calm)' },
   { id: 'coral', name: 'Coral (bright, female)' },
   { id: 'shimmer', name: 'Shimmer (soft, female)' },
+];
+
+// ---------- Live voice (GPT-Live: listens and speaks in one model; the Chavrusa brain does the learning) ----------
+export const LIVE = {
+  model: 'gpt-live-1',
+  usdPerMinute: 0.05, // voice layer only; the brain model is billed separately. Verify on OpenAI's pricing page.
+};
+
+export const LIVE_VOICES: { id: string; name: string }[] = [
+  { id: 'meridian', name: 'Meridian' },
+  { id: 'marin', name: 'Marin' },
+  { id: 'stone', name: 'Stone' },
+  { id: 'vesper', name: 'Vesper' },
+  { id: 'willow', name: 'Willow' },
+  { id: 'quartz', name: 'Quartz' },
+  { id: 'ripple', name: 'Ripple' },
+  { id: 'gleam', name: 'Gleam' },
+  { id: 'bossa', name: 'Bossa' },
+  { id: 'tempo', name: 'Tempo' },
+  { id: 'beacon', name: 'Beacon' },
+  { id: 'delta', name: 'Delta' },
+  { id: 'cinder', name: 'Cinder' },
 ];

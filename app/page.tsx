@@ -8,6 +8,7 @@ import SettingsDrawer from '@/components/SettingsDrawer';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
+import { useLive } from '@/components/useLive';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -52,6 +53,37 @@ export default function Home() {
     sessionId: () => sessionIdRef.current,
   });
 
+  // ---------- Live voice ----------
+  const liveQueue = useRef<{ text: string; id: string }[]>([]);
+  const liveDelegation = useRef<string | null>(null);
+  const live = useLive({
+    onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
+    onError: (m) => setItems((it) => [...it, { kind: 'error', text: m }]),
+    onEnded: (seconds) => {
+      liveQueue.current = [];
+      liveDelegation.current = null;
+      fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds, sessionId: sessionIdRef.current }) }).catch(() => {});
+    },
+  });
+
+  function pumpLive() {
+    if (busyRef.current || liveDelegation.current || !liveQueue.current.length) return;
+    const next = liveQueue.current.shift()!;
+    liveDelegation.current = next.id;
+    send(next.text, { live: true });
+  }
+
+  function toggleTalk() {
+    if (settings.talkMode === 'live' && live.supported) {
+      if (convo) setConvoMode(false);
+      if (live.active) live.stop(); else live.start();
+    } else {
+      if (live.active) live.stop();
+      setConvoMode(!convo);
+    }
+  }
+  const talking = convo || live.active;
+
   function setConvoMode(on: boolean) {
     convoRef.current = on;
     setConvo(on);
@@ -68,6 +100,8 @@ export default function Home() {
   const [help, setHelp] = useState(false);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  useEffect(() => { busyRef.current = busy; }, [busy]);
   const [status, setStatus] = useState('');
   const [sessionUsd, setSessionUsd] = useState(0);
   const [isWide, setIsWide] = useState(false);
@@ -137,21 +171,22 @@ export default function Home() {
   }
 
   // ---------- Send ----------
-  async function send(text: string) {
+  async function send(text: string, opts: { live?: boolean } = {}) {
     const msg = text.trim();
-    if (!msg || busy) return;
+    if (!msg || busyRef.current) return;
+    busyRef.current = true;
     setInput('');
     setItems((it) => [...it, { kind: 'user', text: msg }]);
     setBusy(true); setStatus('Thinking…');
     liveIdx.current = null;
     liveText.current = '';
     speechBuf.current = '';
-    speakTurn.current = convoRef.current || settingsRef.current.autoSpeak || spokeLast.current;
+    speakTurn.current = !opts.live && (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current);
     spokeLast.current = false;
     if (speakTurn.current) voice.beginSpeech();
 
     try {
-      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId, voice: convoRef.current }) });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId: sessionIdRef.current ?? sessionId, voice: convoRef.current || !!opts.live }) });
       if (res.status === 401) { window.location.href = '/login'; return; }
       if (!res.body) throw new Error('No response from server.');
       const reader = res.body.getReader();
@@ -171,7 +206,10 @@ export default function Home() {
     } catch (e) {
       setItems((it) => [...it, { kind: 'error', text: (e as Error).message }]);
     } finally {
+      busyRef.current = false;
+      if (liveDelegation.current) { live.answer(liveDelegation.current, 'Sorry, I lost my place for a moment. Could you say that again?'); liveDelegation.current = null; }
       setBusy(false); setStatus('');
+      window.setTimeout(pumpLive, 0);
       refreshSessions();
     }
   }
@@ -220,6 +258,7 @@ export default function Home() {
           return copy;
         });
         liveIdx.current = null;
+        if (liveDelegation.current) { live.answer(liveDelegation.current, finalText); liveDelegation.current = null; }
         if (speakTurn.current) {
           const leftover = streamed ? speechBuf.current : finalText;
           splitSentences(leftover, true).sentences.forEach((x) => voice.enqueue(x));
@@ -287,9 +326,9 @@ export default function Home() {
             {settings.nusach === 'ashkenaz' ? 'Ashkenaz' : 'Sephardi'}
           </button>
           {voice.supported && (
-            <button className={`chip talk ${convo ? 'live' : ''}`} onClick={() => setConvoMode(!convo)} aria-pressed={convo}>
+            <button className={`chip talk ${talking ? 'live' : ''}`} onClick={toggleTalk} aria-pressed={talking}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
-              {convo ? 'End talk' : 'Talk'}
+              {talking ? 'End talk' : 'Talk'}
             </button>
           )}
           <span className="spacer" />
@@ -396,6 +435,20 @@ export default function Home() {
             {busy && <div className="status"><span className="dots"><span /><span /><span /></span>{status}</div>}
           </div>
         </div>
+
+        {live.active && (
+          <div className="voicebar" role="status">
+            <span className={`orb ${live.state === 'listening' ? 'listening' : live.state === 'speaking' ? 'speaking' : 'idle'}`} aria-hidden="true" />
+            <span className="vtext" dir="auto">
+              {live.state === 'connecting' ? 'Connecting…'
+                : live.heard ? `“${live.heard.slice(-120)}”`
+                : live.state === 'thinking' ? (status || 'Looking into it…')
+                : live.state === 'speaking' ? 'Speaking… just talk to interrupt'
+                : 'Listening… just talk'}
+            </span>
+            <button className="btn" onClick={() => live.stop()}>End</button>
+          </div>
+        )}
 
         {convo && (
           <div className="voicebar" role="status">

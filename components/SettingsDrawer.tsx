@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS, VOICES } from '@/lib/config';
+import { LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS, VOICES } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 
@@ -116,7 +116,25 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
           <div className="section">
             <h3>Voice</h3>
             <div className="field">
-              <label htmlFor="voice-pick">Chavrusa’s voice</label>
+              <label>Talk mode</label>
+              <Seg value={s.talkMode} options={[['live', 'Live (most natural)'], ['basic', 'Basic (cheapest)']]} onPick={(v) => onChange({ talkMode: v })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                {s.talkMode === 'live'
+                  ? 'Live: natural voice that answers almost instantly and can be interrupted. About $0.05 per minute for the voice, plus the AI model.'
+                  : 'Basic: step-by-step voice. Slower and less natural, but costs only a few cents per hour for the voice.'}
+              </div>
+            </div>
+            {s.talkMode === 'live' && (
+              <div className="field">
+                <label htmlFor="live-voice-pick">Live voice</label>
+                <select id="live-voice-pick" value={s.liveVoice} onChange={(e) => onChange({ liveVoice: e.target.value })}>
+                  {LIVE_VOICES.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                </select>
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
+              </div>
+            )}
+            <div className="field">
+              <label htmlFor="voice-pick">Basic voice (also used for Listen)</label>
               <select id="voice-pick" value={s.voice} onChange={(e) => onChange({ voice: e.target.value })}>
                 {VOICES.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </select>
