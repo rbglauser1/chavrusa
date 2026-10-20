@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { DEFAULT_SETTINGS, normalizeLook, OWNER_ID, Settings } from './config';
+import { DEFAULT_SETTINGS, LIVE_VOICES, normalizeLook, OWNER_ID, Settings, VOICES } from './config';
 
 let client: SupabaseClient | null = null;
 
@@ -26,6 +26,9 @@ export async function getSettings(userId = OWNER_ID): Promise<Settings> {
   const row = check(await db().from('settings').select('data').eq('user_id', userId).maybeSingle());
   const s = { ...DEFAULT_SETTINGS, ...((row as { data?: Partial<Settings> } | null)?.data ?? {}) };
   s.theme = normalizeLook(s.theme);
+  // Only male voices are offered; replace any earlier choice that was removed.
+  if (!VOICES.some((v) => v.id === s.voice)) s.voice = DEFAULT_SETTINGS.voice;
+  if (!LIVE_VOICES.some((v) => v.id === s.liveVoice)) s.liveVoice = DEFAULT_SETTINGS.liveVoice;
   return s;
 }
 

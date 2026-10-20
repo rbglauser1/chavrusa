@@ -588,7 +588,7 @@ export default function Home() {
         </>
       )}
 
-      {drawer === 'settings' && <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setDrawer(null)} onHelp={() => setHelp(true)} />}
+      {drawer === 'settings' && <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setDrawer(null)} onHelp={() => setHelp(true)} liveActive={live.active} />}
       {help && <Help onClose={() => setHelp(false)} />}
       {loaded && !settings.disclaimerAccepted && !seenDisclaimer && (
         <Disclaimer

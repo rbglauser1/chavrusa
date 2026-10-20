@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS, VOICES } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
+import { VoicePicker } from './VoicePicker';
 
-interface Props { settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void }
+interface Props { settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean }
 
 function Seg<T extends string>({ value, options, onPick }: { value: T; options: [T, string][]; onPick: (v: T) => void }) {
   return (
@@ -14,7 +15,7 @@ function Seg<T extends string>({ value, options, onPick }: { value: T; options: 
   );
 }
 
-export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp }: Props) {
+export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive }: Props) {
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [newMem, setNewMem] = useState('');
   const [costs, setCosts] = useState<{ totalUsd: number; byModel: Record<string, { exchanges: number; usd: number }> } | null>(null);
@@ -130,10 +131,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
             </div>
             {s.talkMode === 'live' && (
               <div className="field">
-                <label htmlFor="live-voice-pick">Live voice</label>
-                <select id="live-voice-pick" value={s.liveVoice} onChange={(e) => onChange({ liveVoice: e.target.value })}>
-                  {LIVE_VOICES.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                </select>
+                <label>Live voice (tap ▶ to hear it; a sample costs about 1 cent)</label>
+                <VoicePicker kind="live" voices={LIVE_VOICES} value={s.liveVoice} onPick={(v) => onChange({ liveVoice: v })} disabled={liveActive} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
@@ -157,10 +156,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
               </div>
             )}
             <div className="field">
-              <label htmlFor="voice-pick">Basic voice (also used for Listen)</label>
-              <select id="voice-pick" value={s.voice} onChange={(e) => onChange({ voice: e.target.value })}>
-                {VOICES.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-              </select>
+              <label>Basic voice (also used for Listen; tap ▶ to hear it)</label>
+              <VoicePicker kind="basic" voices={VOICES} value={s.voice} onPick={(v) => onChange({ voice: v })} />
             </div>
             <div className="field">
               <label>Read every reply aloud</label>

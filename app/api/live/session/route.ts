@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LIVE } from '@/lib/config';
+import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
 import { liveInstructions } from '@/lib/live';
 
@@ -12,6 +12,9 @@ export async function POST(req: NextRequest) {
   const sdp = await req.text();
   if (!sdp.startsWith('v=')) return NextResponse.json({ error: 'Missing WebRTC offer.' }, { status: 400 });
   const s = await getSettings();
+  const askVoice = req.nextUrl.searchParams.get('voice');
+  const preview = req.nextUrl.searchParams.get('preview') === '1';
+  const voice = LIVE_VOICES.some((v) => v.id === askVoice) ? askVoice : (s.liveVoice || 'meridian');
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
     method: 'POST',
@@ -19,8 +22,10 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       session: {
         model: LIVE.model,
-        instructions: liveInstructions(s.nusach),
-        audio: { output: { voice: s.liveVoice || 'meridian' } },
+        instructions: preview
+          ? `As soon as the session starts, without waiting for the user, say exactly this in a warm, natural voice, then stop: "${VOICE_SAMPLE}"`
+          : liveInstructions(s.nusach),
+        audio: { output: { voice } },
         delegation: { type: 'client' },
       },
       transport: { type: 'webrtc', sdp },

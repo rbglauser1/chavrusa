@@ -149,6 +149,16 @@ a { color: var(--accent); }
 .req-text { overflow: hidden; text-overflow: ellipsis; }
 .req button { border: 0; background: none; color: var(--soft); font-size: 15px; line-height: 1; padding: 2px 6px; }
 
+/* Voice picker with samples */
+.voice-list { display: grid; gap: 4px; }
+.voice-row { display: flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: var(--radius); padding: 2px 4px 2px 0; }
+.voice-row.on { border-color: var(--accent); background: var(--accent-soft); }
+.voice-pick { flex: 1; display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; padding: 8px 10px; font-size: 14px; color: var(--ink); }
+.voice-pick .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--soft); flex-shrink: 0; }
+.voice-row.on .voice-pick .dot { border-color: var(--accent); background: radial-gradient(var(--accent) 45%, transparent 50%); }
+.voice-play { background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--accent); white-space: nowrap; }
+.voice-play:disabled { opacity: 0.4; }
+
 /* Quick menus under the mode bar */
 .chip.open { background: var(--accent-soft); }
 .quick { border-bottom: 1px solid var(--rule); background: var(--surface); padding: 10px 16px 12px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); max-height: 55vh; overflow-y: auto; font-family: var(--f-ui); box-shadow: var(--shadow); position: relative; z-index: 5; }

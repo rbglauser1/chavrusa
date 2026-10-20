@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { VOICE } from '@/lib/config';
+import { VOICE, VOICES } from '@/lib/config';
 import { getSettings, logCost } from '@/lib/db';
 import { prepareForSpeech, speechInstructions } from '@/lib/pronounce';
 
@@ -10,14 +10,15 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return NextResponse.json({ error: 'OPENAI_API_KEY is not set.' }, { status: 500 });
-  const { text, sessionId } = await req.json().catch(() => ({}));
+  const { text, sessionId, voice } = await req.json().catch(() => ({}));
   if (!text) return NextResponse.json({ error: 'text required' }, { status: 400 });
   const s = await getSettings();
   const input = prepareForSpeech(String(text), s.nusach);
 
   let lastError = '';
   for (const model of VOICE.speechModels) {
-    const body: Record<string, unknown> = { model, voice: s.voice, input, response_format: 'mp3' };
+    const useVoice = VOICES.some((v) => v.id === voice) ? voice : s.voice; // a sample can ask for a specific voice
+    const body: Record<string, unknown> = { model, voice: useVoice, input, response_format: 'mp3' };
     // Only change speed when asked: time-stretching can add artifacts.
     if (Math.abs((s.speechRate ?? 1) - 1) > 0.01) body.speed = s.speechRate;
     if (!model.startsWith('tts-')) body.instructions = speechInstructions(s.nusach);

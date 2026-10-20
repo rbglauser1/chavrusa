@@ -253,13 +253,13 @@ export const VOICE = {
   charsPerMinute: 900,
 };
 
+// Male voices only.
 export const VOICES: { id: string; name: string }[] = [
-  { id: 'ash', name: 'Ash (warm, male)' },
-  { id: 'onyx', name: 'Onyx (deep, male)' },
-  { id: 'echo', name: 'Echo (clear, male)' },
-  { id: 'sage', name: 'Sage (calm)' },
-  { id: 'coral', name: 'Coral (bright, female)' },
-  { id: 'shimmer', name: 'Shimmer (soft, female)' },
+  { id: 'ash', name: 'Ash (warm)' },
+  { id: 'onyx', name: 'Onyx (deep)' },
+  { id: 'echo', name: 'Echo (clear)' },
+  { id: 'ballad', name: 'Ballad (expressive)' },
+  { id: 'verse', name: 'Verse (lively)' },
 ];
 
 // ---------- Live voice (GPT-Live: listens and speaks in one model; the Chavrusa brain does the learning) ----------
@@ -268,21 +268,17 @@ export const LIVE = {
   usdPerMinute: 0.05, // voice layer only; the brain model is billed separately. Verify on OpenAI's pricing page.
 };
 
+// Male English voices only, as marked "masculine" in OpenAI's GPT-Live voice list.
 export const LIVE_VOICES: { id: string; name: string }[] = [
-  { id: 'meridian', name: 'Meridian' },
-  { id: 'marin', name: 'Marin' },
-  { id: 'stone', name: 'Stone' },
-  { id: 'vesper', name: 'Vesper' },
-  { id: 'willow', name: 'Willow' },
-  { id: 'quartz', name: 'Quartz' },
-  { id: 'ripple', name: 'Ripple' },
-  { id: 'gleam', name: 'Gleam' },
-  { id: 'bossa', name: 'Bossa' },
-  { id: 'tempo', name: 'Tempo' },
-  { id: 'beacon', name: 'Beacon' },
-  { id: 'delta', name: 'Delta' },
-  { id: 'cinder', name: 'Cinder' },
+  { id: 'meridian', name: 'Meridian (North American)' },
+  { id: 'vesper', name: 'Vesper (British)' },
+  { id: 'stone', name: 'Stone (Irish)' },
+  { id: 'ripple', name: 'Ripple (Australian)' },
+  { id: 'cinder', name: 'Cinder (Southern U.S.)' },
+  { id: 'beacon', name: 'Beacon (Filipino)' },
 ];
+
+export const VOICE_SAMPLE = "Shalom! I'm your chavrusa. Let's open the Gemara together. What do you think is bothering Rashi here?";
 
 // Short acknowledgments that don't need the deep model. "Next", "yes" and "no" are NOT included:
 // those usually move the learning forward and get the full model.
