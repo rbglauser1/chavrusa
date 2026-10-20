@@ -94,17 +94,18 @@ export function styleById(id: string | undefined): Style {
   return STYLES.find((s) => s.id === id) ?? STYLES[0];
 }
 
-export type Look = 'daf' | 'shtender' | 'techelet';
+export type Look = 'daf' | 'shtender' | 'techelet' | 'midnight';
 
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
   { id: 'shtender', name: 'Shtender at night', blurb: 'Warm wood and lamplight, easy on the eyes at night' },
   { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
+  { id: 'midnight', name: 'Midnight', blurb: 'Navy and gold, clean and modern, with quoted passages' },
 ];
 
 // Older saved values from the first version map onto the new looks.
 export function normalizeLook(v: unknown): Look {
-  if (v === 'daf' || v === 'shtender' || v === 'techelet') return v;
+  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight') return v;
   if (v === 'dark') return 'shtender';
   if (v === 'light') return 'techelet';
   return 'daf';

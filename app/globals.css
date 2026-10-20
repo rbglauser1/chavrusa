@@ -332,7 +332,7 @@ table.costs th { color: var(--soft); }
 table.costs td.n, table.costs th.n { text-align: right; }
 
 /* Look picker: three miniature previews */
-.looks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.looks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .look { display: grid; gap: 6px; padding: 0; border: 0; background: none; text-align: left; color: var(--ink); }
 .look .mini { height: 120px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px var(--rule); display: flex; flex-direction: column; }
 .look.on .mini { box-shadow: 0 0 0 2px var(--accent); }
@@ -363,11 +363,60 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .login input { width: 100%; padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--rule); background: var(--surface); margin: 16px 0 10px; font-size: 16px; }
 .login .btn { width: 100%; }
 
+
+/* ---------- Midnight: navy and gold, modern sans, round ח badge, dark quote boxes ---------- */
+[data-look='midnight'] {
+  --bg: #0e1320;
+  --surface: #151c2b;
+  --surface-2: #1b2334;
+  --ink: #ece8dd;
+  --soft: #98a1b3;
+  --rule: #263047;
+  --accent: #d4a94f;
+  --accent-ink: #1a1408;
+  --accent-soft: rgba(212, 169, 79, 0.12);
+  --me: #ece8dd;
+  --src-bg: #1b2334;
+  --src-ink: #ece8dd;
+  --src-rule: #263047;
+  --danger: #e2786b;
+  --scrim: rgba(0, 0, 0, 0.55);
+  --shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  --f-body: 'Source Sans 3', system-ui, sans-serif;
+  --f-ui: 'Source Sans 3', system-ui, sans-serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif;
+  --f-brand: 'Frank Ruhl Libre', serif;
+  --radius: 16px;
+  color-scheme: dark;
+}
+[data-look='midnight'] body { font-size: calc(var(--en-size, 16px) + 1px); }
+[data-look='midnight'] .brand { font-size: 30px; }
+[data-look='midnight'] .chip { border-radius: 14px; padding: 6px 14px; }
+[data-look='midnight'] .turn { grid-template-columns: 44px 1fr; gap: 14px; }
+[data-look='midnight'] .turn .letter { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--rule); background: var(--surface); font-family: var(--f-he); font-weight: 700; color: var(--accent); font-size: 20px; }
+[data-look='midnight'] .turn.me { grid-template-columns: 1fr; justify-items: end; }
+[data-look='midnight'] .turn.me .letter { display: none; }
+[data-look='midnight'] .turn.me > div { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; }
+[data-look='midnight'] .turn.me .say { background: var(--surface-2); border-radius: 18px 18px 4px 18px; padding: 10px 16px; max-width: 85%; color: var(--ink); }
+[data-look='midnight'] .turn .say strong { color: var(--accent); }
+[data-look='midnight'] .turn .say p { line-height: 1.65; }
+[data-look='midnight'] .quote { background: #1a2131; border-inline-start: 4px solid var(--accent); border-radius: 0 14px 14px 0; padding: 14px 18px; }
+[data-look='midnight'] .quote .q-he { font-size: calc(var(--he-size, 22px) - 1px); }
+[data-look='midnight'] .quote .q-en { font-family: 'Crimson Pro', Georgia, serif; font-size: 1.22em; line-height: 1.5; }
+[data-look='midnight'] .pin { background: var(--surface); }
+[data-look='midnight'] .composer-inner { border: 1px solid var(--rule); background: var(--surface); border-radius: 28px; padding: 6px 6px 6px 18px; align-items: center; }
+[data-look='midnight'] .send { border-radius: 14px; width: 52px; height: 46px; padding: 0; }
+[data-look='midnight'] .mic { border: 0; }
+.mini.midnight { background: #0e1320; }
+.mini.midnight .m-head { border-bottom: 1px solid #263047; }
+.mini.midnight .m-src { background: #1a2131; border-left: 3px solid #d4a94f; }
+.mini.midnight .m-line { background: #ece8dd; opacity: 0.55; }
+
 /* Narrow screens: the Sefer panel covers the screen when opened. */
 @media (max-width: 999px) {
   .sefer { position: fixed; inset: 0; z-index: 45; width: 100%; max-width: none; min-width: 0; border-left: 0; }
   .sefer-head { padding-top: max(12px, env(safe-area-inset-top)); }
   .hide-mobile { display: none; }
 }
-@media (max-width: 420px) { .looks { grid-template-columns: 1fr 1fr 1fr; gap: 6px; } .look .mini { height: 90px; } }
+@media (max-width: 420px) { .looks { gap: 8px; } .look .mini { height: 90px; } }
 @media (prefers-reduced-motion: reduce) { .pulse, .dots span { animation: none; } }
