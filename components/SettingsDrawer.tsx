@@ -235,7 +235,7 @@ function VoiceDesigner({ onCreated, hasCustom }: { onCreated: (p: Partial<Settin
 
   if (!open) return (
     <div style={{ marginTop: 8 }}>
-      <button className="btn" onClick={() => setOpen(true)}>Design another voice</button>
+      <button className="btn" onClick={() => setOpen(true)}>Redesign Rebbi or design another voice</button>
       {msg && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{msg}</div>}
     </div>
   );
@@ -246,7 +246,7 @@ function VoiceDesigner({ onCreated, hasCustom }: { onCreated: (p: Partial<Settin
         <label htmlFor="vd-prompt">Describe how it should sound</label>
         <textarea id="vd-prompt" rows={5} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
       </div>
-      <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Describe qualities (age, accent, pace, tone), not a real person. Works with Live only.</div>
+      <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Describe qualities (age, accent, pace, tone), not a real person. Works with Live only. A new voice with the same name replaces the old one.</div>
       <button className="btn primary" onClick={create} disabled={busy || prompt.trim().length < 20}>{busy ? 'Creating…' : 'Create voice'}</button>
       {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
     </div>

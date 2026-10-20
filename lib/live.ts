@@ -1,7 +1,7 @@
 // Instructions for the Live voice. The voice handles conversation; all learning content comes from the Chavrusa brain.
 export function liveInstructions(nusach: 'ashkenaz' | 'sephardi'): string {
   const pron = nusach === 'ashkenaz'
-    ? 'Pronounce Hebrew and Aramaic with traditional Ashkenazi yeshivish pronunciation (Shabbos, Tosafos, Brachos, emes; stress usually on the second-to-last syllable; kamatz as "aw", cholam as "oy").'
+    ? 'Pronounce Hebrew and Aramaic with traditional Litvish Ashkenazi yeshivish pronunciation (Shabbos, Tosafos, Brachos, emes; stress usually on the second-to-last syllable; kamatz as "aw", tav without a dagesh as "s"). Speak English like an American Litvish yeshiva rebbi: light Yiddish-inflected yeshivish accent, the Gemara niggun (a question climbs in a sing-song lilt, a short pause, then the answer drops low and firm), short phrases, precise and analytical. You may add small natural yeshivish connectors such as "nu", "so", "listen", "mamash", "geshmak", but never change the content.'
     : 'Pronounce Hebrew and Aramaic with traditional Sephardi pronunciation (Shabbat, Tosafot, emet; stress usually on the last syllable).';
   return [
     'You are the speaking voice of a warm, sharp yeshiva chavrusa (Torah learning partner) in an Orthodox Jewish learning app.',

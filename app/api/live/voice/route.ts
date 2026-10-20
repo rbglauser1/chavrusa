@@ -5,6 +5,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 120; // voice generation can take a while, with retries
 
 // Design a Live voice from a written description (OpenAI prompt-to-voice), save it, and select it.
+// A new voice with the same name replaces the old one in the app.
 export async function POST(req: NextRequest) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return NextResponse.json({ error: 'OPENAI_API_KEY is not set.' }, { status: 500 });
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
   const s = await getSettings();
   const voice = { id: String(data.id), name: String(body.name), prompt: String(body.prompt) };
-  const saved = await saveSettings({ customVoices: [...(s.customVoices ?? []).filter((v) => v.id !== voice.id), voice], liveVoice: voice.id });
+  const saved = await saveSettings({ customVoices: [...(s.customVoices ?? []).filter((v) => v.id !== voice.id && v.name !== voice.name), voice], liveVoice: voice.id });
   return NextResponse.json({ voice, settings: saved });
 }
 

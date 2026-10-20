@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { VOICE_SAMPLE } from '@/lib/config';
 import { silentWav } from './useVoice';
 
@@ -19,6 +19,8 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
   const audio = useRef<HTMLAudioElement | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
+  // If the settings close mid-sample, end it and release the sound engine.
+  useEffect(() => () => { stopRef.current?.(); ctxRef.current?.close().catch(() => {}); ctxRef.current = null; }, []);
 
   function stop() {
     stopRef.current?.();
@@ -71,7 +73,9 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
       if (ended) return;
       ended = true;
       try { if (dc.readyState === 'open') dc.send(JSON.stringify({ type: 'session.close', event_id: `evt_${Date.now()}` })); } catch { /* ignore */ }
-      setTimeout(() => { try { pc.close(); } catch { /* ignore */ } el.pause(); el.srcObject = null; silent?.getTracks().forEach((t) => t.stop()); }, 300);
+      setTimeout(() => { try { pc.close(); } catch { /* ignore */ } el.pause(); el.srcObject = null; silent?.getTracks().forEach((t) => t.stop());
+        // Shut the sound engine down fully: two sound systems running at once is what makes a Live call crackle.
+        if (ctx) { ctx.close().catch(() => {}); if (ctxRef.current === ctx) ctxRef.current = null; } }, 300);
       const secs = Math.max(15, (Date.now() - started) / 1000); // a Live session bills at least 15 seconds
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: secs }) }).catch(() => {});
       if (!said) setMsg('The Live voice connected but didn\'t speak. Try it in a real call: pick it and tap Talk.');
