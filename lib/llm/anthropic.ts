@@ -22,20 +22,29 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
     return { ...m, content: [...blocks.slice(0, -1), last] };
   });
 
+  let speedSettings = true; // effort/thinking settings; dropped automatically if the model rejects them
+  const request = () => fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    // The system prompt is marked cacheable so repeated exchanges cost less.
+    body: JSON.stringify({
+      model: o.model,
+      max_tokens: 4000,
+      stream: true,
+      ...(speedSettings && o.effort ? { output_config: { effort: o.effort } } : {}),
+      ...(speedSettings && o.thinking ? { thinking: { type: o.thinking } } : {}),
+      system: [{ type: 'text', text: o.system, cache_control: { type: 'ephemeral' } }],
+      ...(tools.length ? { tools } : {}),
+      messages: withCacheMark(),
+    }),
+  });
+
   for (let step = 0; step < (o.maxSteps ?? 10); step++) {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      // The system prompt is marked cacheable so repeated exchanges cost less.
-      body: JSON.stringify({
-        model: o.model,
-        max_tokens: 4000,
-        stream: true,
-        system: [{ type: 'text', text: o.system, cache_control: { type: 'ephemeral' } }],
-        ...(tools.length ? { tools } : {}),
-        messages: withCacheMark(),
-      }),
-    });
+    let res = await request();
+    if (res.status === 400 && speedSettings && (o.effort || o.thinking)) {
+      const peek: any = await res.clone().json().catch(() => ({}));
+      if (/thinking|effort|output_config/i.test(peek?.error?.message ?? '')) { speedSettings = false; res = await request(); }
+    }
     if (!res.ok) {
       const data: any = await res.json().catch(() => ({}));
       throw new Error(`Claude error ${res.status}: ${data?.error?.message ?? 'request failed'}`);

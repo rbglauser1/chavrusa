@@ -23,6 +23,7 @@ export interface RunOptions {
   tools: ToolDef[];
   execute: ToolExecutor;
   effort?: string;
+  thinking?: 'disabled' | 'between_tools';
   maxSteps?: number;
   onText?: (delta: string) => void; // called with each piece of text as it is written
 }

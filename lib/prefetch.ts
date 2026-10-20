@@ -6,7 +6,7 @@ import { getLinks, getText, resolveName, todaysLearning } from './sefaria';
 // When the learner names a source ("Bava Metzia 21a") or asks for today's daf or this week's parsha,
 // open it right away so the text appears instantly and the AI doesn't need an extra round trip to fetch it.
 
-const TIMEOUT_MS = 4000;
+const TIMEOUT_MS = 2500;
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([p.catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), ms))]);

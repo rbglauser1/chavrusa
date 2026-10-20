@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
     const r = await run({
       model: model.id, system: TRANSLATE_PROMPT, history: [{ role: 'user', content: String(text).slice(0, 6000) }],
-      tools: [], execute: async () => '', effort: model.effort, maxSteps: 1,
+      tools: [], execute: async () => '', effort: model.effort, thinking: model.thinking, maxSteps: 1,
     });
     await logCost({ sessionId: sessionId ?? null, kind: 'translate', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) });
     return NextResponse.json({ translation: r.text });

@@ -46,7 +46,14 @@ export async function POST(req: NextRequest) {
         ]);
         const pre = await prefetchP;
         // Prepare the sugya: list the main commentaries now, and load their texts in the background.
-        const prepared = pre ? await prepareCommentaries(pre.ref, approved).catch(() => null) : null;
+        // Never make the learner wait for this: use it only if it's ready almost immediately.
+        const prepared = pre ? await Promise.race([
+          prepareCommentaries(pre.ref, approved).catch(() => null),
+          new Promise<null>((r) => setTimeout(() => r(null), 400)),
+        ]) : null;
+        if (pre && !prepared) {
+          try { after(async () => { const p = await prepareCommentaries(pre.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
+        }
         if (prepared) {
           try { after(() => warmTexts(prepared.refs, approved)); }
           catch { void warmTexts(prepared.refs, approved); } // background warm-up is optional
@@ -85,7 +92,10 @@ export async function POST(req: NextRequest) {
           ],
           tools: TOOLS,
           execute,
-          effort: model.effort,
+          // Spoken turns need quick answers: think one level less.
+          effort: spoken ? ({ high: 'medium', medium: 'low', low: settings.provider === 'openai' ? 'none' : 'low' } as Record<string, string>)[model.effort ?? ''] ?? model.effort : model.effort,
+          thinking: model.thinking,
+          maxSteps: 5,
           onText: (d) => send({ type: 'delta', text: d }),
         });
 
