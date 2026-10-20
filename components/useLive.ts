@@ -45,6 +45,7 @@ export function useLive(opts: {
   const [pauseIn, setPauseIn] = useState<number | null>(null);
   const wake = useRef<{ stream: MediaStream; ctx: AudioContext; timer: number } | null>(null);
   const bump = () => { lastActivity.current = Date.now(); };
+  const lastHeardPaint = useRef(0);
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
   const startWakeRef = useRef<(() => void) | null>(null);
   const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
@@ -120,7 +121,7 @@ export function useLive(opts: {
           userBuf.current += e.delta;
           lastInputAt.current = Date.now();
           bump();
-          setHeard(userBuf.current);
+          if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
           if (stateRef.current === 'speaking') setS('listening');
         }
         break;
@@ -168,11 +169,19 @@ export function useLive(opts: {
     closingTo.current = null;
     setS('connecting');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true } });
       mic.current = stream;
       const peer = new RTCPeerConnection();
       pc.current = peer;
-      if (!audio.current) { audio.current = new Audio(); audio.current.autoplay = true; }
+      // A real <audio> element in the page, set to play inline, gives phones the cleanest call playback.
+      if (!audio.current) {
+        const el = document.createElement('audio');
+        el.autoplay = true;
+        el.setAttribute('playsinline', '');
+        el.style.display = 'none';
+        document.body.appendChild(el);
+        audio.current = el;
+      }
       peer.ontrack = (ev) => { if (audio.current) { audio.current.srcObject = ev.streams[0]; audio.current.play().catch(() => {}); } };
       stream.getAudioTracks().forEach((t) => peer.addTrack(t, stream));
       const channel = peer.createDataChannel('oai-events');
