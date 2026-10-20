@@ -16,6 +16,11 @@ export async function POST(req: NextRequest) {
   const preview = req.nextUrl.searchParams.get('preview') === '1';
   const allowed = [...LIVE_VOICES.map((v) => v.id), ...(s.customVoices ?? []).map((v) => v.id)];
   const voice = askVoice && allowed.includes(askVoice) ? askVoice : (s.liveVoice || 'meridian');
+  // Designed voices are passed by id, with their description to help the model perform them.
+  const custom = (s.customVoices ?? []).find((v) => v.id === voice);
+  const voiceField = custom ? { id: custom.id } : voice;
+  const voiceNote = custom?.prompt ? `\nYour speaking voice: ${custom.prompt}` : '';
+  const greeting = `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
     method: 'POST',
@@ -23,10 +28,11 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       session: {
         model: LIVE.model,
-        instructions: preview
-          ? `As soon as the session starts, without waiting for the user, say exactly this in a warm, natural voice, then stop: "${VOICE_SAMPLE}"`
-          : liveInstructions(s.nusach),
-        audio: { output: { voice } },
+        instructions: (preview
+          ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
+          : liveInstructions(s.nusach)) + voiceNote,
+        ...(preview ? { input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: greeting }] }] } : {}),
+        audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },
       },
       transport: { type: 'webrtc', sdp },

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSettings, saveSettings } from '@/lib/db';
 
 export const runtime = 'nodejs';
+export const maxDuration = 120; // voice generation can take a while, with retries
 
 // Design a Live voice from a written description (OpenAI prompt-to-voice), save it, and select it.
 export async function POST(req: NextRequest) {
@@ -12,12 +13,23 @@ export async function POST(req: NextRequest) {
   const body: Record<string, unknown> = { type: 'prompt', name: String(name || 'Custom voice').slice(0, 60), prompt: String(prompt).slice(0, 2000), model: 'auto' };
   if (script && String(script).trim().length > 40) body.script_hint = String(script).slice(0, 2000);
 
-  const res = await fetch('https://api.openai.com/v1/audio/voices', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data: any = await res.json().catch(() => ({}));
+  const create = async (b: Record<string, unknown>) => {
+    const r = await fetch('https://api.openai.com/v1/audio/voices', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(b),
+    });
+    return { res: r, data: (await r.json().catch(() => ({}))) as any };
+  };
+  // OpenAI's voice generation sometimes fails on its side ("please try again"). Retry once as is,
+  // then once letting OpenAI write its own sample script from the description.
+  let { res, data } = await create(body);
+  if ((!res.ok || !data?.id) && res.status >= 500) ({ res, data } = await create(body));
+  if ((!res.ok || !data?.id) && res.status >= 500 && body.script_hint) {
+    const noScript = { ...body };
+    delete noScript.script_hint;
+    ({ res, data } = await create(noScript));
+  }
   if (!res.ok || !data?.id) {
     return NextResponse.json({ error: `OpenAI couldn't create the voice (${res.status}): ${data?.error?.message ?? 'unknown error'}` }, { status: 502 });
   }

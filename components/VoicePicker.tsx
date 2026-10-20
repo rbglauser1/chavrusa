@@ -18,6 +18,7 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
   const cache = useRef<Record<string, string>>({});
   const audio = useRef<HTMLAudioElement | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
+  const ctxRef = useRef<AudioContext | null>(null);
 
   function stop() {
     stopRef.current?.();
@@ -43,34 +44,58 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
 
   async function playLive(id: string) {
     const pc = new RTCPeerConnection();
-    pc.addTransceiver('audio', { direction: 'sendrecv' });
+    // GPT-Live only speaks while it is receiving input audio, so send it a silent track (no microphone needed).
+    const ctx = ctxRef.current;
+    let silent: MediaStream | null = null;
+    if (ctx) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      const dest = ctx.createMediaStreamDestination();
+      osc.connect(g).connect(dest);
+      osc.start();
+      const stream = dest.stream;
+      silent = stream;
+      stream.getAudioTracks().forEach((t) => pc.addTrack(t, stream));
+    } else {
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+    }
     const dc = pc.createDataChannel('oai-events');
     const el = audio.current ?? blessPlayer(); // the player already unlocked during the tap
     el.autoplay = true;
-    pc.ontrack = (ev) => { el.removeAttribute('src'); el.srcObject = ev.streams[0]; el.play().catch(() => {}); };
+    pc.ontrack = (ev) => { el.removeAttribute('src'); el.srcObject = ev.streams[0]; el.play().catch(() => setMsg('Your phone blocked the sound. Tap ▶ Hear again.')); };
     const started = Date.now();
     let ended = false;
+    let said = '';
     const end = () => {
       if (ended) return;
       ended = true;
       try { if (dc.readyState === 'open') dc.send(JSON.stringify({ type: 'session.close', event_id: `evt_${Date.now()}` })); } catch { /* ignore */ }
-      setTimeout(() => { try { pc.close(); } catch { /* ignore */ } el.pause(); el.srcObject = null; }, 300);
+      setTimeout(() => { try { pc.close(); } catch { /* ignore */ } el.pause(); el.srcObject = null; silent?.getTracks().forEach((t) => t.stop()); }, 300);
       const secs = Math.max(15, (Date.now() - started) / 1000); // a Live session bills at least 15 seconds
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: secs }) }).catch(() => {});
+      if (!said) setMsg('The Live voice connected but didn\'t speak. Try it in a real call: pick it and tap Talk.');
       setPlaying((p) => (p === id ? null : p));
     };
     stopRef.current = end;
     dc.onopen = () => {
-      // Nudge it to speak right away, in case it waits for the user.
-      dc.send(JSON.stringify({ type: 'session.instructions.append', event_id: `evt_${Date.now()}`, delegation_id: null, content: `Say the greeting now: "${VOICE_SAMPLE}"` }));
+      // Ask it to speak now, without waiting for the user.
+      dc.send(JSON.stringify({ type: 'session.commentary.append', event_id: `greet_${Date.now()}`, delegation_id: null, content: `Say exactly this now: "${VOICE_SAMPLE}"` }));
+    };
+    dc.onmessage = (ev) => {
+      try {
+        const e = JSON.parse(ev.data);
+        if (e.type === 'session.output_transcript.delta' && e.delta) { said += e.delta; setMsg(`♪ ${said}`); }
+        if (e.type === 'error' || e.type === 'session.error') setMsg(`Live voice: ${e.error?.message ?? e.message ?? 'error'}`);
+      } catch { /* ignore */ }
     };
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     const res = await fetch(`/api/live/session?voice=${encodeURIComponent(id)}&preview=1`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
     const d = await res.json().catch(() => ({}));
-    if (!res.ok || !d.sdp) { end(); throw new Error(d.error ?? 'Sample failed'); }
+    if (!res.ok || !d.sdp) { said = 'x'; end(); throw new Error(d.error ?? 'Sample failed'); }
     await pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
-    setTimeout(end, 10_000);
+    setTimeout(end, 12_000);
   }
 
   // iPhones only allow sound that starts during a tap. Play a moment of silence right now, inside the tap,
@@ -87,6 +112,14 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
     a.srcObject = null;
     a.src = silentWav();
     a.play().catch(() => {});
+    // Also start (inside the tap) the small sound engine used to feed silence to Live samples.
+    if (kind === 'live') {
+      try {
+        const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        ctxRef.current ??= new AC();
+        void ctxRef.current.resume();
+      } catch { /* optional */ }
+    }
     return a;
   }
 
