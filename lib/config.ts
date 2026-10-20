@@ -128,6 +128,8 @@ export interface Settings {
   voice: string;            // voice for Basic talk mode (OpenAI text-to-speech)
   talkMode: 'live' | 'basic'; // live = natural speech-to-speech (GPT-Live); basic = cheaper step-by-step voice
   liveVoice: string;        // voice for Live mode
+  liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
+  liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
 }
@@ -149,6 +151,8 @@ export const DEFAULT_SETTINGS: Settings = {
   voice: 'ash',
   talkMode: 'live',
   liveVoice: 'meridian',
+  liveIdleSec: 60,
+  liveWake: true,
   autoSpeak: false,
   speechRate: 1,
 };

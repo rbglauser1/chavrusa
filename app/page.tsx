@@ -64,6 +64,9 @@ export default function Home() {
       liveDelegation.current = null;
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds, sessionId: sessionIdRef.current }) }).catch(() => {});
     },
+    isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0,
+    idleSeconds: () => settingsRef.current.liveIdleSec ?? 60,
+    wakeOnSpeech: () => settingsRef.current.liveWake ?? true,
   });
 
   function pumpLive() {
@@ -440,12 +443,16 @@ export default function Home() {
           <div className="voicebar" role="status">
             <span className={`orb ${live.state === 'listening' ? 'listening' : live.state === 'speaking' ? 'speaking' : 'idle'}`} aria-hidden="true" />
             <span className="vtext" dir="auto">
-              {live.state === 'connecting' ? 'Connecting…'
+              {live.state === 'paused' ? (settings.liveWake ? 'Paused to save cost. Just start talking, or tap Resume.' : 'Paused to save cost. Tap Resume to continue.')
+                : live.pauseIn ? `Pausing in ${live.pauseIn}s… say something to keep going`
+                : live.state === 'connecting' ? 'Connecting…'
                 : live.heard ? `“${live.heard.slice(-120)}”`
                 : live.state === 'thinking' ? (status || 'Looking into it…')
                 : live.state === 'speaking' ? 'Speaking… just talk to interrupt'
                 : 'Listening… just talk'}
             </span>
+            {live.state === 'paused' && <button className="btn primary" onClick={() => live.start()}>Resume</button>}
+            {live.pauseIn && live.state !== 'paused' && <button className="btn" onClick={() => live.keepAwake()}>Stay</button>}
             <button className="btn" onClick={() => live.stop()}>End</button>
           </div>
         )}

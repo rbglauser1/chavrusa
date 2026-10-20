@@ -133,6 +133,25 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp 
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
+            {s.talkMode === 'live' && (
+              <div className="field">
+                <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
+                <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
+                  <option value="30">30 seconds</option>
+                  <option value="60">1 minute</option>
+                  <option value="120">2 minutes</option>
+                  <option value="300">5 minutes</option>
+                  <option value="0">Never pause</option>
+                </select>
+              </div>
+            )}
+            {s.talkMode === 'live' && s.liveIdleSec > 0 && (
+              <div className="field">
+                <label>When paused</label>
+                <Seg value={s.liveWake ? 'wake' : 'tap'} options={[['wake', 'Start talking to resume'], ['tap', 'Tap Resume']]} onPick={(v) => onChange({ liveWake: v === 'wake' })} />
+                {s.liveWake && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Your first second or two may be missed while it reconnects. While paused, the microphone listens only on your device; nothing is sent until you speak.</div>}
+              </div>
+            )}
             <div className="field">
               <label htmlFor="voice-pick">Basic voice (also used for Listen)</label>
               <select id="voice-pick" value={s.voice} onChange={(e) => onChange({ voice: e.target.value })}>

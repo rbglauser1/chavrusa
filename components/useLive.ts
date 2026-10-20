@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // learner says something about the learning, it "delegates" to us. We send the learner's words to the
 // Chavrusa brain (/api/chat) and hand the answer back for the voice to say.
 
-export type LiveState = 'off' | 'connecting' | 'listening' | 'thinking' | 'speaking';
+export type LiveState = 'off' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'paused';
 
 const MAX_CHARS = 1800; // the voice accepts about 500 tokens per hand-back
 
@@ -20,7 +20,10 @@ function forSpeech(text: string): string {
 export function useLive(opts: {
   onRequest: (text: string, delegationId: string) => void; // learner said something: ask the brain
   onError: (msg: string) => void;
-  onEnded: (seconds: number) => void;
+  onEnded: (seconds: number) => void;          // a connected stretch ended (for cost tracking)
+  isBusy: () => boolean;                        // the brain is still working on something
+  idleSeconds: () => number;                    // pause after this much quiet (0 = never)
+  wakeOnSpeech: () => boolean;                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
   const [heard, setHeard] = useState('');           // what the learner is saying right now
@@ -38,6 +41,12 @@ export function useLive(opts: {
   const speakTimer = useRef<number | undefined>(undefined);
   const pending = useRef<Set<string>>(new Set());
   const stateRef = useRef<LiveState>('off');
+  const lastActivity = useRef(0);
+  const [pauseIn, setPauseIn] = useState<number | null>(null);
+  const wake = useRef<{ stream: MediaStream; ctx: AudioContext; timer: number } | null>(null);
+  const bump = () => { lastActivity.current = Date.now(); };
+  const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
+  const startWakeRef = useRef<(() => void) | null>(null);
   const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
 
   const send = useCallback((obj: Record<string, unknown>) => {
@@ -57,22 +66,27 @@ export function useLive(opts: {
     setHeard('');
   }, []);
 
-  const finish = useCallback(() => {
-    if (stateRef.current === 'off') return;
+  // End the current connection. `next` is 'off' (call ended) or 'paused' (resume later).
+  const finish = useCallback((next: 'off' | 'paused' = 'off') => {
+    if (!pc.current && (stateRef.current === 'off' || stateRef.current === 'paused')) { setS(next === 'off' ? 'off' : stateRef.current); return; }
     const secs = Math.max(seconds.current, startedAt.current ? (Date.now() - startedAt.current) / 1000 : 0);
     teardown();
-    setS('off');
+    setS(next);
+    setPauseIn(null);
     seconds.current = 0; startedAt.current = 0;
     optsRef.current.onEnded(secs);
   }, [teardown]);
 
-  const stop = useCallback(() => {
-    send({ type: 'session.close' });
-    // Give the close a moment to go out, then hang up.
-    window.setTimeout(finish, 300);
-  }, [send, finish]);
+  const stopWakeWatch = useCallback(() => {
+    const w = wake.current;
+    if (!w) return;
+    clearInterval(w.timer);
+    w.stream.getTracks().forEach((t) => t.stop());
+    w.ctx.close().catch(() => {});
+    wake.current = null;
+  }, []);
 
-  useEffect(() => () => { teardown(); }, [teardown]);
+  useEffect(() => () => { teardown(); stopWakeWatch(); }, [teardown, stopWakeWatch]);
 
   // Wait until the learner's words have stopped arriving, then hand them to the brain.
   const handleDelegation = useCallback((delegationId: string) => {
@@ -105,11 +119,13 @@ export function useLive(opts: {
         if (typeof e.delta === 'string') {
           userBuf.current += e.delta;
           lastInputAt.current = Date.now();
+          bump();
           setHeard(userBuf.current);
           if (stateRef.current === 'speaking') setS('listening');
         }
         break;
       case 'session.output_transcript.delta':
+        bump();
         setS('speaking');
         if (speakTimer.current) clearTimeout(speakTimer.current);
         speakTimer.current = window.setTimeout(() => {
@@ -117,6 +133,7 @@ export function useLive(opts: {
         }, 900);
         break;
       case 'session.delegation.created':
+        bump();
         if (e.delegation?.id) handleDelegation(e.delegation.id);
         break;
       case 'session.usage.updated':
@@ -124,8 +141,12 @@ export function useLive(opts: {
         break;
       case 'session.closed':
         if (typeof e.usage?.seconds === 'number') seconds.current = e.usage.seconds;
-        if (e.reason === 'expired') optsRef.current.onError('The live session reached its time limit. Tap Talk to continue.');
-        finish();
+        if (pc.current) {
+          const to = closingTo.current ?? (e.reason === 'expired' ? 'paused' : 'off'); // expired: just reconnect on the next tap or word
+          closingTo.current = null;
+          finish(to);
+          if (to === 'paused' && optsRef.current.wakeOnSpeech()) startWakeRef.current?.();
+        }
         break;
       case 'error':
         optsRef.current.onError(`Live voice: ${e.error?.message ?? 'something went wrong'}`);
@@ -137,11 +158,14 @@ export function useLive(opts: {
   const answer = useCallback((delegationId: string, text: string) => {
     if (!pending.current.has(delegationId)) return;
     pending.current.delete(delegationId);
+    bump();
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: forSpeech(text) || 'Let’s keep going.' });
   }, [send]);
 
   const start = useCallback(async () => {
-    if (stateRef.current !== 'off') return;
+    if (stateRef.current !== 'off' && stateRef.current !== 'paused') return;
+    stopWakeWatch();
+    closingTo.current = null;
     setS('connecting');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
@@ -154,10 +178,10 @@ export function useLive(opts: {
       const channel = peer.createDataChannel('oai-events');
       dc.current = channel;
       channel.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch { /* ignore */ } };
-      channel.onopen = () => { startedAt.current = Date.now(); setS('listening'); };
+      channel.onopen = () => { startedAt.current = Date.now(); bump(); setS('listening'); };
       peer.onconnectionstatechange = () => {
         if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {
-          if (stateRef.current !== 'off') { optsRef.current.onError('The live connection dropped. Tap Talk to reconnect.'); finish(); }
+          if (pc.current === peer) { optsRef.current.onError('The live connection dropped. Tap Talk to reconnect.'); finish('off'); }
         }
       };
       const offer = await peer.createOffer();
@@ -174,9 +198,76 @@ export function useLive(opts: {
       teardown();
       setS('off');
     }
-  }, [onEvent, finish, teardown]);
+  }, [onEvent, finish, teardown, stopWakeWatch]);
+
+  // While paused: listen locally (free, nothing is sent anywhere) and reconnect when the learner speaks.
+  const startWakeWatch = useCallback(async () => {
+    if (wake.current) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AC();
+      await ctx.resume().catch(() => {});
+      const an = ctx.createAnalyser();
+      an.fftSize = 1024;
+      ctx.createMediaStreamSource(stream).connect(an);
+      const buf = new Float32Array(an.fftSize);
+      let floor = -1, loudSince = 0;
+      const timer = window.setInterval(() => {
+        if (stateRef.current !== 'paused') { stopWakeWatch(); return; }
+        an.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        const rms = Math.sqrt(sum / buf.length);
+        floor = floor < 0 ? rms : rms < floor ? floor * 0.8 + rms * 0.2 : floor * 0.995 + rms * 0.005;
+        if (rms > Math.max(0.03, floor * 3)) {
+          if (!loudSince) loudSince = Date.now();
+          else if (Date.now() - loudSince > 250) { stopWakeWatch(); start(); }
+        } else loudSince = 0;
+      }, 80);
+      wake.current = { stream, ctx, timer };
+    } catch { /* if the mic can't be opened, the learner can still tap Resume */ }
+  }, [start, stopWakeWatch]);
+
+  startWakeRef.current = startWakeWatch;
+
+  const pause = useCallback(() => {
+    if (closingTo.current) return;
+    closingTo.current = 'paused';
+    send({ type: 'session.close' });
+    window.setTimeout(() => {
+      if (!pc.current) return; // already handled by session.closed
+      closingTo.current = null;
+      finish('paused');
+      if (optsRef.current.wakeOnSpeech()) startWakeWatch();
+    }, 400);
+  }, [send, finish, startWakeWatch]);
+
+  // End the call completely.
+  const stop = useCallback(() => {
+    stopWakeWatch();
+    if (stateRef.current === 'paused') { setS('off'); setPauseIn(null); return; }
+    closingTo.current = 'off';
+    send({ type: 'session.close' });
+    window.setTimeout(() => { if (pc.current) { closingTo.current = null; finish('off'); } }, 400);
+  }, [send, finish, stopWakeWatch]);
+
+  // The quiet clock: runs only while nobody is talking and nothing is being worked on.
+  useEffect(() => {
+    if (state === 'off' || state === 'paused' || state === 'connecting') { setPauseIn(null); return; }
+    const id = window.setInterval(() => {
+      const limit = optsRef.current.idleSeconds();
+      if (pending.current.size > 0 || optsRef.current.isBusy() || stateRef.current === 'speaking') bump();
+      if (!limit) { setPauseIn(null); return; }
+      const idle = (Date.now() - lastActivity.current) / 1000;
+      const left = limit - idle;
+      setPauseIn(left <= 10 && left > 0 ? Math.ceil(left) : null);
+      if (left <= 0) pause();
+    }, 1000);
+    return () => clearInterval(id);
+  }, [state, pause]);
 
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  return { state, heard, supported, start, stop, answer, active: state !== 'off' };
+  return { state, heard, supported, start, stop, answer, pauseIn, keepAwake: bump, active: state !== 'off' };
 }
