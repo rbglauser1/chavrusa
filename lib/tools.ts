@@ -106,7 +106,7 @@ export type ToolEvent =
   | { type: 'requests'; items: { id: string; content: string }[] };
 
 // The learner sees the full text; the AI gets a lean copy (no vowels, capped length) to save cost and time.
-const MAX_HE_CHARS = 3500;
+const MAX_HE_CHARS = 2500; // the AI reads a lean copy; the learner sees the full text
 const MAX_EN_CHARS = 1500;
 
 function clip(lines: string[], max: number): { text: string; clipped: boolean } {

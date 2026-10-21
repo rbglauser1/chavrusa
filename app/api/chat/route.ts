@@ -8,7 +8,7 @@ import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
-import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
+import { isJustOpening, openingReply, prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
 import { after } from 'next/server';
 import { addSource } from '@/lib/db';
 
@@ -76,8 +76,23 @@ export async function POST(req: NextRequest) {
         }
         await addMessage(sid, 'user', message);
 
+        // Just opening a place? Do it with no AI call (free and instant). The AI starts on the next turn.
+        if (pre && isJustOpening(message)) {
+          try { after(async () => { const p = await prepareCommentaries(pre.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
+          const reply = openingReply(pre, spoken);
+          await addMessage(sid, 'assistant', reply, { opened: pre.ref, free: true });
+          send({ type: 'reply', text: reply, model: 'Opened without AI (free)' });
+          await touchSession(sid);
+          send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
+          return;
+        }
+        // If the app opened a place on the last turn, hand its text to the AI now so it doesn't spend a step fetching it.
+        const lastBot = [...history].reverse().find((m) => m.role === 'assistant');
+        const openedRef = !pre && typeof lastBot?.meta?.opened === 'string' ? lastBot.meta.opened as string : null;
+        const opened = openedRef ? sources.find((x) => x.ref === openedRef)?.data ?? null : null;
+
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
-        const quick = settings.quickReplies !== false && isQuickReply(message) && !pre;
+        const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
         const model = MODELS[settings.provider][quick ? 'basic' : settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
         const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid);
@@ -99,7 +114,9 @@ export async function POST(req: NextRequest) {
             ...history.map((m) => ({ role: m.role, content: m.content })),
             { role: 'user' as const, content: pre
               ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre)}${prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : ''}`
-              : message },
+              : opened
+                ? `${message}\n\n[The app opened this source for the learner on the last turn. Its text is below, so you do not need get_text for it.]\n${textForModel(opened)}`
+                : message },
           ],
           tools: TOOLS,
           execute,

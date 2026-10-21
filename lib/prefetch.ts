@@ -80,3 +80,27 @@ export async function prepareCommentaries(ref: string, approved: ApprovedEntry[]
 export function warmTexts(refs: string[], approved: ApprovedEntry[]): Promise<unknown> {
   return Promise.allSettled(refs.slice(0, 8).map((r) => getText(r, approved)));
 }
+
+// Is the learner only asking to open a place ("Berachos 36a", "let's learn Bava Kamma 2b", "bring up today's daf")?
+// Then the app opens it with no AI call at all, and the AI joins on the next turn.
+const FILLER = new Set(('let lets let\'s us learn learning open opening bring up pull show me go to goto start starting begin turn the a ' +
+  'gemara gemora gemarah daf amud page side mishna mishnah perek chapter pasuk posuk passuk verse parsha parshah parasha sedra ' +
+  'today todays today\'s this week weeks week\'s yomi please can could you would i want wanna to do with from at on in of ' +
+  'and now ok okay so hi hello shalom again lets\' ready get let\'s').split(' '));
+export function isJustOpening(message: string): boolean {
+  let m = message.toLowerCase().replace(/[’]/g, "'");
+  for (const c of candidateRefs(message)) m = m.replace(c.toLowerCase(), ' ');
+  m = m.replace(/\b\d{1,3}[ab]?(?::\d{1,3}(?:-\d{1,3})?)?\b/g, ' ');
+  const words = m.replace(/[^a-z' ]/g, ' ').split(/\s+/).filter((w) => w && !FILLER.has(w));
+  // Allow one leftover word (often part of a tractate name the pattern didn't catch).
+  return words.length <= 1 && !/\?\s*$/.test(message.trim()) && !/\b(why|what|how|explain|meaning|mean|kashya|question)\b/i.test(message);
+}
+
+// What the Chavrusa says when the app opened the place by itself (no AI call).
+export function openingReply(s: SourceData, spoken: boolean): string {
+  const name = s.ref.replace(/ (\d+)([ab])\b/, (_, d, a) => ` ${d}${a === 'a' ? 'a' : 'b'}`);
+  if (spoken) return `Okay, I've opened ${name}. Do you want to start from the top, or is there a specific place you want to look at?`;
+  const first = (s.he[0] ?? '').replace(/\s+/g, ' ').trim();
+  const line = first.length > 220 ? first.slice(0, 220).replace(/\s+\S*$/, '') + ' …' : first;
+  return `Here's **${name}**. It opens:\n\n> ${line}\n\nShould we start from the top, or is there a specific place you want to look at (for example, "at the two dots" or "the line starting with…")?`;
+}
