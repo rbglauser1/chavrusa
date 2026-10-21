@@ -8,7 +8,8 @@ import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
-import { isJustOpening, openingReply, prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
+import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
+import { routeWithoutAI } from '@/lib/router';
 import { after } from 'next/server';
 import { addSource } from '@/lib/db';
 
@@ -76,16 +77,32 @@ export async function POST(req: NextRequest) {
         }
         await addMessage(sid, 'user', message);
 
-        // Just opening a place? Do it with no AI call (free and instant). The AI starts on the next turn.
-        if (pre && isJustOpening(message)) {
-          try { after(async () => { const p = await prepareCommentaries(pre.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
-          const reply = openingReply(pre, spoken);
-          await addMessage(sid, 'assistant', reply, { opened: pre.ref, free: true });
-          send({ type: 'reply', text: reply, model: 'Opened without AI (free)' });
+        // Anything the app can do by itself (open a place, turn the page, open Rashi, switch style, repeat, thanks…)
+        // is done here with no AI call: free and instant. Only real learning goes to the AI.
+        const routed = await routeWithoutAI({ message, spoken, settings, sessionId: sid, sources, history, memories, approved, pre }).catch(() => null);
+        if (routed?.settings) {
+          settings = await saveSettings(routed.settings);
+          send({ type: 'mode', settings: routed.settings });
+        }
+        if (routed?.source && routed.source !== pre && !sources.some((x) => x.ref === routed.source!.ref)) {
+          send({ type: 'source', source: routed.source });
+          await addSource(sid, routed.source);
+          sources.push({ id: 'routed', ref: routed.source.ref, he_ref: routed.source.heRef, data: routed.source, created_at: new Date().toISOString() });
+        } else if (routed?.source && routed.source !== pre) {
+          send({ type: 'source', source: routed.source }); // already in this session: bring it back into view
+        }
+        if (routed?.reply && routed.then !== 'ai') {
+          if (routed.source) {
+            const src = routed.source;
+            try { after(async () => { const p = await prepareCommentaries(src.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
+          }
+          await addMessage(sid, 'assistant', routed.reply, { free: true, ...(routed.source ? { opened: routed.source.ref } : {}) });
+          send({ type: 'reply', text: routed.reply, model: 'No AI needed (free)' });
           await touchSession(sid);
           send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
           return;
         }
+
         // If the app opened a place on the last turn, hand its text to the AI now so it doesn't spend a step fetching it.
         const lastBot = [...history].reverse().find((m) => m.role === 'assistant');
         const openedRef = !pre && typeof lastBot?.meta?.opened === 'string' ? lastBot.meta.opened as string : null;

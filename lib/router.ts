@@ -1,0 +1,290 @@
+import 'server-only';
+// The no-AI path. Anything the app can do by itself (open a place, turn the page, open Rashi, switch style,
+// repeat, say thanks…) is done here for free. Only real learning (explaining, asking, reasoning) goes to the AI.
+
+import { ApprovedEntry } from './approval';
+import { MODELS, Provider, Settings, styleById, Tier } from './config';
+import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCost, SourceData, SourceRow } from './db';
+import { isJustOpening, openingReply } from './prefetch';
+import { getLinks, getText, todaysLearning } from './sefaria';
+
+export interface RouteCtx {
+  message: string;
+  spoken: boolean;
+  settings: Settings;
+  sessionId: string;
+  sources: SourceRow[];
+  history: MessageRow[];
+  memories: Memory[];
+  approved: ApprovedEntry[];
+  pre: SourceData | null;
+}
+
+export interface Routed {
+  reply?: string;                 // a full answer: no AI needed
+  source?: SourceData;            // a source the app opened (shown in the Sefer panel)
+  settings?: Partial<Settings>;   // settings to save
+  then?: 'ai';                    // apply the settings, then still let the AI answer this turn
+}
+
+// Lowercase, no punctuation, without polite padding at either end.
+function norm(m: string): string {
+  let s = m.toLowerCase().replace(/[’]/g, "'").replace(/[^a-z0-9' ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const lead = /^(ok(ay)?|so|now|please|hey|um+|uh+|can you|could you|would you|let's|lets|let us|i want to|i'd like to|go ahead and|just)\s+/;
+  for (let i = 0; i < 4 && lead.test(s); i++) s = s.replace(lead, '');
+  return s.replace(/\s+(please|now|thanks|thank you)$/, '').trim();
+}
+
+// True when nothing is left once the given words are removed.
+function onlyWords(s: string, keep: RegExp, filler: Set<string>): boolean {
+  const rest = s.replace(keep, ' ').split(' ').filter((w) => w && !filler.has(w));
+  return rest.length === 0;
+}
+
+// The last main text (not a commentary) the learner has open.
+function currentMain(sources: SourceRow[]): SourceData | null {
+  for (let i = sources.length - 1; i >= 0; i--) if (!/ on /.test(sources[i].ref)) return sources[i].data;
+  return sources.length ? sources[sources.length - 1].data : null;
+}
+
+async function tryText(ref: string, approved: ApprovedEntry[]): Promise<SourceData | null> {
+  try {
+    const s = await getText(ref, approved);
+    if (!s.verdict.allowed || (!s.he.length && !s.en.length)) return null;
+    const src: SourceData & { verdict?: unknown } = { ...s };
+    delete src.verdict;
+    return src;
+  } catch { return null; }
+}
+
+// ---------- 1. Thanks, goodbye, greetings ----------
+const THANKS = /^(thanks|thank you|thank you so much|thanks so much|thanks a lot|yasher koach|yasher koyach|yasher ko'ach|todah|toda|todah rabbah|great thanks|perfect thanks)$/;
+const BYE = /^(bye|goodbye|good bye|good night|goodnight|that's it|that's it for (today|now|tonight)|i'm done|im done|done for (today|now|tonight)|gotta go|i have to go|i need to go|stop here|let's stop|stop for (today|now))$/;
+const HELLO = /^(hi|hello|hey|hi there|shalom|shalom aleichem|good (morning|afternoon|evening)|boker tov|erev tov)$/;
+
+async function greeting(ctx: RouteCtx): Promise<string> {
+  const [today, last] = await Promise.all([
+    Promise.race([todaysLearning().catch(() => []), new Promise<{ title: string; display: string; ref: string }[]>((r) => setTimeout(() => r([]), 1500))]),
+    lastPlace(ctx.sessionId).catch(() => null),
+  ]);
+  const daf = today.find((i) => /daf yomi/i.test(i.title));
+  const parsha = today.find((i) => /parash/i.test(i.title));
+  const opts = [
+    last ? `pick up where we left off (${last.source.ref})` : null,
+    daf ? `today's daf (${daf.display || daf.ref})` : null,
+    parsha ? `this week's parsha (${parsha.display || parsha.ref})` : null,
+  ].filter(Boolean) as string[];
+  const list = opts.length > 1 ? `${opts.slice(0, -1).join(', ')}, or ${opts[opts.length - 1]}` : opts[0] ?? 'anything you like';
+  return `Shalom! What are we learning? We could ${list}. Or just tell me where.`;
+}
+
+// ---------- 2. Where we left off ----------
+async function lastPlace(currentSession: string): Promise<{ source: SourceData; lastWords: string | null } | null> {
+  const sessions = (await listSessions()).filter((s) => s.id !== currentSession).slice(0, 5);
+  for (const s of sessions) {
+    const srcs = await listSources(s.id);
+    if (!srcs.length) continue;
+    const main = currentMain(srcs);
+    if (!main) continue;
+    const msgs = await listMessages(s.id, 6);
+    const lastBot = [...msgs].reverse().find((m) => m.role === 'assistant');
+    return { source: main, lastWords: lastBot ? lastBot.content : null };
+  }
+  return null;
+}
+const RESUME = /\b(where were we|where did we (leave off|stop)|where we left off|pick up where|continue (from )?(where we|last time)|last time|resume|carry on from last time)\b/;
+
+// ---------- 3. Turning pages ----------
+type Unit = 'amud' | 'daf' | 'pasuk' | 'perek' | 'mishnah';
+const NAV = /^(go |move |turn |let's go |on |onto |on to )?(to )?(the )?(next|previous|prev|last|back( to)?( the| an| a)?( previous)?|forward( to)?( the| an| a)?) ?(amud|omud|daf|page|side|pasuk|posuk|passuk|verse|line of the pasuk|perek|chapter|mishna|mishnah)$/;
+const NAV2 = /^(go )?back (an?|one) (amud|omud|daf|page|pasuk|posuk|verse|perek|chapter|mishna|mishnah)$/;
+
+function unitOf(w: string): Unit {
+  if (/amud|omud|side/.test(w)) return 'amud';
+  if (/daf|page/.test(w)) return 'daf';
+  if (/pasuk|posuk|passuk|verse/.test(w)) return 'pasuk';
+  if (/mishna/.test(w)) return 'mishnah';
+  return 'perek';
+}
+
+function stepRef(ref: string, dir: 1 | -1, unit: Unit): string[] {
+  // Talmud: "Berakhot 36b", "Berakhot 36b:3-7"
+  const t = ref.match(/^(.*?) (\d+)([ab])(?::[\d-]+)?$/);
+  if (t) {
+    const [book, n, side] = [t[1], Number(t[2]), t[3]];
+    if (unit === 'daf' || unit === 'perek') return [`${book} ${n + dir}a`];
+    if (dir === 1) return [side === 'a' ? `${book} ${n}b` : `${book} ${n + 1}a`];
+    return [side === 'b' ? `${book} ${n}a` : `${book} ${n - 1}b`];
+  }
+  // Tanakh / Mishnah: "Genesis 1:5", "Genesis 1:1-5", "Mishnah Berakhot 1:1", "Genesis 2"
+  const v = ref.match(/^(.*?) (\d+)(?::(\d+)(?:-(\d+))?)?$/);
+  if (v) {
+    const [book, ch] = [v[1], Number(v[2])];
+    const start = v[3] ? Number(v[3]) : null;
+    const end = v[4] ? Number(v[4]) : start;
+    if (unit === 'perek' || start === null) return [`${book} ${ch + dir}`];
+    if (dir === 1) return [`${book} ${ch}:${(end ?? 0) + 1}`, `${book} ${ch + 1}:1`];
+    return start > 1 ? [`${book} ${ch}:${start - 1}`] : ch > 1 ? [`${book} ${ch - 1}`] : [];
+  }
+  return [];
+}
+
+// ---------- 4. Opening a commentary on what's open ----------
+const COMMENTARIES: [RegExp, RegExp][] = [
+  [/\brashi\b/, /^Rashi$/i],
+  [/\btosa?fo[st]\b|\btosfos\b|\btosafot\b/, /^Tosafot$/i],
+  [/\brashbam\b/, /^Rashbam$/i],
+  [/\bramban\b/, /^Ramban$/i],
+  [/\bibn ezra\b|\bevan ezra\b/, /^Ibn Ezra$/i],
+  [/\bs'?e?forno\b/, /^Sforno$/i],
+  [/\bo?h?r ha ?chaim\b|\bor hachayim\b/, /^Or HaChaim$/i],
+  [/\bkli yakar\b|\bk'li yakar\b/, /^Kli Yakar$/i],
+  [/\bbaal ha ?turim\b/, /^Baal HaTurim$/i],
+  [/\bonkelos\b|\bonkeles\b|\btargum\b/, /Onkelos/i],
+  [/\brashba\b/, /^Rashba$/i],
+  [/\britva\b/, /^Ritva$/i],
+  [/\bran\b/, /^Ran$/i],
+  [/\bmaharsha\b/, /Maharsha/i],
+  [/\bbartenura\b|\bbertinoro\b|\bbartenuro\b/, /^Bartenura$/i],
+  [/\btosafos yom tov\b|\btosfos yom tov\b/, /Tosafot Yom Tov/i],
+  [/\bmishna(h)? berura(h)?\b/, /Mishnah Berurah/i],
+];
+const OPEN_FILLER = new Set(['open', 'show', 'bring', 'up', 'see', 'look', 'at', 'the', 'me', 'go', 'to', 'what', 'about', 'on', 'this', 'here', 'it', 'inside', 'in', 'pull', 'read', 'lets', "let's", 'there', 'have', 'a', 'let', 'us', 'check', 'out', 'and', 'too', 'also', 'now', 'next']);
+
+async function openCommentary(ctx: RouteCtx, s: string): Promise<Routed | null> {
+  const hit = COMMENTARIES.find(([said]) => said.test(s));
+  if (!hit || !onlyWords(s, hit[0], OPEN_FILLER) || /\b(say|says|saying|mean|means|why|how|explain|ask|asking|bothered|hold|holds)\b/.test(s)) return null;
+  const main = currentMain(ctx.sources);
+  if (!main) return null;
+  const links = await getLinks(main.ref, ctx.approved, ['Commentary', 'Targum']).catch(() => null);
+  const ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
+  if (!ofIt.length) {
+    return { reply: `I couldn't find an approved ${s.replace(/\b(open|show|bring|up|the|me|lets|let's)\b/g, '').trim()} on ${main.ref} on Sefaria.` };
+  }
+  const index = ofIt[0].ref.replace(/\s\d.*$/, '');               // "Rashi on Berakhot"
+  const section = main.ref.match(/\s(\d.*)$/)?.[1] ?? '';          // "36b" or "1:1-5"
+  const src = (section && await tryText(`${index} ${section}`, ctx.approved)) || await tryText(ofIt[0].ref, ctx.approved);
+  if (!src) return null;
+  const n = ofIt.length;
+  const reply = ctx.spoken
+    ? `Okay, I've opened ${src.ref}. ${n > 1 ? 'Which one do you want to look at?' : 'Take a look.'}`
+    : `${openingReply(src, false).replace(/\n\nShould we start.*$/s, '')}\n\n${n > 1 ? `There are ${n} comments here. Which one do you want to look at?` : 'Take a look. What is it bothered by?'}`;
+  return { reply, source: src };
+}
+
+// ---------- 5. Style and model ----------
+const STYLE_WORDS: [RegExp, string][] = [
+  [/\b(challenger|challenge me|sharp|push me( harder)?|harder)\b/, 'challenger'],
+  [/\b(patient( teacher)?|gentle|gentler|go easy|easier on me)\b/, 'patient'],
+  [/\b(sevara|svara|logic)\b/, 'sevara'],
+  [/\b(iyun|b'?iyun|lomdus|lomdish)\b/, 'iyun'],
+  [/\b(bekius|bekiyus|bekiut|quick review|review mode)\b/, 'bekius'],
+  [/\b(mussar|inspirational|inspire me)\b/, 'mussar'],
+  [/\b(farher|test me|quiz me|test mode|quiz mode)\b/, 'farher'],
+  [/\b(simple( explainer)?|simpler|explainer)\b/, 'simple'],
+  [/\b(chassidic|chasidic|chassidish|chasidish|chassidus|chasidus)\b/, 'chassidic'],
+];
+const STYLE_FILLER = new Set(['switch', 'change', 'to', 'the', 'style', 'mode', 'use', 'try', 'be', 'more', 'a', 'go', 'into', 'teacher', 'please', 'me', 'i', 'want', 'with', 'learn', 'learning', 'way', 'like', 'instead', 'can', 'you', 'now', 'do', 'lets', "let's", 'put', 'in', 'on', 'set', 'it', 'as']);
+const MODEL_WORDS: [RegExp, Provider, Tier | null][] = [
+  [/\bopus\b/, 'anthropic', 'top'], [/\bsonnet\b/, 'anthropic', 'middle'], [/\bhaiku\b/, 'anthropic', 'basic'],
+  [/\bastra\b/, 'openai', 'top'], [/\bsol\b/, 'openai', 'middle'], [/\bluna\b/, 'openai', 'basic'],
+  [/\bclaude\b|\banthropic\b/, 'anthropic', null], [/\bopen ?ai\b|\bchat ?gpt\b|\bgpt\b/, 'openai', null],
+];
+
+function styleSwitch(ctx: RouteCtx, s: string): Routed | null {
+  const hit = STYLE_WORDS.find(([re]) => re.test(s));
+  if (!hit || !onlyWords(s, hit[0], STYLE_FILLER)) return null;
+  const st = styleById(hit[1]);
+  const explicit = /\b(style|mode|switch|change)\b/.test(s) || s === st.short.toLowerCase() || s === st.name.toLowerCase();
+  if (explicit) {
+    return { settings: { style: st.id }, reply: `Okay, switched to ${st.name}.${ctx.sources.length ? ' Shall we keep going?' : ' Where would you like to start?'}` };
+  }
+  // "Quiz me", "push me harder": switch, and let the AI act on it right away.
+  return { settings: { style: st.id }, then: 'ai' };
+}
+
+function modelSwitch(s: string): Routed | null {
+  if (!/\b(use|switch|change|go|move|try)\b/.test(s)) return null;
+  const hit = MODEL_WORDS.find(([re]) => re.test(s));
+  if (!hit) return null;
+  const filler = new Set([...STYLE_FILLER, 'model', 'ai', 'brain', 'claude', 'anthropic', 'openai', 'open', 'gpt', 'chatgpt', 'chat', 'over', 'back']);
+  if (!onlyWords(s, hit[0], filler)) return null;
+  const patch: Partial<Settings> = { provider: hit[1] };
+  if (hit[2]) patch.tier = hit[2];
+  return { settings: patch };
+}
+
+// ---------- The router ----------
+export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
+  const { message, spoken, pre } = ctx;
+  const s = norm(message);
+  if (!s) return null;
+
+  // Open a named place ("Berachos 36b", "today's daf", "what's this week's parsha?").
+  if (pre && (isJustOpening(message) || (/\b(today'?s daf|daf yomi|this week'?s parsha|parsha this week)\b/.test(s) && s.split(' ').length <= 8))) {
+    return { reply: openingReply(pre, spoken), source: pre };
+  }
+  if (pre) return null; // a question about a named place: that's for the AI
+
+  if (THANKS.test(s)) return { reply: ctx.sources.length ? 'Bevakasha! Ready for the next step whenever you are.' : 'Bevakasha!' };
+  if (BYE.test(s)) {
+    return { reply: ctx.history.length > 2 ? 'Kol tuv! Before you go, want a quick summary and a few review questions? Just say "summary."' : 'Kol tuv!' };
+  }
+  if (HELLO.test(s)) return { reply: await greeting(ctx) };
+
+  if (/^(say (that|it) again|repeat( that| it)?( again)?|come again|what did you say|can you repeat( that)?|one more time|again)$/.test(s)) {
+    const last = [...ctx.history].reverse().find((m) => m.role === 'assistant');
+    if (last) return { reply: last.content };
+  }
+
+  if (/\bwhat do you (remember|know) about me\b|\bwhat have you saved\b|\bwhat are my (saved )?(requests|instructions|preferences)\b|\bwhat do you remember\b/.test(s)) {
+    const sess = ctx.memories.filter((m) => m.scope === `session:${ctx.sessionId}`);
+    const saved = ctx.memories.filter((m) => !m.scope?.startsWith('session:'));
+    const lines = [
+      ...(sess.length ? ['For this session:', ...sess.map((m) => `- ${m.content}`)] : []),
+      ...(saved.length ? ['Saved for every session:', ...saved.map((m) => `- ${m.content}`)] : []),
+    ];
+    return { reply: lines.length ? lines.join('\n') : "I haven't saved anything yet. Tell me how you like to learn, and say \"always\" if you want me to remember it." };
+  }
+
+  if (/\bhow much (has|did|does|is) (this|it|today|this session|the session)( been)? cost|\bwhat (has|did) (this|the session) cost/.test(s)) {
+    const usd = await sessionCost(ctx.sessionId);
+    return { reply: `This session has cost $${usd.toFixed(usd < 0.1 ? 3 : 2)} so far (the AI and voice together).` };
+  }
+
+  if (RESUME.test(s) && s.split(' ').length <= 10) {
+    const here = currentMain(ctx.sources);
+    if (here) return { reply: `We're on ${here.ref}. It's open in the Sefer panel. Shall we keep going?` };
+    const last = await lastPlace(ctx.sessionId).catch(() => null);
+    if (!last) return { reply: "I don't have an earlier session to pick up from. What would you like to learn?" };
+    const where = last.lastWords ? last.lastWords.replace(/\n+/g, ' ').replace(/[>*]/g, '').trim() : '';
+    const tail = where ? (spoken ? '' : `\n\nWhere we stopped, I'd said: "${where.length > 240 ? where.slice(0, 240).replace(/\s+\S*$/, '') + '…' : where}"`) : '';
+    return { reply: `Last time we were learning ${last.source.ref}. I've opened it again.${tail}\n\nWant to pick up from there?`.trim(), source: last.source };
+  }
+
+  const nav = s.match(NAV) ?? s.match(NAV2);
+  if (nav) {
+    const main = currentMain(ctx.sources);
+    if (!main) return { reply: 'Which sefer are we in? Tell me the place (for example, "Berachos 36b") and I\'ll open it.' };
+    const word = nav[nav.length - 1] as string;
+    const dir: 1 | -1 = /\b(previous|prev|last|back)\b/.test(s) ? -1 : 1;
+    for (const ref of stepRef(main.ref, dir, unitOf(word))) {
+      const src = await tryText(ref, ctx.approved);
+      if (src) return { reply: openingReply(src, spoken), source: src };
+    }
+    return { reply: dir === 1 ? `That's the end of ${main.ref.replace(/\s\d.*$/, '')}.` : "We're already at the beginning." };
+  }
+
+  const comm = await openCommentary(ctx, s);
+  if (comm) return comm;
+
+  const style = styleSwitch(ctx, s);
+  if (style) return style;
+
+  const model = modelSwitch(s);
+  if (model) {
+    const p = { ...ctx.settings, ...model.settings } as Settings;
+    return { ...model, reply: `Okay, now using ${MODELS[p.provider][p.tier].label}.` };
+  }
+  return null;
+}
