@@ -113,7 +113,13 @@ export async function prepareCommentaries(ref: string, approved: ApprovedEntry[]
   const chosen = (preferred.length ? preferred : res.allowed).slice(0, 24);
   const byTitle: Record<string, string[]> = {};
   for (const l of chosen) (byTitle[l.title || 'Commentary'] ??= []).push(l.ref);
-  const list = Object.entries(byTitle).map(([t, refs]) => `${t}: ${refs.slice(0, 8).join('; ')}`).join('\n');
+  // Just a short table of contents (who comments here, and how much), not every reference:
+  // the AI fetches a specific one with get_text only when it actually brings it.
+  const section = ref.match(/\s(\d.*)$/)?.[1] ?? '';
+  const list = Object.entries(byTitle).slice(0, 6).map(([t, refs]) => {
+    const index = refs[0].replace(/\s\d.*$/, '');
+    return `${t} (${refs.length} comment${refs.length > 1 ? 's' : ''}; get_text "${section ? `${index} ${section}` : refs[0]}")`;
+  }).join('\n');
   return { list, refs: chosen.map((l) => l.ref) };
 }
 
