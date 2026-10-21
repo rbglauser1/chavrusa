@@ -7,7 +7,7 @@ import {
 import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
-import { makeExecutor, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
+import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
 import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
 import { routeWithoutAI } from '@/lib/router';
 import { stripNikud } from '@/lib/hebrew';
@@ -60,9 +60,13 @@ export async function POST(req: NextRequest) {
         const pre = await prefetchP;
         // Prepare the sugya: list the main commentaries now, and load their texts in the background.
         // Never make the learner wait for this: use it only if it's ready almost immediately.
-        // Only the deep styles get the commentary list up front; for the others it is extra reading the AI rarely needs.
-        const wantsCommentaries = ['challenger', 'iyun', 'sevara'].includes(settings.style);
-        const prepared = pre && wantsCommentaries ? await Promise.race([
+        // Commentaries cost money to read, so the AI may use them only when the learner asks about one
+        // (in this message, the one before, or by saying "yes" to the Chavrusa's offer to look at one).
+        const prevUser = [...history].reverse().find((m) => m.role === 'user')?.content ?? '';
+        const prevBot = [...history].reverse().find((m) => m.role === 'assistant')?.content ?? '';
+        const allowCommentary = mentionsCommentary(message) || mentionsCommentary(prevUser)
+          || (/^\W*(yes|yeah|sure|ok(ay)?|please|let'?s (see|look)|go ahead)\b/i.test(message) && mentionsCommentary(prevBot));
+        const prepared = pre && allowCommentary ? await Promise.race([
           prepareCommentaries(pre.ref, approved).catch(() => null),
           new Promise<null>((r) => setTimeout(() => r(null), 400)),
         ]) : null;
@@ -132,6 +136,7 @@ export async function POST(req: NextRequest) {
 
         const emit = (e: ToolEvent) => send(e);
         const baseExecute = makeExecutor({
+          allowCommentary,
           sessionId: sid,
           approved,
           saveSettings: async (p) => (settings = await saveSettings(p)),
@@ -163,7 +168,7 @@ export async function POST(req: NextRequest) {
                   ? `${message}\n\n[The learner is on this line, which the app just showed them with its translation. You do not need get_text for it.]\nREF: ${shownLine.ref}\n${stripNikud(shownLine.he)}${shownLine.en ? `\nTRANSLATION: ${shownLine.en}` : ''}`
                   : message },
           ],
-          tools: TOOLS,
+          tools: allowCommentary ? TOOLS : TOOLS.filter((t) => t.name !== 'get_connections'),
           execute,
           // Spoken turns need quick answers: think one level less.
           // Deep styles (Iyun, Sevara) think one level more; fast ones (Bekius, Farher) and spoken turns one level less.

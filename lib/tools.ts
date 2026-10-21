@@ -120,7 +120,14 @@ function clip(lines: string[], max: number): { text: string; clipped: boolean } 
   return { text: out, clipped: false };
 }
 
+// Does this text talk about a commentary (Rashi, Tosafos, the Rishonim…)?
+const COMMENTARY_WORDS = /\b(rashi|tosa?fo[st]|tosfos|tosafot|rashbam|ramban|rambam|ibn ezra|s'?e?forno|o?h?r ha ?chaim|kli yakar|baal ha ?turim|onkelos|targum|rashba|ritva|the ran|the rosh|rif|meiri|maharsha|maharam|bartenura|tosafos yom tov|mishna(h)? berura(h)?|commentar(y|ies)|meforshim|mefarshim|rishonim|rishon|acharonim|achronim|pirush|peirush)\b/i;
+export function mentionsCommentary(text: string): boolean { return COMMENTARY_WORDS.test(text); }
+// Sefaria names commentaries "X on Y" (Rashi on Berakhot 2a); Targum Onkelos too.
+export function isCommentaryRef(ref: string): boolean { return / on /i.test(ref) || /^(onkelos|targum)/i.test(ref); }
+
 export function makeExecutor(ctx: {
+  allowCommentary?: boolean; // false: the learner hasn't asked about a commentary, so don't spend money reading one
   sessionId: string;
   approved: ApprovedEntry[];
   saveSettings: (p: Partial<Settings>) => Promise<Settings>;
@@ -130,6 +137,9 @@ export function makeExecutor(ctx: {
     switch (name) {
       case 'get_text': {
         const ref = String(args.ref ?? '');
+        if (ctx.allowCommentary === false && isCommentaryRef(ref)) {
+          return 'NOT OPENED: the learner has not asked about a commentary, so stay with the main text. If a commentary would really help, mention its name in one short line and offer to look at it together.';
+        }
         ctx.emit({ type: 'status', text: `Opening ${ref}…` });
         const s = await getText(ref, ctx.approved);
         if (!s.verdict.allowed) {
@@ -143,6 +153,7 @@ export function makeExecutor(ctx: {
       }
       case 'get_connections': {
         const ref = String(args.ref ?? '');
+        if (ctx.allowCommentary === false) return 'NOT AVAILABLE: the learner has not asked about commentaries. Stay with the main text.';
         ctx.emit({ type: 'status', text: `Finding sources on ${ref}…` });
         const cats = Array.isArray(args.categories) ? args.categories.map(String) : undefined;
         const { allowed, excluded } = await getLinks(ref, ctx.approved, cats);
