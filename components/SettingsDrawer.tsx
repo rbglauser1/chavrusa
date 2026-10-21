@@ -89,7 +89,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.saver !== false ? 'saver' : 'full'} options={[['saver', 'Saver'], ['full', 'Full depth every turn']]} onPick={(v) => onChange({ saver: v === 'saver' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
                 {s.saver !== false
-                  ? `Saver: everyday spoken turns use ${MODELS[s.provider].basic.label} (a fraction of a cent each). Say “go deeper” or “explain it fully” and ${MODELS[s.provider][s.tier].label} takes over for the next few turns. Calls pause after 30 quiet seconds. Typing always uses your chosen depth.`
+                  ? `Saver: everyday spoken turns use ${MODELS[s.provider][s.tier === 'basic' ? 'basic' : 'middle'].label}. Say “go deeper” or “explain it fully” and ${MODELS[s.provider][s.tier].label} takes over for the next few turns. Calls pause after 30 quiet seconds. Typing always uses your chosen depth.`
                   : `Every spoken turn uses ${MODELS[s.provider][s.tier].label}.`}
               </div>
             </div>

@@ -111,13 +111,15 @@ export async function POST(req: NextRequest) {
 
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
-        // Saver (spoken turns only): everyday turns go to the cheapest model. Saying "go deeper" (or similar)
+        // Saver (spoken turns only): everyday turns go to the middle model. Saying "go deeper" (or similar)
         // brings back the chosen depth for that turn and the next two.
         const recentUser = history.filter((m) => m.role === 'user').slice(-2).map((m) => m.content);
         const deep = wantsDepth(message) || recentUser.some(wantsDepth);
         const saver = spoken && settings.saver !== false;
         const lean = saver && !deep;
-        const model = MODELS[settings.provider][quick || lean ? 'basic' : settings.tier];
+        // Saver's everyday brain is the middle model (Sonnet / Sol), or the chosen depth if that is lower.
+        const saverTier = settings.tier === 'basic' ? 'basic' : 'middle';
+        const model = MODELS[settings.provider][quick ? 'basic' : lean ? saverTier : settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
         const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid);
 
@@ -135,7 +137,7 @@ export async function POST(req: NextRequest) {
           : quick ? 'Short reply, answered by the cheapest model'
           : pre ? `A question about ${pre.ref} (opening it was free)`
           : saver && deep ? 'You asked to go deeper'
-          : lean ? 'Learning turn while talking (Saver: cheapest model)'
+          : lean ? `Learning turn while talking (Saver: ${MODELS[settings.provider][saverTier].label})`
           : 'Learning turn: explaining, asking, or answering';
 
         send({ type: 'status', text: 'Thinking…' });

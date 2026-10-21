@@ -207,7 +207,7 @@ export interface Settings {
   liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
   liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
   quickReplies: boolean;    // answer short acknowledgments ("ok", "got it") with the cheaper model
-  saver: boolean;           // while talking: everyday turns on the cheapest model, chosen depth on "go deeper"; leaner turns; pause after 30s
+  saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
