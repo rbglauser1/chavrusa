@@ -16,6 +16,8 @@ import { addSource } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
+const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles)\b/;
+
 // Move the thinking level up or down, within what each model accepts.
 function shiftEffort(effort: string | undefined, delta: number, provider: string, tier: string): string | undefined {
   if (!effort || !delta) return effort;
@@ -64,9 +66,9 @@ export async function POST(req: NextRequest) {
         // (in this message, the one before, or by saying "yes" to the Chavrusa's offer to look at one).
         const prevUser = [...history].reverse().find((m) => m.role === 'user')?.content ?? '';
         const prevBot = [...history].reverse().find((m) => m.role === 'assistant')?.content ?? '';
-        const allowCommentary = mentionsCommentary(message) || mentionsCommentary(prevUser)
+        const askedCommentary = mentionsCommentary(message) || mentionsCommentary(prevUser)
           || (/^\W*(yes|yeah|sure|ok(ay)?|please|let'?s (see|look)|go ahead)\b/i.test(message) && mentionsCommentary(prevBot));
-        const prepared = pre && allowCommentary ? await Promise.race([
+        const prepared = pre && (askedCommentary || settings.style === 'iyun') ? await Promise.race([
           prepareCommentaries(pre.ref, approved).catch(() => null),
           new Promise<null>((r) => setTimeout(() => r(null), 400)),
         ]) : null;
@@ -132,7 +134,20 @@ export async function POST(req: NextRequest) {
         const saverTier = settings.tier === 'basic' ? 'basic' : 'middle';
         const model = MODELS[settings.provider][quick ? 'basic' : everyday ? saverTier : settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
-        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid);
+        // Some styles are themselves a request for sources: Iyun always brings Rishonim and Acharonim;
+        // Mussar and Chassidic bring their seforim on Chumash and Tanach (on Gemara/Mishnah they stay with the text).
+        const mainRef = pre?.ref ?? [...sources].reverse().find((x) => !/ on /i.test(x.ref))?.ref ?? '';
+        const onTanakh = TANAKH.test(mainRef);
+        const styleSources = settings.style === 'iyun' || (['mussar', 'chassidic'].includes(settings.style) && onTanakh);
+        const allowCommentary = askedCommentary || styleSources;
+        const styleNote = settings.style === 'iyun' && !askedCommentary
+          ? '\n\n# Sources in this style\nIn Iyun you may bring the main Rishonim and Acharonim without being asked, but only ONE at a time and only when it moves the analysis forward. Never survey commentaries.'
+          : ['mussar', 'chassidic'].includes(settings.style) && !askedCommentary
+            ? (onTanakh
+              ? '\n\n# Sources in this style\nOn Chumash and Tanach you may bring classic seforim of this style (and Kli Yakar, Ohr HaChaim and the like) without being asked: one at a time, only when it truly adds.'
+              : '\n\n# Sources in this style\nThis is Gemara or Mishnah: draw the lesson from the words of the text itself. Do not bring outside seforim; if one would really add, mention it in one line and offer.')
+            : '';
+        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid) + styleNote;
 
         const emit = (e: ToolEvent) => send(e);
         const baseExecute = makeExecutor({
