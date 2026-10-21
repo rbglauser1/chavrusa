@@ -210,7 +210,8 @@ export interface Settings {
   liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
   liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
   quickReplies: boolean;    // answer short acknowledgments ("ok", "got it") with the cheaper model
-  pinBar: boolean;          // show the box with the current text at the top of the conversation
+  pinBar: boolean;
+  blankCall: boolean;       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
   saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   autoSpeak: boolean;       // read every reply aloud
@@ -238,6 +239,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveWake: true,
   quickReplies: true,
   pinBar: true,
+  blankCall: false,
   saver: true,
   customVoices: [],
   autoSpeak: false,

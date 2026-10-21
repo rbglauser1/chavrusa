@@ -105,6 +105,10 @@ export default function Home() {
     }
   }
   const talking = convo || live.active;
+  // Blank screen during a voice conversation (purely verbal). "Show screen" peeks for the rest of this call.
+  const [peek, setPeek] = useState(false);
+  useEffect(() => { if (!talking) setPeek(false); }, [talking]);
+  const blank = !!settings.blankCall && talking && !peek;
 
   function setConvoMode(on: boolean) {
     convoRef.current = on;
@@ -430,7 +434,7 @@ export default function Home() {
           </div>
         )}
 
-        {showPin && (
+        {showPin && !blank && (
           <section className={`pin ${pinCollapsed ? 'collapsed' : ''}`} aria-label="Current source">
             <div className="pin-inner">
               <div className="pin-head">
@@ -456,7 +460,13 @@ export default function Home() {
           </section>
         )}
 
-        <div className="thread" ref={threadRef}>
+        {blank && (
+          <div className="blank-call" aria-label="Voice only">
+            <div className="blank-note">Voice only. The screen stays blank.</div>
+            <button className="blank-peek" onClick={() => setPeek(true)}>Show screen</button>
+          </div>
+        )}
+        <div className="thread" ref={threadRef} style={blank ? { display: 'none' } : undefined}>
           <div className="thread-inner">
             {items.length === 0 && (
               <div className="welcome">
@@ -519,7 +529,7 @@ export default function Home() {
               {live.state === 'paused' ? (settings.liveWake ? 'Paused to save cost. Just start talking, or tap Resume.' : 'Paused to save cost. Tap Resume to continue.')
                 : live.pauseIn ? `Pausing in ${live.pauseIn}s… say something to keep going`
                 : live.state === 'connecting' ? 'Connecting…'
-                : live.heard ? `“${live.heard.slice(-120)}”`
+                : live.heard && !blank ? `“${live.heard.slice(-120)}”`
                 : live.state === 'thinking' ? (status || 'Looking into it…')
                 : live.state === 'speaking' ? 'Speaking… just talk to interrupt'
                 : 'Listening… just talk'}
@@ -546,7 +556,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="composer">
+        <div className="composer" style={blank ? { display: 'none' } : undefined}>
           <div className="composer-inner">
             <textarea
               ref={inputRef}

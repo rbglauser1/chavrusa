@@ -111,6 +111,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>
             <div className="field">
+              <label>Screen during voice conversations</label>
+              <Seg value={s.blankCall ? 'blank' : 'show'} options={[['show', 'Show the conversation'], ['blank', 'Blank (voice only)']]} onPick={(v) => onChange({ blankCall: v === 'blank' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Blank keeps the screen empty while you talk, for focus. It doesn't change the cost. Everything is still saved, so you can read it after the call.</div>
+            </div>
+            <div className="field">
               <label>Text box at the top of the conversation</label>
               <Seg value={s.pinBar !== false ? 'show' : 'hide'} options={[['show', 'Show'], ['hide', 'Hide']]} onPick={(v) => onChange({ pinBar: v === 'show' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The full text is always in the Sefer (the book button at the top).</div>

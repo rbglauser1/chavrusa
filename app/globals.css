@@ -297,6 +297,10 @@ a { color: var(--accent); }
 .orb.listening { background: var(--danger); }
 .orb.speaking { animation: breathe 1.4s ease-in-out infinite; }
 .orb.transcribing, .orb.idle { opacity: 0.6; }
+/* Voice-only call: an empty, calm screen with the call controls at the bottom. */
+.blank-call { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 16px; min-height: 40vh; }
+.blank-note { color: var(--soft); font-family: var(--f-ui); font-size: 13px; opacity: .7; }
+.blank-peek { background: none; border: 0; color: var(--accent); font-family: var(--f-ui); font-size: 13px; padding: 6px; opacity: .8; }
 @keyframes breathe { 50% { transform: scale(1.25); } }
 .listen { margin-top: 6px; display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 2px 0; color: var(--soft); font-size: 13px; font-family: var(--f-ui); }
 .listen:hover { color: var(--accent); }
