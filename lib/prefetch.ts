@@ -18,15 +18,52 @@ function opening(ref: string): string {
   return m ? `${m[1]} ${m[2]}:${m[3]}-${Number(m[3]) + 4}` : ref;
 }
 
+// Words that come before a name but aren't part of it ("let's learn Berachos 36b").
+const LEAD = new Set(["let's", 'lets', 'let', 'us', 'learn', 'learning', 'open', 'start', 'show', 'bring', 'pull', 'do', 'try', 'the', 'in',
+  'at', 'read', 'go', 'to', 'up', 'me', 'please', 'can', 'could', 'you', 'we', 'i', 'want', 'and', 'now', 'from', 'with', 'ok', 'okay', 'so']);
+// Words between a name and its number ("Berachos daf 36b").
+const UNIT = new Set(['daf', 'page', 'amud', 'perek', 'chapter', 'pasuk', 'posuk', 'passuk', 'verse', 'siman', 'mishna', 'mishnah']);
+
+// Possible references in what the learner typed or said, longest first. Works in any letter case
+// ("berachos 36B", "Bava Metzia 21a", "Rashi on Berachos 2a").
 export function candidateRefs(message: string): string[] {
   const out: string[] = [];
-  const re = /((?:[A-Z][\w'’]*(?:[ -]|$)){1,3}(?:on (?:[A-Z][\w'’]*[ -]?){1,3})?)(\d{1,3}[ab]?(?::\d{1,3}(?:-\d{1,3})?)?)(?![\w])/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(message)) && out.length < 3) {
-    const cand = `${m[1].trim()} ${m[2]}`.replace(/\s+/g, ' ').replace(/^(?:Let'?s|Learn|Open|Start|Show|Bring|Do|Try|The|In|On|At|Read)\s+/i, '');
-    if (cand.split(' ').length >= 2) out.push(cand);
+  const words = message.replace(/[’]/g, "'").split(/\s+/).filter(Boolean);
+  for (let i = 0; i < words.length && out.length < 6; i++) {
+    const m = words[i].match(/^(\d{1,3}[abAB]?(?::\d{1,3}(?:-\d{1,3})?)?)[.,!?;:]*$/);
+    if (!m) continue;
+    const num = m[1].replace(/[AB]$/, (c) => c.toLowerCase());
+    const before: string[] = [];
+    for (let j = i - 1; j >= 0 && before.length < 5; j--) {
+      const w = words[j].replace(/[.,!?;:"()]/g, '');
+      if (!w || /^\d/.test(w)) break;
+      before.unshift(w);
+    }
+    while (before.length && UNIT.has(before[before.length - 1].toLowerCase())) before.pop();
+    while (before.length && LEAD.has(before[0].toLowerCase())) before.shift();
+    for (let k = before.length; k >= 1; k--) {
+      const ws = before.slice(before.length - k);
+      if (LEAD.has(ws[0].toLowerCase()) || ws[0].toLowerCase() === 'on') continue;
+      out.push(`${ws.join(' ')} ${num}`);
+    }
   }
-  return out;
+  return out.slice(0, 6);
+}
+
+// Yeshivish spellings (often how speech-to-text writes them) -> the names Sefaria knows.
+const ALIASES: [RegExp, string][] = [
+  [/\b(b'?e?rachos|brochos|berochos|brachot)\b/i, 'Berakhot'], [/\bshabbos\b/i, 'Shabbat'], [/\bpesachim\b/i, 'Pesachim'],
+  [/\bsukk?os\b/i, 'Sukkah'], [/\bbeitza\b/i, 'Beitzah'], [/\bta'?anis\b/i, 'Taanit'], [/\bmegil?la\b/i, 'Megillah'],
+  [/\bmoed katan\b/i, 'Moed Katan'], [/\bchagiga\b/i, 'Chagigah'], [/\byevamos\b/i, 'Yevamot'], [/\bk[e']?subos\b/i, 'Ketubot'],
+  [/\bmakkos\b/i, 'Makkot'], [/\bshevuos\b/i, 'Shevuot'], [/\bavoda(h)? zara(h)?\b/i, 'Avodah Zarah'], [/\bhoriyos\b/i, 'Horayot'],
+  [/\bmenachos\b/i, 'Menachot'], [/\bbechoros\b/i, 'Bekhorot'], [/\barachin\b/i, 'Arakhin'], [/\bkerisos\b/i, 'Keritot'],
+  [/\bbava basra\b/i, 'Bava Batra'], [/\bbaba (kamma|metzia|batra|basra)\b/i, 'Bava $1'], [/\bbava basra\b/i, 'Bava Batra'],
+  [/\bbereishis\b/i, 'Genesis'], [/\bshemos\b/i, 'Exodus'], [/\bvayikra\b/i, 'Leviticus'], [/\bbamidbar\b/i, 'Numbers'], [/\bdevarim\b/i, 'Deuteronomy'],
+];
+function sefariaName(cand: string): string {
+  let c = cand;
+  for (const [re, to] of ALIASES) c = c.replace(re, to);
+  return c.replace(/\bBava basra\b/i, 'Bava Batra');
 }
 
 export async function findRef(message: string, direct = false): Promise<string | null> {
@@ -44,11 +81,14 @@ export async function findRef(message: string, direct = false): Promise<string |
     const r = await resolveName(message.trim()).catch(() => null);
     if (r?.isRef && r.ref) return r.ref;
   }
-  for (const cand of candidateRefs(message)) {
-    const r = await resolveName(cand).catch(() => null);
+  // Check all the possible readings at once (each lookup is cached), and take the longest that is a real place.
+  const cands = candidateRefs(message);
+  const results = await Promise.all(cands.map(async (c) => {
+    const r = await resolveName(sefariaName(c)).catch(() => null);
     if (r?.isRef && r.ref) return r.ref;
-  }
-  return null;
+    return null;
+  }));
+  return results.find(Boolean) ?? null;
 }
 
 export async function prefetchSource(message: string, approved: ApprovedEntry[]): Promise<SourceData | null> {
