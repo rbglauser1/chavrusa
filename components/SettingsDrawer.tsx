@@ -111,6 +111,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>
             <div className="field">
+              <label>Text box at the top of the conversation</label>
+              <Seg value={s.pinBar !== false ? 'show' : 'hide'} options={[['show', 'Show'], ['hide', 'Hide']]} onPick={(v) => onChange({ pinBar: v === 'show' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The full text is always in the Sefer (the book button at the top).</div>
+            </div>
+            <div className="field">
               <label>Source text</label>
               <Seg value={s.display} options={[['toggle', 'With translation'], ['original', 'Original only'], ['off', 'Off (verbal)']]} onPick={(v) => onChange({ display: v })} />
             </div>

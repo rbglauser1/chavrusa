@@ -336,7 +336,7 @@ export default function Home() {
   const showSefer = settings.display !== 'off' && seferOpen;
   const current = sources[selected];
   const look: Look = settings.theme;
-  const showPin = settings.display !== 'off' && !!current && !(isWide && showSefer);
+  const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
   return (
@@ -438,6 +438,7 @@ export default function Home() {
                 <span className="en-ref">{current.ref}</span>
                 <button onClick={() => setPinCollapsed((v) => !v)}>{pinCollapsed ? 'Show text' : 'Hide'}</button>
                 <button onClick={() => setSeferOpen(true)}>Open</button>
+                <button className="pin-close" aria-label="Remove this box (you can bring it back in Settings, Display)" title="Remove this box" onClick={() => { updateSettings({ pinBar: false }); setItems((it) => [...it, { kind: 'event', text: 'The text box is hidden. To bring it back: Settings → Display → Text box at the top. The full text is always in the Sefer (📖).' }]); }}>✕</button>
               </div>
               <div className="pin-text">
                 <div className={`he ${isCommentary(current.ref) ? 'rashi' : ''}`}>

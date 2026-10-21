@@ -179,7 +179,8 @@ a { color: var(--accent); }
 /* ---------- Pinned source (the daf in front of you) ---------- */
 .pin { flex-shrink: 0; border-bottom: 1px solid var(--rule); }
 .pin-head { display: flex; align-items: baseline; gap: 10px; padding: 10px 18px 0; }
-.pin-head .ref { font-family: var(--f-he); font-weight: 700; font-size: 20px; color: var(--accent); direction: rtl; }
+.pin-head .ref { font-family: var(--f-he); font-weight: 700; font-size: 20px; color: var(--accent); direction: rtl; white-space: nowrap; }
+.pin-head .pin-close { margin-left: 4px; font-size: 15px; opacity: .8; padding: 4px 2px; }
 .pin-head .en-ref { font-size: 12px; color: var(--soft); font-family: var(--f-ui); }
 .pin-head button { margin-left: auto; background: none; border: 0; color: var(--accent); font-size: 13px; font-family: var(--f-ui); padding: 4px 0; }
 .pin-text { max-height: 22vh; overflow-y: auto; padding: 6px 18px 12px; }
