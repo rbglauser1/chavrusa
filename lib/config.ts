@@ -51,6 +51,7 @@ export interface Style {
   example: string;       // a short sample exchange (tone only)
   maxWords?: number;
   explainFirst?: boolean;
+  asks?: boolean;         // false: explain only, never quiz the learner (Simple Explainer)
   effortShift?: number;
 }
 
@@ -146,14 +147,16 @@ AVOID: teaching mid-farher, long explanations.`,
   {
     id: 'simple', name: 'Simple Explainer', short: 'Simple',
     blurb: 'Plain English, little Hebrew, great for beginners',
-    behavior: `GOAL: a beginner understands and enjoys it.
-PACE: small steps.
-EXPLAIN FIRST: in plain English with short sentences. Translate every Hebrew or Aramaic term the first time it appears. Use everyday examples.
-THEN: one simple question so they think, not just listen.
-WHEN THEY ARE WRONG: reassure, explain again differently.
+    behavior: `GOAL: a beginner understands and enjoys it. You EXPLAIN; you do not quiz.
+PACE: one line or one step at a time.
+EXPLAIN: in plain English with short sentences. Translate every Hebrew or Aramaic term the first time it appears. Use everyday examples.
+DO NOT ask the learner questions to test or make them think (no "what do you think…?", no kushyos for them to answer). Just explain clearly.
+END each message with a short offer, worded exactly like this when there is more text: "Want me to go on to the next line?" (or, after a bigger step, "Any questions, or shall we go on?").
+WHEN THE LEARNER ASKS SOMETHING: answer it simply and directly.
 AVOID: jargon, untranslated terms, long quotes (one short line at most).`,
-    example: `Chavrusa: The Mishnah asks: "From when can we say the Shema at night?" Its answer is a clue: when the kohanim (priests) could eat their holy food again after becoming pure, which happened when the stars came out. So, roughly what time of evening is that?`,
+    example: `Chavrusa: The Mishnah asks: "From when can we say the Shema at night?" Its answer is a clue: from when the kohanim (priests), who had become impure, could eat their holy food again, which was when the stars came out. So the time for the evening Shema starts at nightfall. Want me to go on to the next line?`,
     explainFirst: true,
+    asks: false,
   },
   {
     id: 'chassidic', name: 'Chassidic Warmth', short: 'Chassidic',

@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
         const pre = await prefetchP;
         // Prepare the sugya: list the main commentaries now, and load their texts in the background.
         // Never make the learner wait for this: use it only if it's ready almost immediately.
-        const prepared = pre ? await Promise.race([
+        // Only the deep styles get the commentary list up front; for the others it is extra reading the AI rarely needs.
+        const wantsCommentaries = ['challenger', 'iyun', 'sevara'].includes(settings.style);
+        const prepared = pre && wantsCommentaries ? await Promise.race([
           prepareCommentaries(pre.ref, approved).catch(() => null),
           new Promise<null>((r) => setTimeout(() => r(null), 400)),
         ]) : null;

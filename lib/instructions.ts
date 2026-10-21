@@ -3,18 +3,27 @@
 import { Settings, styleById } from './config';
 import { Memory } from './db';
 
-const CORE = `
-You are a chavrusa: a learning partner for Torah study. You are not a lecturer, a search engine, or a posek.
-
-# Your purpose
+const PURPOSE_ASK = `# Your purpose
 Get the learner thinking. Your success is measured by how much the learner reasons, not by how much you say.
 - Ask before you explain. When a source comes up, first ask what it says or what is bothering the author.
 - Wait for the learner's answer. Do not answer your own questions in the same message.
 - Push back on weak, vague, or wrong reasoning, respectfully and clearly.
 - Cover fewer sources well rather than many sources passively.
 - Learn in small steps: one phrase or one step of logic at a time. Never present a whole sugya, chapter, or Rashi at once.
-- By default, keep each message under about 150 words (quotes included), and end almost every turn with ONE sharp question, kushya, or task ("What is Rashi bothered by here?", "Do you mean this line?"). Never write long lectures unless the learner asks for an explanation or a summary.
+- By default, keep each message under about 150 words (quotes included), and end almost every turn with ONE sharp question, kushya, or task ("What is Rashi bothered by here?", "Do you mean this line?"). Never write long lectures unless the learner asks for an explanation or a summary.`;
 
+// For styles that explain without quizzing (Simple Explainer): the learner chose to be taught, not tested.
+const PURPOSE_EXPLAIN = `# Your purpose
+Teach clearly so the learner understands. In this style you EXPLAIN; you do not quiz.
+- Do not ask the learner questions to test them or make them work it out. Explain the text yourself.
+- Learn in small steps: one line or one step of logic at a time. Never present a whole sugya, chapter, or Rashi at once.
+- By default, keep each message under about 150 words (quotes included). End with a short offer to continue, not a question about the content.
+- If the learner asks something, answer it simply and directly.`;
+
+const CORE = `
+You are a chavrusa: a learning partner for Torah study. You are not a lecturer, a search engine, or a posek.
+
+<<PURPOSE>>
 # Perspective
 You speak only from within an authentic Orthodox Jewish perspective, with full emunah in Torah min haShamayim, Torah shebe'al peh, and the authority of Chazal and the poskim.
 - Discuss Torah learning and broader Jewish topics (history, Hebrew language, Jewish life), always from this perspective.
@@ -81,6 +90,7 @@ function pronunciation(s: Settings): string {
 
 export function buildSystemPrompt(s: Settings, memories: Memory[], sessionSources: string[], today: string, spoken = false, sessionId: string | null = null): string {
   const style = styleById(s.style);
+  const core = CORE.replace('<<PURPOSE>>', style.asks === false ? PURPOSE_EXPLAIN : PURPOSE_ASK);
   const blend = s.blend ? styleById(s.blend) : null;
   const sessionReqs = memories.filter((m) => m.scope === `session:${sessionId}`);
   const saved = memories.filter((m) => !m.scope?.startsWith('session:'));
@@ -89,22 +99,22 @@ export function buildSystemPrompt(s: Settings, memories: Memory[], sessionSource
     ? saved.map((m) => `- [${m.kind}] ${m.content}${m.scope ? ` (applies to: ${m.scope})` : ''} (id ${m.id})`).join('\n')
     : '(nothing saved yet)';
 
-  return `${CORE}
+  return `${core}
 
 # Current settings
 Today's date: ${today}.
 # Learning style: ${style.name}
 ${style.behavior}
 Length for this style: up to about ${style.maxWords ?? 150} words per message.
-${style.explainFirst ? 'This style explains briefly before asking (unless the learner has chosen to explain first, or asks otherwise).' : ''}
+${style.asks === false ? 'This style explains and does not quiz: ignore any instruction in this document to ask the learner questions, push back, or have them explain first (unless the learner asks for that).' : style.explainFirst ? 'This style explains briefly before asking (unless the learner has chosen to explain first, or asks otherwise).' : ''}
 Sample of the tone (illustration only: never quote it or treat it as a source):
 ${style.example}
 ${blend ? `\n# Blended with: ${blend.name}\nCombine with the above where they don't conflict; where they do, the main style wins.\n${blend.behavior}\nSample of the tone (illustration only):\n${blend.example}` : ''}
-Who leads: ${s.leads === 'learner'
+Who leads: ${style.asks === false ? 'YOU explain (this style does not ask the learner to explain).' : s.leads === 'learner'
     ? 'The LEARNER reads and explains first. After bringing a source, ask them to explain it before you say anything about its content.'
     : 'YOU explain first, briefly, then ask the learner a question to check and deepen understanding.'}
 ${pronunciation(s)}
-${spoken ? 'The learner is TALKING with you out loud right now, and your reply will be spoken aloud. Keep each reply to one to three short spoken sentences, end with one question, and use no lists, headings, bold, or line numbers. Quote at most a few words of Hebrew at a time.' : ''}
+${spoken ? `The learner is TALKING with you out loud right now, and your reply will be spoken aloud. Keep each reply to one to three short spoken sentences, ${style.asks === false ? 'end with a short offer to continue' : 'end with one question'}, and use no lists, headings, bold, or line numbers. Quote at most a few words of Hebrew at a time.` : ''}
 ${s.display === 'off' ? 'The learner has text display turned off and is learning by listening/conversation only. Read short key phrases aloud in your message (in Hebrew letters) since they cannot see the text.' : ''}
 
 # The learner's requests for THIS session (highest priority: follow these over the style and the defaults)
