@@ -96,8 +96,9 @@ export async function POST(req: NextRequest) {
             const src = routed.source;
             try { after(async () => { const p = await prepareCommentaries(src.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
           }
-          await addMessage(sid, 'assistant', routed.reply, { free: true, ...(routed.source ? { opened: routed.source.ref } : {}) });
-          send({ type: 'reply', text: routed.reply, model: 'No AI needed (free)' });
+          const usage = { ai: false, reason: routed.source ? `Opened ${routed.source.ref}` : routed.settings ? 'Changed a setting' : 'Handled by the app' };
+          await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(routed.source ? { opened: routed.source.ref } : {}) });
+          send({ type: 'reply', text: routed.reply, model: 'No AI needed (free)', usage });
           await touchSession(sid);
           send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
           return;
@@ -121,12 +122,21 @@ export async function POST(req: NextRequest) {
         const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid);
 
         const emit = (e: ToolEvent) => send(e);
-        const execute = makeExecutor({
+        const baseExecute = makeExecutor({
           sessionId: sid,
           approved,
           saveSettings: async (p) => (settings = await saveSettings(p)),
           emit,
         });
+        let lookups = 0; // how many times the AI used a tool (looked up a source, saved a note…)
+        const execute = (async (...args: Parameters<typeof baseExecute>) => { lookups++; return baseExecute(...args); }) as typeof baseExecute;
+        // Why the AI is answering this turn (shown under the reply, so the learner can see what engages it).
+        const reason = routed?.then === 'ai' ? 'Style switched for free; the AI starts it in the new style'
+          : quick ? 'Short reply, answered by the cheapest model'
+          : pre ? `A question about ${pre.ref} (opening it was free)`
+          : saver && deep ? 'You asked to go deeper'
+          : lean ? 'Learning turn while talking (Saver: cheapest model)'
+          : 'Learning turn: explaining, asking, or answering';
 
         send({ type: 'status', text: 'Thinking…' });
         const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
@@ -153,10 +163,11 @@ export async function POST(req: NextRequest) {
         });
 
         const reply = result.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
-        await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend });
-        send({ type: 'reply', text: reply, model: model.label });
-
         const usd = costUsd(model, result.inputTokens, result.outputTokens, result.cachedTokens ?? 0, result.cacheWriteTokens ?? 0);
+        const usage = { ai: true, model: model.label, reason, usd, lookups };
+        await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend, usage });
+        send({ type: 'reply', text: reply, model: model.label, usage });
+
         await logCost({ sessionId: sid, provider: settings.provider, model: model.id, inputTokens: result.inputTokens, outputTokens: result.outputTokens, costUsd: usd });
         await touchSession(sid);
         send({ type: 'cost', usd, sessionUsd: await sessionCost(sid), inputTokens: result.inputTokens, outputTokens: result.outputTokens });
