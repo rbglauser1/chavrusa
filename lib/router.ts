@@ -25,7 +25,9 @@ export interface Routed {
   source?: SourceData;            // a source the app opened (shown in the Sefer panel)
   settings?: Partial<Settings>;   // settings to save
   then?: 'ai';                    // apply the settings, then still let the AI answer this turn
+  line?: LineText;                // the line the learner is now on (saved, so the AI gets it without a lookup)
 }
+export interface LineText { ref: string; he: string; en: string; translation: string | null }
 
 // Lowercase, no punctuation, without polite padding at either end.
 function norm(m: string): string {
@@ -214,6 +216,56 @@ function modelSwitch(s: string): Routed | null {
   return { settings: patch };
 }
 
+// ---------- 6. Line by line ----------
+// The learner moves one line (one Sefaria segment, usually ending at the "two dots") at a time.
+// The app shows the line with its approved translation itself; the AI is only needed for a question about it.
+const NEXT_LINE = /^(the )?(next|following) (line|sentence|piece|part|statement)$|^(go |move |continue |keep going |on )?(on )?(to )?the (next|following) (line|sentence|piece|statement)$|^read the next (line|piece)$/;
+const PREV_LINE = /^(the )?(previous|last|prior) (line|sentence|piece|statement)$|^(go )?back (a|one) (line|sentence)$|^(go )?(back )?to the (previous|last) (line|sentence)$/;
+const YES = /^(yes|yeah|yep|yup|sure|ok|okay|next|go ahead|go on|please do|continue|keep going|let's go|go for it|yes please|sounds good)$/;
+const ASKED_NEXT = /\b(next line|next piece|next sentence|the next one|continue|keep going|go on|move on)\b[^.?!]*\?\s*$/i;
+
+function lineFromSource(src: SourceData): LineText {
+  return { ref: src.ref, he: src.he.join(' '), en: src.en.join(' '), translation: src.translation };
+}
+
+// Which line is the learner on? The line the app last showed, or the furthest line the AI looked up last turn.
+function currentLine(ctx: RouteCtx): string | null {
+  // The last line the app showed (if any), unless the AI has looked up a later line since then.
+  const shownMsg = [...ctx.history].reverse().find((m) => m.role === 'assistant' && (m.meta as { line?: LineText } | null)?.line);
+  const shown = shownMsg ? (shownMsg.meta as { line: LineText }).line.ref : null;
+  const since = shownMsg?.created_at ?? '';
+  const lastUserAt = [...ctx.history].reverse().find((m) => m.role === 'user')?.created_at ?? '';
+  const segs = ctx.sources.filter((x) => /:\d+$/.test(x.ref) && x.created_at > since);
+  const recent = segs.filter((x) => x.created_at >= lastUserAt);
+  const pool = recent.length ? recent : segs.slice(-1);
+  if (!pool.length) return shown;
+  const base = pool[pool.length - 1].ref.replace(/:\d+$/, '');
+  const nums = pool.filter((x) => x.ref.startsWith(base + ':')).map((x) => Number(x.ref.split(':').pop()));
+  return `${base}:${Math.max(...nums)}`;
+}
+
+function lineReply(l: LineText, spoken: boolean): string {
+  if (spoken) {
+    return l.en ? `Next line. ${l.en} Any question on this, or shall we keep going?` : `Next line is ${l.ref}. There's no approved translation for it. Want me to explain it?`;
+  }
+  const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
+  const ask = l.en ? 'Any question on this line, or next line?' : "There's no approved translation for this line. Want me to explain it?";
+  return `**${l.ref}**\n\n> ${l.he}${en}\n\n${ask}`;
+}
+
+async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
+  const cur = currentLine(ctx);
+  if (!cur) return null; // we don't know where they are: let the AI work it out
+  const base = cur.replace(/:\d+$/, '');
+  const n = Number(cur.split(':').pop());
+  const tries = dir === 1 ? [`${base}:${n + 1}`, ...stepRef(base, 1, 'amud').map((r) => `${r}:1`)] : n > 1 ? [`${base}:${n - 1}`] : [];
+  for (const ref of tries) {
+    const src = await tryText(ref, ctx.approved);
+    if (src) { const line = lineFromSource(src); return { reply: lineReply(line, ctx.spoken), line }; }
+  }
+  return { reply: dir === 1 ? `That's the end of ${base.replace(/\s\d.*$/, '')}.` : "We're already at the first line." };
+}
+
 // ---------- The router ----------
 export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   const { message, spoken, pre } = ctx;
@@ -260,6 +312,17 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     const where = last.lastWords ? last.lastWords.replace(/\n+/g, ' ').replace(/[>*]/g, '').trim() : '';
     const tail = where ? (spoken ? '' : `\n\nWhere we stopped, I'd said: "${where.length > 240 ? where.slice(0, 240).replace(/\s+\S*$/, '') + '…' : where}"`) : '';
     return { reply: `Last time we were learning ${last.source.ref}. I've opened it again.${tail}\n\nWant to pick up from there?`.trim(), source: last.source };
+  }
+
+  // Line by line: "next line", or "yes" when the Chavrusa just asked whether to continue to the next line.
+  const lastBotText = [...ctx.history].reverse().find((m) => m.role === 'assistant')?.content ?? '';
+  if (NEXT_LINE.test(s) || (YES.test(s) && ASKED_NEXT.test(lastBotText.trim()))) {
+    const r = await moveLine(ctx, 1);
+    if (r) return r;
+  }
+  if (PREV_LINE.test(s)) {
+    const r = await moveLine(ctx, -1);
+    if (r) return r;
   }
 
   const nav = s.match(NAV) ?? s.match(NAV2);

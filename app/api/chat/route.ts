@@ -10,6 +10,7 @@ import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
 import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
 import { routeWithoutAI } from '@/lib/router';
+import { stripNikud } from '@/lib/hebrew';
 import { after } from 'next/server';
 import { addSource } from '@/lib/db';
 
@@ -96,8 +97,8 @@ export async function POST(req: NextRequest) {
             const src = routed.source;
             try { after(async () => { const p = await prepareCommentaries(src.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
           }
-          const usage = { ai: false, reason: routed.source ? `Opened ${routed.source.ref}` : routed.settings ? 'Changed a setting' : 'Handled by the app' };
-          await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(routed.source ? { opened: routed.source.ref } : {}) });
+          const usage = { ai: false, reason: routed.line ? `Showed ${routed.line.ref} with its translation` : routed.source ? `Opened ${routed.source.ref}` : routed.settings ? 'Changed a setting' : 'Handled by the app' };
+          await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(routed.source ? { opened: routed.source.ref } : {}), ...(routed.line ? { line: routed.line } : {}) });
           send({ type: 'reply', text: routed.reply, model: 'No AI needed (free)', usage });
           await touchSession(sid);
           send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
@@ -108,6 +109,8 @@ export async function POST(req: NextRequest) {
         const lastBot = [...history].reverse().find((m) => m.role === 'assistant');
         const openedRef = !pre && typeof lastBot?.meta?.opened === 'string' ? lastBot.meta.opened as string : null;
         const opened = openedRef ? sources.find((x) => x.ref === openedRef)?.data ?? null : null;
+        // If the app just showed the learner a line, hand that line to the AI so it doesn't spend a step looking it up.
+        const shownLine = !pre && !opened ? (lastBot?.meta as { line?: { ref: string; he: string; en: string } } | null)?.line ?? null : null;
 
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
@@ -149,12 +152,14 @@ export async function POST(req: NextRequest) {
           system,
           history: [
             // Saver keeps only the recent conversation on spoken turns: less to read every time.
-            ...(lean ? history.slice(-10) : history).map((m) => ({ role: m.role, content: m.content })),
+            ...(lean ? history.slice(-10) : everyday ? history.slice(-14) : history).map((m) => ({ role: m.role, content: m.content })),
             { role: 'user' as const, content: pre
               ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}${prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : ''}`
               : opened
                 ? `${message}\n\n[The app opened this source for the learner on the last turn. Its text is below, so you do not need get_text for it.]\n${textForModel(opened, lean)}`
-                : message },
+                : shownLine
+                  ? `${message}\n\n[The learner is on this line, which the app just showed them with its translation. You do not need get_text for it.]\nREF: ${shownLine.ref}\n${stripNikud(shownLine.he)}${shownLine.en ? `\nTRANSLATION: ${shownLine.en}` : ''}`
+                  : message },
           ],
           tools: TOOLS,
           execute,
