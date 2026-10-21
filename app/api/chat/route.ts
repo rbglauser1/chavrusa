@@ -111,15 +111,17 @@ export async function POST(req: NextRequest) {
 
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
-        // Saver (spoken turns only): everyday turns go to the middle model. Saying "go deeper" (or similar)
+        // Saver: everyday turns go to the middle model. Saying "go deeper" (or similar)
         // brings back the chosen depth for that turn and the next two.
         const recentUser = history.filter((m) => m.role === 'user').slice(-2).map((m) => m.content);
         const deep = wantsDepth(message) || recentUser.some(wantsDepth);
-        const saver = spoken && settings.saver !== false;
-        const lean = saver && !deep;
+        // Saver applies to typed and spoken turns. Spoken Saver turns are also kept lean (short history and excerpt).
+        const saver = settings.saver !== false;
+        const everyday = saver && !deep;
+        const lean = spoken && everyday;
         // Saver's everyday brain is the middle model (Sonnet / Sol), or the chosen depth if that is lower.
         const saverTier = settings.tier === 'basic' ? 'basic' : 'middle';
-        const model = MODELS[settings.provider][quick ? 'basic' : lean ? saverTier : settings.tier];
+        const model = MODELS[settings.provider][quick ? 'basic' : everyday ? saverTier : settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
         const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid);
 
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
           : quick ? 'Short reply, answered by the cheapest model'
           : pre ? `A question about ${pre.ref} (opening it was free)`
           : saver && deep ? 'You asked to go deeper'
-          : lean ? `Learning turn while talking (Saver: ${MODELS[settings.provider][saverTier].label})`
+          : everyday ? `Everyday learning turn (Saver: ${MODELS[settings.provider][saverTier].label}; say "go deeper" for ${MODELS[settings.provider][settings.tier].label})`
           : 'Learning turn: explaining, asking, or answering';
 
         send({ type: 'status', text: 'Thinking…' });
@@ -147,7 +149,7 @@ export async function POST(req: NextRequest) {
           system,
           history: [
             // Saver keeps only the recent conversation on spoken turns: less to read every time.
-            ...(saver ? history.slice(-10) : history).map((m) => ({ role: m.role, content: m.content })),
+            ...(lean ? history.slice(-10) : history).map((m) => ({ role: m.role, content: m.content })),
             { role: 'user' as const, content: pre
               ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}${prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : ''}`
               : opened
