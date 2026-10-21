@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
         // Saver (spoken turns only): everyday turns go to the cheapest model. Saying "go deeper" (or similar)
         // brings back the chosen depth for that turn and the next two.
-        const recentUser = history.filter((m) => m.role === 'user').slice(-3, -1).map((m) => m.content);
+        const recentUser = history.filter((m) => m.role === 'user').slice(-2).map((m) => m.content);
         const deep = wantsDepth(message) || recentUser.some(wantsDepth);
         const saver = spoken && settings.saver !== false;
         const lean = saver && !deep;
