@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_SETTINGS, Look, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { DEFAULT_SETTINGS, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import SeferPanel from '@/components/SeferPanel';
@@ -67,7 +67,8 @@ export default function Home() {
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds, sessionId: sessionIdRef.current }) }).catch(() => {});
     },
     isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0,
-    idleSeconds: () => settingsRef.current.liveIdleSec ?? 60,
+    // Saver pauses sooner: never later than 30 quiet seconds.
+    idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,
   });
 

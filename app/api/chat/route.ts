@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { costUsd, isQuickReply, MODELS, styleById } from '@/lib/config';
+import { costUsd, isQuickReply, MODELS, styleById, wantsDepth } from '@/lib/config';
 import {
   addMessage, approvedList, createSession, getSession, getSettings, listMemories, listMessages, listSources,
   logCost, saveSettings, sessionCost, touchSession,
@@ -93,7 +93,13 @@ export async function POST(req: NextRequest) {
 
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
-        const model = MODELS[settings.provider][quick ? 'basic' : settings.tier];
+        // Saver (spoken turns only): everyday turns go to the cheapest model. Saying "go deeper" (or similar)
+        // brings back the chosen depth for that turn and the next two.
+        const recentUser = history.filter((m) => m.role === 'user').slice(-3, -1).map((m) => m.content);
+        const deep = wantsDepth(message) || recentUser.some(wantsDepth);
+        const saver = spoken && settings.saver !== false;
+        const lean = saver && !deep;
+        const model = MODELS[settings.provider][quick || lean ? 'basic' : settings.tier];
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
         const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid);
 
@@ -111,11 +117,12 @@ export async function POST(req: NextRequest) {
           model: model.id,
           system,
           history: [
-            ...history.map((m) => ({ role: m.role, content: m.content })),
+            // Saver keeps only the recent conversation on spoken turns: less to read every time.
+            ...(saver ? history.slice(-10) : history).map((m) => ({ role: m.role, content: m.content })),
             { role: 'user' as const, content: pre
-              ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre)}${prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : ''}`
+              ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}${prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : ''}`
               : opened
-                ? `${message}\n\n[The app opened this source for the learner on the last turn. Its text is below, so you do not need get_text for it.]\n${textForModel(opened)}`
+                ? `${message}\n\n[The app opened this source for the learner on the last turn. Its text is below, so you do not need get_text for it.]\n${textForModel(opened, lean)}`
                 : message },
           ],
           tools: TOOLS,
@@ -124,7 +131,7 @@ export async function POST(req: NextRequest) {
           // Deep styles (Iyun, Sevara) think one level more; fast ones (Bekius, Farher) and spoken turns one level less.
           effort: shiftEffort(model.effort, (styleById(settings.style).effortShift ?? 0) - (spoken ? 1 : 0), settings.provider, settings.tier),
           thinking: model.thinking,
-          maxSteps: 5,
+          maxSteps: lean ? 3 : 5,
           onText: (d) => send({ type: 'delta', text: d }),
         });
 

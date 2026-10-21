@@ -85,9 +85,10 @@ export const TOOLS: ToolDef[] = [
 ];
 
 // The lean copy of a source that the AI reads (the learner sees the full text).
-export function textForModel(s: SourceData): string {
-  const he = clip(s.he.map(stripNikud), MAX_HE_CHARS);
-  const en = clip(s.en, MAX_EN_CHARS);
+export function textForModel(s: SourceData, lean = false): string {
+  // Lean (spoken Saver turns): a shorter excerpt, since a spoken reply covers one small step anyway.
+  const he = clip(s.he.map(stripNikud), lean ? 1500 : MAX_HE_CHARS);
+  const en = clip(s.en, lean ? 700 : MAX_EN_CHARS);
   return [
     `REF: ${s.ref} (${s.heRef})`,
     `Shown to learner in the Sefer panel. Lines are numbered.`,

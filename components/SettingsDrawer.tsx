@@ -85,6 +85,15 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               </div>
             </div>
             <div className="field">
+              <label>While talking</label>
+              <Seg value={s.saver !== false ? 'saver' : 'full'} options={[['saver', 'Saver'], ['full', 'Full depth every turn']]} onPick={(v) => onChange({ saver: v === 'saver' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                {s.saver !== false
+                  ? `Saver: everyday spoken turns use ${MODELS[s.provider].basic.label} (a fraction of a cent each). Say “go deeper” or “explain it fully” and ${MODELS[s.provider][s.tier].label} takes over for the next few turns. Calls pause after 30 quiet seconds. Typing always uses your chosen depth.`
+                  : `Every spoken turn uses ${MODELS[s.provider][s.tier].label}.`}
+              </div>
+            </div>
+            <div className="field">
               <label>Quick replies (“OK,” “got it,” “thanks”)</label>
               <Seg value={s.quickReplies ? 'cheap' : 'full'} options={[['cheap', 'Use the cheaper model'], ['full', 'Always use my chosen depth']]} onPick={(v) => onChange({ quickReplies: v === 'cheap' })} />
             </div>
@@ -147,6 +156,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   <option value="300">5 minutes</option>
                   <option value="0">Never pause</option>
                 </select>
+                {s.saver !== false && s.liveIdleSec > 30 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 30 seconds.</div>}
               </div>
             )}
             {s.talkMode === 'live' && s.liveIdleSec > 0 && (

@@ -207,6 +207,7 @@ export interface Settings {
   liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
   liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
   quickReplies: boolean;    // answer short acknowledgments ("ok", "got it") with the cheaper model
+  saver: boolean;           // while talking: everyday turns on the cheapest model, chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
@@ -232,6 +233,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveIdleSec: 60,
   liveWake: true,
   quickReplies: true,
+  saver: true,
   customVoices: [],
   autoSpeak: false,
   speechRate: 1,
@@ -295,3 +297,9 @@ export function isQuickReply(message: string): boolean {
   if (!m || m.split(' ').length > 5) return false;
   return /^(?:(?:ok|okay|oh|ah|alright|all right) )?(ok|okay|k|alright|got it|i got it|gotcha|thanks|thank you|thank you very much|makes sense|that makes sense|right|i see|uh huh|mhm|mm|hmm|cool|great|good|nice|interesting|wow|understood|i understand|ah|oh|yasher koach|yashar koach|תודה|הבנתי|אוקיי)$/.test(m);
 }
+
+// Saver: the learner asks for real depth ("go deeper", "explain it fully", "b'iyun"…).
+export function wantsDepth(message: string): boolean {
+  return /\b(deeper|in[ -]depth|more depth|think (hard|harder|carefully)|lomdus|iyun|b'?iyun|chakira|tzvei dinim|brisker|full explanation|explain (it |this |that )?(fully|properly|in detail|more))\b/i.test(message);
+}
+export const SAVER_IDLE_SEC = 30;
