@@ -74,6 +74,7 @@ export default function Home() {
   // ---------- Live voice ----------
   const liveQueue = useRef<{ text: string; id: string }[]>([]);
   const liveDelegation = useRef<string | null>(null);
+  const liveSpeech = useRef({ buf: '', out: '', sent: false }); // the answer, as it streams, for the Live voice
   const live = useLive({
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => setItems((it) => [...it, { kind: 'error', text: m }]),
@@ -228,7 +229,7 @@ export default function Home() {
     setItems((it) => [...it, { kind: 'user', text: msg }]);
     setBusy(true); setStatus('Thinking…');
     liveIdx.current = null;
-    liveText.current = '';
+    liveText.current = ''; liveSpeech.current = { buf: '', out: '', sent: false };
     speechBuf.current = '';
     turnRefs.current = [];
     speakTurn.current = !opts.live && (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current);
@@ -279,6 +280,19 @@ export default function Home() {
       case 'requests': setRequests(e.items ?? []); break;
       case 'delta': {
         liveText.current += e.text;
+        // Live call: pass finished sentences to the voice as they arrive. The first sentence goes at once;
+        // after that, a couple of sentences at a time so it flows naturally.
+        if (liveDelegation.current) {
+          liveSpeech.current.buf += e.text;
+          const { sentences, rest } = splitSentences(liveSpeech.current.buf);
+          liveSpeech.current.buf = rest;
+          liveSpeech.current.out += sentences.join(' ') + (sentences.length ? ' ' : '');
+          const out = liveSpeech.current.out.trim();
+          if (out && (!liveSpeech.current.sent || out.length >= 180)) {
+            live.answerPart(liveDelegation.current, out);
+            liveSpeech.current = { buf: liveSpeech.current.buf, out: '', sent: true };
+          }
+        }
         const full = liveText.current;
         setItems((it) => {
           if (liveIdx.current === null || liveIdx.current >= it.length) { liveIdx.current = it.length; return [...it, { kind: 'assistant', text: full }]; }
@@ -306,7 +320,13 @@ export default function Home() {
           return copy;
         });
         liveIdx.current = null;
-        if (liveDelegation.current) { live.answer(liveDelegation.current, finalText); liveDelegation.current = null; }
+        if (liveDelegation.current) {
+          // Whatever wasn't handed over yet: all of it if nothing streamed (e.g. a free reply), else the remainder.
+          const rest = liveSpeech.current.sent ? `${liveSpeech.current.out} ${liveSpeech.current.buf}`.trim() : finalText;
+          live.answer(liveDelegation.current, rest);
+          liveDelegation.current = null;
+        }
+        liveSpeech.current = { buf: '', out: '', sent: false };
         if (speakTurn.current) {
           const leftover = streamed ? speechBuf.current : finalText;
           splitSentences(leftover, true).sentences.forEach((x) => voice.enqueue(x));

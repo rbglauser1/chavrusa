@@ -10,7 +10,7 @@ import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
 import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
 import { routeWithoutAI } from '@/lib/router';
-import { stripNikud } from '@/lib/hebrew';
+import { currentPlace, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
 import { after } from 'next/server';
 import { addSource } from '@/lib/db';
 
@@ -117,8 +117,12 @@ export async function POST(req: NextRequest) {
         const lastBot = [...history].reverse().find((m) => m.role === 'assistant');
         const openedRef = !pre && typeof lastBot?.meta?.opened === 'string' ? lastBot.meta.opened as string : null;
         const opened = openedRef ? sources.find((x) => x.ref === openedRef)?.data ?? null : null;
-        // If the app just showed the learner a line, hand that line to the AI so it doesn't spend a step looking it up.
-        const shownLine = !pre && !opened ? (lastBot?.meta as { line?: { ref: string; he: string; en: string } } | null)?.line ?? null : null;
+        // Text in hand: the few real lines around the learner's place go to the AI with the question,
+        // so it doesn't spend a lookup (time and money) fetching them. When the learner points somewhere
+        // inside a page just opened ("at the two dots", "where it says…"), it gets a bigger piece to search.
+        const place = pre ? splitRef(pre.ref) : currentPlace(history, sources);
+        const pointing = /\btwo dots\b|\bwhere it says\b|\bline (that )?(starts|starting|begins|beginning)\b|\bthe (mishna|mishnah|gemara)\b|\bamud (bet|beis|b)\b|\bthe (end|bottom|middle)\b/i.test(message);
+        const inHand = place && !(pre && pointing) ? await textInHand(place, sources, approved, pre ? 1 : undefined).catch(() => null) : null;
 
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
@@ -168,6 +172,8 @@ export async function POST(req: NextRequest) {
           : 'Learning turn: explaining, asking, or answering';
 
         send({ type: 'status', text: 'Thinking…' });
+        const marks = markFilter((t) => send({ type: 'delta', text: t }));
+        const startedAt = new Date().toISOString();
         const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
         const result = await run({
           model: model.id,
@@ -175,13 +181,12 @@ export async function POST(req: NextRequest) {
           history: [
             // Saver keeps only the recent conversation on spoken turns: less to read every time.
             ...(lean ? history.slice(-10) : everyday ? history.slice(-14) : history).map((m) => ({ role: m.role, content: m.content })),
-            { role: 'user' as const, content: pre
-              ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}${prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : ''}`
-              : opened
-                ? `${message}\n\n[The app opened this source for the learner on the last turn. Its text is below, so you do not need get_text for it.]\n${textForModel(opened, lean)}`
-                : shownLine
-                  ? `${message}\n\n[The learner is on this line, which the app just showed them with its translation. You do not need get_text for it.]\nREF: ${shownLine.ref}\n${stripNikud(shownLine.he)}${shownLine.en ? `\nTRANSLATION: ${shownLine.en}` : ''}`
-                  : message },
+            { role: 'user' as const, content: (inHand
+              ? `${message}\n\n${inHand}`
+              : pre
+                ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}`
+                : message)
+              + (prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : '') },
           ],
           tools: allowCommentary ? TOOLS : TOOLS.filter((t) => t.name !== 'get_connections'),
           execute,
@@ -190,13 +195,17 @@ export async function POST(req: NextRequest) {
           effort: shiftEffort(model.effort, (styleById(settings.style).effortShift ?? 0) - (spoken ? 1 : 0), settings.provider, settings.tier),
           thinking: model.thinking,
           maxSteps: lean ? 3 : 5,
-          onText: (d) => send({ type: 'delta', text: d }),
+          onText: (d) => marks.push(d),
         });
+        marks.flush();
 
-        const reply = result.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
+        // The AI marks the line it finished on ([[line:N]]); remember it as the learner's place, and hide the mark.
+        const marked = readMark(result.text || '');
+        const reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
+        const newPlace = marked.n && place ? { base: place.base, n: marked.n } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
         const usd = costUsd(model, result.inputTokens, result.outputTokens, result.cachedTokens ?? 0, result.cacheWriteTokens ?? 0);
         const usage = { ai: true, model: model.label, reason, usd, lookups };
-        await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend, usage });
+        await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend, usage, ...(newPlace ? { pos: newPlace } : {}) });
         send({ type: 'reply', text: reply, model: model.label, usage });
 
         await logCost({ sessionId: sid, provider: settings.provider, model: model.id, inputTokens: result.inputTokens, outputTokens: result.outputTokens, costUsd: usd });

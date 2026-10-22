@@ -155,12 +155,27 @@ export function useLive(opts: {
     }
   }, [finish, handleDelegation]);
 
-  // The brain's answer for a delegation: give it to the voice to say.
+  // Sentence by sentence: hand the voice the first part of the answer while the brain is still writing the rest,
+  // so it can start speaking sooner. (GPT-Live accepts several updates for one delegation.)
+  const partial = useRef<Set<string>>(new Set());
+  const answerPart = useCallback((delegationId: string, text: string) => {
+    if (!pending.current.has(delegationId)) return;
+    const t = forSpeech(text);
+    if (!t) return;
+    partial.current.add(delegationId);
+    bump();
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: t });
+  }, [send]);
+
+  // The rest of the brain's answer (or all of it, if nothing went ahead): give it to the voice to say.
   const answer = useCallback((delegationId: string, text: string) => {
     if (!pending.current.has(delegationId)) return;
     pending.current.delete(delegationId);
+    const hadPart = partial.current.delete(delegationId);
     bump();
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: forSpeech(text) || 'Let’s keep going.' });
+    const t = forSpeech(text);
+    if (!t && hadPart) return; // everything was already handed over
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: t || 'Let’s keep going.' });
   }, [send]);
 
   const start = useCallback(async () => {
@@ -279,5 +294,5 @@ export function useLive(opts: {
 
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  return { state, heard, supported, start, stop, answer, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { state, heard, supported, start, stop, answer, answerPart, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

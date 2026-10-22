@@ -7,6 +7,7 @@ import { MODELS, Provider, Settings, styleById, Tier } from './config';
 import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCost, SourceData, SourceRow } from './db';
 import { isJustOpening, openingReply } from './prefetch';
 import { getLinks, getText, todaysLearning } from './sefaria';
+import { currentPlace } from './place';
 
 export interface RouteCtx {
   message: string;
@@ -230,18 +231,9 @@ function lineFromSource(src: SourceData): LineText {
 
 // Which line is the learner on? The line the app last showed, or the furthest line the AI looked up last turn.
 function currentLine(ctx: RouteCtx): string | null {
-  // The last line the app showed (if any), unless the AI has looked up a later line since then.
-  const shownMsg = [...ctx.history].reverse().find((m) => m.role === 'assistant' && (m.meta as { line?: LineText } | null)?.line);
-  const shown = shownMsg ? (shownMsg.meta as { line: LineText }).line.ref : null;
-  const since = shownMsg?.created_at ?? '';
-  const lastUserAt = [...ctx.history].reverse().find((m) => m.role === 'user')?.created_at ?? '';
-  const segs = ctx.sources.filter((x) => /:\d+$/.test(x.ref) && x.created_at > since);
-  const recent = segs.filter((x) => x.created_at >= lastUserAt);
-  const pool = recent.length ? recent : segs.slice(-1);
-  if (!pool.length) return shown;
-  const base = pool[pool.length - 1].ref.replace(/:\d+$/, '');
-  const nums = pool.filter((x) => x.ref.startsWith(base + ':')).map((x) => Number(x.ref.split(':').pop()));
-  return `${base}:${Math.max(...nums)}`;
+  // Same tracking the AI's "text in hand" uses: the line shown last, the line the AI finished on, or a later lookup.
+  const p = currentPlace(ctx.history, ctx.sources);
+  return p ? `${p.base}:${p.n}` : null;
 }
 
 function lineReply(l: LineText, spoken: boolean): string {
