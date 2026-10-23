@@ -159,6 +159,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             )}
             {s.talkMode === 'live' && (
               <div className="field">
+                <label>Speaking speed</label>
+                <Seg value={s.livePace ?? 'natural'} options={[['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>
                 <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
                 <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
                   <option value="30">30 seconds</option>
