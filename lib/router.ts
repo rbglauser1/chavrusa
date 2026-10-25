@@ -233,7 +233,7 @@ function modelSwitch(s: string): Routed | null {
 const NEXT_LINE = /^(the )?(next|following) (line|sentence|piece|part|statement)$|^(go |move |continue |keep going |on )?(on )?(to )?the (next|following) (line|sentence|piece|statement)$|^read the next (line|piece)$/;
 const PREV_LINE = /^(the )?(previous|last|prior) (line|sentence|piece|statement)$|^(go )?back (a|one) (line|sentence)$|^(go )?(back )?to the (previous|last) (line|sentence)$/;
 const YES = /^(yes|yeah|yep|yup|sure|ok|okay|next|go ahead|go on|please do|continue|keep going|let's go|go for it|yes please|sounds good)$/;
-const ASKED_NEXT = /\b(next line|next piece|next sentence|the next one|continue|keep going|go on|move on)\b[^.?!]*\?\s*$/i;
+const ASKED_NEXT = /\b(next line|next piece|next sentence|next mishna|next mishnah|next pasuk|next posuk|next verse|the next one|continue|keep going|go on|move on)\b[^.?!]*\?\s*$/i;
 
 function lineFromSource(src: SourceData): LineText {
   return { ref: src.ref, he: src.he.join(' '), en: src.en.join(' '), translation: src.translation };
@@ -246,12 +246,21 @@ function currentLine(ctx: RouteCtx): string | null {
   return p ? `${p.base}:${p.n}` : null;
 }
 
+// What one step is called in this kind of text: a mishnah, a pasuk, or a line of Gemara.
+const TANAKH_BOOK = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles)\b/;
+function unitWord(ref: string): string {
+  if (/^Mishnah /.test(ref)) return 'mishnah';
+  if (TANAKH_BOOK.test(ref)) return 'pasuk';
+  return 'line';
+}
+
 function lineReply(l: LineText, spoken: boolean): string {
+  const u = unitWord(l.ref);
   if (spoken) {
-    return l.en ? `Next line. ${l.en} Any question on this, or shall we keep going?` : `Next line is ${l.ref}. There's no approved translation for it. Want me to explain it?`;
+    return l.en ? `Next ${u}. ${l.en} Any question on this, or shall we keep going?` : `Next ${u} is ${l.ref}. There's no approved translation for it. Want me to explain it?`;
   }
   const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
-  const ask = l.en ? 'Any question on this line, or next line?' : "There's no approved translation for this line. Want me to explain it?";
+  const ask = l.en ? `Any question on this ${u}, or next ${u}?` : `There's no approved translation for this ${u}. Want me to explain it?`;
   return `**${l.ref}**\n\n> ${l.he}${en}\n\n${ask}`;
 }
 
@@ -263,9 +272,15 @@ async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
   const tries = dir === 1 ? [`${base}:${n + 1}`, ...stepRef(base, 1, 'amud').map((r) => `${r}:1`)] : n > 1 ? [`${base}:${n - 1}`] : [];
   for (const ref of tries) {
     const src = await tryText(ref, ctx.approved);
-    if (src) { const line = lineFromSource(src); return { reply: lineReply(line, ctx.spoken), line }; }
+    if (src) {
+      const line = lineFromSource(src);
+      // Show the whole perek / amud in the Sefer, scrolled to this line, so the learner can look around it.
+      const p = splitRef(src.ref);
+      const whole = await tryText(p.base, ctx.approved);
+      return { reply: lineReply(line, ctx.spoken), line, ...(whole ? { source: { ...whole, focus: p.n } } : {}) };
+    }
   }
-  return { reply: dir === 1 ? `That's the end of ${base.replace(/\s\d.*$/, '')}.` : "We're already at the first line." };
+  return { reply: dir === 1 ? `That's the end of ${base.replace(/\s\d.*$/, '')}.` : `We're already at the first ${unitWord(base)}.` };
 }
 
 // ---------- 7. Read-through ----------
@@ -344,8 +359,13 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     const r = await moveLine(ctx, 1);
     if (r) return r;
   }
-  if (PREV_LINE.test(s)) {
+  if (PREV_LINE.test(s) || /^(back|go back|previous|previous one|the previous one|last one)$/.test(s)) {
     const r = await moveLine(ctx, -1);
+    if (r) return r;
+  }
+  // Plain "next": the next mishnah / pasuk / line, with its translation, for free. ("Explain" brings the AI in.)
+  if (/^(next|next one|the next one|next please|onward|onwards|forward|go on|continue|keep going|moving on|move on)$/.test(s)) {
+    const r = await moveLine(ctx, 1);
     if (r) return r;
   }
 
@@ -355,6 +375,11 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     if (!main) return { reply: 'Which sefer are we in? Tell me the place (for example, "Berachos 36b") and I\'ll open it.' };
     const word = nav[nav.length - 1] as string;
     const dir: 1 | -1 = /\b(previous|prev|last|back)\b/.test(s) ? -1 : 1;
+    // "Next mishnah" / "next pasuk": one step, like "next line".
+    if (unitOf(word) === 'mishnah' || unitOf(word) === 'pasuk') {
+      const r = await moveLine(ctx, dir);
+      if (r) return r;
+    }
     for (const ref of stepRef(main.ref, dir, unitOf(word))) {
       const src = await tryText(ref, ctx.approved);
       if (src) return { reply: openingReply(src, spoken), source: src };

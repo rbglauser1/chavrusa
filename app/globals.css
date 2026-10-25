@@ -481,3 +481,6 @@ table.costs td.n, table.costs th.n { text-align: right; }
 }
 @media (max-width: 420px) { .looks { gap: 8px; } .look .mini { height: 90px; } }
 @media (prefers-reduced-motion: reduce) { .pulse, .dots span { animation: none; } }
+
+/* The line the learner is on, in the Sefer panel. */
+.sefer .line.focus { background: color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 8px; box-shadow: inset 3px 0 0 var(--accent); }

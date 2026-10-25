@@ -78,6 +78,7 @@ export interface SourceData {
   translation: string | null;   // approved translation version title, or null
   archaic?: boolean;             // the translation uses old-fashioned English (thou, hath…)
   url: string;
+  focus?: number;                // Sefer panel: the line to scroll to and highlight
 }
 
 export async function listSessions(userId = OWNER_ID): Promise<SessionRow[]> {

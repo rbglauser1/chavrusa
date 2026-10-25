@@ -249,7 +249,12 @@ export default function Home() {
   function showSource(src: SourceData) {
     setSources((s) => {
       const existing = s.findIndex((x) => x.ref === src.ref);
-      if (existing >= 0) { setSelected(existing); return s; }
+      if (existing >= 0) {
+        setSelected(existing);
+        // Same perek/amud, new place in it: move the highlight.
+        if (src.focus && src.focus !== s[existing].focus) { const copy = s.slice(); copy[existing] = { ...s[existing], focus: src.focus }; return copy; }
+        return s;
+      }
       setSelected(s.length);
       return [...s, src];
     });

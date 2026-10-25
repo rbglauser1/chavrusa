@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud } from '@/lib/hebrew';
@@ -34,6 +34,13 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [loading, setLoading] = useState<string | null>(null);
 
   useEffect(() => { setOpen(new Set()); setShowAll(false); }, [selected, src?.ref]);
+  // Scroll to the line the learner is on (and highlight it).
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!src?.focus) return;
+    const t = window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${src.focus}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120);
+    return () => window.clearTimeout(t);
+  }, [src?.ref, src?.focus, selected]);
 
   const canTranslate = settings.display === 'toggle';
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
@@ -86,7 +93,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       )}
 
-      <div className="sefer-body">
+      <div className="sefer-body" ref={bodyRef}>
         {!src && <div className="empty">Sources your chavrusa brings will appear here.</div>}
         {src && (
           <>
@@ -99,7 +106,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const en = src.en[i];
               const key = `${src.ref}#${i}`;
               return (
-                <div key={i} className={`line ${open.has(i) ? 'open' : ''}`} onClick={() => toggleLine(i)}>
+                <div key={i} data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={() => toggleLine(i)}>
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                   {isOpen && (
                     <div className="en" onClick={(e) => e.stopPropagation()}>
