@@ -210,7 +210,7 @@ function styleSwitch(ctx: RouteCtx, s: string): Routed | null {
   const st = styleById(hit[1]);
   const explicit = /\b(style|mode|switch|change)\b/.test(s) || s === st.short.toLowerCase() || s === st.name.toLowerCase();
   if (explicit) {
-    return { settings: { style: st.id }, reply: `Okay, switched to ${st.name}.${ctx.sources.length ? ' Shall we keep going?' : ' Where would you like to start?'}` };
+    return { settings: { style: st.id }, reply: ctx.spoken ? 'Sure.' : `Switched to ${st.name}.` };
   }
   // "Quiz me", "push me harder": switch, and let the AI act on it right away.
   return { settings: { style: st.id }, then: 'ai' };
@@ -296,7 +296,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   if (/\b(read|say over|say it over|read it|read me|go through|read out)\b/.test(s) && COMMENTARIES.some(([re]) => re.test(s)) && !/\b(why|explain|what does|what is|mean|asking|bothered)\b/.test(s)) {
     const found = await findCommentary(s, ctx.sources, ctx.approved);
     if (found && 'src' in found) {
-      return { reply: spoken ? `Okay, here's ${found.src.ref}. Just say stop whenever you want.` : `Reading ${found.src.ref}.`, readThrough: { mode: 'he', base: found.src.ref, from: 1 }, source: found.src };
+      return { reply: spoken ? 'Sure.' : `Reading ${found.src.ref}.`, readThrough: { mode: 'he', base: found.src.ref, from: 1 }, source: found.src };
     }
     if (found && 'missing' in found) return { reply: `I couldn't find an approved ${found.missing} on ${found.on} on Sefaria. Sometimes there's none on that amud; try the next amud, or name a specific line.` };
   }
@@ -308,7 +308,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     if (!place) return { reply: 'Which parsha or perek? Tell me the place (for example, "Bereishis 1") and say "read it through."' };
     const from = pre ? place.n : /\bfrom the (top|beginning)\b/.test(s) ? 1 : place.n + (/\bkeep reading|continue reading|go on reading\b/.test(s) ? 1 : 0);
     const what = mode === 'shnayim' ? "shnayim mikra v'echad targum" : mode === 'he' ? 'the Hebrew' : 'with the English';
-    return { reply: spoken ? `Okay, let's read ${what}. Just say stop whenever you want.` : `Reading ${what} from ${place.base}:${from}.`, readThrough: { mode, base: place.base, from }, ...(pre ? { source: pre } : {}) };
+    return { reply: spoken ? 'Sure.' : `Reading ${what} from ${place.base}:${from}.`, readThrough: { mode, base: place.base, from }, ...(pre ? { source: pre } : {}) };
   }
 
   // Open a named place ("Berachos 36b", "today's daf", "what's this week's parsha?").
@@ -396,7 +396,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   const model = modelSwitch(s);
   if (model) {
     const p = { ...ctx.settings, ...model.settings } as Settings;
-    return { ...model, reply: `Okay, now using ${MODELS[p.provider][p.tier].label}.` };
+    return { ...model, reply: ctx.spoken ? 'Sure.' : `Now using ${MODELS[p.provider][p.tier].label}.` };
   }
   return null;
 }

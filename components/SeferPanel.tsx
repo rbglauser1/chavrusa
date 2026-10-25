@@ -29,11 +29,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
   const src = sources[selected];
   const [open, setOpen] = useState<Set<number>>(new Set());
-  const [showAll, setShowAll] = useState(false);
+  const showAll = settings.seferEnglish !== false; // translation under each part (Settings, or the toggle here)
+  const setShowAll = (f: (v: boolean) => boolean) => onSettings({ seferEnglish: f(showAll) });
   const [aiText, setAiText] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<string | null>(null);
 
-  useEffect(() => { setOpen(new Set()); setShowAll(false); }, [selected, src?.ref]);
+  useEffect(() => { setOpen(new Set()); setComm({}); }, [selected, src?.ref]);
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -42,7 +43,29 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     return () => window.clearTimeout(t);
   }, [src?.ref, src?.focus, selected]);
 
-  const canTranslate = settings.display === 'toggle';
+  const canTranslate = settings.display !== 'off';
+
+  // Commentary on one part, opened right under it (free, straight from Sefaria).
+  const [comm, setComm] = useState<Record<string, { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string }>>({});
+  const kind = !src ? 'none' : /^Mishnah /.test(src.ref) ? 'mishnah' : / on /i.test(src.ref) ? 'none' : /\d+[ab](:|$)/.test(src.ref) ? 'gemara' : 'tanakh';
+  const buttons: [string, string][] = kind === 'mishnah' ? [['bartenura', 'Bartenura'], ['tyt', 'Tosfos Yom Tov']]
+    : kind === 'gemara' ? [['rashi', 'Rashi'], ['tosafot', 'Tosafos']]
+    : kind === 'tanakh' ? [['rashi', 'Rashi'], ['ramban', 'Ramban']] : [];
+  // The reference of part i: "Mishnah Peah 1" + 4 -> "Mishnah Peah 1:4"; "Genesis 1:3-7" + 0 -> "Genesis 1:3".
+  function partRef(i: number): string {
+    if (!src) return '';
+    const m = src.ref.match(/^(.*?):(\d+)(?:-\d+)?$/);
+    return m ? `${m[1]}:${Number(m[2]) + i}` : `${src.ref}:${i + 1}`;
+  }
+  async function toggleComm(i: number, who: string) {
+    const key = `${i}:${who}`;
+    if (comm[key]) { setComm((c) => { const n = { ...c }; delete n[key]; return n; }); return; }
+    setComm((c) => ({ ...c, [key]: { loading: true } }));
+    try {
+      const r = await fetch(`/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`).then((x) => x.json());
+      setComm((c) => ({ ...c, [key]: r.error ? { error: r.error } : r.empty ? { empty: true } : { he: r.he, en: r.en } }));
+    } catch { setComm((c) => ({ ...c, [key]: { error: 'Could not load it.' } })); }
+  }
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
 
   async function aiTranslate(key: string, text: string) {
@@ -88,7 +111,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             <button className={`toggle ${showAll ? 'on' : ''}`} onClick={() => setShowAll((v) => !v)}>Translation {showAll ? 'on' : 'off'}</button>
           )}
           <span className="muted" style={{ alignSelf: 'center' }}>
-            {canTranslate ? 'Tap a line to translate it' : 'Original only'}
+            {canTranslate ? (showAll ? 'Translation under each part' : 'Tap a line to translate it') : 'Original only'}
           </span>
         </div>
       )}
@@ -108,6 +131,31 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={() => toggleLine(i)}>
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                  {buttons.length > 0 && (
+                    <div className="comm-btns" onClick={(e) => e.stopPropagation()}>
+                      {buttons.map(([who, label]) => (
+                        <button key={who} className={`comm-btn ${comm[`${i}:${who}`] ? 'on' : ''}`} onClick={() => toggleComm(i, who)}>{label}</button>
+                      ))}
+                    </div>
+                  )}
+                  {buttons.map(([who, label]) => {
+                    const c = comm[`${i}:${who}`];
+                    if (!c) return null;
+                    return (
+                      <div key={who} className="comm" onClick={(e) => e.stopPropagation()}>
+                        <div className="comm-title">{label}</div>
+                        {c.loading ? <div className="muted">Opening…</div>
+                          : c.error ? <div className="muted">{c.error}</div>
+                          : c.empty ? <div className="muted">No {label} on this part on Sefaria.</div>
+                          : (c.he ?? []).map((h, k) => (
+                            <div key={k} className="comm-line">
+                              <div className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>
+                              {showAll && c.en?.[k] && <div className="en">{c.en[k]}</div>}
+                            </div>
+                          ))}
+                      </div>
+                    );
+                  })}
                   {isOpen && (
                     <div className="en" onClick={(e) => e.stopPropagation()}>
                       {en ? en : aiText[key] ? (
