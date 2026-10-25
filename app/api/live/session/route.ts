@@ -43,6 +43,11 @@ export async function POST(req: NextRequest) {
       });
     } catch { /* the call still works without it */ }
   }
+  // A warm yeshiva-style hello when a call starts (not when it resumes after a pause).
+  const resume = req.nextUrl.searchParams.get('resume') === '1';
+  const placeName = context.match(/The learner is on (.*?), line \d+/)?.[1] ?? null;
+  const hello = `Speak first, right now, before the learner says anything: greet the learner warmly the way a yeshiva chavrusa would, in one or two short sentences. Vary it naturally, for example "Shalom aleichem, chaver!", "Shalom, my friend, good to see you!", "Nu, chaver, ready to learn?". ${placeName ? `Then mention that last time we were on ${placeName} and ask if he wants to pick up there.` : 'Then ask what we are learning today.'} Then stop and listen.`;
+  const resumeNote = 'The call is resuming after a short pause. Do not greet again; just say something very short like "I\'m here" if the learner speaks, and continue where you left off.';
   const greeting = `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
         instructions: (preview
           ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
           : liveInstructions(s.nusach, s.livePace) + context) + voiceNote,
-        ...(preview ? { input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: greeting }] }] } : {}),
+        input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : resume ? resumeNote : hello }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },
       },

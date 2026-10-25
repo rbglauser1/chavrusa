@@ -200,6 +200,7 @@ export function useLive(opts: {
 
   const start = useCallback(async () => {
     if (stateRef.current !== 'off' && stateRef.current !== 'paused') return;
+    const resuming = stateRef.current === 'paused'; // coming back from a pause: no new greeting
     stopWakeWatch();
     closingTo.current = null;
     setS('connecting');
@@ -232,7 +233,10 @@ export function useLive(opts: {
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
       const sid = optsRef.current.sessionId?.();
-      const res = await fetch(`/api/live/session${sid ? `?session=${encodeURIComponent(sid)}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
+      const q = new URLSearchParams();
+      if (sid) q.set('session', sid);
+      if (resuming) q.set('resume', '1');
+      const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
