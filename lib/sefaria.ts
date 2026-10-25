@@ -201,3 +201,28 @@ export async function todaysLearning(): Promise<{ title: string; display: string
     title: c?.title?.en ?? '', display: c?.displayValue?.en ?? '', ref: c?.ref ?? '',
   })).filter((c: { ref: string }) => c.ref);
 }
+
+
+// When a reference doesn't work: how is this book divided? Many seforim (Nefesh HaChayim, Kuzari, Shulchan Aruch…)
+// have named parts, so their references look like "Nefesh HaChayim, Gate III 1" rather than "Nefesh HaChayim 3:1".
+export async function bookOutline(ref: string): Promise<string | null> {
+  const guess = bookTitleFromRef(ref).replace(/,.*$/, '').trim();
+  const r = await resolveName(guess).catch(() => null);
+  const titles = [...new Set([guess, ...(r?.suggestions ?? [])])].slice(0, 4);
+  for (const t of titles) {
+    let data: any = null;
+    try { data = await getJson(`${BASE}/api/v2/raw/index/${enc(t)}`); } catch { continue; }
+    if (!data?.title) continue;
+    const nodeTitle = (n: any): string | null => n?.title ?? n?.titles?.find((x: any) => x.lang === 'en' && x.primary)?.text ?? null;
+    const nodes: any[] = Array.isArray(data?.schema?.nodes) ? data.schema.nodes : [];
+    if (!nodes.length) return `"${data.title}" uses references like "${data.title} 1:1" (chapter:section).`;
+    const parts = nodes.map((n) => {
+      const name = nodeTitle(n);
+      const kids: any[] = Array.isArray(n?.nodes) ? n.nodes : [];
+      return name ? (kids.length ? `${name} (subdivided: ${kids.map(nodeTitle).filter(Boolean).slice(0, 6).join(', ')})` : name) : null;
+    }).filter(Boolean).slice(0, 14) as string[];
+    const first = nodeTitle(nodes.find((n) => !/intro/i.test(nodeTitle(n) ?? '')) ?? nodes[0]);
+    return `"${data.title}" is divided into named parts: ${parts.join('; ')}. A reference names the part, then the number: e.g. "${data.title}, ${first} 1".`;
+  }
+  return null;
+}

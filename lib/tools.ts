@@ -3,7 +3,7 @@ import { ApprovedEntry } from './approval';
 import { Settings, STYLES, styleById } from './config';
 import { forPanel } from './place';
 import { addMemory, addSource, forgetMemory, listSessionRequests, SourceData } from './db';
-import { getLinks, getText, resolveName, search, todaysLearning } from './sefaria';
+import { bookOutline, getLinks, getText, resolveName, search, todaysLearning } from './sefaria';
 import { stripNikud } from './hebrew';
 import { ToolDef } from './llm/types';
 
@@ -148,11 +148,19 @@ export function makeExecutor(ctx: {
           return 'NOT OPENED (to save cost, commentaries open only when the learner asks about one). Do NOT say it failed to load or that the system would not open it. Stay with the main text, and if this commentary would help, offer it in one short line, e.g. "Want to see what Tosafos says?". If the learner says yes, it will open.';
         }
         ctx.emit({ type: 'status', text: `Opening ${ref}…` });
-        const s = await getText(ref, ctx.approved);
+        let s: Awaited<ReturnType<typeof getText>>;
+        try { s = await getText(ref, ctx.approved); }
+        catch {
+          const how = await bookOutline(ref).catch(() => null);
+          return `No text found for "${ref}".${how ? ` ${how} Try again with a reference in that form.` : ' Check the reference with find_ref.'}`;
+        }
         if (!s.verdict.allowed) {
           return `NOT APPROVED: ${s.verdict.reason} Do not quote or rely on it. Tell the learner briefly that this source is outside the approved list, and continue with approved sources.`;
         }
-        if (s.he.length === 0 && s.en.length === 0) return `No text found for "${ref}". Check the reference with find_ref.`;
+        if (s.he.length === 0 && s.en.length === 0) {
+          const how = await bookOutline(ref).catch(() => null);
+          return `No text found for "${ref}".${how ? ` ${how} Try again with a reference in that form.` : ' Check the reference with find_ref.'}`;
+        }
         const { verdict, ...source } = s;
         // The learner sees the whole perek/amud at this line; the AI reads just what it asked for.
         const shown = await forPanel(source, ctx.approved);
@@ -180,7 +188,9 @@ export function makeExecutor(ctx: {
       }
       case 'find_ref': {
         const r = await resolveName(String(args.name ?? ''));
-        return r.isRef ? `Valid ref: ${r.ref}` : `Not a complete ref. Suggestions: ${r.suggestions.join('; ') || 'none'}`;
+        if (r.isRef) return `Valid ref: ${r.ref}`;
+        const how = await bookOutline(String(args.name ?? '')).catch(() => null);
+        return `Not a complete ref. Suggestions: ${r.suggestions.join('; ') || 'none'}.${how ? ` ${how}` : ''}`;
       }
       case 'todays_learning': {
         const items = await todaysLearning();

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { approvedList } from '@/lib/db';
 import { stripNikud } from '@/lib/hebrew';
 import { findRef } from '@/lib/prefetch';
-import { getLinks, getText, resolveName, search, todaysLearning } from '@/lib/sefaria';
+import { bookOutline, getLinks, getText, resolveName, search, todaysLearning } from '@/lib/sefaria';
 
 export const runtime = 'nodejs';
 
@@ -75,10 +75,12 @@ const clip = (t: string, max: number) => (t.length > max ? t.slice(0, max).repla
 
 async function lines(ref: string, from = 1, count = 6): Promise<string> {
   const approved = await approvedList();
-  const s = await getText(ref, approved);
+  let s: Awaited<ReturnType<typeof getText>>;
+  try { s = await getText(ref, approved); }
+  catch { const how = await bookOutline(ref).catch(() => null); return `No text found for "${ref}".${how ? ` ${how}` : ' Try find_place first.'}`; }
   if (!s.verdict.allowed) return `Not approved: ${s.verdict.reason} Do not quote or rely on it.`;
   const total = Math.max(s.he.length, s.en.length);
-  if (!total) return `No text found for "${ref}". Try find_place first.`;
+  if (!total) { const how = await bookOutline(ref).catch(() => null); return `No text found for "${ref}".${how ? ` ${how}` : ' Try find_place first.'}`; }
   const start = Math.min(Math.max(1, from), total);
   const end = Math.min(total, start + Math.min(Math.max(1, count), 20) - 1);
   const out: string[] = [];
