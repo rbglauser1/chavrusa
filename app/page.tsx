@@ -85,6 +85,12 @@ export default function Home() {
     },
     isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0,
     sessionId: () => sessionIdRef.current,
+    // The voice answered by itself: show the exchange and save it, so the brain knows what was said.
+    onAside: (learner, said) => {
+      setItems((it) => [...it, ...(learner ? [{ kind: 'user' as const, text: learner }] : []), { kind: 'assistant' as const, text: said, usage: { ai: false, reason: 'The voice answered by itself (part of the call)' } }]);
+      fetch('/api/live/aside', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sessionIdRef.current, user: learner, voice: said }) })
+        .then((r) => r.json()).then((d) => { if (d?.session?.id) { sessionIdRef.current = d.session.id; setSessionId(d.session.id); } }).catch(() => {});
+    },
     // Saver pauses sooner: never later than 30 quiet seconds.
     idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,

@@ -24,7 +24,8 @@ export function useLive(opts: {
   isBusy: () => boolean;                        // the brain is still working on something
   idleSeconds: () => number;                    // pause after this much quiet (0 = never)
   wakeOnSpeech: () => boolean;
-  sessionId?: () => string | null;              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
+  sessionId?: () => string | null;
+  onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
   const [heard, setHeard] = useState('');           // what the learner is saying right now
@@ -36,6 +37,8 @@ export function useLive(opts: {
   const mic = useRef<MediaStream | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const userBuf = useRef('');
+  const voiceBuf = useRef('');   // what the voice is saying on its own (not an answer from the brain)
+  const answering = useRef(false); // the voice is saying an answer we handed it
   const lastInputAt = useRef(0);
   const seconds = useRef(0);
   const startedAt = useRef(0);
@@ -129,9 +132,21 @@ export function useLive(opts: {
       case 'session.output_transcript.delta':
         bump();
         setS('speaking');
+        if (typeof e.delta === 'string' && !answering.current && !pending.current.size) voiceBuf.current += e.delta;
         if (speakTimer.current) clearTimeout(speakTimer.current);
         speakTimer.current = window.setTimeout(() => {
           if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
+          // The voice finished a reply it made by itself: record the exchange so the session (and the brain) has it.
+          if (!pending.current.size && !answering.current && voiceBuf.current.trim()) {
+            const learner = userBuf.current.trim();
+            const said = voiceBuf.current.trim();
+            userBuf.current = '';
+            voiceBuf.current = '';
+            setHeard('');
+            optsRef.current.onAside?.(learner, said);
+          }
+          if (!pending.current.size) answering.current = false;
+          voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
         }, 900);
         break;
       case 'session.delegation.created':
@@ -164,6 +179,8 @@ export function useLive(opts: {
     const t = forSpeech(text);
     if (!t) return;
     partial.current.add(delegationId);
+    answering.current = true;
+    voiceBuf.current = '';
     bump();
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: t });
   }, [send]);
@@ -173,6 +190,8 @@ export function useLive(opts: {
     if (!pending.current.has(delegationId)) return;
     pending.current.delete(delegationId);
     const hadPart = partial.current.delete(delegationId);
+    answering.current = true;
+    voiceBuf.current = '';
     bump();
     const t = forSpeech(text);
     if (!t && hadPart) return; // everything was already handed over
