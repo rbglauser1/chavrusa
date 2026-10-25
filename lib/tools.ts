@@ -138,7 +138,7 @@ export function makeExecutor(ctx: {
       case 'get_text': {
         const ref = String(args.ref ?? '');
         if (ctx.allowCommentary === false && isCommentaryRef(ref)) {
-          return 'NOT OPENED: the learner has not asked about a commentary, so stay with the main text. If a commentary would really help, mention its name in one short line and offer to look at it together.';
+          return 'NOT OPENED (to save cost, commentaries open only when the learner asks about one). Do NOT say it failed to load or that the system would not open it. Stay with the main text, and if this commentary would help, offer it in one short line, e.g. "Want to see what Tosafos says?". If the learner says yes, it will open.';
         }
         ctx.emit({ type: 'status', text: `Opening ${ref}…` });
         const s = await getText(ref, ctx.approved);

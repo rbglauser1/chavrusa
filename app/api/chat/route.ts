@@ -66,8 +66,12 @@ export async function POST(req: NextRequest) {
         // (in this message, the one before, or by saying "yes" to the Chavrusa's offer to look at one).
         const prevUser = [...history].reverse().find((m) => m.role === 'user')?.content ?? '';
         const prevBot = [...history].reverse().find((m) => m.role === 'assistant')?.content ?? '';
-        const askedCommentary = mentionsCommentary(message) || mentionsCommentary(prevUser)
-          || (/^\W*(yes|yeah|sure|ok(ay)?|please|let'?s (see|look)|go ahead)\b/i.test(message) && mentionsCommentary(prevBot));
+        // Generous on purpose: a commentary mentioned by the learner in the last few turns, or by the Chavrusa (or the
+        // voice) in its last reply, or one already open in this session, counts as asked.
+        const recentLearner = history.filter((m) => m.role === 'user').slice(-3).map((m) => m.content);
+        const commentaryOpen = sources.slice(-3).some((x) => / on /i.test(x.ref));
+        const askedCommentary = mentionsCommentary(message) || recentLearner.some(mentionsCommentary) || mentionsCommentary(prevBot) || commentaryOpen;
+        void prevUser;
         const prepared = pre && (askedCommentary || settings.style === 'iyun') ? await Promise.race([
           prepareCommentaries(pre.ref, approved).catch(() => null),
           new Promise<null>((r) => setTimeout(() => r(null), 400)),
