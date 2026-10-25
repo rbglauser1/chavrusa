@@ -95,7 +95,7 @@ function sefariaName(cand: string, mishnah = false): string {
   for (const [re, to] of ALIASES) c = c.replace(re, to);
   c = c.replace(/\bBava basra\b/i, 'Bava Batra');
   // "Mishnayos Berachos 1" / a Mishnah-only tractate -> the Mishnah.
-  if (!/^(Mishnah|Jerusalem|Tosefta|Rashi|Tosafot)\b/i.test(c) && (mishnah || MISHNAH_ONLY.test(c))) c = `Mishnah ${c}`;
+  if (!/^(Mishnah|Jerusalem|Tosefta|Rashi|Tosafot)\b/i.test(c) && !/\d+[ab]\b/.test(c) && (mishnah || MISHNAH_ONLY.test(c))) c = `Mishnah ${c}`;
   return c;
 }
 
@@ -115,11 +115,16 @@ export async function findRef(message: string, direct = false): Promise<string |
     if (r?.isRef && r.ref) return r.ref;
   }
   // Check all the possible readings at once (each lookup is cached), and take the longest that is a real place.
-  const mishnah = /\bmishn(a|ah|ayos|ayot|ais|as)\b/i.test(message);
-  const cands = candidateRefs(normalizePlaceText(message));
+  // "Mishnayos Berachos 1" means the Mishnah; but a daf ("Berachos 2a", "daf beis", "the Mishnah on 2a") is the Gemara.
+  const normalized = normalizePlaceText(message);
+  const gemara = /\b\d{1,3}[ab]\b|\bdaf\b|\bamud\b|\bgemara\b|\bgemora\b/i.test(normalized);
+  const mishnah = !gemara && /\bmishn(a|ah|ayos|ayot|ais|as)\b/i.test(message);
+  const cands = candidateRefs(normalized);
   const results = await Promise.all(cands.map(async (c) => {
-    const r = await resolveName(sefariaName(c, mishnah)).catch(() => null);
-    if (r?.isRef && r.ref) return r.ref;
+    for (const name of [...new Set([sefariaName(c, mishnah), sefariaName(c, false)])]) {
+      const r = await resolveName(name).catch(() => null);
+      if (r?.isRef && r.ref) return r.ref;
+    }
     return null;
   }));
   return results.find(Boolean) ?? null;
