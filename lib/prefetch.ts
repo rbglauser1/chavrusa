@@ -65,6 +65,10 @@ export function normalizePlaceText(message: string): string {
   m = m.replace(new RegExp(`\\b(${ord})\\s+(${UNIT_WORDS})\\b`, 'gi'), (_, o, u) => `${u} ${ORD[o.toLowerCase()]}`);   // first perek -> perek 1
   m = m.replace(new RegExp(`\\b(${UNIT_WORDS})\\s+(${ord})\\b`, 'gi'), (_, u, o) => `${u} ${ORD[o.toLowerCase()]}`);   // perek alef -> perek 1
   m = m.replace(/\b(\d{1,3})(st|nd|rd|th)\s+(perek|chapter|mishnah?|pasuk|posuk|verse)\b/gi, '$3 $1');
+  // "mishna 4 (of) perek 1" / "perek 1 mishna 4" -> "1:4"
+  m = m.replace(/\b(?:mishna|mishnah)\s+(\d{1,3})\s+(?:of\s+)?(?:the\s+)?(?:perek|chapter)\s+(\d{1,3})\b/gi, '$2:$1');
+  m = m.replace(/\b(?:perek|chapter)\s+(\d{1,3})\s+(?:,\s*)?(?:mishna|mishnah|pasuk|posuk|verse)\s+(\d{1,3})\b/gi, '$1:$2');
+  m = m.replace(/\b(\d{1,3}:\d{1,3})\s+(?:of|in)\s+((?:[A-Za-z']+\s?){1,3})/gi, (_, r, name) => `${name.trim()} ${r} `);
   // "perek 1 of Peah" -> "Peah perek 1"
   m = m.replace(new RegExp(`\\b(${UNIT_WORDS})\\s+(\\d{1,3})\\s+(?:of|in)\\s+((?:[A-Za-z']+\\s?){1,3})`, 'gi'), (_, u, n, name) => `${name.trim()} ${u} ${n} `);
   return m.replace(/\s+/g, ' ').trim();
@@ -81,7 +85,7 @@ const ALIASES: [RegExp, string][] = [
   [/\bmakkos\b/i, 'Makkot'], [/\bshevuos\b/i, 'Shevuot'], [/\bavoda(h)? zara(h)?\b/i, 'Avodah Zarah'], [/\bhoriyos\b/i, 'Horayot'],
   [/\bmenachos\b/i, 'Menachot'], [/\bbechoros\b/i, 'Bekhorot'], [/\barachin\b/i, 'Arakhin'], [/\bkerisos\b/i, 'Keritot'],
   [/\bbava basra\b/i, 'Bava Batra'], [/\bbaba (kamma|metzia|batra|basra)\b/i, 'Bava $1'], [/\bbava basra\b/i, 'Bava Batra'],
-  [/\b(paya|pe'?ah|peya|pe ah)\b/i, 'Peah'], [/\bmishnayos\b|\bmishnayot\b|\bmishnais\b|\bmishnas\b/i, 'Mishnah'],
+  [/\b(paya|pe'?[ae]h|peya|pe ah|peiah)\b/i, 'Peah'], [/\bmishnayos\b|\bmishnayot\b|\bmishnais\b|\bmishnas\b/i, 'Mishnah'],
   [/\bterumos\b/i, 'Terumot'], [/\bmaasros\b/i, 'Maasrot'], [/\bbikkurim\b/i, 'Bikkurim'], [/\beduyos\b/i, 'Eduyot'], [/\bavos\b/i, 'Pirkei Avot'],
   [/\bmiddos\b/i, 'Middot'], [/\boholos\b/i, 'Oholot'], [/\btaharos\b|\btohoros\b/i, 'Tahorot'], [/\bmikvaos\b/i, 'Mikvaot'], [/\bshviis\b|\bsheviis\b/i, 'Sheviit'],
   [/\bbereishis\b/i, 'Genesis'], [/\bshemos\b/i, 'Exodus'], [/\bvayikra\b/i, 'Leviticus'], [/\bbamidbar\b/i, 'Numbers'], [/\bdevarim\b/i, 'Deuteronomy'],
@@ -176,6 +180,13 @@ export function isJustOpening(message: string): boolean {
 // What the Chavrusa says when the app opened the place by itself (no AI call).
 export function openingReply(s: SourceData, spoken: boolean): string {
   const name = s.ref.replace(/ (\d+)([ab])\b/, (_, d, a) => ` ${d}${a === 'a' ? 'a' : 'b'}`);
+  // One mishnah / pasuk (e.g. "Peah 1:4"): show it whole, with its translation.
+  if (!/\d+[ab](:|$)/.test(s.ref) && /:\d+$/.test(s.ref)) {
+    const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
+    const en = s.en.join(' ').trim();
+    if (spoken) return en ? `${name}. ${en} Any question on it, or next ${unit}?` : `Okay, I've opened ${name}. Want me to explain it, or go on to the next ${unit}?`;
+    return `**${name}**\n\n> ${s.he.join(' ').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
+  }
   // A perek of Mishnah (or of Tanach): start right in, with the first mishnah / pasuk and its translation.
   if (!/\d+[ab](:|$)/.test(s.ref) && s.he.length > 1) {
     const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
