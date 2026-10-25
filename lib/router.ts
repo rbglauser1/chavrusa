@@ -135,8 +135,9 @@ function stepRef(ref: string, dir: 1 | -1, unit: Unit): string[] {
 
 // ---------- 4. Opening a commentary on what's open ----------
 const COMMENTARIES: [RegExp, RegExp][] = [
+  [/\btosafos yom tov\b|\btosfos yom tov\b/, /Tosafot Yom Tov/i],
   [/\brashi\b/, /^Rashi$/i],
-  [/\btosa?fo[st]\b|\btosfos\b|\btosafot\b/, /^Tosafot$/i],
+  [/\bto[iy]?s[aeo]?(?:f|ph)[aeo]?[st]s?\b/, /^Tosafot$/i], // Tosafos, Tosfos, Tosofos, Toisfos, Tosafot…
   [/\brashbam\b/, /^Rashbam$/i],
   [/\bramban\b/, /^Ramban$/i],
   [/\bibn ezra\b|\bevan ezra\b/, /^Ibn Ezra$/i],
@@ -150,7 +151,6 @@ const COMMENTARIES: [RegExp, RegExp][] = [
   [/\bran\b/, /^Ran$/i],
   [/\bmaharsha\b/, /Maharsha/i],
   [/\bbartenura\b|\bbertinoro\b|\bbartenuro\b/, /^Bartenura$/i],
-  [/\btosafos yom tov\b|\btosfos yom tov\b/, /Tosafot Yom Tov/i],
   [/\bmishna(h)? berura(h)?\b/, /Mishnah Berurah/i],
 ];
 const OPEN_FILLER = new Set(['open', 'show', 'bring', 'up', 'see', 'look', 'at', 'the', 'me', 'go', 'to', 'what', 'about', 'on', 'this', 'here', 'it', 'inside', 'in', 'pull', 'read', 'lets', "let's", 'there', 'have', 'a', 'let', 'us', 'check', 'out', 'and', 'too', 'also', 'now', 'next']);
@@ -163,7 +163,8 @@ async function openCommentary(ctx: RouteCtx, s: string): Promise<Routed | null> 
   const links = await getLinks(main.ref, ctx.approved, ['Commentary', 'Targum']).catch(() => null);
   const ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
   if (!ofIt.length) {
-    return { reply: `I couldn't find an approved ${s.replace(/\b(open|show|bring|up|the|me|lets|let's)\b/g, '').trim()} on ${main.ref} on Sefaria.` };
+    const name = hit[1].source.replace(/[\^$\\]/g, '').replace(/^Tosafot$/, 'Tosafos').replace(/^Or HaChaim$/, 'Ohr HaChaim');
+    return { reply: `I couldn't find an approved ${name} on ${main.ref} on Sefaria.` };
   }
   const index = ofIt[0].ref.replace(/\s\d.*$/, '');               // "Rashi on Berakhot"
   const section = main.ref.match(/\s(\d.*)$/)?.[1] ?? '';          // "36b" or "1:1-5"

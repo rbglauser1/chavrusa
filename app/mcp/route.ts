@@ -67,7 +67,7 @@ const TOOLS = [
 ];
 
 const ALIAS: [RegExp, string][] = [
-  [/^tosa?fo[st]$|^tosfos$/i, 'Tosafot'], [/^or?h? ?ha ?chaim$/i, 'Or HaChaim'], [/^s'?e?forno$/i, 'Sforno'],
+  [/^to[iy]?s[aeo]?(?:f|ph)[aeo]?[st]s?$/i, 'Tosafot'], [/^or?h? ?ha ?chaim$/i, 'Or HaChaim'], [/^s'?e?forno$/i, 'Sforno'],
   [/^onkelos$|^targum$/i, 'Onkelos'], [/^baal ha ?turim$/i, 'Baal HaTurim'], [/^bartenura$|^bertinoro$/i, 'Bartenura'],
 ];
 

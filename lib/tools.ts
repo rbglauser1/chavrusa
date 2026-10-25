@@ -121,7 +121,7 @@ function clip(lines: string[], max: number): { text: string; clipped: boolean } 
 }
 
 // Does this text talk about a commentary (Rashi, Tosafos, the Rishonim…)?
-const COMMENTARY_WORDS = /\b(rashi|tosa?fo[st]|tosfos|tosafot|rashbam|ramban|rambam|ibn ezra|s'?e?forno|o?h?r ha ?chaim|kli yakar|baal ha ?turim|onkelos|targum|rashba|ritva|the ran|the rosh|rif|meiri|maharsha|maharam|bartenura|tosafos yom tov|mishna(h)? berura(h)?|commentar(y|ies)|meforshim|mefarshim|rishonim|rishon|acharonim|achronim|pirush|peirush)\b/i;
+const COMMENTARY_WORDS = /\b(rashi|to[iy]?s[aeo]?(?:f|ph)[aeo]?[st]s?|rashbam|ramban|rambam|ibn ezra|s'?e?forno|o?h?r ha ?chaim|kli yakar|baal ha ?turim|onkelos|targum|rashba|ritva|the ran|the rosh|rif|meiri|maharsha|maharam|bartenura|tosafos yom tov|mishna(h)? berura(h)?|commentar(y|ies)|meforshim|mefarshim|rishonim|rishon|acharonim|achronim|pirush|peirush)\b/i;
 export function mentionsCommentary(text: string): boolean { return COMMENTARY_WORDS.test(text); }
 // Sefaria names commentaries "X on Y" (Rashi on Berakhot 2a); Targum Onkelos too.
 export function isCommentaryRef(ref: string): boolean { return / on /i.test(ref) || /^(onkelos|targum)/i.test(ref); }
