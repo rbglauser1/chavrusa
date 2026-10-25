@@ -87,8 +87,9 @@ export const TOOLS: ToolDef[] = [
 // The lean copy of a source that the AI reads (the learner sees the full text).
 export function textForModel(s: SourceData, lean = false): string {
   // Lean (spoken Saver turns): a shorter excerpt, since a spoken reply covers one small step anyway.
-  const he = clip(s.he.map(stripNikud), lean ? 1500 : MAX_HE_CHARS);
-  const en = clip(s.en, lean ? 700 : MAX_EN_CHARS);
+  const comm = / on /i.test(s.ref);
+  const he = clip(s.he.map(stripNikud), comm ? (lean ? 2500 : 4000) : lean ? 1500 : MAX_HE_CHARS);
+  const en = clip(s.en, comm ? 1500 : lean ? 700 : MAX_EN_CHARS);
   return [
     `REF: ${s.ref} (${s.heRef})`,
     `Shown to learner in the Sefer panel. Lines are numbered.`,
@@ -114,7 +115,12 @@ function clip(lines: string[], max: number): { text: string; clipped: boolean } 
   let out = '';
   for (let i = 0; i < lines.length; i++) {
     const next = `[${i + 1}] ${lines[i]}\n`;
-    if (out.length + next.length > max) return { text: out, clipped: true };
+    if (out.length + next.length > max) {
+      // A single long line (a long Tosafos is often one "line") must still come through: cut it at a word.
+      const room = max - out.length;
+      if (!out || room > 300) out += next.slice(0, Math.max(room, 300)).replace(/\s+\S*$/, '') + ' …\n';
+      return { text: out, clipped: true };
+    }
     out += next;
   }
   return { text: out, clipped: false };

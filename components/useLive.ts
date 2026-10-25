@@ -39,6 +39,7 @@ export function useLive(opts: {
   const userBuf = useRef('');
   const voiceBuf = useRef('');   // what the voice is saying on its own (not an answer from the brain)
   const answering = useRef(false); // the voice is saying an answer we handed it
+  const handed = useRef({ text: '', at: 0 }); // what we last handed the voice to say (so it isn't saved twice)
   const lastInputAt = useRef(0);
   const seconds = useRef(0);
   const startedAt = useRef(0);
@@ -139,7 +140,7 @@ export function useLive(opts: {
         speakTimer.current = window.setTimeout(() => {
           if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
           // The voice finished a reply it made by itself: record the exchange so the session (and the brain) has it.
-          if (!pending.current.size && !answering.current && voiceBuf.current.trim()) {
+          if (!pending.current.size && !answering.current && voiceBuf.current.trim() && !echoesHanded(voiceBuf.current)) {
             const learner = userBuf.current.trim();
             const said = voiceBuf.current.trim();
             userBuf.current = '';
@@ -187,11 +188,23 @@ export function useLive(opts: {
     const t = forSpeech(text);
     if (!t) return;
     partial.current.add(delegationId);
+    handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${t}` : t, at: Date.now() };
     answering.current = true;
     voiceBuf.current = '';
     bump();
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: t });
   }, [send]);
+
+  // Is what the voice just said really the answer we handed it (spoken after a pause), not its own reply?
+  function echoesHanded(said: string): boolean {
+    if (!handed.current.text || Date.now() - handed.current.at > 90_000) return false;
+    const words = (x: string) => new Set(x.toLowerCase().replace(/[^a-z\u05d0-\u05ea' ]/g, ' ').split(/\s+/).filter((w) => w.length > 2));
+    const a = words(said), b = words(handed.current.text);
+    if (!a.size) return false;
+    let shared = 0;
+    a.forEach((w) => { if (b.has(w)) shared++; });
+    return shared / a.size > 0.5;
+  }
 
   // Read-through: have the voice read a piece of text aloud exactly, then resolve when it has finished
   // (true) or when the learner starts talking (false).
@@ -204,6 +217,7 @@ export function useLive(opts: {
     if (stateRef.current === 'off' || stateRef.current === 'paused') return false;
     answering.current = true;
     voiceBuf.current = '';
+    handed.current = { text, at: Date.now() };
     bump();
     const words = text.split(/\s+/).length;
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
@@ -224,6 +238,7 @@ export function useLive(opts: {
     voiceBuf.current = '';
     bump();
     const t = forSpeech(text);
+    if (t) handed.current = { text: hadPart ? `${handed.current.text} ${t}` : t, at: Date.now() };
     if (!t && hadPart) return; // everything was already handed over
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: t || 'Let’s keep going.' });
   }, [send]);
