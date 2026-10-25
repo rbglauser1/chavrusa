@@ -238,7 +238,6 @@ export default function Home() {
   }
 
   async function deleteSessionById(id: string) {
-    if (!confirm('Delete this session?')) return;
     await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
     if (id === sessionId) newSession();
     refreshSessions();
