@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { addMessage, approvedList, getSession, touchSession } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 
+// Keep the vowels (nikud) but drop the trop marks, which only confuse the voice.
+const noTrop = (s: string) => s.replace(/[\u0591-\u05AF\u05BD\u05C0]/g, '').replace(/\s+/g, ' ').trim();
+
 export const runtime = 'nodejs';
 
 // Read-through (say over the pesukim, or shnayim mikra v'echad targum): serves the next few lines in order,
@@ -45,7 +48,7 @@ export async function GET(req: NextRequest) {
     const tg = mode === 'shnayim' ? await section(`Onkelos ${base}`).catch(() => null) : null;
     const end = Math.min(sec.he.length, from + count - 1);
     const lines: Line[] = [];
-    for (let n = from; n <= end; n++) lines.push({ n, he: sec.he[n - 1] ?? '', en: sec.en[n - 1] ?? '', tg: tg?.he[n - 1] ?? '' });
+    for (let n = from; n <= end; n++) lines.push({ n, he: noTrop(sec.he[n - 1] ?? ''), en: sec.en[n - 1] ?? '', tg: noTrop(tg?.he[n - 1] ?? '') });
 
     const ref = `${base}:${from}${end > from ? `-${end}` : ''}`;
     const text = lines.map((l) => mode === 'shnayim'

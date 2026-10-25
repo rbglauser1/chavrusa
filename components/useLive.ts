@@ -209,7 +209,7 @@ export function useLive(opts: {
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
     return new Promise<boolean>((resolve) => {
       reading.current = resolve;
-      send({ type: 'session.instructions.append', delegation_id: null, content: `Immediately read the following aloud, exactly as written, word for word and in full, at a steady pace, with no pauses between verses. Do not add, explain, comment, or ask anything. Read Hebrew and Aramaic with traditional Ashkenazi yeshivish pronunciation.\n\n${text}` });
+      send({ type: 'session.instructions.append', delegation_id: null, content: `Immediately read the following aloud, exactly as written, word for word and in full, at a steady pace, with no pauses between verses. Do not add, explain, comment, or ask anything. Read the Hebrew the way it is read in an Ashkenazi shul: follow the vowels exactly, kamatz as \"aw\", cholam as \"oy\", tav without a dagesh as \"s\", with each word's stress where its accent falls, never modern Israeli pronunciation. Read the English naturally.\n\n${text}` });
       window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
     });
   }, [send]);
