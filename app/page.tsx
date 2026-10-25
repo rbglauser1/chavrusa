@@ -218,7 +218,7 @@ export default function Home() {
           setItems((it) => [...it, { kind: 'event', text: 'Say or type \u201ckeep reading\u201d for more.' }]);
           break;
         }
-        const spoken = (r.lines as { he: string; en: string; tg: string }[]).map((l) => st.mode === 'shnayim'
+        const spoken = (r.lines as { say: { he: string; en: string; tg: string } }[]).map(({ say: l }) => st.mode === 'shnayim'
           ? `${l.he}\n${l.he}${l.tg ? `\n${l.tg}` : ''}`
           : st.mode === 'he' ? l.he : `${l.he}\n${l.en}`).join('\n\n');
         const finished = await live.read(spoken);
