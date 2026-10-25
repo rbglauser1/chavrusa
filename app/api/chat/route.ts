@@ -9,7 +9,7 @@ import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
 import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
-import { routeWithoutAI } from '@/lib/router';
+import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
 import { after } from 'next/server';
 import { addSource } from '@/lib/db';
@@ -124,6 +124,19 @@ export async function POST(req: NextRequest) {
         const place = pre ? splitRef(pre.ref) : currentPlace(history, sources);
         const pointing = /\btwo dots\b|\bwhere it says\b|\bline (that )?(starts|starting|begins|beginning)\b|\bthe (mishna|mishnah|gemara)\b|\bamud (bet|beis|b)\b|\bthe (end|bottom|middle)\b/i.test(message);
         const inHand = place && !(pre && pointing) ? await textInHand(place, sources, approved, pre ? 1 : undefined).catch(() => null) : null;
+        // A question about a commentary ("what is Tosafos asking?"): the app finds and opens it, and hands the AI its text.
+        const comm = !pre && askedCommentary ? await findCommentary(message, sources, approved).catch(() => null) : null;
+        let commNote = '';
+        if (comm && 'src' in comm) {
+          if (!sources.some((x) => x.ref === comm.src.ref)) {
+            await addSource(sid, comm.src);
+            sources.push({ id: 'comm', ref: comm.src.ref, he_ref: comm.src.heRef, data: comm.src, created_at: new Date().toISOString() });
+          }
+          send({ type: 'source', source: comm.src });
+          commNote = `\n\n[The app opened ${comm.src.ref} for the learner (${comm.count} comment${comm.count > 1 ? 's' : ''}). Its text is below, so you do not need get_text for it.]\n${textForModel(comm.src, spoken)}`;
+        } else if (comm && 'missing' in comm) {
+          commNote = `\n\n[The app checked Sefaria: there is no approved ${comm.missing} on ${comm.on}. Tell the learner that plainly; do not guess what it says.]`;
+        }
 
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.
         const quick = settings.quickReplies !== false && isQuickReply(message) && !pre && !opened;
@@ -187,6 +200,7 @@ export async function POST(req: NextRequest) {
               : pre
                 ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}`
                 : message)
+              + commNote
               + (prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : '') },
           ],
           tools: allowCommentary ? TOOLS : TOOLS.filter((t) => t.name !== 'get_connections'),

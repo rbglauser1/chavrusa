@@ -155,22 +155,30 @@ const COMMENTARIES: [RegExp, RegExp][] = [
 ];
 const OPEN_FILLER = new Set(['open', 'show', 'bring', 'up', 'see', 'look', 'at', 'the', 'me', 'go', 'to', 'what', 'about', 'on', 'this', 'here', 'it', 'inside', 'in', 'pull', 'read', 'lets', "let's", 'there', 'have', 'a', 'let', 'us', 'check', 'out', 'and', 'too', 'also', 'now', 'next']);
 
+// Find the commentary the learner named on the text that's open. Used by "open Tosafos" (free) and to hand the AI
+// the commentary's text with a question like "what is Tosafos asking?" (so it doesn't have to find it itself).
+export async function findCommentary(text: string, sources: SourceRow[], approved: ApprovedEntry[]): Promise<{ src: SourceData; count: number } | { missing: string; on: string } | null> {
+  const s = norm(text);
+  const hit = COMMENTARIES.find(([said]) => said.test(s));
+  const main = currentMain(sources);
+  if (!hit || !main) return null;
+  const links = await getLinks(main.ref, approved, ['Commentary', 'Targum']).catch(() => null);
+  const ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
+  const name = hit[1].source.replace(/[\^$\\]/g, '').replace(/^Tosafot$/, 'Tosafos').replace(/^Or HaChaim$/, 'Ohr HaChaim');
+  if (!ofIt.length) return { missing: name, on: main.ref };
+  const index = ofIt[0].ref.replace(/\s\d.*$/, '');               // "Rashi on Berakhot"
+  const section = main.ref.match(/\s(\d.*)$/)?.[1] ?? '';          // "36b" or "1:1-5"
+  const src = (section && await tryText(`${index} ${section}`, approved)) || await tryText(ofIt[0].ref, approved);
+  return src ? { src, count: ofIt.length } : { missing: name, on: main.ref };
+}
+
 async function openCommentary(ctx: RouteCtx, s: string): Promise<Routed | null> {
   const hit = COMMENTARIES.find(([said]) => said.test(s));
   if (!hit || !onlyWords(s, hit[0], OPEN_FILLER) || /\b(say|says|saying|mean|means|why|how|explain|ask|asking|bothered|hold|holds)\b/.test(s)) return null;
-  const main = currentMain(ctx.sources);
-  if (!main) return null;
-  const links = await getLinks(main.ref, ctx.approved, ['Commentary', 'Targum']).catch(() => null);
-  const ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
-  if (!ofIt.length) {
-    const name = hit[1].source.replace(/[\^$\\]/g, '').replace(/^Tosafot$/, 'Tosafos').replace(/^Or HaChaim$/, 'Ohr HaChaim');
-    return { reply: `I couldn't find an approved ${name} on ${main.ref} on Sefaria.` };
-  }
-  const index = ofIt[0].ref.replace(/\s\d.*$/, '');               // "Rashi on Berakhot"
-  const section = main.ref.match(/\s(\d.*)$/)?.[1] ?? '';          // "36b" or "1:1-5"
-  const src = (section && await tryText(`${index} ${section}`, ctx.approved)) || await tryText(ofIt[0].ref, ctx.approved);
-  if (!src) return null;
-  const n = ofIt.length;
+  const found = await findCommentary(s, ctx.sources, ctx.approved);
+  if (!found) return null;
+  if ('missing' in found) return { reply: `I couldn't find an approved ${found.missing} on ${found.on} on Sefaria. Sometimes there's none on that amud; try the next amud, or name a specific line.` };
+  const { src, count: n } = found;
   const reply = ctx.spoken
     ? `Okay, I've opened ${src.ref}. ${n > 1 ? 'Which one do you want to look at?' : 'Take a look.'}`
     : `${openingReply(src, false).replace(/\n\nShould we start.*$/s, '')}\n\n${n > 1 ? `There are ${n} comments here. Which one do you want to look at?` : 'Take a look. What is it bothered by?'}`;
