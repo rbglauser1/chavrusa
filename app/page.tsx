@@ -75,6 +75,9 @@ export default function Home() {
   const liveQueue = useRef<{ text: string; id: string }[]>([]);
   const liveDelegation = useRef<string | null>(null);
   const liveSpeech = useRef({ buf: '', out: '', sent: false }); // the answer, as it streams, for the Live voice
+  // Read-through (say over the pesukim / shnayim mikra): where we are, while it's running.
+  const readingRef = useRef<{ mode: string; base: string; next: number; id: number } | null>(null);
+  const [readingOn, setReadingOn] = useState(false);
   const live = useLive({
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => setItems((it) => [...it, { kind: 'error', text: m }]),
@@ -83,7 +86,7 @@ export default function Home() {
       liveDelegation.current = null;
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds, sessionId: sessionIdRef.current }) }).catch(() => {});
     },
-    isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0,
+    isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0 || !!readingRef.current,
     sessionId: () => sessionIdRef.current,
     // The voice answered by itself: show the exchange and save it, so the brain knows what was said.
     onAside: (learner, said) => {
@@ -192,6 +195,42 @@ export default function Home() {
     warned.current = false;
   }
 
+  // Read straight through, piece by piece, until the learner talks or it reaches the end.
+  // In a Live call the voice reads each piece aloud; when typing, one longer piece is shown at a time.
+  async function readLoop() {
+    const st = readingRef.current;
+    if (!st) return;
+    setReadingOn(true);
+    try {
+      while (readingRef.current === st) {
+        const calling = live.active;
+        const q = new URLSearchParams({ base: st.base, from: String(st.next), mode: st.mode, count: String(calling ? (st.mode === 'shnayim' ? 1 : 2) : 5) });
+        if (sessionIdRef.current) q.set('session', sessionIdRef.current);
+        const r = await fetch(`/api/readthrough?${q}`).then((x) => x.json()).catch(() => ({ error: 'Could not load the next pesukim.' }));
+        if (readingRef.current !== st) break;
+        if (r.error || r.done) {
+          setItems((it) => [...it, { kind: 'event', text: r.error ?? 'That\u2019s the end of what we can read here.' }]);
+          break;
+        }
+        st.base = r.base; st.next = r.next;
+        setItems((it) => [...it, { kind: 'assistant', text: `**${r.ref}**\n\n${r.text}`, usage: { ai: false, reason: 'Read-through, straight from Sefaria' } }]);
+        if (!calling) {
+          setItems((it) => [...it, { kind: 'event', text: 'Say or type \u201ckeep reading\u201d for more.' }]);
+          break;
+        }
+        const spoken = (r.lines as { he: string; en: string; tg: string }[]).map((l) => st.mode === 'shnayim'
+          ? `${l.he}\n${l.he}${l.tg ? `\n${l.tg}` : ''}`
+          : st.mode === 'he' ? l.he : `${l.he}\n${l.en}`).join('\n\n');
+        const finished = await live.read(spoken);
+        if (!finished) break; // the learner started talking
+      }
+    } finally {
+      if (readingRef.current === st) readingRef.current = null;
+      setReadingOn(false);
+    }
+  }
+  function stopReadThrough() { readingRef.current = null; live.stopReading(); setReadingOn(false); }
+
   function newSession() {
     setDrawer(null); setSessionId(null); setItems([]); setSources([]); setSelected(0); setSessionUsd(0); setRequests([]);
     warned.current = false;
@@ -285,6 +324,11 @@ export default function Home() {
       case 'memory': setItems((it) => [...it, { kind: 'event', text: `Remembered: ${e.text}` }]); break;
       case 'mode': setSettings((s) => ({ ...s, ...e.settings })); break;
       case 'requests': setRequests(e.items ?? []); break;
+      case 'readthrough':
+        // Start reading straight through once this reply is done (the app reads; no AI).
+        readingRef.current = { mode: e.mode, base: e.base, next: e.from, id: Date.now() };
+        window.setTimeout(() => { void readLoop(); }, 50);
+        break;
       case 'delta': {
         liveText.current += e.text;
         // Live call: pass finished sentences to the voice as they arrive. The first sentence goes at once;
@@ -558,11 +602,13 @@ export default function Home() {
                 : live.state === 'connecting' ? 'Connecting…'
                 : live.heard && !blank ? `“${live.heard.slice(-120)}”`
                 : live.state === 'thinking' ? (status || 'Looking into it…')
+                : readingOn ? 'Reading… just talk to stop'
                 : live.state === 'speaking' ? 'Speaking… just talk to interrupt'
                 : 'Listening… just talk'}
             </span>
             {live.state === 'paused' && <button className="btn primary" onClick={() => live.start()}>Resume</button>}
             {live.pauseIn && live.state !== 'paused' && <button className="btn" onClick={() => live.keepAwake()}>Stay</button>}
+            {readingOn && <button className="btn" onClick={stopReadThrough}>Stop reading</button>}
             <button className="btn" onClick={() => live.stop()}>End</button>
           </div>
         )}

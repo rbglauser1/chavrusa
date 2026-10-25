@@ -7,7 +7,7 @@ import { MODELS, Provider, Settings, styleById, Tier } from './config';
 import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCost, SourceData, SourceRow } from './db';
 import { isJustOpening, openingReply } from './prefetch';
 import { getLinks, getText, todaysLearning } from './sefaria';
-import { currentPlace } from './place';
+import { currentPlace, splitRef } from './place';
 
 export interface RouteCtx {
   message: string;
@@ -27,6 +27,7 @@ export interface Routed {
   settings?: Partial<Settings>;   // settings to save
   then?: 'ai';                    // apply the settings, then still let the AI answer this turn
   line?: LineText;                // the line the learner is now on (saved, so the AI gets it without a lookup)
+  readThrough?: { mode: 'he-en' | 'shnayim' | 'he'; base: string; from: number }; // start reading straight through, no AI
 }
 export interface LineText { ref: string; he: string; en: string; translation: string | null }
 
@@ -258,11 +259,24 @@ async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
   return { reply: dir === 1 ? `That's the end of ${base.replace(/\s\d.*$/, '')}.` : "We're already at the first line." };
 }
 
+// ---------- 7. Read-through ----------
+const READ_THROUGH = /\bshn?a?yim mikra\b|\bshnayim\b|\bmikra v'?echad targum\b|\bread (it |them |the pesukim |the psukim |the pasuk(im)? |the parsha |the perek |through|straight|along|it straight|it through)|\bsay over the (pesukim|psukim|pasuk|parsha)\b|\bkeep reading\b|\bcontinue reading\b|\bgo on reading\b|\bread (with|in) (the )?english\b|\bread (just|only) (the )?hebrew\b/;
+
 // ---------- The router ----------
 export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   const { message, spoken, pre } = ctx;
   const s = norm(message);
   if (!s) return null;
+
+  // Read straight through ("shnayim mikra", "read the pesukim", "keep reading"): the app reads, no AI, no questions.
+  if (READ_THROUGH.test(s) && !/\b(why|explain|what does|what is|mean)\b/.test(s)) {
+    const mode = /\bshn?a?yim mikra|\bshnayim\b|\btargum\b|\bonkelos\b/.test(s) ? 'shnayim' : /\b(just|only) (the )?hebrew\b|\bno english\b|\bwithout (the )?english\b/.test(s) ? 'he' : 'he-en';
+    const place = pre ? splitRef(pre.ref) : currentPlace(ctx.history, ctx.sources);
+    if (!place) return { reply: 'Which parsha or perek? Tell me the place (for example, "Bereishis 1") and say "read it through."' };
+    const from = pre ? place.n : /\bfrom the (top|beginning)\b/.test(s) ? 1 : place.n + (/\bkeep reading|continue reading|go on reading\b/.test(s) ? 1 : 0);
+    const what = mode === 'shnayim' ? "shnayim mikra v'echad targum" : mode === 'he' ? 'the Hebrew' : 'with the English';
+    return { reply: spoken ? `Okay, let's read ${what}. Just say stop whenever you want.` : `Reading ${what} from ${place.base}:${from}.`, readThrough: { mode, base: place.base, from }, ...(pre ? { source: pre } : {}) };
+  }
 
   // Open a named place ("Berachos 36b", "today's daf", "what's this week's parsha?").
   if (pre && (isJustOpening(message) || (/\b(today'?s daf|daf yomi|this week'?s parsha|parsha this week)\b/.test(s) && s.split(' ').length <= 8))) {

@@ -23,7 +23,7 @@ Backchannel policy: Use occasional short listening sounds while the user reads o
 Interruption policy: Stop your answer and listen when the user interrupts.
 Delegation policy:
 Backend tools: A careful learning partner with the full Sefaria library (approved Orthodox sources only): it reads the real text of any pasuk, Rashi, Tosfos, Gemara, Mishna, Rambam, Shulchan Aruch, Mishna Berura, Midrash or other sefer, keeps the learner's place line by line, and saves the learner's requests.
-Delegate to the backend when: The user asks to read or hear a specific text or the next line or piece; asks what a Rashi, Tosfos or other commentary says; asks where something is found; you are about to quote or cite a source; or the user asks to change how you learn for the rest of the session (follow it right away too, so it is saved).
+Delegate to the backend when: The user asks to read or hear a specific text or the next line or piece, or to read straight through (say over the pesukim, shnayim mikra v'echad targum, keep reading): the app then gives you the exact text to read, so never recite it from memory; asks what a Rashi, Tosfos or other commentary says; asks where something is found; you are about to quote or cite a source; or the user asks to change how you learn for the rest of the session (follow it right away too, so it is saved).
 Do not delegate to the backend when: Greeting, explaining a concept, discussing a sugya, asking or answering a kashya, quick back-and-forth, or repeating a still-current answer. Answer those yourself right away. When you do delegate, say a brief filler like "let me look at that inside" and wait for the backend result, then say it in your own natural words, keeping every fact, quote, and question accurate.`;
 }
 

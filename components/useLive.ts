@@ -127,6 +127,8 @@ export function useLive(opts: {
           bump();
           if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
           if (stateRef.current === 'speaking') setS('listening');
+          // The learner spoke during a read-through: stop reading and let him talk.
+          if (reading.current && e.delta.trim()) { const r = reading.current; reading.current = null; r(false); }
         }
         break;
       case 'session.output_transcript.delta':
@@ -147,6 +149,12 @@ export function useLive(opts: {
           }
           if (!pending.current.size) answering.current = false;
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
+          // A read-through piece finished (allowing for the audio running a little behind the words).
+          if (reading.current) {
+            const r = reading.current;
+            const wait = Math.max(0, readMinEnd.current - Date.now());
+            window.setTimeout(() => { if (reading.current === r) { reading.current = null; r(true); } }, wait);
+          }
         }, 900);
         break;
       case 'session.delegation.created':
@@ -184,6 +192,28 @@ export function useLive(opts: {
     bump();
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: t });
   }, [send]);
+
+  // Read-through: have the voice read a piece of text aloud exactly, then resolve when it has finished
+  // (true) or when the learner starts talking (false).
+  const reading = useRef<((done: boolean) => void) | null>(null);
+  const readMinEnd = useRef(0);
+  const read = useCallback(async (text: string): Promise<boolean> => {
+    // Let anything the voice is already saying finish first.
+    await new Promise((r) => setTimeout(r, 700));
+    for (let i = 0; i < 100 && (stateRef.current === 'speaking' || stateRef.current === 'thinking' || pending.current.size); i++) await new Promise((r) => setTimeout(r, 200));
+    if (stateRef.current === 'off' || stateRef.current === 'paused') return false;
+    answering.current = true;
+    voiceBuf.current = '';
+    bump();
+    const words = text.split(/\s+/).length;
+    readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
+    return new Promise<boolean>((resolve) => {
+      reading.current = resolve;
+      send({ type: 'session.instructions.append', delegation_id: null, content: `Immediately read the following aloud, exactly as written, word for word and in full, at a steady pace, with no pauses between verses. Do not add, explain, comment, or ask anything. Read Hebrew and Aramaic with traditional Ashkenazi yeshivish pronunciation.\n\n${text}` });
+      window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
+    });
+  }, [send]);
+  const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
   // The rest of the brain's answer (or all of it, if nothing went ahead): give it to the voice to say.
   const answer = useCallback((delegationId: string, text: string) => {
@@ -319,5 +349,5 @@ export function useLive(opts: {
 
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  return { state, heard, supported, start, stop, answer, answerPart, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { state, heard, supported, start, stop, answer, answerPart, read, stopReading, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

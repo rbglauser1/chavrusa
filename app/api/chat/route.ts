@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
         } else if (routed?.source && routed.source !== pre) {
           send({ type: 'source', source: routed.source }); // already in this session: bring it back into view
         }
+        if (routed?.readThrough) send({ type: 'readthrough', ...routed.readThrough });
         if (routed?.reply && routed.then !== 'ai') {
           if (routed.source) {
             const src = routed.source;
