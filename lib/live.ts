@@ -5,8 +5,10 @@ const PACE = {
   brisk: 'Speak briskly, a little faster than normal conversation, with minimal pauses. Never drag out words or leave long silences.',
 };
 
-export function liveInstructions(nusach: 'ashkenaz' | 'sephardi', pace: 'relaxed' | 'natural' | 'brisk' = 'natural'): string {
-  const pron = nusach === 'ashkenaz'
+export function liveInstructions(nusach: 'ashkenaz' | 'sephardi', pace: 'relaxed' | 'natural' | 'brisk' = 'natural', accent = false): string {
+  const pron = nusach === 'ashkenaz' && !accent
+    ? 'Pronounce Hebrew and Aramaic words with traditional Ashkenazi yeshivish pronunciation (Shabbos, Tosafos, Brachos, emes; kamatz as "aw", cholam as "oy" the American yeshivish way, tav without a dagesh as "s"). Speak English naturally, in a normal American accent, like a friendly, sharp chavrusa in conversation. Do not put on an accent or a sing-song.'
+    : nusach === 'ashkenaz'
     ? 'Pronounce Hebrew and Aramaic with traditional Litvish Ashkenazi yeshivish pronunciation (Shabbos, Tosafos, Brachos, emes; stress usually on the second-to-last syllable; kamatz as "aw", cholam as "oy" the American yeshivish way (Toirah, Moishe), tav without a dagesh as "s"). Speak English like an American Litvish yeshiva rebbi: light Yiddish-inflected yeshivish accent, the Gemara niggun (a question climbs in a sing-song lilt, then the answer drops low and firm, without slowing down), short phrases, precise and analytical. You may add small natural yeshivish connectors such as "nu", "so", "listen", "mamash", "geshmak", but never change the content.'
     : 'Pronounce Hebrew and Aramaic with traditional Sephardi pronunciation (Shabbat, Tosafot, emet; stress usually on the last syllable).';
   return [

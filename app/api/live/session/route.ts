@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
   const voiceNote = custom?.prompt ? `\nYour speaking voice: ${custom.prompt}` : '';
   // The learner's style, place, and requests go to the voice too, so it can carry the conversation itself.
   let context = '';
+  let recap = '';
+  let lastSaid = '';
   if (!preview) {
     try {
       const sid = req.nextUrl.searchParams.get('session');
@@ -41,13 +43,23 @@ export async function POST(req: NextRequest) {
         requests: memories.filter((m) => m.scope === `session:${sid}`).map((m) => m.content),
         saved: memories.filter((m) => m.kind === 'instruction' && !m.scope?.startsWith('session:')).map((m) => m.content),
       });
+      // The conversation so far, so a new or resumed call picks up exactly where we were.
+      const plain = (t: string) => t.replace(/\[\[line:\d+\]\]/g, '').replace(/^\s*>\s?/gm, '').replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim();
+      const clip = (t: string, n: number) => (t.length > n ? t.slice(0, n).replace(/\s+\S*$/, '') + '…' : t);
+      const recent = history.slice(-12);
+      recap = recent.map((m) => `${m.role === 'user' ? 'Learner' : 'You'}: ${clip(plain(m.content), 320)}`).join('\n');
+      const lastBot = [...recent].reverse().find((m) => m.role === 'assistant');
+      lastSaid = lastBot ? clip(plain(lastBot.content), 600) : '';
     } catch { /* the call still works without it */ }
   }
   // A warm yeshiva-style hello when a call starts (not when it resumes after a pause).
   const resume = req.nextUrl.searchParams.get('resume') === '1';
   const placeName = context.match(/The learner is on (.*?), line \d+/)?.[1] ?? null;
-  const hello = `Speak first, right now, before the learner says anything: greet the learner warmly the way a yeshiva chavrusa would, in one or two short sentences. Vary it naturally, for example "Shalom aleichem, chaver!", "Shalom, my friend, good to see you!", "Nu, chaver, ready to learn?". ${placeName ? `Then mention that last time we were on ${placeName} and ask if he wants to pick up there.` : 'Then ask what we are learning today.'} Then stop and listen.`;
-  const resumeNote = 'The call is resuming after a short pause. Do not greet again; just say something very short like "I\'m here" if the learner speaks, and continue where you left off.';
+  const recapBlock = recap ? `\n\n# The conversation so far in this session (most recent last)\n${recap}` : '';
+  const hello = recap
+    ? `Speak first, right now: a short warm greeting ("Shalom aleichem, chaver!", "Nu, chaver, let's keep going!"), then pick up EXACTLY where we left off: in one sentence say where we were${placeName ? ` (${placeName})` : ''}, then continue from your last message: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again briefly. Then stop and listen.${recapBlock}`
+    : `Speak first, right now, before the learner says anything: greet the learner warmly the way a yeshiva chavrusa would, in one or two short sentences. Vary it naturally, for example "Shalom aleichem, chaver!", "Shalom, my friend, good to see you!", "Nu, chaver, ready to learn?". ${placeName ? `Then mention that last time we were on ${placeName} and ask if he wants to pick up there.` : 'Then ask what we are learning today.'} Then stop and listen.`;
+  const resumeNote = `The call is resuming after a short pause, in the middle of learning. Do not greet and do not recap. Continue exactly where you left off. Your last message was: "${lastSaid}". If the learner hasn't answered it yet, wait for him; when he speaks, carry on from there.${recapBlock}`;
   const greeting = `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
@@ -58,7 +70,7 @@ export async function POST(req: NextRequest) {
         model: LIVE.model,
         instructions: (preview
           ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
-          : liveInstructions(s.nusach, s.livePace) + context) + voiceNote,
+          : liveInstructions(s.nusach, s.livePace, !!s.liveAccent) + context) + voiceNote,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : resume ? resumeNote : hello }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },
