@@ -50,6 +50,29 @@ export function candidateRefs(message: string): string[] {
   return out.slice(0, 6);
 }
 
+// "Peah, first perek" / "perek alef of Peah" / "chapter one" -> "Peah perek 1", so the place can be found.
+const ORD: Record<string, number> = {
+  first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9, tenth: 10,
+  eleventh: 11, twelfth: 12, thirteenth: 13, fourteenth: 14, fifteenth: 15, sixteenth: 16, seventeenth: 17, eighteenth: 18, nineteenth: 19, twentieth: 20,
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+  sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+  alef: 1, aleph: 1, beis: 2, bais: 2, bet: 2, beit: 2, gimmel: 3, gimel: 3, daled: 4, dalet: 4, hei: 5, heh: 5, vav: 6, zayin: 7, ches: 8, chet: 8, tes: 9, tet: 9, yud: 10, yod: 10,
+};
+const UNIT_WORDS = 'perek|chapter|mishna|mishnah|pasuk|posuk|verse|siman|daf';
+export function normalizePlaceText(message: string): string {
+  let m = message.replace(/[’]/g, "'").replace(/[,;]/g, ' ');
+  const ord = Object.keys(ORD).join('|');
+  m = m.replace(new RegExp(`\\b(${ord})\\s+(${UNIT_WORDS})\\b`, 'gi'), (_, o, u) => `${u} ${ORD[o.toLowerCase()]}`);   // first perek -> perek 1
+  m = m.replace(new RegExp(`\\b(${UNIT_WORDS})\\s+(${ord})\\b`, 'gi'), (_, u, o) => `${u} ${ORD[o.toLowerCase()]}`);   // perek alef -> perek 1
+  m = m.replace(/\b(\d{1,3})(st|nd|rd|th)\s+(perek|chapter|mishnah?|pasuk|posuk|verse)\b/gi, '$3 $1');
+  // "perek 1 of Peah" -> "Peah perek 1"
+  m = m.replace(new RegExp(`\\b(${UNIT_WORDS})\\s+(\\d{1,3})\\s+(?:of|in)\\s+((?:[A-Za-z']+\\s?){1,3})`, 'gi'), (_, u, n, name) => `${name.trim()} ${u} ${n} `);
+  return m.replace(/\s+/g, ' ').trim();
+}
+
+// Tractates that are only Mishnah (no Bavli): "Peah 1" means Mishnah Peah.
+const MISHNAH_ONLY = /^(Peah|Demai|Kilayim|Sheviit|Terumot|Maasrot|Maaser Sheni|Challah|Orlah|Bikkurim|Eduyot|Pirkei Avot|Avot|Middot|Kinnim|Kelim|Oholot|Negaim|Parah|Tahorot|Mikvaot|Makhshirin|Zavim|Tevul Yom|Yadayim|Oktzin)\b/i;
+
 // Yeshivish spellings (often how speech-to-text writes them) -> the names Sefaria knows.
 const ALIASES: [RegExp, string][] = [
   [/\b(b'?e?rachos|brochos|berochos|brachot)\b/i, 'Berakhot'], [/\bshabbos\b/i, 'Shabbat'], [/\bpesachim\b/i, 'Pesachim'],
@@ -58,12 +81,18 @@ const ALIASES: [RegExp, string][] = [
   [/\bmakkos\b/i, 'Makkot'], [/\bshevuos\b/i, 'Shevuot'], [/\bavoda(h)? zara(h)?\b/i, 'Avodah Zarah'], [/\bhoriyos\b/i, 'Horayot'],
   [/\bmenachos\b/i, 'Menachot'], [/\bbechoros\b/i, 'Bekhorot'], [/\barachin\b/i, 'Arakhin'], [/\bkerisos\b/i, 'Keritot'],
   [/\bbava basra\b/i, 'Bava Batra'], [/\bbaba (kamma|metzia|batra|basra)\b/i, 'Bava $1'], [/\bbava basra\b/i, 'Bava Batra'],
+  [/\b(paya|pe'?ah|peya|pe ah)\b/i, 'Peah'], [/\bmishnayos\b|\bmishnayot\b|\bmishnais\b|\bmishnas\b/i, 'Mishnah'],
+  [/\bterumos\b/i, 'Terumot'], [/\bmaasros\b/i, 'Maasrot'], [/\bbikkurim\b/i, 'Bikkurim'], [/\beduyos\b/i, 'Eduyot'], [/\bavos\b/i, 'Pirkei Avot'],
+  [/\bmiddos\b/i, 'Middot'], [/\boholos\b/i, 'Oholot'], [/\btaharos\b|\btohoros\b/i, 'Tahorot'], [/\bmikvaos\b/i, 'Mikvaot'], [/\bshviis\b|\bsheviis\b/i, 'Sheviit'],
   [/\bbereishis\b/i, 'Genesis'], [/\bshemos\b/i, 'Exodus'], [/\bvayikra\b/i, 'Leviticus'], [/\bbamidbar\b/i, 'Numbers'], [/\bdevarim\b/i, 'Deuteronomy'],
 ];
-function sefariaName(cand: string): string {
+function sefariaName(cand: string, mishnah = false): string {
   let c = cand;
   for (const [re, to] of ALIASES) c = c.replace(re, to);
-  return c.replace(/\bBava basra\b/i, 'Bava Batra');
+  c = c.replace(/\bBava basra\b/i, 'Bava Batra');
+  // "Mishnayos Berachos 1" / a Mishnah-only tractate -> the Mishnah.
+  if (!/^(Mishnah|Jerusalem|Tosefta|Rashi|Tosafot)\b/i.test(c) && (mishnah || MISHNAH_ONLY.test(c))) c = `Mishnah ${c}`;
+  return c;
 }
 
 export async function findRef(message: string, direct = false): Promise<string | null> {
@@ -82,9 +111,10 @@ export async function findRef(message: string, direct = false): Promise<string |
     if (r?.isRef && r.ref) return r.ref;
   }
   // Check all the possible readings at once (each lookup is cached), and take the longest that is a real place.
-  const cands = candidateRefs(message);
+  const mishnah = /\bmishn(a|ah|ayos|ayot|ais|as)\b/i.test(message);
+  const cands = candidateRefs(normalizePlaceText(message));
   const results = await Promise.all(cands.map(async (c) => {
-    const r = await resolveName(sefariaName(c)).catch(() => null);
+    const r = await resolveName(sefariaName(c, mishnah)).catch(() => null);
     if (r?.isRef && r.ref) return r.ref;
     return null;
   }));
@@ -129,13 +159,14 @@ export function warmTexts(refs: string[], approved: ApprovedEntry[]): Promise<un
 
 // Is the learner only asking to open a place ("Berachos 36a", "let's learn Bava Kamma 2b", "bring up today's daf")?
 // Then the app opens it with no AI call at all, and the AI joins on the next turn.
-const FILLER = new Set(('let lets let\'s us learn learning open opening bring up pull show me go to goto start starting begin turn the a ' +
+const FILLER = new Set(('mishnayos mishnayot mishnais perek chapter of the ' + 'let lets let\'s us learn learning open opening bring up pull show me go to goto start starting begin turn the a ' +
   'gemara gemora gemarah daf amud page side mishna mishnah perek chapter pasuk posuk passuk verse parsha parshah parasha sedra ' +
   'today todays today\'s this week weeks week\'s yomi please can could you would i want wanna to do with from at on in of ' +
   'and now ok okay so hi hello shalom again lets\' ready get let\'s').split(' '));
 export function isJustOpening(message: string): boolean {
-  let m = message.toLowerCase().replace(/[’]/g, "'");
-  for (const c of candidateRefs(message)) m = m.replace(c.toLowerCase(), ' ');
+  const normalized = normalizePlaceText(message);
+  let m = normalized.toLowerCase();
+  for (const c of candidateRefs(normalized)) m = m.replace(c.toLowerCase(), ' ');
   m = m.replace(/\b\d{1,3}[ab]?(?::\d{1,3}(?:-\d{1,3})?)?\b/g, ' ');
   const words = m.replace(/[^a-z' ]/g, ' ').split(/\s+/).filter((w) => w && !FILLER.has(w));
   // Allow one leftover word (often part of a tractate name the pattern didn't catch).
@@ -145,6 +176,13 @@ export function isJustOpening(message: string): boolean {
 // What the Chavrusa says when the app opened the place by itself (no AI call).
 export function openingReply(s: SourceData, spoken: boolean): string {
   const name = s.ref.replace(/ (\d+)([ab])\b/, (_, d, a) => ` ${d}${a === 'a' ? 'a' : 'b'}`);
+  // A perek of Mishnah (or of Tanach): start right in, with the first mishnah / pasuk and its translation.
+  if (!/\d+[ab](:|$)/.test(s.ref) && s.he.length > 1) {
+    const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
+    const en = (s.en[0] ?? '').trim();
+    if (spoken) return en ? `${name}. The first ${unit} says: ${en} Any question on it, or next ${unit}?` : `Okay, I've opened ${name}. Want me to explain the first ${unit}, or go on to the next?`;
+    return `**${name}:1**\n\n> ${(s.he[0] ?? '').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
+  }
   if (spoken) return `Okay, I've opened ${name}. Do you want to start from the top, or is there a specific place you want to look at?`;
   const first = (s.he[0] ?? '').replace(/\s+/g, ' ').trim();
   const line = first.length > 220 ? first.slice(0, 220).replace(/\s+\S*$/, '') + ' …' : first;
