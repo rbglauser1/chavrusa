@@ -12,7 +12,7 @@ import { useLive } from '@/components/useLive';
 
 type Item =
   | { kind: 'user'; text: string }
-  | { kind: 'assistant'; text: string; model?: string; usage?: Usage; refs?: { ref: string; heRef: string; url: string }[] }
+  | { kind: 'assistant'; text: string; model?: string; usage?: Usage; refs?: { ref: string; heRef: string; url: string }[]; live?: boolean }
   | { kind: 'event'; text: string }
   | { kind: 'error'; text: string };
 
@@ -277,7 +277,8 @@ export default function Home() {
     if (!msg || busyRef.current) return;
     busyRef.current = true;
     setInput('');
-    setItems((it) => [...it, { kind: 'user', text: msg }]);
+    // A reply left unfinished by an earlier error is closed, so this turn's reply starts fresh.
+    setItems((it) => [...it.map((x) => (x.kind === 'assistant' && x.live ? { ...x, live: false } : x)), { kind: 'user', text: msg }]);
     setBusy(true); setStatus('Thinking…');
     liveIdx.current = null;
     liveText.current = ''; liveSpeech.current = { buf: '', out: '', sent: false };
@@ -351,9 +352,11 @@ export default function Home() {
         }
         const full = liveText.current;
         setItems((it) => {
-          if (liveIdx.current === null || liveIdx.current >= it.length) { liveIdx.current = it.length; return [...it, { kind: 'assistant', text: full }]; }
+          // The reply being written is marked "live", so it is updated in place (never added twice).
+          const i = it.findIndex((x) => x.kind === 'assistant' && x.live);
+          if (i < 0) return [...it, { kind: 'assistant', text: full, live: true }];
           const copy = it.slice();
-          copy[liveIdx.current] = { kind: 'assistant', text: full };
+          copy[i] = { kind: 'assistant', text: full, live: true };
           return copy;
         });
         if (speakTurn.current) {
@@ -370,9 +373,11 @@ export default function Home() {
         const refs = turnRefs.current.slice();
         const streamed = liveText.current.length > 0;
         setItems((it) => {
-          if (liveIdx.current === null || liveIdx.current >= it.length) return [...it, { kind: 'assistant', text: finalText, model: e.model, usage: e.usage, refs }];
+          const i = it.findIndex((x) => x.kind === 'assistant' && x.live);
+          const done = { kind: 'assistant' as const, text: finalText, model: e.model, usage: e.usage, refs };
+          if (i < 0) return [...it, done];
           const copy = it.slice();
-          copy[liveIdx.current] = { kind: 'assistant', text: finalText, model: e.model, usage: e.usage, refs };
+          copy[i] = done;
           return copy;
         });
         liveIdx.current = null;
