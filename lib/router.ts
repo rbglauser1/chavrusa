@@ -277,6 +277,15 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   const s = norm(message);
   if (!s) return null;
 
+  // "Read / say over the Tosafos (Rashi…)": read the commentary itself straight through, word for word, no AI.
+  if (/\b(read|say over|say it over|read it|read me|go through|read out)\b/.test(s) && COMMENTARIES.some(([re]) => re.test(s)) && !/\b(why|explain|what does|what is|mean|asking|bothered)\b/.test(s)) {
+    const found = await findCommentary(s, ctx.sources, ctx.approved);
+    if (found && 'src' in found) {
+      return { reply: spoken ? `Okay, here's ${found.src.ref}. Just say stop whenever you want.` : `Reading ${found.src.ref}.`, readThrough: { mode: 'he', base: found.src.ref, from: 1 }, source: found.src };
+    }
+    if (found && 'missing' in found) return { reply: `I couldn't find an approved ${found.missing} on ${found.on} on Sefaria. Sometimes there's none on that amud; try the next amud, or name a specific line.` };
+  }
+
   // Read straight through ("shnayim mikra", "read the pesukim", "keep reading"): the app reads, no AI, no questions.
   if (READ_THROUGH.test(s) && !/\b(why|explain|what does|what is|mean)\b/.test(s)) {
     const mode = /\bshn?a?yim mikra|\bshnayim\b|\btargum\b|\bonkelos\b/.test(s) ? 'shnayim' : /\b(just|only) (the )?hebrew\b|\bno english\b|\bwithout (the )?english\b/.test(s) ? 'he' : 'he-en';
