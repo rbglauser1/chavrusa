@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
-import { liveInstructions } from '@/lib/live';
+import { liveContext, liveInstructions } from '@/lib/live';
+import { listMemories, listMessages, listSources } from '@/lib/db';
+import { currentPlace } from '@/lib/place';
+import { styleById } from '@/lib/config';
 
 export const runtime = 'nodejs';
 
@@ -20,6 +23,26 @@ export async function POST(req: NextRequest) {
   const custom = (s.customVoices ?? []).find((v) => v.id === voice);
   const voiceField = custom ? { id: custom.id } : voice;
   const voiceNote = custom?.prompt ? `\nYour speaking voice: ${custom.prompt}` : '';
+  // The learner's style, place, and requests go to the voice too, so it can carry the conversation itself.
+  let context = '';
+  if (!preview) {
+    try {
+      const sid = req.nextUrl.searchParams.get('session');
+      const [memories, history, sources] = await Promise.all([
+        listMemories(), sid ? listMessages(sid, 30) : Promise.resolve([]), sid ? listSources(sid) : Promise.resolve([]),
+      ]);
+      const st = styleById(s.style);
+      const place = sid ? currentPlace(history, sources) : null;
+      context = liveContext({
+        styleName: st.name,
+        styleRules: st.behavior,
+        leads: st.asks === false ? 'you explain' : s.leads === 'learner' ? 'the learner explains first' : 'you explain first, then ask',
+        place: place ? `${place.base}, line ${place.n}` : null,
+        requests: memories.filter((m) => m.scope === `session:${sid}`).map((m) => m.content),
+        saved: memories.filter((m) => m.kind === 'instruction' && !m.scope?.startsWith('session:')).map((m) => m.content),
+      });
+    } catch { /* the call still works without it */ }
+  }
   const greeting = `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
@@ -30,7 +53,7 @@ export async function POST(req: NextRequest) {
         model: LIVE.model,
         instructions: (preview
           ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
-          : liveInstructions(s.nusach, s.livePace)) + voiceNote,
+          : liveInstructions(s.nusach, s.livePace) + context) + voiceNote,
         ...(preview ? { input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: greeting }] }] } : {}),
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },

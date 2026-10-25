@@ -23,7 +23,8 @@ export function useLive(opts: {
   onEnded: (seconds: number) => void;          // a connected stretch ended (for cost tracking)
   isBusy: () => boolean;                        // the brain is still working on something
   idleSeconds: () => number;                    // pause after this much quiet (0 = never)
-  wakeOnSpeech: () => boolean;                  // while paused, reconnect when the learner starts talking
+  wakeOnSpeech: () => boolean;
+  sessionId?: () => string | null;              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
   const [heard, setHeard] = useState('');           // what the learner is saying right now
@@ -184,9 +185,9 @@ export function useLive(opts: {
     closingTo.current = null;
     setS('connecting');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true } });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       mic.current = stream;
-      const peer = new RTCPeerConnection();
+      const peer = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
       pc.current = peer;
       // A real <audio> element in the page, set to play inline, gives phones the cleanest call playback.
       if (!audio.current) {
@@ -211,7 +212,8 @@ export function useLive(opts: {
       };
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
-      const res = await fetch('/api/live/session', { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
+      const sid = optsRef.current.sessionId?.();
+      const res = await fetch(`/api/live/session${sid ? `?session=${encodeURIComponent(sid)}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });

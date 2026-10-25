@@ -84,6 +84,7 @@ export default function Home() {
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds, sessionId: sessionIdRef.current }) }).catch(() => {});
     },
     isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0,
+    sessionId: () => sessionIdRef.current,
     // Saver pauses sooner: never later than 30 quiet seconds.
     idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,

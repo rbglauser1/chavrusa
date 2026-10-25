@@ -117,7 +117,7 @@ Who leads: ${style.asks === false ? 'YOU explain (this style does not ask the le
     ? 'The LEARNER reads and explains first. After bringing a source, ask them to explain it before you say anything about its content.'
     : 'YOU explain first, briefly, then ask the learner a question to check and deepen understanding.'}
 ${pronunciation(s)}
-${spoken ? `The learner is TALKING with you out loud right now, and your reply will be spoken aloud. Keep each reply to one to three short spoken sentences, ${style.asks === false ? 'end with a short offer to continue' : 'end with one question'}, and use no lists, headings, bold, or line numbers. Quote at most a few words of Hebrew at a time.` : ''}
+${spoken ? `The learner is TALKING with you out loud right now, and your reply will be spoken aloud. Answer in plain spoken prose, at most about 80 words (usually one to three sentences), ${style.asks === false ? 'ending with a short offer to continue' : 'ending with one question'}. No lists, headings, bold, quote blocks, or line numbers. Write Hebrew and Aramaic words in English letters (transliterated, as they should be pronounced), never in Hebrew letters, and quote at most a short phrase of the text at a time. Your reply is notes for the voice to say in its own words, so be clear and accurate rather than polished.` : ''}
 ${s.display === 'off' ? 'The learner has text display turned off and is learning by listening/conversation only. Read short key phrases aloud in your message (in Hebrew letters) since they cannot see the text.' : ''}
 
 # The learner's requests for THIS session (highest priority: follow these over the style and the defaults)
