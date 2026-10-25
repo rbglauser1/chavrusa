@@ -25,8 +25,12 @@ async function getJson(url: string, init?: RequestInit, timeoutMs = 12_000): Pro
 }
 
 // Flatten Sefaria's nested text arrays into a list of lines.
+// A version with no words at all counts as missing.
+const nonEmpty = (lines: string[]) => (lines.some((l) => l.trim()) ? lines : []);
+
+// Empty lines are kept (as ""), so the Hebrew and the English stay lined up line for line.
 export function flatten(text: unknown): string[] {
-  if (typeof text === 'string') return text.trim() ? [text] : [];
+  if (typeof text === 'string') return [text];
   if (Array.isArray(text)) return text.flatMap(flatten);
   return [];
 }
@@ -119,8 +123,8 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
   return {
     ref: canonical,
     heRef: first?.heRef ?? canonical,
-    he: flatten(heV?.text).map(stripHtml),
-    en: enV ? flatten(enV.text).map(stripHtml) : [],
+    he: nonEmpty(flatten(heV?.text).map(stripHtml)),
+    en: enV ? nonEmpty(flatten(enV.text).map(stripHtml)) : [],
     translation: enV?.versionTitle ?? null,
     archaic: enV ? isArchaic(flatten(enV.text).slice(0, 40).join(' ')) : false,
     url: `${BASE}/${enc(canonical)}`,
