@@ -10,7 +10,7 @@ import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
 import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
 import { findCommentary, routeWithoutAI } from '@/lib/router';
-import { currentPlace, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
+import { currentPlace, forPanel, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
 import { after } from 'next/server';
 import { addSource } from '@/lib/db';
 
@@ -84,9 +84,11 @@ export async function POST(req: NextRequest) {
           catch { void warmTexts(prepared.refs, approved); } // background warm-up is optional
         }
         if (pre && !sources.some((x) => x.ref === pre.ref)) {
-          send({ type: 'source', source: pre });
-          await addSource(sid, pre);
-          sources.push({ id: 'pre', ref: pre.ref, he_ref: pre.heRef, data: pre, created_at: new Date().toISOString() });
+          // A single mishnah / pasuk / line: show its whole perek or amud in the Sefer, at that spot.
+          const shown = await forPanel(pre, approved).catch(() => pre);
+          send({ type: 'source', source: shown });
+          await addSource(sid, shown);
+          sources.push({ id: 'pre', ref: shown.ref, he_ref: shown.heRef, data: shown, created_at: new Date().toISOString() });
         }
         await addMessage(sid, 'user', message);
 

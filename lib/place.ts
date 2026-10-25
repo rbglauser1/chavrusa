@@ -28,10 +28,12 @@ export function currentPlace(history: MessageRow[], sources: SourceRow[]): Place
     place = meta.pos ?? (meta.line ? splitRef(meta.line.ref) : meta.opened ? splitRef(meta.opened) : null);
     since = msg.created_at;
   }
-  const later = sources.filter((x) => isMain(x.ref) && /:\d+$/.test(x.ref) && x.created_at > since);
+  // A line the AI (or app) opened since then: either a line ref, or a whole perek/amud shown at a line (focus).
+  const at = (x: SourceRow): Place => (x.data?.focus ? { base: x.ref, n: x.data.focus } : splitRef(x.ref));
+  const later = sources.filter((x) => isMain(x.ref) && (/:\d+$/.test(x.ref) || !!x.data?.focus) && x.created_at > since);
   if (later.length) {
-    const base = splitRef(later[later.length - 1].ref).base;
-    const n = Math.max(...later.filter((x) => splitRef(x.ref).base === base).map((x) => splitRef(x.ref).n));
+    const base = at(later[later.length - 1]).base;
+    const n = Math.max(...later.map(at).filter((p) => p.base === base).map((p) => p.n));
     return { base, n };
   }
   if (place) return place;
@@ -53,6 +55,18 @@ async function section(base: string, sources: SourceRow[], approved: ApprovedEnt
 }
 
 const clip = (t: string, max: number) => (t.length > max ? t.slice(0, max).replace(/\s+\S*$/, '') + ' …' : t);
+
+// For the Sefer panel: a single line of a main text is shown as its whole perek / amud, scrolled to that line,
+// so the learner can see what comes before and after. (Commentaries are shown as they are.)
+export async function forPanel(src: SourceData, approved: ApprovedEntry[]): Promise<SourceData> {
+  if (!isMain(src.ref) || !/:\d+(-\d+)?$/.test(src.ref)) return src;
+  const p = splitRef(src.ref);
+  const whole = await getText(p.base, approved).catch(() => null);
+  if (!whole || !whole.verdict.allowed || !whole.he.length) return src;
+  const out: SourceData & { verdict?: unknown } = { ...whole, focus: p.n };
+  delete out.verdict;
+  return out;
+}
 
 // The lines around the learner's place, numbered, for the AI: one line before, the line itself, and three after.
 export async function textInHand(place: Place, sources: SourceRow[], approved: ApprovedEntry[], from?: number, count = 5): Promise<string | null> {

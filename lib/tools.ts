@@ -1,6 +1,7 @@
 import 'server-only';
 import { ApprovedEntry } from './approval';
 import { Settings, STYLES, styleById } from './config';
+import { forPanel } from './place';
 import { addMemory, addSource, forgetMemory, listSessionRequests, SourceData } from './db';
 import { getLinks, getText, resolveName, search, todaysLearning } from './sefaria';
 import { stripNikud } from './hebrew';
@@ -153,8 +154,10 @@ export function makeExecutor(ctx: {
         }
         if (s.he.length === 0 && s.en.length === 0) return `No text found for "${ref}". Check the reference with find_ref.`;
         const { verdict, ...source } = s;
-        ctx.emit({ type: 'source', source });
-        await addSource(ctx.sessionId, source);
+        // The learner sees the whole perek/amud at this line; the AI reads just what it asked for.
+        const shown = await forPanel(source, ctx.approved);
+        ctx.emit({ type: 'source', source: shown });
+        await addSource(ctx.sessionId, shown);
         return textForModel(source);
       }
       case 'get_connections': {
