@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
           send({ type: 'source', source: comm.src });
           commNote = `\n\n[The app opened ${comm.src.ref} for the learner (${comm.count} comment${comm.count > 1 ? 's' : ''}). Its text is below, so you do not need get_text for it.]\n${textForModel(comm.src, spoken)}`;
         } else if (comm && 'missing' in comm) {
-          commNote = `\n\n[The app checked Sefaria: there is no approved ${comm.missing} on ${comm.on}. Tell the learner that plainly; do not guess what it says.]`;
+          commNote = `\n\n[The app checked Sefaria: there is no approved ${comm.missing} on ${comm.on}. Tell the learner that plainly; do not guess what it says.${comm.available.length ? ` The commentaries this text does have: ${comm.available.join(', ')}. Offer one of them (for Mishnayos, usually the Bartenura).` : ''}]`;
         }
 
         // Short acknowledgments go to the cheaper model of the same company; real learning turns use the chosen depth.

@@ -8,6 +8,7 @@ import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCos
 import { isJustOpening, openingReply } from './prefetch';
 import { getLinks, getText, todaysLearning } from './sefaria';
 import { currentPlace, splitRef } from './place';
+import { namesForSpeech } from './hebrew';
 
 export interface RouteCtx {
   message: string;
@@ -136,6 +137,10 @@ function stepRef(ref: string, dir: 1 | -1, unit: Unit): string[] {
 // ---------- 4. Opening a commentary on what's open ----------
 const COMMENTARIES: [RegExp, RegExp][] = [
   [/\btosafos yom tov\b|\btosfos yom tov\b/, /Tosafot Yom Tov/i],
+  [/\btiferes yisr[oa]el\b|\btiferet yisrael\b/, /Tiferet Yisrael/i],
+  [/\bmelech?es shlomo\b|\bmelechet shlomo\b/, /Melechet Shlomo/i],
+  [/\bmishna(h)? rishona(h)?\b/, /Mishnah Rishonah/i],
+  [/\b(the )?rash\b|\brash mi ?shantz\b|\brabbeinu shimshon\b/, /Rash MiShantz|Rabbeinu Shimshon/i],
   [/\brashi\b/, /^Rashi$/i],
   [/\bto[iy]?s[aeo]?(?:f|ph)[aeo]?[st]s?\b/, /^Tosafot$/i], // Tosafos, Tosfos, Tosofos, Toisfos, Tosafot…
   [/\brashbam\b/, /^Rashbam$/i],
@@ -147,6 +152,7 @@ const COMMENTARIES: [RegExp, RegExp][] = [
   [/\bbaal ha ?turim\b/, /^Baal HaTurim$/i],
   [/\bonkelos\b|\bonkeles\b|\btargum\b/, /Onkelos/i],
   [/\brashba\b/, /^Rashba$/i],
+  [/\brambam\b/, /Rambam/i],
   [/\britva\b/, /^Ritva$/i],
   [/\bran\b/, /^Ran$/i],
   [/\bmaharsha\b/, /Maharsha/i],
@@ -157,7 +163,7 @@ const OPEN_FILLER = new Set(['open', 'show', 'bring', 'up', 'see', 'look', 'at',
 
 // Find the commentary the learner named on the text that's open. Used by "open Tosafos" (free) and to hand the AI
 // the commentary's text with a question like "what is Tosafos asking?" (so it doesn't have to find it itself).
-export async function findCommentary(text: string, sources: SourceRow[], approved: ApprovedEntry[]): Promise<{ src: SourceData; count: number } | { missing: string; on: string } | null> {
+export async function findCommentary(text: string, sources: SourceRow[], approved: ApprovedEntry[]): Promise<{ src: SourceData; count: number } | { missing: string; on: string; available: string[] } | null> {
   const s = norm(text);
   const hit = COMMENTARIES.find(([said]) => said.test(s));
   const main = currentMain(sources);
@@ -165,11 +171,19 @@ export async function findCommentary(text: string, sources: SourceRow[], approve
   const links = await getLinks(main.ref, approved, ['Commentary', 'Targum']).catch(() => null);
   const ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
   const name = hit[1].source.replace(/[\^$\\]/g, '').replace(/^Tosafot$/, 'Tosafos').replace(/^Or HaChaim$/, 'Ohr HaChaim');
-  if (!ofIt.length) return { missing: name, on: main.ref };
+  // Not there (e.g. no Rashi on Mishnah Peah): say which commentaries this text does have.
+  const available = [...new Set((links?.allowed ?? []).map((l) => l.title).filter(Boolean))].slice(0, 8);
+  if (!ofIt.length) return { missing: name, on: main.ref, available };
   const index = ofIt[0].ref.replace(/\s\d.*$/, '');               // "Rashi on Berakhot"
   const section = main.ref.match(/\s(\d.*)$/)?.[1] ?? '';          // "36b" or "1:1-5"
   const src = (section && await tryText(`${index} ${section}`, approved)) || await tryText(ofIt[0].ref, approved);
-  return src ? { src, count: ofIt.length } : { missing: name, on: main.ref };
+  return src ? { src, count: ofIt.length } : { missing: name, on: main.ref, available };
+}
+
+function missingReply(f: { missing: string; on: string; available: string[] }): string {
+  return f.available.length
+    ? `There's no ${f.missing} on ${f.on} on Sefaria. What it does have: ${f.available.join(', ')}. Which one would you like?`
+    : `I couldn't find an approved ${f.missing} on ${f.on} on Sefaria. Sometimes there's none on that amud; try the next amud, or name a specific line.`;
 }
 
 async function openCommentary(ctx: RouteCtx, s: string): Promise<Routed | null> {
@@ -177,7 +191,7 @@ async function openCommentary(ctx: RouteCtx, s: string): Promise<Routed | null> 
   if (!hit || !onlyWords(s, hit[0], OPEN_FILLER) || /\b(say|says|saying|mean|means|why|how|explain|ask|asking|bothered|hold|holds)\b/.test(s)) return null;
   const found = await findCommentary(s, ctx.sources, ctx.approved);
   if (!found) return null;
-  if ('missing' in found) return { reply: `I couldn't find an approved ${found.missing} on ${found.on} on Sefaria. Sometimes there's none on that amud; try the next amud, or name a specific line.` };
+  if ('missing' in found) return { reply: missingReply(found) };
   const { src, count: n } = found;
   const reply = ctx.spoken
     ? `Okay, I've opened ${src.ref}. ${n > 1 ? 'Which one do you want to look at?' : 'Take a look.'}`
@@ -257,7 +271,8 @@ function unitWord(ref: string): string {
 function lineReply(l: LineText, spoken: boolean): string {
   const u = unitWord(l.ref);
   if (spoken) {
-    return l.en ? `Next ${u}. ${l.en} Any question on this, or shall we keep going?` : `Next ${u} is ${l.ref}. There's no approved translation for it. Want me to explain it?`;
+    // Lashon kodesh first, then the English.
+    return l.en ? `${namesForSpeech(l.he)} ... ${l.en} Any question on this, or next ${u}?` : `${namesForSpeech(l.he)} ... There's no approved translation for this one. Want me to explain it?`;
   }
   const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
   const ask = l.en ? `Any question on this ${u}, or next ${u}?` : `There's no approved translation for this ${u}. Want me to explain it?`;
@@ -298,7 +313,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     if (found && 'src' in found) {
       return { reply: spoken ? 'Sure.' : `Reading ${found.src.ref}.`, readThrough: { mode: 'he', base: found.src.ref, from: 1 }, source: found.src };
     }
-    if (found && 'missing' in found) return { reply: `I couldn't find an approved ${found.missing} on ${found.on} on Sefaria. Sometimes there's none on that amud; try the next amud, or name a specific line.` };
+    if (found && 'missing' in found) return { reply: missingReply(found) };
   }
 
   // Read straight through ("shnayim mikra", "read the pesukim", "keep reading"): the app reads, no AI, no questions.
