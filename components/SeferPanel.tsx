@@ -14,9 +14,10 @@ interface Props {
   onSettings: (p: Partial<Settings>) => void;
   sessionId: string | null;
   onOpenRef: (q: string) => Promise<string | null>; // returns an error message, or null when opened
+  libraryRequest?: number; // changes when the page asks to open the Library
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, libraryRequest }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -32,6 +33,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [showLib, setShowLib] = useState(false);
   const [libUsed, setLibUsed] = useState(false); // load the library only once it's first opened
   useEffect(() => { if (showLib) setLibUsed(true); }, [showLib]);
+  useEffect(() => { if (libraryRequest) setShowLib(true); }, [libraryRequest]);
   // Approve a translation Sefaria has (e.g. Rabbi Aryeh Kaplan's), then reload this text with it.
   const [approving, setApproving] = useState(false);
   async function approve(title: string, ref: string) {

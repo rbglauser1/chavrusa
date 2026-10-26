@@ -78,6 +78,9 @@ export default function Home() {
   // Read-through (say over the pesukim / shnayim mikra): where we are, while it's running.
   const readingRef = useRef<{ mode: string; base: string; next: number; id: number } | null>(null);
   const [readingOn, setReadingOn] = useState(false);
+  // Open the Sefer straight into the Library (from the top bar or the start screen).
+  const [libReq, setLibReq] = useState(0);
+  const openLibrary = () => { setSeferOpen(true); setLibReq((n) => n + 1); };
   const live = useLive({
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => setItems((it) => [...it, { kind: 'error', text: m }]),
@@ -435,7 +438,13 @@ export default function Home() {
           <div className="brand">חברותא</div>
           <div className="spacer" />
           {settings.display !== 'off' && (
-            <button className={`icon-btn ${showSefer ? 'active' : ''} ${pulse ? 'pulse' : ''}`} onClick={() => setSeferOpen((v) => !v)} aria-label="Sefer">
+            <button className="icon-btn" onClick={openLibrary} aria-label="Library" title="Library">
+              <span aria-hidden="true" style={{ fontSize: 18 }}>📚</span>
+              <span className="hide-mobile">Library</span>
+            </button>
+          )}
+          {settings.display !== 'off' && (
+            <button className={`icon-btn ${showSefer ? 'active' : ''} ${pulse ? 'pulse' : ''}`} onClick={() => { setSeferOpen((v) => !v); setLibReq(0); }} aria-label="Sefer">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><path d="M2 5c3-1.5 6-1.5 10 1 4-2.5 7-2.5 10-1v14c-3-1.5-6-1.5-10 1-4-2.5-7-2.5-10-1z" /><path d="M12 6v14" /></svg>
               <span className="hide-mobile">Sefer</span>
               {sources.length > 0 && <span className="badge">{sources.length}</span>}
@@ -555,6 +564,11 @@ export default function Home() {
                 <div className="shalom">שלום</div>
                 <p>What would you like to learn? Pick a starting point or just type. You can change how your chavrusa learns with you at any time, just by asking.</p>
                 <div className="starters">
+                  {settings.display !== 'off' && (
+                    <button className="starter" onClick={openLibrary}>
+                      <b>Browse the library</b><span>Pick any sefer, perek or daf from Sefaria</span><i>ספרייה</i>
+                    </button>
+                  )}
                   {STARTERS.map((s) => (
                     <button key={s.title} className="starter" onClick={() => (s.prompt ? send(s.prompt) : inputRef.current?.focus())}>
                       <b>{s.title}</b><span>{s.sub}</span><i>{s.he}</i>
@@ -676,8 +690,9 @@ export default function Home() {
       {showSefer && (
         <SeferPanel
           sources={sources} selected={selected} onSelect={setSelected}
-          onClose={() => setSeferOpen(false)}
+          onClose={() => { setSeferOpen(false); setLibReq(0); }}
           settings={settings} onSettings={updateSettings} sessionId={sessionId}
+          libraryRequest={libReq}
           onOpenRef={(q) => openRef(q, true)}
         />
       )}

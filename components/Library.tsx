@@ -7,10 +7,15 @@ type Shape = { title: string; he: string; kind: 'chapters' | 'talmud' | 'parts' 
 
 const UNIT_LABEL: Record<string, string> = { Chapter: 'Perek', Perek: 'Perek', Siman: 'Siman', Daf: 'Daf', Parasha: 'Parsha' };
 
+// Where the learner was in the library, kept for the whole visit (even when the Sefer is closed and reopened).
+const memory: { path: string[]; book: { title: string; part?: string } | null } = { path: [], book: null };
+
 export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => Promise<string | null>; onClose: () => void }) {
-  const [path, setPath] = useState<string[]>([]);
+  const [path, setPathState] = useState<string[]>(memory.path);
+  const setPath = (p: string[]) => { memory.path = p; setPathState(p); };
   const [items, setItems] = useState<Item[] | null>(null);
-  const [book, setBook] = useState<{ title: string; part?: string } | null>(null);
+  const [book, setBookState] = useState<{ title: string; part?: string } | null>(memory.book);
+  const setBook = (b: { title: string; part?: string } | null) => { memory.book = b; setBookState(b); };
   const [shape, setShape] = useState<Shape | null>(null);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
