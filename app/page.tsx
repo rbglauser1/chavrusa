@@ -355,7 +355,7 @@ export default function Home() {
         liveText.current += e.text;
         // Live call: pass finished sentences to the voice as they arrive. The first sentence goes at once;
         // after that, a couple of sentences at a time so it flows naturally.
-        if (liveDelegation.current) {
+        if (liveDelegation.current && !/\[\[say/i.test(liveText.current)) {
           liveSpeech.current.buf += e.text;
           const { sentences, rest } = splitSentences(liveSpeech.current.buf);
           liveSpeech.current.buf = rest;
@@ -400,7 +400,10 @@ export default function Home() {
         if (liveDelegation.current) {
           // Whatever wasn't handed over yet: all of it if nothing streamed (e.g. a free reply), else the remainder.
           const rest = liveSpeech.current.sent ? `${liveSpeech.current.out} ${liveSpeech.current.buf}`.trim() : finalText;
-          live.answer(liveDelegation.current, rest);
+          // Text the voice must say word for word (the lashon kodesh with its English) comes in [[say]] … [[/say]].
+          const exact = [...finalText.matchAll(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi)].map((m) => m[1].trim()).filter(Boolean);
+          if (exact.length && !liveSpeech.current.sent) live.answerExact(liveDelegation.current, exact.join(' '), finalText.replace(/\[\[say\]\][\s\S]*?\[\[\/say\]\]/gi, ' ').replace(/\s+/g, ' ').trim());
+          else live.answer(liveDelegation.current, rest.replace(/\[\[\/?say\]\]/gi, ''));
           liveDelegation.current = null;
         }
         liveSpeech.current = { buf: '', out: '', sent: false };

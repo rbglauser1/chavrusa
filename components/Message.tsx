@@ -56,7 +56,7 @@ function Quote({ text }: { text: string }) {
 
 // Words written for the voice with stress marks (be-REI-shis, ha-SHEM) are shown normally (bereishis, Hashem).
 export function unmarkStress(text: string): string {
-  return text.replace(/\b(?:[a-z'’]+-)*[A-Z'’]{2,7}(?:-[a-z'’]+)+\b|\b(?:[a-z'’]+-)+[A-Z'’]{2,7}\b/g, (w) => {
+  return text.replace(/\[\[\/?say\]\]/gi, '').replace(/\b(?:[a-z'’]+-)*[A-Z'’]{2,7}(?:-[a-z'’]+)+\b|\b(?:[a-z'’]+-)+[A-Z'’]{2,7}\b/g, (w) => {
     const plain = w.replace(/-/g, '').toLowerCase();
     return plain === 'hashem' ? 'Hashem' : plain;
   });

@@ -13,7 +13,7 @@ export type LiveState = 'off' | 'connecting' | 'listening' | 'thinking' | 'speak
 const MAX_CHARS = 1800; // the voice accepts about 500 tokens per hand-back
 
 function forSpeech(text: string): string {
-  const t = text.replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
+  const t = text.replace(/\[\[\/?say\]\]/gi, '').replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
   if (t.length <= MAX_CHARS) return t;
   const cut = t.slice(0, MAX_CHARS);
   const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('\n'));
@@ -252,6 +252,22 @@ export function useLive(opts: {
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: t || 'Let’s keep going.' });
   }, [send]);
 
+  // The answer has text to say word for word (lashon kodesh phrase by phrase, with its English): the voice is told,
+  // for this request, to read that part exactly, every phrase and in order, and only then say the rest.
+  const answerExact = useCallback((delegationId: string, exact: string, rest: string) => {
+    if (!pending.current.has(delegationId)) return;
+    pending.current.delete(delegationId);
+    partial.current.delete(delegationId);
+    answering.current = true;
+    voiceBuf.current = '';
+    bump();
+    const ex = forSpeech(exact);
+    const more = forSpeech(rest);
+    handed.current = { text: `${ex} ${more}`, at: Date.now() };
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: first read the part between READ EXACTLY and END word for word, every phrase, in order, the lashon kodesh and then its English exactly as written. Do not skip, shorten, summarize, or translate it differently, and do not drop the Hebrew. Then say the rest naturally.' });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `READ EXACTLY: ${ex} END.${more ? ` Then: ${more}` : ''}` });
+  }, [send]);
+
   const start = useCallback(async () => {
     if (stateRef.current !== 'off' && stateRef.current !== 'paused') return;
     const resuming = stateRef.current === 'paused'; // coming back from a pause: no new greeting
@@ -373,5 +389,5 @@ export function useLive(opts: {
 
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  return { state, heard, supported, start, stop, answer, answerPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { state, heard, supported, start, stop, answer, answerPart, answerExact, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }
