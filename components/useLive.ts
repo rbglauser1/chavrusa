@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 
-const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he));
+const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
 
 // Live voice: a GPT-Live session over WebRTC. The voice model listens and speaks naturally; whenever the
 // learner says something about the learning, it "delegates" to us. We send the learner's words to the

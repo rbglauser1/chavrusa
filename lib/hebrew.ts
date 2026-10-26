@@ -108,7 +108,7 @@ function wordToSyllables(word: string): Syl[] {
   if (pending && syl.length) syl[syl.length - 1].coda += pending;
   return syl.filter((x) => x.on || x.v || x.coda);
 }
-export function yeshivishTranslit(hebrew: string): string {
+export function yeshivishTranslit(hebrew: string, marks = true): string {
   return hebrew
     .replace(/[־]/g, ' ')                       // maqaf
     .replace(/[׃:.,;!?"״׳'()\[\]{}–-]/g, (p) => (p === '׃' || p === ':' ? '.' : /[.,;!?]/.test(p) ? p : ' '))
@@ -116,11 +116,12 @@ export function yeshivishTranslit(hebrew: string): string {
     .map((w) => {
       const punct = w.match(/[.,;!?]+$/)?.[0] ?? '';
       const word = w.replace(/[.,;!?]+$/, '');
-      if (/^ה[֑-ׇ]*ש[֑-ׇ]*ם[֑-ׇ]*$/.test(word)) return `ha-SHEM${punct}`;
+      if (/^ה[֑-ׇ]*ש[֑-ׇ]*ם[֑-ׇ]*$/.test(word)) return `${marks ? 'ha-SHEM' : 'Hashem'}${punct}`;
       if (!/[א-ת]/.test(word)) return w;
       const syl = wordToSyllables(word);
       if (!syl.length) return punct;
       const parts = syl.map((x) => x.on + x.v + x.coda);
+      if (!marks) return parts.join('') + punct;
       // Stress the second-to-last syllable; but never a said shva (p'NEI, not PE-nei): then the last one.
       if (parts.length > 1) {
         const k = syl[parts.length - 2].shva ? parts.length - 1 : parts.length - 2;

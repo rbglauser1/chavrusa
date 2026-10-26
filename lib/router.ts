@@ -272,7 +272,7 @@ function lineReply(l: LineText, spoken: boolean): string {
   const u = unitWord(l.ref);
   if (spoken) {
     // Lashon kodesh first, then the English.
-    const tr = yeshivishTranslit(namesForSpeech(l.he));
+    const tr = yeshivishTranslit(namesForSpeech(l.he), false);
     return l.en ? `${tr} ... ${l.en} Any question on this, or next ${u}?` : `${tr} ... There's no approved translation for this one. Want me to explain it?`;
   }
   const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
