@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addMessage, approvedList, getSession, touchSession } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
-import { namesForSpeech, namesForSpeechEn } from '@/lib/hebrew';
+import { namesForSpeech, namesForSpeechEn, yeshivishTranslit } from '@/lib/hebrew';
 
 // Keep the vowels (nikud) but drop the trop marks, which only confuse the voice.
 const noTrop = (s: string) => s.replace(/[\u0591-\u05AF\u05BD\u05C0]/g, '').replace(/\s+/g, ' ').trim();
@@ -12,7 +12,7 @@ export const runtime = 'nodejs';
 // straight from Sefaria. No AI is used. Each piece is saved so the session keeps the learner's place.
 export type ReadMode = 'he-en' | 'shnayim' | 'he';
 
-type Line = { n: number; he: string; en: string; tg: string; say: { he: string; en: string; tg: string } };
+type Line = { n: number; he: string; en: string; tg: string; say: { he: string; en: string; tg: string; heTr: string; tgTr: string } };
 
 async function section(ref: string) {
   const s = await getText(ref, await approvedList());
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     for (let n = from; n <= end; n++) {
       const he = noTrop(sec.he[n - 1] ?? ''), en = sec.en[n - 1] ?? '', t = noTrop(tg?.he[n - 1] ?? '');
       // The text shown stays as written; what the voice says uses Hashem and Elokim in place of the Names.
-      lines.push({ n, he, en, tg: t, say: { he: namesForSpeech(he), en: namesForSpeechEn(en), tg: namesForSpeech(t) } });
+      lines.push({ n, he, en, tg: t, say: { he: namesForSpeech(he), en: namesForSpeechEn(en), tg: namesForSpeech(t), heTr: yeshivishTranslit(namesForSpeech(he)), tgTr: t ? yeshivishTranslit(namesForSpeech(t)) : '' } });
     }
 
     const ref = `${base}:${from}${end > from ? `-${end}` : ''}`;

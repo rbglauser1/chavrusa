@@ -222,9 +222,11 @@ export default function Home() {
           setItems((it) => [...it, { kind: 'event', text: 'Say or type \u201ckeep reading\u201d for more.' }]);
           break;
         }
-        const spoken = (r.lines as { say: { he: string; en: string; tg: string } }[]).map(({ say: l }) => st.mode === 'shnayim'
-          ? `${l.he}\n${l.he}${l.tg ? `\n${l.tg}` : ''}`
-          : st.mode === 'he' ? l.he : `${l.he}\n${l.en}`).join('\n\n');
+        // The voice gets the lashon kodesh in yeshivish transliteration with the stressed syllable in capitals.
+        const spoken = (r.lines as { say: { he: string; en: string; tg: string; heTr?: string; tgTr?: string } }[]).map(({ say: l }) => {
+          const he = l.heTr || l.he, tg = l.tgTr || l.tg;
+          return st.mode === 'shnayim' ? `${he}\n${he}${tg ? `\n${tg}` : ''}` : st.mode === 'he' ? he : `${he}\n${l.en}`;
+        }).join('\n\n');
         const finished = await live.read(spoken);
         if (!finished) break; // the learner started talking
       }

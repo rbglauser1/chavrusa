@@ -8,7 +8,7 @@ import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCos
 import { isJustOpening, openingReply } from './prefetch';
 import { getLinks, getText, todaysLearning } from './sefaria';
 import { currentPlace, splitRef } from './place';
-import { namesForSpeech } from './hebrew';
+import { namesForSpeech, yeshivishTranslit } from './hebrew';
 
 export interface RouteCtx {
   message: string;
@@ -272,7 +272,8 @@ function lineReply(l: LineText, spoken: boolean): string {
   const u = unitWord(l.ref);
   if (spoken) {
     // Lashon kodesh first, then the English.
-    return l.en ? `${namesForSpeech(l.he)} ... ${l.en} Any question on this, or next ${u}?` : `${namesForSpeech(l.he)} ... There's no approved translation for this one. Want me to explain it?`;
+    const tr = yeshivishTranslit(namesForSpeech(l.he));
+    return l.en ? `${tr} ... ${l.en} Any question on this, or next ${u}?` : `${tr} ... There's no approved translation for this one. Want me to explain it?`;
   }
   const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
   const ask = l.en ? `Any question on this ${u}, or next ${u}?` : `There's no approved translation for this ${u}. Want me to explain it?`;

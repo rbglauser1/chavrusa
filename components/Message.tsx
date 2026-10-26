@@ -54,7 +54,16 @@ function Quote({ text }: { text: string }) {
   );
 }
 
-export function Formatted({ text }: { text: string }) {
+// Words written for the voice with stress marks (be-REI-shis, ha-SHEM) are shown normally (bereishis, Hashem).
+export function unmarkStress(text: string): string {
+  return text.replace(/\b(?:[a-z'’]+-)*[A-Z'’]{2,7}(?:-[a-z'’]+)+\b|\b(?:[a-z'’]+-)+[A-Z'’]{2,7}\b/g, (w) => {
+    const plain = w.replace(/-/g, '').toLowerCase();
+    return plain === 'hashem' ? 'Hashem' : plain;
+  });
+}
+
+export function Formatted({ text: raw }: { text: string }) {
+  const text = unmarkStress(raw);
   return (
     <>
       {segments(text).map((seg, si) => seg.quote
