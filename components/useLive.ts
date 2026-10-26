@@ -282,6 +282,7 @@ export function useLive(opts: {
     voiceBuf.current = '';
     handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${ex}` : ex, at: Date.now() };
     bump();
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: `Immediately say the following exactly and in full, word for word, before anything else, without leaving out any Hebrew word: ${ex}` });
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: `READ EXACTLY: ${ex} END.` });
   }, [send]);
 
