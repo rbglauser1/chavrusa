@@ -247,7 +247,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pinBar: true,
   blankCall: false,
   seferEnglish: true,
-  rashiScript: false,
+  rashiScript: true,
   saver: true,
   customVoices: [],
   autoSpeak: false,

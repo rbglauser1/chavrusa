@@ -93,9 +93,11 @@ a { color: var(--accent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .he { font-family: var(--f-he); font-size: var(--he-size, 22px); line-height: 1.75; direction: rtl; text-align: right; }
-/* Commentaries in regular letters by default; Rashi script only if chosen in Settings. */
+/* Rashi script like a printed Gemara (Mekorot-Rashi, from the free Culmus/Mekorot fonts, GPL; see /fonts/Mekorot-LICENSE.txt).
+   Settings can switch commentaries to regular letters instead. */
+@font-face { font-family: 'Mekorot Rashi'; src: url('/fonts/Mekorot-Rashi.ttf') format('truetype'); font-display: swap; }
 .rashi { font-family: var(--f-he); }
-[data-rashi='on'] .rashi { font-family: 'Noto Rashi Hebrew', var(--f-he); }
+[data-rashi='on'] .rashi { font-family: 'Mekorot Rashi', var(--f-he); font-size: 1.05em; }
 
 /* ---------- Shell ---------- */
 .app { display: flex; height: 100dvh; overflow: hidden; }
