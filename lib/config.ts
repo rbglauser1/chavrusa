@@ -214,7 +214,8 @@ export interface Settings {
   quickReplies: boolean;    // answer short acknowledgments ("ok", "got it") with the cheaper model
   pinBar: boolean;
   blankCall: boolean;
-  seferEnglish: boolean;    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
+  seferEnglish: boolean;
+  rashiScript: boolean;     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
   saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   autoSpeak: boolean;       // read every reply aloud
@@ -246,6 +247,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pinBar: true,
   blankCall: false,
   seferEnglish: true,
+  rashiScript: false,
   saver: true,
   customVoices: [],
   autoSpeak: false,

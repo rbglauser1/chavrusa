@@ -165,9 +165,10 @@ export default function Home() {
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.look = settings.theme;
+    root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.style.setProperty('--he-size', `${settings.heSize}px`);
     root.style.setProperty('--en-size', `${settings.enSize}px`);
-  }, [settings.theme, settings.heSize, settings.enSize]);
+  }, [settings.theme, settings.heSize, settings.enSize, settings.rashiScript]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 
