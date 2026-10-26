@@ -693,6 +693,7 @@ export default function Home() {
           onClose={() => { setSeferOpen(false); setLibReq(0); }}
           settings={settings} onSettings={updateSettings} sessionId={sessionId}
           libraryRequest={libReq}
+          talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}
           onOpenRef={(q) => openRef(q, true)}
         />
       )}

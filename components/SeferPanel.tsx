@@ -15,9 +15,10 @@ interface Props {
   sessionId: string | null;
   onOpenRef: (q: string) => Promise<string | null>; // returns an error message, or null when opened
   libraryRequest?: number; // changes when the page asks to open the Library
+  talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, libraryRequest }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, libraryRequest, talk }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -103,6 +104,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       <div className="sefer-head">
         <h2>Sefer</h2>
         <button className="btn lib-open" onClick={() => setShowLib((v) => !v)} aria-pressed={showLib}>📚 Library</button>
+        {talk && (
+          <button className={`chip talk ${talk.on ? 'live' : ''}`} onClick={talk.toggle} aria-pressed={talk.on} title={talk.status || undefined}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+            {talk.on ? (talk.status ? `${talk.status} · End` : 'End talk') : 'Talk'}
+          </button>
+        )}
         {src && <a href={src.url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open on Sefaria ↗</a>}
         <button className="icon-btn" onClick={onClose} aria-label="Close sefer">✕</button>
       </div>
