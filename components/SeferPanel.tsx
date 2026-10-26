@@ -30,6 +30,17 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
   const src = sources[selected];
   const [showLib, setShowLib] = useState(false);
+  const [libUsed, setLibUsed] = useState(false); // load the library only once it's first opened
+  useEffect(() => { if (showLib) setLibUsed(true); }, [showLib]);
+  // Approve a translation Sefaria has (e.g. Rabbi Aryeh Kaplan's), then reload this text with it.
+  const [approving, setApproving] = useState(false);
+  async function approve(title: string, ref: string) {
+    setApproving(true);
+    try {
+      await fetch('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ translation: title }) });
+      await onOpenRef(ref);
+    } finally { setApproving(false); }
+  }
   const [open, setOpen] = useState<Set<number>>(new Set());
   const showAll = settings.seferEnglish !== false; // translation under each part (Settings, or the toggle here)
   const setShowAll = (f: (v: boolean) => boolean) => onSettings({ seferEnglish: f(showAll) });
@@ -99,7 +110,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       </form>
       {gotoMsg && <div className="goto-msg">{gotoMsg}</div>}
 
-      {showLib && <Library onOpen={onOpenRef} onClose={() => setShowLib(false)} />}
+      {/* The library stays where you left it (hidden, not closed), so you can go back up a level later. */}
+      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library onOpen={onOpenRef} onClose={() => setShowLib(false)} /></div>}
 
       {!showLib && sources.length > 0 && (
         <div className="sefer-tabs">
@@ -125,13 +137,19 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         {!src && <div className="empty">Sources your chavrusa brings will appear here.</div>}
         {src && (
           <>
+            {!src.en.length && src.altEn?.length && src.altTitle && canTranslate && (
+              <div className="alt-note">
+                English shown: <b>{src.altTitle}</b>. It isn't on your approved list yet, so the Chavrusa won't quote it.
+                <button className="btn" disabled={approving} onClick={() => approve(src.altTitle as string, src.ref)}>{approving ? 'Approving…' : 'Approve this translation'}</button>
+              </div>
+            )}
             <div className="sefer-title">
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
             {src.he.map((line, i) => {
               const isOpen = canTranslate && (showAll || open.has(i));
-              const en = src.en[i];
+              const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
               const key = `${src.ref}#${i}`;
               return (
                 <div key={i} data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={() => toggleLine(i)}>

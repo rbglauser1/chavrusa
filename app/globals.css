@@ -520,3 +520,6 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .lib-grid .daf-cell { display: flex; align-items: center; gap: 4px; }
 .lib-grid .daf-cell b { width: 28px; text-align: right; font-family: var(--f-ui); font-weight: 600; font-size: 13px; }
 .lib-grid .daf-cell button { flex: 1; padding: 8px 0; }
+
+.sefer .alt-note { font-family: var(--f-ui); font-size: 13px; color: var(--soft); padding: 8px 10px; margin: 6px 0 10px; border-radius: 8px; border: 1px dashed var(--line, rgba(127,127,127,.35)); display: flex; flex-direction: column; gap: 8px; }
+.sefer .alt-note .btn { align-self: flex-start; }

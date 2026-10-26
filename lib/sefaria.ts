@@ -104,6 +104,8 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
 
   // Use only an approved translation, and among those prefer plain modern English (e.g. Metsudah over
   // the "thou / hath" style of the Koren Jerusalem Bible).
+  // Sefaria's default English, kept aside if it isn't approved: the learner can see it (labeled) and approve it.
+  const defaultEn = enV;
   if (!translationApproved(enV?.versionTitle, list)) enV = undefined;
   const available: { versionTitle?: string; language?: string; actualLanguage?: string }[] = Array.isArray(first?.available_versions) ? first.available_versions : [];
   const best = available
@@ -126,6 +128,8 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
     he: nonEmpty(flatten(heV?.text).map(stripHtml)),
     en: enV ? nonEmpty(flatten(enV.text).map(stripHtml)) : [],
     translation: enV?.versionTitle ?? null,
+    ...(!enV && defaultEn?.versionTitle && nonEmpty(flatten(defaultEn.text)).length
+      ? { altEn: nonEmpty(flatten(defaultEn.text).map(stripHtml)), altTitle: defaultEn.versionTitle } : {}),
     archaic: enV ? isArchaic(flatten(enV.text).slice(0, 40).join(' ')) : false,
     url: `${BASE}/${enc(canonical)}`,
     verdict,

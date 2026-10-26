@@ -79,6 +79,8 @@ export interface SourceData {
   archaic?: boolean;             // the translation uses old-fashioned English (thou, hath…)
   url: string;
   focus?: number;                // Sefer panel: the line to scroll to and highlight
+  altEn?: string[];              // Sefaria's English when it isn't an approved translation (shown labeled; not given to the AI)
+  altTitle?: string;             // that translation's name
 }
 
 export async function listSessions(userId = OWNER_ID): Promise<SessionRow[]> {
@@ -155,6 +157,11 @@ export async function costSummary(userId = OWNER_ID) {
 }
 
 // ---------- Approved list ----------
+export async function approveTranslation(versionTitle: string): Promise<void> {
+  check(await db().from('approved_sources').insert({ kind: 'translation', name: versionTitle, status: 'approved', lean: 'general', notes: 'Approved by the learner in the Sefer' }));
+  approvedCache = null;
+}
+
 export interface ApprovedRow { kind: 'work' | 'author' | 'translation' | 'site'; name: string; status: 'approved' | 'blocked'; lean: string }
 
 let approvedCache: { at: number; rows: ApprovedRow[] } | null = null;
