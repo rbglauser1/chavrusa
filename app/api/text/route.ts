@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addSource, approvedList } from '@/lib/db';
+import { addSource, approvedList, createSession, getSession } from '@/lib/db';
+import { forPanel } from '@/lib/place';
 import { findRef } from '@/lib/prefetch';
 import { getText } from '@/lib/sefaria';
 
@@ -17,9 +18,17 @@ export async function POST(req: NextRequest) {
     const s = await getText(ref, await approvedList());
     if (!s.verdict.allowed) return NextResponse.json({ source: null, message: `${s.verdict.reason}` });
     if (!s.he.length && !s.en.length) return NextResponse.json({ source: null, message: `No text found for ${ref}.` });
-    const { verdict, ...source } = s;
-    if (sessionId) await addSource(String(sessionId), source).catch(() => {});
-    return NextResponse.json({ source });
+    const { verdict, ...opened } = s;
+    // Show a single line as its whole perek/amud, and mark where the learner is, so the Chavrusa knows the place.
+    const shown = await forPanel(opened, await approvedList()).catch(() => opened);
+    const source = !shown.focus && !/ on /i.test(shown.ref) ? { ...shown, focus: 1 } : shown;
+    // Opening a place starts a session if there isn't one yet, so the Chavrusa has it when you start talking.
+    let sid: string | null = sessionId && (await getSession(String(sessionId))) ? String(sessionId) : null;
+    let session = null;
+    // (Only when opened directly, from the Library or Go to; a typed message gets its session from the chat.)
+    if (!sid && direct) { session = await createSession(source.ref); sid = session.id; }
+    if (sid) await addSource(sid, source).catch(() => {});
+    return NextResponse.json({ source, session });
   } catch (e) {
     return NextResponse.json({ source: null, message: `Sefaria didn't answer: ${(e as Error).message}` });
   }

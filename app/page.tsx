@@ -267,6 +267,7 @@ export default function Home() {
     try {
       const res = await fetch('/api/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, direct, sessionId: sessionIdRef.current }) });
       const d = await res.json();
+      if (d.session?.id) { sessionIdRef.current = d.session.id; setSessionId(d.session.id); refreshSessions(); }
       if (d.source) { showSource(d.source); if (!direct) setPinCollapsed(false); return null; }
       return d.message ?? null;
     } catch (e) { return (e as Error).message; }
