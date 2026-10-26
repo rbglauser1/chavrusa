@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { SourceData } from '@/lib/db';
+import Library from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud } from '@/lib/hebrew';
 
@@ -28,6 +29,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     if (err) setGotoMsg(err); else setGoto('');
   }
   const src = sources[selected];
+  const [showLib, setShowLib] = useState(false);
   const [open, setOpen] = useState<Set<number>>(new Set());
   const showAll = settings.seferEnglish !== false; // translation under each part (Settings, or the toggle here)
   const setShowAll = (f: (v: boolean) => boolean) => onSettings({ seferEnglish: f(showAll) });
@@ -86,6 +88,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     <aside className="sefer" aria-label="Sefer">
       <div className="sefer-head">
         <h2>Sefer</h2>
+        <button className="btn lib-open" onClick={() => setShowLib((v) => !v)} aria-pressed={showLib}>📚 Library</button>
         {src && <a href={src.url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open on Sefaria ↗</a>}
         <button className="icon-btn" onClick={onClose} aria-label="Close sefer">✕</button>
       </div>
@@ -96,7 +99,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       </form>
       {gotoMsg && <div className="goto-msg">{gotoMsg}</div>}
 
-      {sources.length > 0 && (
+      {showLib && <Library onOpen={onOpenRef} onClose={() => setShowLib(false)} />}
+
+      {!showLib && sources.length > 0 && (
         <div className="sefer-tabs">
           {sources.map((s, i) => (
             <button key={`${s.ref}-${i}`} className={`sefer-tab ${i === selected ? 'on' : ''}`} onClick={() => onSelect(i)}>{s.ref}</button>
@@ -104,7 +109,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       )}
 
-      {src && (
+      {!showLib && src && (
         <div className="sefer-tools">
           <button className={`toggle ${settings.nikud ? 'on' : ''}`} onClick={() => onSettings({ nikud: !settings.nikud })}>Nikud {settings.nikud ? 'on' : 'off'}</button>
           {canTranslate && (
@@ -116,7 +121,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       )}
 
-      <div className="sefer-body" ref={bodyRef}>
+      <div className="sefer-body" ref={bodyRef} style={showLib ? { display: 'none' } : undefined}>
         {!src && <div className="empty">Sources your chavrusa brings will appear here.</div>}
         {src && (
           <>

@@ -230,3 +230,16 @@ export async function bookOutline(ref: string): Promise<string | null> {
   }
   return null;
 }
+
+// ---------- Library (Sefaria's table of contents) ----------
+// The full table of contents is large, so it is also kept in memory for an hour.
+let tocCache: { at: number; data: any[] } | null = null;
+export async function sefariaToc(): Promise<any[]> {
+  if (tocCache && Date.now() - tocCache.at < 3_600_000) return tocCache.data;
+  const data = await getJson(`${BASE}/api/index`, { cache: 'no-store' } as RequestInit, 20_000);
+  tocCache = { at: Date.now(), data: Array.isArray(data) ? data : [] };
+  return tocCache.data;
+}
+export async function rawIndex(title: string): Promise<any> {
+  return getJson(`${BASE}/api/v2/raw/index/${enc(title)}`);
+}

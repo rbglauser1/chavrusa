@@ -497,3 +497,26 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .comm-title { font-family: var(--f-ui); font-size: 12px; color: var(--accent); margin-bottom: 4px; }
 .sefer .comm-line + .comm-line { margin-top: 6px; }
 .sefer .comm .he { font-size: 0.92em; }
+
+/* Library browser (Sefaria's table of contents) */
+.sefer .lib-open { margin-left: auto; font-size: 13px; padding: 4px 10px; }
+.lib { display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: auto; padding: 4px 16px 24px; }
+.lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 8px 0; font-family: var(--f-ui); font-size: 13px; position: sticky; top: 0; background: var(--panel, var(--bg)); z-index: 1; }
+.lib-crumbs button { background: none; border: 0; color: var(--accent); padding: 2px 4px; font: inherit; }
+.lib-crumbs button:disabled { color: var(--ink, inherit); opacity: .8; }
+.lib-crumbs .sep { opacity: .5; padding: 0 2px; }
+.lib-crumbs .lib-close { margin-left: auto; color: var(--soft); font-size: 15px; }
+.lib-list { display: flex; flex-direction: column; }
+.lib-item { display: flex; align-items: center; gap: 10px; background: none; border: 0; border-bottom: 1px solid var(--line, rgba(127,127,127,.2)); padding: 12px 4px; text-align: left; color: inherit; font-family: var(--f-ui); font-size: 15px; }
+.lib-item .he { margin-left: auto; font-family: var(--f-he); font-size: 17px; }
+.lib-item .chev { width: 12px; opacity: .5; }
+.lib-item.book .en { font-weight: 500; }
+.lib-title { display: flex; align-items: baseline; gap: 10px; padding: 10px 0; font-family: var(--f-ui); font-size: 16px; font-weight: 600; }
+.lib-title .he { margin-left: auto; font-family: var(--f-he); font-size: 19px; font-weight: 500; }
+.lib-hint { font-size: 12px; margin: 4px 0 8px; }
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; }
+.lib-grid button { padding: 10px 0; border-radius: 8px; border: 1px solid var(--line, rgba(127,127,127,.3)); background: none; color: inherit; font-family: var(--f-ui); font-size: 14px; }
+.lib-grid.daf { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+.lib-grid .daf-cell { display: flex; align-items: center; gap: 4px; }
+.lib-grid .daf-cell b { width: 28px; text-align: right; font-family: var(--f-ui); font-weight: 600; font-size: 13px; }
+.lib-grid .daf-cell button { flex: 1; padding: 8px 0; }
