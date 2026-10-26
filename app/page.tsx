@@ -503,6 +503,13 @@ export default function Home() {
         </header>
 
         <div className="modebar">
+          {/* Talk comes first, so it's always in view without scrolling. */}
+          {voice.supported && (
+            <button className={`chip talk ${talking ? 'live' : ''}`} onClick={toggleTalk} aria-pressed={talking}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+              {talking ? 'End talk' : 'Talk'}
+            </button>
+          )}
           <button className={`chip accent ${quick === 'style' ? 'open' : ''}`} aria-expanded={quick === 'style'} onClick={() => setQuick((q) => (q === 'style' ? null : 'style'))}>
             {style.short}{blend ? ` + ${blend.short}` : ''} · {settings.leads === 'learner' ? 'You lead' : 'Chavrusa leads'}
           </button>
@@ -510,12 +517,6 @@ export default function Home() {
           <button className="chip" onClick={() => updateSettings({ nusach: settings.nusach === 'ashkenaz' ? 'sephardi' : 'ashkenaz' })}>
             {settings.nusach === 'ashkenaz' ? 'Ashkenaz' : 'Sephardi'}
           </button>
-          {voice.supported && (
-            <button className={`chip talk ${talking ? 'live' : ''}`} onClick={toggleTalk} aria-pressed={talking}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
-              {talking ? 'End talk' : 'Talk'}
-            </button>
-          )}
           <span className="spacer" />
           <span className="cost" title={`Cost of this session so far. The AI answered ${aiTurns} of ${allTurns} replies; the rest were free.`}>${sessionUsd.toFixed(sessionUsd < 1 ? 3 : 2)}{allTurns > 0 && <span className="cost-ai"> · AI {aiTurns}/{allTurns}</span>}</span>
         </div>
