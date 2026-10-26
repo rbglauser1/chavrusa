@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
 import { liveContext, liveInstructions } from '@/lib/live';
+import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { listMemories, listMessages, listSources } from '@/lib/db';
 import { currentPlace } from '@/lib/place';
 import { styleById } from '@/lib/config';
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
   let recap = '';
   let lastSaid = '';
   let lastAt: string | null = null;
+  let pointed = ''; // the line the learner tapped in the Sefer since we last spoke: start there
   if (!preview) {
     try {
       const sid = req.nextUrl.searchParams.get('session');
@@ -52,6 +54,13 @@ export async function POST(req: NextRequest) {
       const lastBot = [...recent].reverse().find((m) => m.role === 'assistant');
       lastSaid = lastBot ? clip(plain(lastBot.content), 600) : '';
       lastAt = recent.length ? recent[recent.length - 1].created_at : null;
+      const tapped = [...sources].reverse().find((x) => x.data?.focus);
+      if (tapped && (!lastAt || tapped.created_at > lastAt)) {
+        const n = tapped.data.focus as number;
+        const he = tapped.data.he[n - 1] ?? '';
+        const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';
+        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${yeshivishTranslit(namesForSpeech(he))}${en ? ` — in English: "${clip(en, 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), then continue in the learning style.`;
+      }
     } catch { /* the call still works without it */ }
   }
   const resume = req.nextUrl.searchParams.get('resume') === '1';
@@ -59,12 +68,14 @@ export async function POST(req: NextRequest) {
   const recapBlock = recap ? `\n\n# The conversation so far in this session (most recent last)\n${recap}` : '';
   // How the call opens depends on the circumstances, like a real chavrusa: no formal hello if we were just learning.
   const mins = lastAt ? (Date.now() - new Date(lastAt).getTime()) / 60000 : null;
-  const hello = !recap
+  const hello = pointed
+    ? `Speak first, briefly. ${mins !== null && mins < 20 ? 'We were just learning; do not greet.' : 'At most a short natural opener; no formal greeting.'} ${pointed} Then listen.${recapBlock}`
+    : !recap
     ? `Speak first, briefly and naturally, the way a chavrusa would when sitting down to learn: a short, warm, natural opener (not a formula, and different each time), ${placeName ? `then mention that last time we were on ${placeName} and ask if he wants to pick up there` : 'then ask what we are learning today'}. Then stop and listen.`
     : mins !== null && mins < 20
       ? `We were learning together just a few minutes ago. Do not greet. Speak first, very briefly, and simply continue from your last message: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again in a few words; otherwise just pick up the next step (for example "So, let's continue…"). Then listen.${recapBlock}`
       : `Speak first, briefly and naturally. Use a short, casual opener only if it fits (we last learned ${mins !== null && mins < 24 * 60 ? 'earlier today' : 'on an earlier day'}); no formal greeting. In one sentence say where we were${placeName ? ` (${placeName})` : ''}, then continue from your last message: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again briefly. Then stop and listen.${recapBlock}`;
-  const resumeNote = `The call is resuming after a short pause, in the middle of learning. Do not greet and do not recap. Continue exactly where you left off. Your last message was: "${lastSaid}". If the learner hasn't answered it yet, wait for him; when he speaks, carry on from there.${recapBlock}`;
+  const resumeNote = pointed ? `The call is resuming after a short pause. Do not greet. ${pointed}${recapBlock}` : `The call is resuming after a short pause, in the middle of learning. Do not greet and do not recap. Continue exactly where you left off. Your last message was: "${lastSaid}". If the learner hasn't answered it yet, wait for him; when he speaks, carry on from there.${recapBlock}`;
   const greeting = `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {

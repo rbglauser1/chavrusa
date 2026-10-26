@@ -121,6 +121,15 @@ export async function listSources(sessionId: string): Promise<SourceRow[]> {
     .eq('session_id', sessionId).order('created_at')) as SourceRow[];
 }
 
+// The learner tapped a line in the Sefer: that's now where we are (the latest place wins).
+export async function setSourceFocus(sessionId: string, ref: string, n: number): Promise<boolean> {
+  const rows = check(await db().from('session_sources').select('id, data').eq('session_id', sessionId).eq('ref', ref)
+    .order('created_at', { ascending: false }).limit(1)) as { id: string; data: SourceData }[];
+  if (!rows.length) return false;
+  check(await db().from('session_sources').update({ data: { ...rows[0].data, focus: n }, created_at: new Date().toISOString() }).eq('id', rows[0].id));
+  return true;
+}
+
 export async function addSource(sessionId: string, s: SourceData): Promise<void> {
   check(await db().from('session_sources').insert({ session_id: sessionId, ref: s.ref, he_ref: s.heRef, data: s }));
 }

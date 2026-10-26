@@ -1,5 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+
+const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he));
 
 // Live voice: a GPT-Live session over WebRTC. The voice model listens and speaks naturally; whenever the
 // learner says something about the learning, it "delegates" to us. We send the learner's words to the
@@ -227,6 +230,12 @@ export function useLive(opts: {
       window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
     });
   }, [send]);
+  // The learner pointed to a line mid-call: go there now (the line's words are given, so nothing is said from memory).
+  const pointTo = useCallback((ref: string, n: number, he: string, en: string) => {
+    bump();
+    const words = he ? `It reads: ${toSpeech(he)}${en ? ` — in English: "${en.slice(0, 600)}"` : ''}` : '';
+    send({ type: 'session.commentary.append', delegation_id: null, content: `The learner just pointed to ${ref}, line ${n}. Go there now: stop what you were doing and start learning from this line. ${words} Say it phrase by phrase (lashon kodesh, then English) and continue in the learning style.` });
+  }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
   // The rest of the brain's answer (or all of it, if nothing went ahead): give it to the voice to say.
@@ -364,5 +373,5 @@ export function useLive(opts: {
 
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  return { state, heard, supported, start, stop, answer, answerPart, read, stopReading, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { state, heard, supported, start, stop, answer, answerPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

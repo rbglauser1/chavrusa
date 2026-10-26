@@ -237,6 +237,16 @@ export default function Home() {
   }
   function stopReadThrough() { readingRef.current = null; live.stopReading(); setReadingOn(false); }
 
+  // The learner tapped a line in the Sefer: learn from there. Saved to the session (so the Chavrusa and a new
+  // call start there), and if a call is going, the voice is told right away.
+  function pointAt(src: SourceData, n: number) {
+    setSources((s) => s.map((x) => (x.ref === src.ref ? { ...x, focus: n } : x)));
+    const sid = sessionIdRef.current;
+    if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src }) }).catch(() => {});
+    if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', src.en[n - 1] ?? src.altEn?.[n - 1] ?? '');
+    setItems((it) => [...it, { kind: 'event', text: `📍 Learning from ${src.ref}, line ${n}.` }]);
+  }
+
   function newSession() {
     setDrawer(null); setSessionId(null); setItems([]); setSources([]); setSelected(0); setSessionUsd(0); setRequests([]);
     warned.current = false;
@@ -695,6 +705,7 @@ export default function Home() {
           onClose={() => { setSeferOpen(false); setLibReq(0); }}
           settings={settings} onSettings={updateSettings} sessionId={sessionId}
           libraryRequest={libReq}
+          onPoint={pointAt}
           talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}
           onOpenRef={(q) => openRef(q, true)}
         />

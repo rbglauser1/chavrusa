@@ -16,9 +16,10 @@ interface Props {
   onOpenRef: (q: string) => Promise<string | null>; // returns an error message, or null when opened
   libraryRequest?: number; // changes when the page asks to open the Library
   talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
+  onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, libraryRequest, talk }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, libraryRequest, talk, onPoint }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -94,8 +95,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     } finally { setLoading(null); }
   }
 
+  // Tap a line: that's where we learn from (highlighted; the Chavrusa and the voice start there).
+  // With translations hidden, the tap also shows that line's translation.
   function toggleLine(i: number) {
-    if (!canTranslate) return;
+    if (src && onPoint && !/ on /i.test(src.ref)) onPoint(src, i + 1);
+    if (!canTranslate || showAll) return;
     setOpen((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
   }
 
@@ -138,7 +142,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             <button className={`toggle ${showAll ? 'on' : ''}`} onClick={() => setShowAll((v) => !v)}>Translation {showAll ? 'on' : 'off'}</button>
           )}
           <span className="muted" style={{ alignSelf: 'center' }}>
-            {canTranslate ? (showAll ? 'Translation under each part' : 'Tap a line to translate it') : 'Original only'}
+            {onPoint ? 'Tap a line to learn from there' : canTranslate ? (showAll ? 'Translation under each part' : 'Tap a line to translate it') : 'Original only'}
           </span>
         </div>
       )}
