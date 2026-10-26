@@ -75,6 +75,9 @@ export default function Home() {
   const liveQueue = useRef<{ text: string; id: string }[]>([]);
   const liveDelegation = useRef<string | null>(null);
   const liveSpeech = useRef({ buf: '', out: '', sent: false }); // the answer, as it streams, for the Live voice
+  const exactSent = useRef(0);      // phrases of a [[say]] block already handed to the voice
+  const afterSay = useRef(false);   // the [[say]] block is done; the rest is handed over at the end
+  const preStreamed = useRef(false); // something before the [[say]] block was already spoken
   // Read-through (say over the pesukim / shnayim mikra): where we are, while it's running.
   const readingRef = useRef<{ mode: string; base: string; next: number; id: number } | null>(null);
   const [readingOn, setReadingOn] = useState(false);
@@ -297,7 +300,7 @@ export default function Home() {
     setItems((it) => [...it.map((x) => (x.kind === 'assistant' && x.live ? { ...x, live: false } : x)), { kind: 'user', text: msg }]);
     setBusy(true); setStatus('Thinking…');
     liveIdx.current = null;
-    liveText.current = ''; liveSpeech.current = { buf: '', out: '', sent: false };
+    liveText.current = ''; liveSpeech.current = { buf: '', out: '', sent: false }; exactSent.current = 0; afterSay.current = false; preStreamed.current = false;
     speechBuf.current = '';
     turnRefs.current = [];
     speakTurn.current = !opts.live && (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current);
@@ -355,7 +358,23 @@ export default function Home() {
         liveText.current += e.text;
         // Live call: pass finished sentences to the voice as they arrive. The first sentence goes at once;
         // after that, a couple of sentences at a time so it flows naturally.
-        if (liveDelegation.current && !/\[\[say/i.test(liveText.current)) {
+        // Text to be said word for word ([[say]] … [[/say]]): hand it over phrase by phrase as it is written.
+        if (liveDelegation.current && /\[\[say\]\]/i.test(liveText.current)) {
+          const full = liveText.current;
+          const start = full.search(/\[\[say\]\]/i) + 7;
+          const endAt = full.search(/\[\[\/say\]\]/i);
+          const body = full.slice(start, endAt >= 0 ? endAt : undefined);
+          const pieces = body.split('|');
+          const done = endAt >= 0 ? pieces : pieces.slice(0, -1);            // the last piece may still be growing
+          const ready = done.slice(exactSent.current).map((x) => x.trim()).filter(Boolean);
+          // The first phrase goes at once; after that, two at a time so it flows.
+          if (ready.length && (exactSent.current === 0 || ready.length >= 2 || endAt >= 0)) {
+            live.answerExactPart(liveDelegation.current, ready.join(' | '));
+            exactSent.current += ready.length;
+            liveSpeech.current.sent = true;
+          }
+          if (endAt >= 0) { liveSpeech.current.buf = full.slice(endAt + 8); liveSpeech.current.out = ''; afterSay.current = true; }
+        } else if (liveDelegation.current && !afterSay.current) {
           liveSpeech.current.buf += e.text;
           const { sentences, rest } = splitSentences(liveSpeech.current.buf);
           liveSpeech.current.buf = rest;
@@ -363,6 +382,7 @@ export default function Home() {
           const out = liveSpeech.current.out.trim();
           if (out && (!liveSpeech.current.sent || out.length >= 180)) {
             live.answerPart(liveDelegation.current, out);
+            preStreamed.current = true;
             liveSpeech.current = { buf: liveSpeech.current.buf, out: '', sent: true };
           }
         }
@@ -401,9 +421,17 @@ export default function Home() {
           // Whatever wasn't handed over yet: all of it if nothing streamed (e.g. a free reply), else the remainder.
           const rest = liveSpeech.current.sent ? `${liveSpeech.current.out} ${liveSpeech.current.buf}`.trim() : finalText;
           // Text the voice must say word for word (the lashon kodesh with its English) comes in [[say]] … [[/say]].
-          const exact = [...finalText.matchAll(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi)].map((m) => m[1].trim()).filter(Boolean);
-          if (exact.length && !liveSpeech.current.sent) live.answerExact(liveDelegation.current, exact.join(' '), finalText.replace(/\[\[say\]\][\s\S]*?\[\[\/say\]\]/gi, ' ').replace(/\s+/g, ' ').trim());
-          else live.answer(liveDelegation.current, rest.replace(/\[\[\/?say\]\]/gi, ''));
+          const sayBody = finalText.match(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/i)?.[1] ?? '';
+          // What's outside the block: the part before it may already have been spoken while streaming.
+          const before = finalText.split(/\[\[say\]\]/i)[0];
+          const after = finalText.split(/\[\[\/say\]\]/i).slice(1).join(' ');
+          const outside = `${preStreamed.current ? '' : before} ${after}`.replace(/\[\[\/?say\]\]/gi, '').replace(/\s+/g, ' ').trim();
+          if (sayBody) {
+            // Any phrases not yet handed over are read exactly; then the explanation, in the voice's own words.
+            const left = sayBody.split('|').slice(exactSent.current).map((x) => x.trim()).filter(Boolean).join(' | ');
+            if (left) live.answerExactPart(liveDelegation.current, left);
+            live.answer(liveDelegation.current, outside);
+          } else live.answer(liveDelegation.current, rest.replace(/\[\[\/?say\]\]/gi, ''));
           liveDelegation.current = null;
         }
         liveSpeech.current = { buf: '', out: '', sent: false };

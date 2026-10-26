@@ -268,6 +268,23 @@ export function useLive(opts: {
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: `READ EXACTLY: ${ex} END.${more ? ` Then: ${more}` : ''}` });
   }, [send]);
 
+  const exactTold = useRef<Set<string>>(new Set());
+  const answerExactPart = useCallback((delegationId: string, exact: string) => {
+    if (!pending.current.has(delegationId)) return;
+    const ex = forSpeech(exact.replace(/\s*\|\s*/g, ' … '));
+    if (!ex) return;
+    if (!exactTold.current.has(delegationId)) {
+      exactTold.current.add(delegationId);
+      send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: whatever comes between READ EXACTLY and END, read word for word, every phrase, in order, the lashon kodesh and then its English exactly as written, as soon as it arrives. Do not skip, shorten, summarize, or translate it differently, and do not drop the Hebrew. Other parts you may say naturally.' });
+    }
+    partial.current.add(delegationId);
+    answering.current = true;
+    voiceBuf.current = '';
+    handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${ex}` : ex, at: Date.now() };
+    bump();
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `READ EXACTLY: ${ex} END.` });
+  }, [send]);
+
   const start = useCallback(async () => {
     if (stateRef.current !== 'off' && stateRef.current !== 'paused') return;
     const resuming = stateRef.current === 'paused'; // coming back from a pause: no new greeting
@@ -389,5 +406,5 @@ export function useLive(opts: {
 
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  return { state, heard, supported, start, stop, answer, answerPart, answerExact, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }
