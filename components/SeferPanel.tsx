@@ -60,7 +60,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Commentary on one part, opened right under it (free, straight from Sefaria).
   const [comm, setComm] = useState<Record<string, { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string }>>({});
-  const kind = !src ? 'none' : /^Mishnah /.test(src.ref) ? 'mishnah' : / on /i.test(src.ref) ? 'none' : /\d+[ab](:|$)/.test(src.ref) ? 'gemara' : 'tanakh';
+  const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles)\b/;
+  const kind = !src ? 'none' : /^Mishnah /.test(src.ref) ? 'mishnah' : / on /i.test(src.ref) ? 'none' : /\d+[ab](:|$)/.test(src.ref) ? 'gemara' : TANAKH.test(src.ref) ? 'tanakh' : 'none';
   const buttons: [string, string][] = kind === 'mishnah' ? [['bartenura', 'Bartenura'], ['tyt', 'Tosfos Yom Tov']]
     : kind === 'gemara' ? [['rashi', 'Rashi'], ['tosafot', 'Tosafos']]
     : kind === 'tanakh' ? [['rashi', 'Rashi'], ['ramban', 'Ramban']] : [];
