@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
-import { stripNikud } from '@/lib/hebrew';
+import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 
 interface Props {
   sources: SourceData[];
@@ -281,7 +281,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           : (c.he ?? []).map((h, k2) => (
                             <div key={k2} className="comm-line">
                               <div className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>
-                              {showAll && c.en?.[k2] && <div className="en">{c.en[k2]}</div>}
+                              {showAll && c.en?.[k2] && <div className="en">{yeshivishEnglish(c.en[k2])}</div>}
                             </div>
                           ))}
                       </div>
@@ -289,7 +289,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   })}
                   {isOpen && (
                     <div className="en" onClick={(e) => e.stopPropagation()}>
-                      {en ? en : aiText[key] ? (
+                      {en ? yeshivishEnglish(en) : aiText[key] ? (
                         <><span className="label-ai">AI translation</span><div>{aiText[key]}</div></>
                       ) : (
                         <button className="btn" disabled={loading === key} onClick={() => aiTranslate(key, line)}>

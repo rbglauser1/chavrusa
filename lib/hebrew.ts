@@ -21,7 +21,7 @@ export function namesForSpeech(s: string): string {
 }
 // English: "the LORD" / "LORD" -> Hashem.
 export function namesForSpeechEn(s: string): string {
-  return s.replace(/\bthe LORD\b/g, 'Hashem').replace(/\bLORD\b/g, 'Hashem').replace(/\bthe Lord\b/g, 'Hashem');
+  return yeshivishEnglish(s).replace(/\bthe LORD\b/g, 'Hashem').replace(/\bLORD\b/g, 'Hashem').replace(/\bthe Lord\b/g, 'Hashem');
 }
 
 // ---------- Yeshivish transliteration (for the voice) ----------
@@ -130,4 +130,44 @@ export function yeshivishTranslit(hebrew: string, marks = true): string {
       return parts.join('-') + punct;
     })
     .join(' ');
+}
+
+// ---------- Yeshivish English names ----------
+// Sefaria's English uses academic / modern spellings (Moses, Jacob, Rabbi Yoḥanan, Shabbat, Berakhot).
+// Shown and read the yeshivish way instead: Moshe, Yaakov, Rabbi Yochanan, Shabbos, Brachos. Free, no AI.
+const YESHIVISH_WORDS: [string, string][] = [
+  // Chumash and Tanach
+  ['Moses', 'Moshe'], ['Aaron', 'Aharon'], ['Abraham', 'Avraham'], ['Abram', 'Avram'], ['Sarai', 'Sarai'], ['Isaac', 'Yitzchak'],
+  ['Jacob', 'Yaakov'], ['Rebekah', 'Rivkah'], ['Rebecca', 'Rivkah'], ['Rachel', 'Rochel'], ['Laban', 'Lavan'], ['Esau', 'Eisav'],
+  ['Joseph', 'Yosef'], ['Reuben', 'Reuven'], ['Simeon', 'Shimon'], ['Judah', 'Yehudah'], ['Issachar', 'Yissachar'],
+  ['Zebulun', 'Zevulun'], ['Naphtali', 'Naftali'], ['Benjamin', 'Binyamin'], ['Ephraim', 'Efraim'], ['Manasseh', 'Menasheh'],
+  ['Noah', 'Noach'], ['Eve', 'Chava'], ['Cain', 'Kayin'], ['Abel', 'Hevel'], ['Enoch', 'Chanoch'], ['Methuselah', 'Mesushelach'],
+  ['Japheth', 'Yefes'], ['Ishmael', 'Yishmael'], ['Pharaoh', 'Paroh'], ['Joshua', 'Yehoshua'], ['Caleb', 'Calev'],
+  ['Korah', 'Korach'], ['Balaam', 'Bilam'], ['Phinehas', 'Pinchas'], ['Eleazar', 'Elazar'], ['Ithamar', 'Isamar'],
+  ['Nadab', 'Nadav'], ['Abihu', 'Avihu'], ['Jethro', 'Yisro'], ['Zipporah', 'Tzipporah'], ['Samuel', 'Shmuel'], ['Saul', 'Shaul'],
+  ['David', 'Dovid'], ['Solomon', 'Shlomo'], ['Elijah', 'Eliyahu'], ['Isaiah', 'Yeshayahu'], ['Jeremiah', 'Yirmiyahu'],
+  ['Ezekiel', 'Yechezkel'], ['Mordecai', 'Mordechai'], ['Ahasuerus', 'Achashverosh'], ['Nebuchadnezzar', 'Nevuchadnetzar'],
+  ['Jerusalem', 'Yerushalayim'], ['Egyptians', 'Mitzrim'], ['Egyptian', 'Mitzri'], ['Egypt', 'Mitzrayim'],
+  ['the children of Israel', 'Bnei Yisrael'], ['the Children of Israel', 'Bnei Yisrael'], ['the Israelites', 'Bnei Yisrael'],
+  ['Israelites', 'Bnei Yisrael'], ['the land of Israel', 'Eretz Yisrael'], ['the Land of Israel', 'Eretz Yisrael'], ['Israel', 'Yisrael'],
+  ['Sabbath', 'Shabbos'], ['Tabernacle', 'Mishkan'], ['Passover', 'Pesach'], ['Tabernacles', 'Sukkos'],
+  // Gemara and Mishnah
+  ['Shabbat', 'Shabbos'], ['Shabbatot', 'Shabbosos'], ['Beit', 'Beis'], ['Rosh Ḥodesh', 'Rosh Chodesh'], ['Sukkot', 'Sukkos'], ['Shavuot', 'Shavuos'],
+  ['Berakhot', 'Brachos'], ['berakhot', 'brachos'], ['berakha', 'bracha'], ['Berakha', 'Bracha'], ['Ketubot', 'Kesubos'],
+  ['Yevamot', 'Yevamos'], ['Makkot', 'Makkos'], ['Shevuot', 'Shevuos'], ['Horayot', 'Horiyos'], ['Menaḥot', 'Menachos'],
+  ['Bekhorot', 'Bechoros'], ['Arakhin', 'Erchin'], ['Keritot', 'Kerisos'], ['Taanit', 'Taanis'], ['Terumot', 'Terumos'],
+  ['Maasrot', 'Maasros'], ['Oholot', 'Ohalos'], ['Teharot', 'Taharos'], ['Mikvaot', 'Mikvaos'],
+  ['mitzvot', 'mitzvos'], ['Mitzvot', 'Mitzvos'], ['mitzva', 'mitzvah'], ['halakhot', 'halachos'], ['halakha', 'halacha'], ['Halakha', 'Halacha'],
+  ['tefillot', 'tefillos'], ['matzot', 'matzos'], ['kashrut', 'kashrus'], ['baraita', 'braisa'], ['baraitot', 'braisos'],
+  ['teruma', 'terumah'], ['Toseftot', 'Tosefos'], ['Tosafot', 'Tosafos'], ['Shema', 'Shema'],
+];
+const YESHIVISH_RE = new RegExp(`\\b(${YESHIVISH_WORDS.map(([w]) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).sort((a, b) => b.length - a.length).join('|')})\\b`, 'g');
+const YESHIVISH_MAP = new Map(YESHIVISH_WORDS);
+export function yeshivishEnglish(s: string): string {
+  if (!s) return s;
+  return s
+    .replace(YESHIVISH_RE, (w) => YESHIVISH_MAP.get(w) ?? w)
+    .replace(/ḥ/g, 'ch').replace(/Ḥ/g, 'Ch')                       // Yoḥanan -> Yochanan, Ḥisda -> Chisda
+    .replace(/\b([A-Z][a-z]*?)kh([a-z]*)\b/g, '$1ch$2')              // Arakhin, Mekhilta -> ch
+    .replace(/\b([a-z]+)kh([a-z]*)\b/g, (m, a, b) => (/^(sheikh|khaki)$/.test(m) ? m : `${a}ch${b}`));
 }

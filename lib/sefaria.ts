@@ -1,6 +1,7 @@
 import 'server-only';
 import { ALL_WORKS, ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationApproved, translationRank, Verdict } from './approval';
 import { SourceData } from './db';
+import { yeshivishEnglish } from './hebrew';
 
 const BASE = 'https://www.sefaria.org';
 const enc = (ref: string) => encodeURIComponent(ref.trim().replace(/ /g, '_')).replace(/%2C/g, ',').replace(/%3A/g, ':');
@@ -126,10 +127,10 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
     ref: canonical,
     heRef: first?.heRef ?? canonical,
     he: nonEmpty(flatten(heV?.text).map(stripHtml)),
-    en: enV ? nonEmpty(flatten(enV.text).map(stripHtml)) : [],
+    en: enV ? nonEmpty(flatten(enV.text).map(stripHtml).map(yeshivishEnglish)) : [],
     translation: enV?.versionTitle ?? null,
     ...(!enV && defaultEn?.versionTitle && nonEmpty(flatten(defaultEn.text)).length
-      ? { altEn: nonEmpty(flatten(defaultEn.text).map(stripHtml)), altTitle: defaultEn.versionTitle } : {}),
+      ? { altEn: nonEmpty(flatten(defaultEn.text).map(stripHtml).map(yeshivishEnglish)), altTitle: defaultEn.versionTitle } : {}),
     archaic: enV ? isArchaic(flatten(enV.text).slice(0, 40).join(' ')) : false,
     url: `${BASE}/${enc(canonical)}`,
     verdict,
