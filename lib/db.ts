@@ -1,5 +1,6 @@
 import 'server-only';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ALL_WORKS } from './approval';
 import { DEFAULT_SETTINGS, LIVE_VOICES, normalizeLook, OWNER_ID, Settings, VOICES } from './config';
 
 let client: SupabaseClient | null = null;
@@ -36,6 +37,7 @@ export async function getSettings(userId = OWNER_ID): Promise<Settings> {
 export async function saveSettings(patch: Partial<Settings>, userId = OWNER_ID): Promise<Settings> {
   const next = { ...(await getSettings(userId)), ...patch };
   check(await db().from('settings').upsert({ user_id: userId, data: next, updated_at: new Date().toISOString() }));
+  if ('approveAll' in patch) approvedCache = null;
   return next;
 }
 
@@ -180,7 +182,12 @@ export interface ApprovedRow { kind: 'work' | 'author' | 'translation' | 'site';
 let approvedCache: { at: number; rows: ApprovedRow[] } | null = null;
 export async function approvedList(): Promise<ApprovedRow[]> {
   if (approvedCache && Date.now() - approvedCache.at < 60_000) return approvedCache.rows;
-  const rows = check(await db().from('approved_sources').select('kind, name, status, lean')) as ApprovedRow[];
+  const [rows, s] = await Promise.all([
+    db().from('approved_sources').select('kind, name, status, lean').then((r) => check(r) as ApprovedRow[]),
+    getSettings().catch(() => null),
+  ]);
+  // "Allow all seforim" (Settings): blocked entries still win; everything else is allowed.
+  if (s?.approveAll) rows.push({ kind: 'work', name: ALL_WORKS, status: 'approved', lean: 'general' });
   approvedCache = { at: Date.now(), rows };
   return rows;
 }

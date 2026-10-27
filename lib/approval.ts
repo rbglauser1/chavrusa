@@ -12,6 +12,9 @@ export interface IndexInfo {
   year: number | null;        // earliest composition year, if known
 }
 
+// A marker in the approved list meaning "allow every sefer" (from Settings).
+export const ALL_WORKS = '__all_sefaria__';
+
 export interface Verdict { allowed: boolean; reason: string; lean: string }
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9א-ת]+/g, ' ').trim();
@@ -36,6 +39,9 @@ export function judgeWork(info: IndexInfo, list: ApprovedEntry[]): Verdict {
   if (blockedWork) return { allowed: false, reason: `"${info.title}" is on the blocked list.`, lean: blockedWork.lean };
   const blockedAuthor = authors.find((e) => e.status === 'blocked' && info.authors.some((a) => matches(e.name, a)));
   if (blockedAuthor) return { allowed: false, reason: `The author of "${info.title}" is on the blocked list.`, lean: blockedAuthor.lean };
+
+  // 1b. The learner chose to allow every sefer on Sefaria (Settings).
+  if (works.some((e) => e.status === 'approved' && e.name === ALL_WORKS)) return { allowed: true, reason: 'All Sefaria seforim allowed (Settings).', lean: 'general' };
 
   // 2. Explicitly approved work or author.
   const okWork = works.find((e) => e.status === 'approved' && matches(e.name, info.title));

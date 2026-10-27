@@ -215,7 +215,8 @@ export interface Settings {
   pinBar: boolean;
   blankCall: boolean;
   seferEnglish: boolean;
-  rashiScript: boolean;     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
+  rashiScript: boolean;
+  approveAll: boolean;      // allow every sefer on Sefaria (off: only classic and approved works)     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
   saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   autoSpeak: boolean;       // read every reply aloud
@@ -248,6 +249,7 @@ export const DEFAULT_SETTINGS: Settings = {
   blankCall: false,
   seferEnglish: true,
   rashiScript: true,
+  approveAll: true,
   saver: true,
   customVoices: [],
   autoSpeak: false,
