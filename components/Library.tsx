@@ -104,7 +104,10 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
 
       {!book && !path.length && recent.length > 0 && (
         <div className="lib-recent">
-          <div className="muted lib-hint">Recent</div>
+          <div className="lib-recent-head">
+            <span className="muted lib-hint">Recent</span>
+            <button className="clear-all" onClick={() => { try { localStorage.removeItem('lib-recent'); } catch { /* optional */ } setRecent([]); }}>Clear</button>
+          </div>
           {recent.map((r) => (
             <button key={r.ref} className="lib-item book" disabled={busy} onClick={() => open(r.ref)}>
               <span className="en">{r.ref}</span>

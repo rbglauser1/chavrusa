@@ -256,6 +256,16 @@ export default function Home() {
     setTimeout(() => inputRef.current?.focus(), 50);
   }
 
+  // Clear the whole list: one tap arms it, a second tap (within a few seconds) clears. No pop-up.
+  const [clearArmed, setClearArmed] = useState(false);
+  async function clearAllSessions() {
+    if (!clearArmed) { setClearArmed(true); window.setTimeout(() => setClearArmed(false), 4000); return; }
+    setClearArmed(false);
+    await fetch('/api/sessions', { method: 'DELETE' });
+    newSession();
+    refreshSessions();
+  }
+
   async function deleteSessionById(id: string) {
     await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
     if (id === sessionId) newSession();
@@ -763,6 +773,11 @@ export default function Home() {
             <div className="drawer-body">
               <button className="btn primary" style={{ width: '100%', margin: '8px 0 12px' }} onClick={newSession}>+ New session</button>
               {sessions.length === 0 && <div className="muted" style={{ fontSize: 14 }}>No sessions yet.</div>}
+              {sessions.length > 0 && (
+                <button className={`clear-all ${clearArmed ? 'armed' : ''}`} onClick={clearAllSessions}>
+                  {clearArmed ? `Tap again to clear all ${sessions.length}` : 'Clear all'}
+                </button>
+              )}
               {sessions.map((s) => (
                 <div key={s.id} className={`session-row ${s.id === sessionId ? 'on' : ''}`}>
                   <button className="session-item" onClick={() => openSession(s.id)}>

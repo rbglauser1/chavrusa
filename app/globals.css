@@ -544,3 +544,7 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .comm-x { background: none; border: none; color: inherit; opacity: .6; font-size: 12px; cursor: pointer; padding: 0 2px; }
 .sefer .comm-title .comm-x:first-of-type:last-child { margin-inline-start: auto; }
 .sefer .comm-note { font-size: 12px; align-self: center; }
+.clear-all { display: block; margin: 0 0 10px auto; background: none; border: none; color: var(--soft, inherit); font-family: var(--f-ui); font-size: 13px; text-decoration: underline; cursor: pointer; padding: 2px 0; }
+.clear-all.armed { color: #c0392b; font-weight: 600; text-decoration: none; }
+.lib-recent-head { display: flex; align-items: baseline; justify-content: space-between; }
+.lib-recent-head .clear-all { margin: 0; }

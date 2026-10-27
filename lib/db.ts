@@ -108,6 +108,11 @@ export async function deleteSession(id: string, userId = OWNER_ID): Promise<void
   check(await db().from('sessions').delete().eq('id', id).eq('user_id', userId));
 }
 
+// Clear the whole sessions list (each session's messages and sources go with it). Memories are kept.
+export async function deleteAllSessions(userId = OWNER_ID): Promise<void> {
+  check(await db().from('sessions').delete().eq('user_id', userId));
+}
+
 export async function listMessages(sessionId: string, limit = 200): Promise<MessageRow[]> {
   const rows = check(await db().from('messages').select('id, role, content, meta, created_at')
     .eq('session_id', sessionId).order('created_at', { ascending: false }).limit(limit)) as MessageRow[];
