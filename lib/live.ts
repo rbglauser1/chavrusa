@@ -31,11 +31,13 @@ Do not delegate to the backend when: Greeting, explaining a concept, discussing 
 }
 
 // What the voice needs to know about this learner and session, added to its instructions when the call starts.
-export function liveContext(o: { styleName: string; styleRules: string; leads: string; place: string | null; requests: string[]; saved: string[] }): string {
+export function liveContext(o: { styleName: string; styleRules: string; leads: string; place: string | null; requests: string[]; saved: string[]; noticed?: string[] }): string {
   return [
     `\n# Learning style: ${o.styleName}\n${o.styleRules}\nWho leads: ${o.leads}`,
     o.place ? `\n# Where we are\nThe learner is on ${o.place}. Delegate to get its words.` : '',
     o.requests.length ? `\n# The learner's requests for this session (follow these above everything else)\n${o.requests.map((r) => `- ${r}`).join('\n')}` : '',
     o.saved.length ? `\n# Saved instructions from the learner (always follow)\n${o.saved.map((r) => `- ${r}`).join('\n')}` : '',
+    o.noticed?.length ? `\n# How this learner tends to learn (noticed in earlier sessions: fit yourself to it from the start)\n${o.noticed.map((r) => `- ${r}`).join('\n')}` : '',
+    `\n# Reading the learner (no commands needed)\nFit yourself to what he is doing, inside the style; a clear direction from him always wins. If he starts reading the text aloud himself, let him read: stay quiet except a short "mm-hm" or "right," don't read it for him, and don't explain over him; when he stops or asks, delegate so his reading can be checked against the text. If he starts explaining, let him finish, then respond. If he hesitates, offer a small hint. If he says "ok, got it" quickly, say less and move faster. If he gets questions right, make them harder; if he struggles, slow down.`,
   ].join('\n');
 }

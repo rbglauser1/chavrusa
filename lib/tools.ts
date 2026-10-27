@@ -42,7 +42,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'remember',
-    description: 'Save something about the learner for future sessions. Use kind "instruction" right away when the learner tells you how to teach them (e.g. "don\'t translate Rashi"). Use kind "observation" ONLY after the learner agreed you may remember it. Use kind "note" for a chiddush, open question, or bookmark the learner wants saved.',
+    description: 'Save something about the learner for future sessions. Use kind "instruction" right away when the learner tells you how to teach them (e.g. "don\'t translate Rashi"). Use kind "observation" for a steady pattern in how he learns (he has agreed to this; save quietly, once per pattern). Use kind "note" for a chiddush, open question, or bookmark the learner wants saved.',
     parameters: {
       type: 'object',
       properties: {
