@@ -318,7 +318,7 @@ a { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .orb.speaking { animation: none; } }
 
 /* ---------- Sefer panel ---------- */
-.sefer { width: 44%; max-width: 620px; min-width: 380px; border-left: 1px solid var(--rule); background: var(--surface); display: flex; flex-direction: column; }
+.sefer { position: relative; width: 44%; max-width: 620px; min-width: 380px; border-left: 1px solid var(--rule); background: var(--surface); display: flex; flex-direction: column; }
 [data-look='shtender'] .sefer { background: var(--src-bg); color: var(--src-ink); --soft: #7a6448; --rule: rgba(120, 80, 30, 0.25); --accent: #7a5a2c; --accent-soft: rgba(122, 90, 44, 0.12); --ink: #2a1c16; }
 .sefer-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--rule); font-family: var(--f-ui); }
 .sefer-head h2 { margin: 0; font-size: 15px; font-weight: 600; flex: 1; }
@@ -853,3 +853,6 @@ table.costs td.n, table.costs th.n { text-align: right; }
 }
 [data-look='ink'] .topbar { background: rgba(248, 247, 244, 0.7); }
 .mini.ink { background: #f1f0ed; }
+/* The counter sits in the bottom-left corner of the Sefer, the same low spot as in full screen. */
+.sefer .daf-bar, .sefer.full .daf-bar { position: absolute; left: 14px; bottom: max(18px, env(safe-area-inset-bottom)); margin: 0; z-index: 61; }
+.sefer.full .daf-bar { position: fixed; }
