@@ -6,6 +6,7 @@ import { ApprovedEntry, COMMENTARY_BOOK } from './approval';
 import { MessageRow, SourceData, SourceRow } from './db';
 import { stripNikud } from './hebrew';
 import { getText } from './sefaria';
+import { nextSection } from './refs';
 
 export interface Place { base: string; n: number }  // base: "Berakhot 36b" / "Genesis 1"; n: line (segment) number
 
@@ -81,15 +82,33 @@ export async function textInHand(place: Place, sources: SourceRow[], approved: A
     const en = sec.en[k - 1] ? clip(sec.en[k - 1], 450) : '';
     lines.push(`[${k}] ${he}${en ? `\n    ${en}` : ''}`);
   }
-  return `[TEXT IN HAND: ${place.base}${sec.translation ? ` (translation: ${sec.translation.replace(/,.*$/, '')})` : ''}. The learner is on line ${place.n} of ${total}. These numbered lines are the real text; use and quote them, and do not call get_text for ${place.base} unless you need a line not shown.]\n${lines.join('\n')}`;
+  // Near the end of the amud / perek: the text simply goes on into the next one, so hand over its first lines too.
+  let more = '';
+  const nb = end >= total ? nextSection(place.base) : null;
+  if (nb) {
+    const nx = await section(nb, sources, approved);
+    if (nx?.he.length) {
+      const k2 = Math.min(nx.he.length, Math.max(2, count - (end - start + 1)));
+      const nl: string[] = [];
+      for (let k = 1; k <= k2; k++) {
+        const he = clip(stripNikud(nx.he[k - 1] ?? ''), 500);
+        const en = nx.en[k - 1] ? clip(nx.en[k - 1], 450) : '';
+        nl.push(`[${nb} ${k}] ${he}${en ? `\n    ${en}` : ''}`);
+      }
+      more = `\n[That is the end of ${place.base}. The text continues straight on in ${nb}; just keep going into it, without stopping or asking. If you finish on a line there, mark it like [[line:${nb}:2]].]\n${nl.join('\n')}`;
+    }
+  }
+  return `[TEXT IN HAND: ${place.base}${sec.translation ? ` (translation: ${sec.translation.replace(/,.*$/, '')})` : ''}. The learner is on line ${place.n} of ${total}. These numbered lines are the real text; use and quote them, and do not call get_text for ${place.base} unless you need a line not shown.]\n${lines.join('\n')}${more}`;
 }
 
 // The AI ends its reply with [[line:N]] (the line it finished on). The app reads it and hides it.
-export const LINE_MARK = /\s*\[\[\s*line\s*:\s*(\d+)\s*\]\]\s*/gi;
-export function readMark(text: string): { text: string; n: number | null } {
+// [[line:7]], or [[line:Berakhot 37a:2]] when it went on into the next amud / perek.
+export const LINE_MARK = /\s*\[\[\s*line\s*:\s*(?:([^\]]*?)\s*:\s*)?(\d+)\s*\]\]\s*/gi;
+export function readMark(text: string): { text: string; n: number | null; base: string | null } {
   let n: number | null = null;
-  const clean = text.replace(LINE_MARK, (_, d) => { n = Number(d); return ' '; }).replace(/[ \t]+\n/g, '\n').trim();
-  return { text: clean, n };
+  let base: string | null = null;
+  const clean = text.replace(LINE_MARK, (_, b, d) => { n = Number(d); base = b ? String(b).trim() : null; return ' '; }).replace(/[ \t]+\n/g, '\n').trim();
+  return { text: clean, n, base };
 }
 
 // Streaming: pass text through, but hold back anything that might be the start of a [[line:N]] mark.
@@ -100,7 +119,7 @@ export function markFilter(emit: (s: string) => void) {
       let buf = (hold + d).replace(LINE_MARK, ' ');
       hold = '';
       const j = buf.lastIndexOf('[[');
-      if (j >= 0 && !buf.slice(j).includes(']]') && buf.length - j < 24) { hold = buf.slice(j); buf = buf.slice(0, j); }
+      if (j >= 0 && !buf.slice(j).includes(']]') && buf.length - j < 90) { hold = buf.slice(j); buf = buf.slice(0, j); }
       else if (buf.endsWith('[')) { hold = '['; buf = buf.slice(0, -1); }
       if (buf) emit(buf);
     },

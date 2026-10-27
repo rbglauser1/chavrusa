@@ -370,7 +370,11 @@ async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
       // Show the whole perek / amud in the Sefer, scrolled to this line, so the learner can look around it.
       const p = splitRef(src.ref);
       const whole = await tryText(p.base, ctx.approved);
-      return { reply: lineReply(line, ctx.spoken), line, ...(whole ? { source: { ...whole, focus: p.n } } : {}) };
+      // Went on into the next amud / perek: say so in a word, and carry straight on.
+      const crossed = p.base !== base;
+      const lead = crossed ? `${ctx.spoken ? '' : '**'}${p.base}${ctx.spoken ? '.' : '**'} ` : '';
+      const reply = lineReply(line, ctx.spoken);
+      return { reply: crossed && ctx.spoken ? `${lead}${reply}` : crossed ? reply.replace(/^\*\*[^*]+\*\*/, `**${src.ref}** (${p.base} begins)`) : reply, line, ...(whole ? { source: { ...whole, focus: p.n } } : {}) };
     }
   }
   return { reply: dir === 1 ? `That's the end of ${base.replace(/\s\d.*$/, '')}.` : `We're already at the first ${unitWord(base)}.` };

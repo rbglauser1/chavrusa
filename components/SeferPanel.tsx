@@ -4,6 +4,7 @@ import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
+import { nextSection } from '@/lib/refs';
 
 interface Props {
   sources: SourceData[];
@@ -130,6 +131,30 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const openUsual = (i: number, who: string, label: string) =>
     openComm(i, label, `/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`);
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
+
+  // The text keeps going: under the last line, the next amud / perek appears by itself (when you reach the end
+  // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
+  const nextRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? nextSection(src.ref) : null;
+  const [nextSrc, setNextSrc] = useState<SourceData | null>(null);
+  const [nextState, setNextState] = useState<'idle' | 'loading' | 'none'>('idle');
+  useEffect(() => { setNextSrc(null); setNextState('idle'); }, [src?.ref]);
+  function loadNext() {
+    if (!nextRef || nextSrc || nextState !== 'idle') return;
+    setNextState('loading');
+    fetch(`/api/peek?ref=${encodeURIComponent(nextRef)}`).then((r) => r.json())
+      .then((d) => { if (d.source) { setNextSrc(d.source); setNextState('idle'); } else setNextState('none'); })
+      .catch(() => setNextState('idle'));
+  }
+  // Near the end of what's open: load what comes next.
+  useEffect(() => { if (src?.focus && src.he.length && src.focus >= src.he.length - 2) loadNext(); }, [src?.ref, src?.focus]);
+  const endRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = endRef.current;
+    if (!el || !nextRef || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) loadNext(); }, { rootMargin: '300px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [nextRef, nextSrc, nextState, selected]);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
@@ -301,6 +326,26 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 </div>
               );
             })}
+            {nextRef && (
+              <div ref={endRef} className="next-sec">
+                {nextSrc ? (
+                  <>
+                    <div className="next-head"><span className="he">{nextSrc.heRef}</span> <small>{nextSrc.ref} · the text continues</small></div>
+                    {nextSrc.he.map((line, i) => {
+                      const en = nextSrc.en[i] || (nextSrc.en.length ? undefined : nextSrc.altEn?.[i]);
+                      return (
+                        <div key={`n${i}`} data-line={`n${i + 1}`} className="line" onClick={() => onPoint?.(nextSrc, i + 1)}>
+                          <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                          {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : nextState === 'loading' ? <div className="muted next-head">Bringing {nextRef}…</div>
+                  : nextState === 'none' ? <div className="muted next-head">End of the sefer.</div>
+                  : <button className="btn next-load" onClick={loadNext}>Continue to {nextRef} ↓</button>}
+              </div>
+            )}
             {src.he.length === 0 && src.en.map((l, i) => <div key={i} className="line"><div>{l}</div></div>)}
           </>
         )}

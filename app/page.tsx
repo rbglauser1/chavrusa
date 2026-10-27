@@ -243,7 +243,7 @@ export default function Home() {
   // The learner tapped a line in the Sefer: learn from there. Saved to the session (so the Chavrusa and a new
   // call start there), and if a call is going, the voice is told right away.
   function pointAt(src: SourceData, n: number) {
-    setSources((s) => s.map((x) => (x.ref === src.ref ? { ...x, focus: n } : x)));
+    showSource({ ...src, focus: n }); // also the next amud / perek shown under the text: it becomes its own tab
     const sid = sessionIdRef.current;
     if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src }) }).catch(() => {});
     if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', src.en[n - 1] ?? src.altEn?.[n - 1] ?? '');

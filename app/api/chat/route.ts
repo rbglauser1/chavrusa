@@ -12,7 +12,8 @@ import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
 import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
 import { after } from 'next/server';
-import { addSource } from '@/lib/db';
+import { addSource, SourceData } from '@/lib/db';
+import { getText } from '@/lib/sefaria';
 
 export const runtime = 'nodejs';
 
@@ -226,7 +227,19 @@ export async function POST(req: NextRequest) {
         // The AI marks the line it finished on ([[line:N]]); remember it as the learner's place, and hide the mark.
         const marked = readMark(result.text || '');
         const reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
-        const newPlace = marked.n && place ? { base: place.base, n: marked.n } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
+        const newPlace = marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
+        // It went on into the next amud / perek: open it in the Sefer, at that line.
+        if (newPlace && place && newPlace.base !== place.base) {
+          try {
+            const nx = await getText(newPlace.base, approved);
+            if (nx.verdict.allowed && nx.he.length) {
+              const src: SourceData & { verdict?: unknown } = { ...nx, focus: newPlace.n };
+              delete src.verdict;
+              await addSource(sid, src);
+              send({ type: 'source', source: src });
+            }
+          } catch { /* the place is still saved */ }
+        }
         const usd = costUsd(model, result.inputTokens, result.outputTokens, result.cachedTokens ?? 0, result.cacheWriteTokens ?? 0);
         const usage = { ai: true, model: model.label, reason, usd, lookups };
         await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend, usage, ...(newPlace ? { pos: newPlace } : {}) });

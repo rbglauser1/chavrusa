@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { nextSection } from '@/lib/refs';
 import { addMessage, approvedList, getSession, touchSession } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { namesForSpeech, namesForSpeechEn, yeshivishTranslit } from '@/lib/hebrew';
@@ -17,14 +18,6 @@ type Line = { n: number; he: string; en: string; tg: string; say: { he: string; 
 async function section(ref: string) {
   const s = await getText(ref, await approvedList());
   return s.verdict.allowed ? s : null;
-}
-
-// "Genesis 1" -> "Genesis 2"; "Berakhot 2a" -> "Berakhot 2b" -> "Berakhot 3a"
-function nextSection(base: string): string | null {
-  const t = base.match(/^(.*?) (\d+)([ab])$/);
-  if (t) return t[3] === 'a' ? `${t[1]} ${t[2]}b` : `${t[1]} ${Number(t[2]) + 1}a`;
-  const c = base.match(/^(.*?) (\d+)$/);
-  return c ? `${c[1]} ${Number(c[2]) + 1}` : null;
 }
 
 export async function GET(req: NextRequest) {
