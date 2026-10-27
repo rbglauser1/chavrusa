@@ -1,5 +1,5 @@
 import 'server-only';
-import { ApprovedEntry } from './approval';
+import { ApprovedEntry, COMMENTARY_BOOK } from './approval';
 import { Settings, STYLES, styleById } from './config';
 import { forPanel } from './place';
 import { addMemory, addSource, forgetMemory, listSessionRequests, SourceData } from './db';
@@ -128,10 +128,10 @@ function clip(lines: string[], max: number): { text: string; clipped: boolean } 
 }
 
 // Does this text talk about a commentary (Rashi, Tosafos, the Rishonim…)?
-const COMMENTARY_WORDS = /\b(rashi|to[iy]?s[aeo]?(?:f|ph)[aeo]?[st]s?|rashbam|ramban|rambam|ibn ezra|s'?e?forno|o?h?r ha ?chaim|kli yakar|baal ha ?turim|onkelos|targum|rashba|ritva|the ran|the rosh|rif|meiri|maharsha|maharam|bartenura|tosafos yom tov|mishna(h)? berura(h)?|commentar(y|ies)|meforshim|mefarshim|rishonim|rishon|acharonim|achronim|pirush|peirush)\b/i;
+const COMMENTARY_WORDS = /\b(rashi|to[iy]?s[aeo]?(?:f|ph)[aeo]?[st]s?|rashbam|ramban|rambam|ibn ezra|s'?e?forno|o?h?r ha ?chaim|kli yakar|baal ha ?turim|onkelos|targum|rashba|ritva|the ran|the rosh|rif|meiri|maharsha|maharam|bartenura|tosafos yom tov|mishna(h)? berura(h)?|magen avra(ha|ho)m|mogen avrohom|taz|turei zahav|shach|siftei kohen|sifsei kohen|biur hala(ch|kh)a(h)?|beur hala(ch|kh)a(h)?|sha'?ar ha ?tziyun|ba'?er hei?tev|be'?er hei?tev|kaf ha ?chaim|sha'?arei teshuva(h)?|pri megadim|machatzis ha ?shekel|gr"?a|be'?er ha ?golah|pische teshuva(h)?|pitchei teshuva(h)?|kesef mishneh|maggid mishneh|rabbeinu chananel|shita(h)? mekubetzes|pnei yehoshua|maharshal|rabbeinu ba(ch|h)ya|chizkuni|da'?as zekeinim|siftei chachamim|sifsei chachamim|mizrachi|malbim|ha'?amek davar|netziv|meshech chochma(h)?|radak|metzudas|ralbag|commentar(y|ies)|meforshim|mefarshim|rishonim|rishon|acharonim|achronim|pirush|peirush)\b/i;
 export function mentionsCommentary(text: string): boolean { return COMMENTARY_WORDS.test(text); }
 // Sefaria names commentaries "X on Y" (Rashi on Berakhot 2a); Targum Onkelos too.
-export function isCommentaryRef(ref: string): boolean { return / on /i.test(ref) || /^(onkelos|targum)/i.test(ref); }
+export function isCommentaryRef(ref: string): boolean { return / on /i.test(ref) || /^(onkelos|targum)/i.test(ref) || COMMENTARY_BOOK.test(ref); }
 
 export function makeExecutor(ctx: {
   allowCommentary?: boolean; // false: the learner hasn't asked about a commentary, so don't spend money reading one

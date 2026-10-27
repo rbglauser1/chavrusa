@@ -2,7 +2,7 @@ import 'server-only';
 // The no-AI path. Anything the app can do by itself (open a place, turn the page, open Rashi, switch style,
 // repeat, say thanks…) is done here for free. Only real learning (explaining, asking, reasoning) goes to the AI.
 
-import { ApprovedEntry } from './approval';
+import { ApprovedEntry, COMMENTARY_BOOK } from './approval';
 import { MODELS, Provider, Settings, styleById, Tier } from './config';
 import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCost, SourceData, SourceRow } from './db';
 import { isJustOpening, openingReply } from './prefetch';
@@ -48,7 +48,7 @@ function onlyWords(s: string, keep: RegExp, filler: Set<string>): boolean {
 
 // The last main text (not a commentary) the learner has open.
 function currentMain(sources: SourceRow[]): SourceData | null {
-  for (let i = sources.length - 1; i >= 0; i--) if (!/ on /.test(sources[i].ref)) return sources[i].data;
+  for (let i = sources.length - 1; i >= 0; i--) if (!/ on /.test(sources[i].ref) && !COMMENTARY_BOOK.test(sources[i].ref)) return sources[i].data;
   return sources.length ? sources[sources.length - 1].data : null;
 }
 
@@ -158,18 +158,84 @@ const COMMENTARIES: [RegExp, RegExp][] = [
   [/\bmaharsha\b/, /Maharsha/i],
   [/\bbartenura\b|\bbertinoro\b|\bbartenuro\b/, /^Bartenura$/i],
   [/\bmishna(h)? berura(h)?\b/, /Mishnah Berurah/i],
+  // Shulchan Aruch
+  [/\bmagen avra(ha|ho)m\b|\bmogen avrohom\b/, /Magen Avraham/i],
+  [/\btaz\b|\bturei zahav\b/, /Turei Zahav/i],
+  [/\bshach\b|\bsiftei kohen\b|\bsifsei kohen\b/, /Siftei Kohen/i],
+  [/\bbiur hala(ch|kh)a(h)?\b|\bbeur hala(ch|kh)a(h)?\b/, /Biur Halacha/i],
+  [/\bsha'?ar ha ?tziyun\b|\bshaar hatziun\b/, /Sha'ar HaTziyun/i],
+  [/\bba'?er heitev\b|\bbe'?er hei?tev\b|\bbaer hetev\b/, /Ba'?er Hetev|Be'?er Hetev/i],
+  [/\bkaf ha ?chaim\b|\bkaf hachayim\b/, /Kaf HaChayim|Kaf HaChaim/i],
+  [/\bsha'?arei teshuva(h)?\b/, /Sha'arei Teshuvah/i],
+  [/\bpri megadim\b/, /Pri Megadim/i],
+  [/\bmachatzis ha ?shekel\b|\bmachatzit hashekel\b/, /Machatzit HaShekel/i],
+  [/\b(the )?gr\"?a\b|\bbiur ha ?gra\b|\bvilna gaon\b/, /Gra|Vilna Gaon/i],
+  [/\bbe'?er ha ?golah\b/, /Be'er HaGolah/i],
+  [/\bpische teshuva(h)?\b|\bpitchei teshuva(h)?\b/, /Pithei Teshuva|Pitchei Teshuvah/i],
+  [/\bhagahos maimon(i|ios)\b/, /Hagahot Maimoniyot/i],
+  [/\bkesef mishneh\b/, /Kesef Mishneh/i],
+  [/\bmaggid mishneh\b/, /Maggid Mishneh/i],
+  // Gemara
+  [/\b(the )?rif\b/, /^Rif$|Rif/i],
+  [/\b(the )?rosh\b(?! ?hashana)/, /^Rosh$|Rosh/i],
+  [/\bmeiri\b/, /Meiri/i],
+  [/\brabbeinu chananel\b|\bthe ri ?ch\b/, /Rabbeinu Chananel/i],
+  [/\bshita(h)? mekubetzes\b|\bshitah mekubetzet\b/, /Shita Mekubetzet/i],
+  [/\bpnei yehoshua\b/, /Penei Yehoshua|Pnei Yehoshua/i],
+  [/\bmaharam\b/, /Maharam/i],
+  [/\bmaharshal\b/, /Maharshal/i],
+  [/\bmesoras ha ?shas\b/, /Mesorat HaShas/i],
+  // Chumash
+  [/\brabbeinu ba(ch|h)ya\b/, /Rabbeinu Bahya/i],
+  [/\bchizkuni\b/, /Chizkuni/i],
+  [/\bda'?as zekeinim\b|\bdaat zkenim\b/, /Da'at Zekenim|Daat Zkenim/i],
+  [/\bsiftei chachamim\b|\bsifsei chachamim\b/, /Siftei Chakhamim/i],
+  [/\bmizrachi\b/, /Mizrachi/i],
+  [/\bmalbim\b/, /Malbim/i],
+  [/\bha'?amek davar\b|\bnetziv\b/, /Haamek Davar/i],
+  [/\bmeshech chochma(h)?\b/, /Meshech Hokhmah|Meshech Chochma/i],
+  [/\bradak\b/, /Radak/i],
+  [/\bmetzudas\b|\bmetzudat\b/, /Metzudat/i],
+  [/\bralbag\b/, /Ralbag/i],
 ];
 const OPEN_FILLER = new Set(['open', 'show', 'bring', 'up', 'see', 'look', 'at', 'the', 'me', 'go', 'to', 'what', 'about', 'on', 'this', 'here', 'it', 'inside', 'in', 'pull', 'read', 'lets', "let's", 'there', 'have', 'a', 'let', 'us', 'check', 'out', 'and', 'too', 'also', 'now', 'next']);
 
 // Find the commentary the learner named on the text that's open. Used by "open Tosafos" (free) and to hand the AI
 // the commentary's text with a question like "what is Tosafos asking?" (so it doesn't have to find it itself).
-export async function findCommentary(text: string, sources: SourceRow[], approved: ApprovedEntry[]): Promise<{ src: SourceData; count: number } | { missing: string; on: string; available: string[] } | null> {
+// "Shulchan Arukh, Orach Chayim 239:1" / "Berakhot 36b:3-4" -> 1 / 3 (the line of the main text a comment is on).
+const anchorLine = (a?: string) => { const m = a?.match(/:(\d+)(?:-\d+)?$/); return m ? Number(m[1]) : null; };
+
+// Several comment refs of one commentary -> one reference to open: "Mishnah Berurah 239:1", ":2" -> "Mishnah Berurah 239:1-2".
+function joinRefs(refs: string[]): string {
+  const parts = refs.map((r) => r.match(/^(.*):(\d+)(?:-(\d+))?$/));
+  if (parts.some((m) => !m) || new Set(parts.map((m) => m![1])).size !== 1) return refs[0];
+  const lo = Math.min(...parts.map((m) => Number(m![2]))), hi = Math.max(...parts.map((m) => Number(m![3] ?? m![2])));
+  return lo === hi ? `${parts[0]![1]}:${lo}` : `${parts[0]![1]}:${lo}-${hi}`;
+}
+
+export async function findCommentary(text: string, sources: SourceRow[], approved: ApprovedEntry[], history: MessageRow[] = []): Promise<{ src: SourceData; count: number; line?: number } | { missing: string; on: string; available: string[] } | null> {
   const s = norm(text);
   const hit = COMMENTARIES.find(([said]) => said.test(s));
   const main = currentMain(sources);
   if (!hit || !main) return null;
-  const links = await getLinks(main.ref, approved, ['Commentary', 'Targum']).catch(() => null);
+  const links = await getLinks(main.ref, approved, ['Commentary', 'Targum', 'Halakhah'], 600).catch(() => null);
   const ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
+
+  // Jump to the commentary on the line we're on (or the line the learner named: "the Taz on se'if 3"),
+  // not the whole amud / siman. If it has nothing on that line, the next line where it does.
+  const said = s.match(/\b(?:se'?if|seif|line|mishna|mishnah|pasuk|posuk|halacha|halakha)\s+(\d+)\b/);
+  const here = currentPlace(history, sources);
+  const mainBase = main.ref.replace(/:\d+(-\d+)?$/, '');
+  const n = said ? Number(said[1]) : here && here.base === mainBase ? here.n : null;
+  if (n && ofIt.length) {
+    const lines = [...new Set(ofIt.map((l) => anchorLine(l.anchor)).filter((x): x is number => x !== null))].sort((a, b) => a - b);
+    const at = lines.find((x) => x >= n);
+    if (at !== undefined) {
+      const refs = ofIt.filter((l) => anchorLine(l.anchor) === at).map((l) => l.ref);
+      const src = await tryText(joinRefs(refs), approved);
+      if (src) return { src, count: refs.length, line: at };
+    }
+  }
   const name = hit[1].source.replace(/[\^$\\]/g, '').replace(/^Tosafot$/, 'Tosafos').replace(/^Or HaChaim$/, 'Ohr HaChaim');
   // Not there (e.g. no Rashi on Mishnah Peah): say which commentaries this text does have.
   const available = [...new Set((links?.allowed ?? []).map((l) => l.title).filter(Boolean))].slice(0, 8);
@@ -189,12 +255,12 @@ function missingReply(f: { missing: string; on: string; available: string[] }): 
 async function openCommentary(ctx: RouteCtx, s: string): Promise<Routed | null> {
   const hit = COMMENTARIES.find(([said]) => said.test(s));
   if (!hit || !onlyWords(s, hit[0], OPEN_FILLER) || /\b(say|says|saying|mean|means|why|how|explain|ask|asking|bothered|hold|holds)\b/.test(s)) return null;
-  const found = await findCommentary(s, ctx.sources, ctx.approved);
+  const found = await findCommentary(s, ctx.sources, ctx.approved, ctx.history);
   if (!found) return null;
   if ('missing' in found) return { reply: missingReply(found) };
   const { src, count: n } = found;
   const reply = ctx.spoken
-    ? `Okay, I've opened ${src.ref}. ${n > 1 ? 'Which one do you want to look at?' : 'Take a look.'}`
+    ? `It's open${found.line ? ` on line ${found.line}` : ''}. ${n > 1 ? `${n} comments there. Which one?` : 'Take a look.'}`
     : `${openingReply(src, false).replace(/\n\nShould we start.*$/s, '')}\n\n${n > 1 ? `There are ${n} comments here. Which one do you want to look at?` : 'Take a look. What is it bothered by?'}`;
   return { reply, source: src };
 }
@@ -310,7 +376,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
 
   // "Read / say over the Tosafos (Rashi…)": read the commentary itself straight through, word for word, no AI.
   if (/\b(read|say over|say it over|read it|read me|go through|read out)\b/.test(s) && COMMENTARIES.some(([re]) => re.test(s)) && !/\b(why|explain|what does|what is|mean|asking|bothered)\b/.test(s)) {
-    const found = await findCommentary(s, ctx.sources, ctx.approved);
+    const found = await findCommentary(s, ctx.sources, ctx.approved, ctx.history);
     if (found && 'src' in found) {
       return { reply: spoken ? 'Sure.' : `Reading ${found.src.ref}.`, readThrough: { mode: 'he', base: found.src.ref, from: 1 }, source: found.src };
     }

@@ -1,6 +1,10 @@
 // Pure rules for deciding whether a source may be quoted. No network or database calls here,
 // so the rules are easy to read, test, and change.
 
+// Commentaries Sefaria names without "X on Y" (Mishnah Berurah 239:1, Magen Avraham 239:1…): treat them as
+// commentaries, so the text we're learning stays the Shulchan Aruch / Chumash they comment on.
+export const COMMENTARY_BOOK = /^(Mishnah Berurah|Magen Avraham|Turei Zahav|Siftei Kohen|Biur Halacha|Sha'ar HaTziyun|Ba'?er Hetev|Be'?er Hetev|Kaf HaChayim|Kaf HaChaim|Sha'arei Teshuvah|Pri Megadim|Machatzit HaShekel|Be'er HaGolah|Pithei Teshuva|Pitchei Teshuvah|Kesef Mishneh|Maggid Mishneh|Hagahot Maimoniyot|Mesorat HaShas)\b/i;
+
 import { CLASSIC_CUTOFF_YEAR } from './config';
 
 export interface ApprovedEntry { kind: 'work' | 'author' | 'translation' | 'site'; name: string; status: 'approved' | 'blocked'; lean: string }

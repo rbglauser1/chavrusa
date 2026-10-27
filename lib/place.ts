@@ -2,7 +2,7 @@ import 'server-only';
 // "Text in hand": the app keeps track of which line the learner is on, and hands the AI just the few lines
 // around that spot with every question, so it never has to go and look the text up.
 
-import { ApprovedEntry } from './approval';
+import { ApprovedEntry, COMMENTARY_BOOK } from './approval';
 import { MessageRow, SourceData, SourceRow } from './db';
 import { stripNikud } from './hebrew';
 import { getText } from './sefaria';
@@ -15,7 +15,7 @@ export function splitRef(ref: string): Place {
   return m ? { base: m[1], n: Number(m[2]) } : { base: ref, n: 1 };
 }
 
-const isMain = (ref: string) => !/ on /i.test(ref) && !/^(onkelos|targum)/i.test(ref);
+const isMain = (ref: string) => !/ on /i.test(ref) && !/^(onkelos|targum)/i.test(ref) && !COMMENTARY_BOOK.test(ref);
 
 // Where is the learner now? The newest place the app recorded (a line it showed, or the line the AI said it
 // finished on), unless the AI looked up a later line of the main text since then.

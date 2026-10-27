@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
         const pointing = /\btwo dots\b|\bwhere it says\b|\bline (that )?(starts|starting|begins|beginning)\b|\bthe (mishna|mishnah|gemara)\b|\bamud (bet|beis|b)\b|\bthe (end|bottom|middle)\b/i.test(message);
         const inHand = place && !(pre && pointing) ? await textInHand(place, sources, approved, pre ? 1 : undefined).catch(() => null) : null;
         // A question about a commentary ("what is Tosafos asking?"): the app finds and opens it, and hands the AI its text.
-        const comm = !pre && askedCommentary ? await findCommentary(message, sources, approved).catch(() => null) : null;
+        const comm = !pre && askedCommentary ? await findCommentary(message, sources, approved, history).catch(() => null) : null;
         let commNote = '';
         if (comm && 'src' in comm) {
           if (!sources.some((x) => x.ref === comm.src.ref)) {
