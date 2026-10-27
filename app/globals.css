@@ -794,3 +794,4 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .fp-opt.on { border-color: var(--accent); background: var(--accent-soft); }
 .sefer .page-turn { display: flex; justify-content: space-between; gap: 8px; margin: -4px 0 14px; }
 .sefer .page-turn .btn { font-size: 13px; padding: 6px 12px; }
+.sefer .prev-sec { margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid var(--rule); }

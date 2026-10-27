@@ -143,6 +143,35 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     openComm(i, label, `/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`);
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
 
+  // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).
+  const prevRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? prevSection(src.ref) : null;
+  const [prevSrc, setPrevSrc] = useState<SourceData | null>(null);
+  const [prevState, setPrevState] = useState<'idle' | 'loading' | 'none'>('idle');
+  const prevHeight = useRef<number | null>(null);
+  useEffect(() => { setPrevSrc(null); setPrevState('idle'); }, [src?.ref]);
+  function loadPrev() {
+    if (!prevRef || prevSrc || prevState !== 'idle') return;
+    setPrevState('loading');
+    fetch(`/api/peek?ref=${encodeURIComponent(prevRef)}`).then((r) => r.json())
+      .then((d) => { if (d.source) { prevHeight.current = bodyRef.current?.scrollHeight ?? null; setPrevSrc(d.source); setPrevState('idle'); } else setPrevState('none'); })
+      .catch(() => setPrevState('idle'));
+  }
+  // Keep the page where it was: push the scroll down by however much was added above.
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el || !prevSrc || prevHeight.current === null) return;
+    const before = prevHeight.current;
+    prevHeight.current = null;
+    requestAnimationFrame(() => { el.scrollTop += el.scrollHeight - before; });
+  }, [prevSrc]);
+  const scrolled = useRef(false);
+  function onBodyScroll() {
+    const el = bodyRef.current;
+    if (!el) return;
+    if (el.scrollTop > 60) scrolled.current = true;
+    if (scrolled.current && el.scrollTop < 30) loadPrev();
+  }
+
   // Previous / next amud, perek or siman: open it as the page in front of you.
   const [turning, setTurning] = useState(false);
   async function turn(ref: string) {
@@ -248,7 +277,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       )}
 
-      <div className="sefer-body" ref={bodyRef} style={showLib ? { display: 'none' } : undefined}>
+      <div className="sefer-body" ref={bodyRef} onScroll={onBodyScroll} style={showLib ? { display: 'none' } : undefined}>
         {!src && <div className="empty">Sources your chavrusa brings will appear here.</div>}
         {src && (
           <>
@@ -264,6 +293,26 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 {libraryTrail().map((c, i) => (
                   <span key={i}><span className="sep">›</span><button onClick={() => { jumpLibrary(i); setShowLib(true); }}>{c}</button></span>
                 ))}
+              </div>
+            )}
+            {prevRef && (
+              <div className="prev-sec">
+                {prevSrc ? (
+                  <>
+                    <div className="next-head"><span className="he">{prevSrc.heRef}</span> <small>{prevSrc.ref} · before this {sectionWord(src.ref)}</small></div>
+                    {prevSrc.he.map((line, i) => {
+                      const en = prevSrc.en[i] || (prevSrc.en.length ? undefined : prevSrc.altEn?.[i]);
+                      return (
+                        <div key={`p${i}`} data-line={`p${i + 1}`} className="line" onClick={() => onPoint?.(prevSrc, i + 1)}>
+                          <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                          {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : prevState === 'loading' ? <div className="muted next-head">Bringing {prevRef}…</div>
+                  : prevState === 'none' ? null
+                  : <button className="btn next-load" onClick={loadPrev}>↑ Show the end of {prevRef}</button>}
               </div>
             )}
             <div className="sefer-title">
