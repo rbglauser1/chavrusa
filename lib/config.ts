@@ -247,7 +247,7 @@ export const FONTS_EN: { id: string; name: string; stack: string }[] = [
   { id: 'inter', name: 'Inter (clean sans)', stack: "'Inter', system-ui, sans-serif" },
   { id: 'assistant', name: 'Assistant (soft sans)', stack: "'Assistant', system-ui, sans-serif" },
   { id: 'rubik', name: 'Rubik (round sans)', stack: "'Rubik', system-ui, sans-serif" },
-  { id: 'comic', name: 'Comic (Comic Sans style)', stack: "'Comic Sans MS', 'Comic Neue', 'Chalkboard SE', cursive" },
+  { id: 'comic', name: 'Comic Sans', stack: "'Comic Sans MS', 'Comic Neue', 'Chalkboard SE', cursive" },
   { id: 'patrick', name: 'Patrick Hand (handwritten)', stack: "'Patrick Hand', 'Comic Neue', cursive" },
   { id: 'caveat', name: 'Caveat (marker)', stack: "'Caveat', 'Patrick Hand', cursive" },
   { id: 'fredoka', name: 'Fredoka (bubbly)', stack: "'Fredoka', 'Rubik', sans-serif" },
