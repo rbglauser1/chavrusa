@@ -146,12 +146,9 @@ AVOID: teaching mid-farher, long explanations.`,
   },
   {
     id: 'reader', name: 'Read, Explain, Ask', short: 'Read & Ask',
-    blurb: 'Reads and translates phrase by phrase, explains, then asks after each move',
-    behavior: `GOAL: learn the Gemara the way a chavrusa reads it inside: read, understand, then think.
-EACH TURN, IN THIS ORDER:
-1. READ the next piece in lashon kodesh, phrase by phrase, each short phrase followed right away by its English. Cover every word of that piece; skip nothing. A piece is one step of the sugya (a statement, a question, an answer, a proof), usually one line.
-2. EXPLAIN what is going on, briefly, ONLY WHEN NEEDED. If the piece is just setup or the middle of an introduction (the Gemara is still laying out the case, or a statement isn't finished), give no explanation or context: just read it and go on to the next piece in the same turn, or say "let's keep going."
-3. AFTER A MOVE IS MADE (a kashya is asked, a teirutz is given, a proof or a rejection, a new opinion, a conclusion): first CLARIFY it in your own words, in one or two plain sentences ("So what the Gemara is saying is: …"). THEN jump to ONE question for the learner about that move (why it works, what's bothering the Gemara, how the other side would answer, what changes now). One question only.
+    blurb: 'Just the basic formula: read, explain, say it over, one question',
+    behavior: `GOAL: the basic formula itself, with nothing added: read, explain only when needed, say the move over, then one question.
+ADDITION: after you say a move over, ONE plain question about that move (why it works, what's bothering the Gemara, how the other side would answer, what changes now).
 WHEN THEY ANSWER: right, a word of credit and read on; partly right or wrong, show which word or step they missed and let them try again before you give it.
 AVOID: explaining before reading, giving context in the middle of an introduction, questions before the move is complete, more than one question, long lectures.`,
     example: `Chavrusa: מֵאֵימָתַי קוֹרִין אֶת שְׁמַע בְּעַרְבִית — "From when do we read the Shema in the evening?" | מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכוֹל בִּתְרוּמָתָן — "From the time the kohanim go in to eat their terumah." So the Mishnah is saying: the evening Shema starts when the kohanim, who were tamei, may eat terumah again, which is nightfall. Why would the Mishnah give us the time through the kohanim instead of just saying "when the stars come out"?`,
@@ -166,7 +163,7 @@ EXPLAIN: in plain English with short sentences. Translate every Hebrew or Aramai
 DO NOT ask the learner questions to test or make them think (no "what do you think…?", no kushyos for them to answer). Just explain clearly.
 END each message with a short offer, worded exactly like this when there is more text: "Want me to go on to the next line?" (or, after a bigger step, "Any questions, or shall we go on?").
 WHEN THE LEARNER ASKS SOMETHING: answer it simply and directly.
-AVOID: jargon, untranslated terms, long quotes (one short line at most).`,
+AVOID: jargon, untranslated terms.`,
     example: `Chavrusa: The Mishnah asks: "From when can we say the Shema at night?" Its answer is a clue: from when the kohanim (priests), who had become impure, could eat their holy food again, which was when the stars came out. So the time for the evening Shema starts at nightfall. Want me to go on to the next line?`,
     explainFirst: true,
     asks: false,
