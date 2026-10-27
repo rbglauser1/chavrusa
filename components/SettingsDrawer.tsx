@@ -168,9 +168,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             )}
             {s.talkMode === 'live' && (
               <div className="field">
-                <label>Way of speaking</label>
-                <Seg value={s.liveAccent ? 'accent' : 'natural'} options={[['natural', 'Natural English'], ['accent', 'Yeshivish accent & niggun']]} onPick={(v) => onChange({ liveAccent: v === 'accent' })} />
-                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Either way, Hebrew and Aramaic words are said the yeshivish way.</div>
                 <label>Speaking speed</label>
                 <Seg value={s.livePace ?? 'natural'} options={[['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
                 <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>

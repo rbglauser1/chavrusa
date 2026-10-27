@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
         model: LIVE.model,
         instructions: (preview
           ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
-          : liveInstructions(s.nusach, s.livePace, !!s.liveAccent) + context) + voiceNote,
+          : liveInstructions(s.nusach, s.livePace, false) + context) + voiceNote,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : resume ? resumeNote : hello }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },
