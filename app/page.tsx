@@ -46,6 +46,11 @@ export default function Home() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [sources, setSources] = useState<SourceData[]>([]);
+  const sourcesRef = useRef<SourceData[]>([]);
+  useEffect(() => { sourcesRef.current = sources; }, [sources]);
+  // A commentary the Chavrusa brings up (Rashi on the line we're on) opens right under that line of the Gemara,
+  // instead of as a separate page, so the Gemara stays in front of you.
+  const [inlineComm, setInlineComm] = useState<{ main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null>(null);
   const [selected, setSelected] = useState(0);
   const [seferOpen, setSeferOpen] = useState(false);
   const [pinCollapsed, setPinCollapsed] = useState(true);
@@ -283,6 +288,21 @@ export default function Home() {
     refreshSessions();
   }
 
+  // "Rashi on Yoma 3a:4:1" -> under line 4 of Yoma 3a, if Yoma 3a is open. Otherwise it gets its own tab as before.
+  function openUnderLine(src: SourceData): boolean {
+    const m = src.ref.match(/^(.+?) on (.+)$/);
+    if (!m) return false;
+    const parts = m[2].split(':');
+    const main = parts[0], line = parts[1] ? Number(parts[1].split('-')[0]) : NaN;
+    const idx = sourcesRef.current.findIndex((x) => x.ref === main);
+    if (idx < 0 || !Number.isFinite(line) || !src.he.length) return false;
+    setSelected(idx);
+    setSources((s) => s.map((x, i) => (i === idx ? { ...x, focus: line } : x)));
+    setInlineComm({ main, line, title: m[1], ref: src.ref, he: src.he, en: src.en, key: Date.now() });
+    if (window.matchMedia('(min-width: 1000px)').matches) setSeferOpen(true);
+    return true;
+  }
+
   // ---------- Send ----------
   // Put a source on screen (Sefer panel and the bar at the top).
   function showSource(src: SourceData) {
@@ -376,7 +396,7 @@ export default function Home() {
       case 'status': setStatus(e.text); break;
       case 'source':
         if (!turnRefs.current.some((r) => r.ref === e.source.ref)) turnRefs.current.push({ ref: e.source.ref, heRef: e.source.heRef, url: e.source.url });
-        showSource(e.source);
+        if (!openUnderLine(e.source)) showSource(e.source);
         break;
       case 'memory': setItems((it) => [...it, { kind: 'event', text: `Remembered: ${e.text}` }]); break;
       case 'mode': setSettings((s) => ({ ...s, ...e.settings })); break;
@@ -773,6 +793,7 @@ export default function Home() {
           talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}
           onOpenRef={(q) => openRef(q, true)}
           onOpenExact={openExact}
+          inlineComm={inlineComm}
         />
       )}
 

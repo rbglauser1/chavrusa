@@ -19,9 +19,10 @@ interface Props {
   libraryRequest?: number; // changes when the page asks to open the Library
   talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
+  inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -126,6 +127,16 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       setComm((c) => ({ ...c, [key]: r.error ? { error: r.error } : r.empty ? { empty: true } : { he: r.he, en: r.en, refs } }));
     } catch { setComm((c) => ({ ...c, [key]: { error: 'Could not load it.' } })); }
   }
+  // The Chavrusa opened a commentary on a line: open it right there under the line, and scroll to it.
+  useEffect(() => {
+    if (!inlineComm || !src || src.ref !== inlineComm.main) return;
+    const i = inlineComm.line - 1;
+    const label = nice(inlineComm.title === 'Tosafot' ? 'Tosafot' : inlineComm.title);
+    setShowLib(false);
+    setComm((c) => ({ ...c, [`${i}:${label}`]: { he: inlineComm.he, en: inlineComm.en, refs: [inlineComm.ref] } }));
+    const t = window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${inlineComm.line}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 150);
+    return () => window.clearTimeout(t);
+  }, [inlineComm?.key, src?.ref]);
   const openLinked = (i: number, x: { title: string; refs: string[] }) =>
     openComm(i, nice(x.title), `/api/commentary?refs=${encodeURIComponent(x.refs.join('|'))}`, x.refs);
   const openUsual = (i: number, who: string, label: string) =>
