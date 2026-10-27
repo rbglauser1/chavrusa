@@ -663,3 +663,68 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .mini.ink .m-line { background: #111111; opacity: 0.5; }
 [data-look='leather'] .pin-head .ref, [data-look='leather'] .pin-head .en-ref, [data-look='leather'] .pin-head button { color: #7a2a30; }
 [data-look='vilna'] .pin-head .ref, [data-look='vilna'] .pin-head .en-ref, [data-look='vilna'] .pin-head button { color: #1f5a48; }
+
+/* ---------- Fonts, layout and texture for the new looks ---------- */
+/* Yerushalayim stone: a real limestone surface (soft layered tones and a fine grain), carved cards, Bellefair titles. */
+[data-look='stone'] {
+  --f-body: 'Cormorant Garamond', 'Crimson Pro', Georgia, serif; --f-ui: 'Assistant', system-ui, sans-serif; --f-brand: 'Bellefair', 'Frank Ruhl Libre', serif;
+  --stone-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .22 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --stone-veins: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .014' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .44 0 0 0 0 .28 0 0 0 .5 -.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+}
+[data-look='stone'] body {
+  background-color: #e9dfcb;
+  background-image: var(--stone-grain), var(--stone-veins),
+    radial-gradient(ellipse 70% 50% at 15% 10%, rgba(255, 250, 238, 0.75), transparent 70%),
+    radial-gradient(ellipse 60% 60% at 90% 80%, rgba(196, 170, 122, 0.35), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 60% 40%, rgba(222, 205, 170, 0.5), transparent 70%);
+  background-attachment: fixed;
+  font-size: calc(var(--en-size, 16px) + 2px);
+}
+[data-look='stone'] .topbar { background: rgba(214, 196, 160, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-bottom: 1px solid rgba(138, 106, 47, 0.35); box-shadow: 0 1px 0 rgba(255, 250, 238, 0.6); }
+[data-look='stone'] .brand { font-weight: 400; font-size: 30px; letter-spacing: .5px; color: #6a4f22; }
+[data-look='stone'] .pin-inner { background: rgba(250, 245, 234, 0.82); box-shadow: inset 0 1px 3px rgba(90, 69, 32, 0.18), 0 1px 0 rgba(255, 255, 255, 0.7); border: 1px solid rgba(138, 106, 47, 0.28); }
+[data-look='stone'] .turn { grid-template-columns: 1fr; }
+[data-look='stone'] .turn.them .say { background: rgba(250, 245, 234, 0.72); border: 1px solid rgba(138, 106, 47, 0.22); border-radius: 12px; padding: 12px 16px; box-shadow: inset 0 1px 2px rgba(90, 69, 32, 0.12); }
+[data-look='stone'] .turn.me { justify-items: end; }
+[data-look='stone'] .turn.me .say { background: rgba(138, 106, 47, 0.12); border-radius: 12px 12px 3px 12px; padding: 9px 14px; max-width: 85%; color: var(--ink); font-style: italic; }
+[data-look='stone'] .sefer { background: rgba(247, 241, 229, 0.9); }
+[data-look='stone'] .composer-inner { background: rgba(250, 245, 234, 0.85); border: 1px solid rgba(138, 106, 47, 0.3); border-radius: 14px; padding: 6px 6px 6px 14px; align-items: center; }
+
+/* Leather Shas: EB Garamond, a gold-tooled header like the spine of a Shas, the chavrusa's words on cream pages. */
+[data-look='leather'] { --f-body: 'EB Garamond', Georgia, serif; --f-ui: 'EB Garamond', Georgia, serif; --f-brand: 'Bellefair', 'Frank Ruhl Libre', serif; }
+[data-look='leather'] body { background-color: #2a1215; background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(122, 42, 48, 0.55), transparent 70%); background-attachment: fixed; font-size: calc(var(--en-size, 16px) + 1px); }
+[data-look='leather'] .topbar { border-bottom: 0; box-shadow: inset 0 -1px 0 #c9a24a, inset 0 -4px 0 #3a171b, inset 0 -5px 0 rgba(201, 162, 74, 0.55); padding-bottom: 14px; }
+[data-look='leather'] .brand { font-weight: 400; font-size: 30px; letter-spacing: 1px; color: #e9d49a; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4); }
+[data-look='leather'] .turn { grid-template-columns: 1fr; }
+[data-look='leather'] .turn.them .say { background: #f3e9d2; color: #2a1a12; border-radius: 4px; padding: 14px 18px; box-shadow: 0 0 0 1px rgba(201, 162, 74, 0.5), 0 8px 22px rgba(0, 0, 0, 0.35); }
+[data-look='leather'] .turn.them .say strong { color: #7a2a30; }
+[data-look='leather'] .turn.me { justify-items: end; }
+[data-look='leather'] .turn.me .say { color: #e8d6ae; font-style: italic; border-inline-end: 2px solid #c9a24a; padding: 2px 12px; max-width: 85%; text-align: right; }
+[data-look='leather'] .composer-inner { border: 1px solid rgba(201, 162, 74, 0.5); border-radius: 6px; background: #3a171b; padding: 6px 6px 6px 14px; align-items: center; }
+
+/* Vilna green: Libre Baskerville, brass double rules, the chavrusa's words on cream pages, your words in green. */
+[data-look='vilna'] { --f-body: 'Libre Baskerville', Georgia, serif; --f-ui: 'Libre Baskerville', Georgia, serif; --f-brand: 'David Libre', 'Frank Ruhl Libre', serif; }
+[data-look='vilna'] body { font-size: calc(var(--en-size, 16px) - 1px); background-color: #0f2620; background-image: radial-gradient(ellipse 90% 60% at 50% 110%, rgba(212, 180, 92, 0.08), transparent 70%); background-attachment: fixed; }
+[data-look='vilna'] .topbar { border-bottom: 3px double #b79a4c; }
+[data-look='vilna'] .brand { font-size: 28px; color: #e4cf8e; }
+[data-look='vilna'] .turn { grid-template-columns: 1fr; }
+[data-look='vilna'] .turn.them .say { background: #f2eedf; color: #1c241f; border: 3px double #b79a4c; border-radius: 2px; padding: 12px 16px; line-height: 1.7; }
+[data-look='vilna'] .turn.them .say strong { color: #1f5a48; }
+[data-look='vilna'] .turn.me { justify-items: end; }
+[data-look='vilna'] .turn.me .say { background: #1f5a48; color: #f2eedf; border-radius: 14px 14px 2px 14px; padding: 9px 14px; max-width: 85%; }
+[data-look='vilna'] .composer-inner { border: 1px solid #b79a4c; border-radius: 4px; background: #143129; padding: 6px 6px 6px 14px; align-items: center; }
+
+/* Ink and paper: Inter, lots of white space, the brand set large, a single gold rule marking the chavrusa. */
+[data-look='ink'] { --f-body: 'Inter', system-ui, sans-serif; --f-ui: 'Inter', system-ui, sans-serif; }
+[data-look='ink'] .topbar { padding-top: max(14px, env(safe-area-inset-top)); padding-bottom: 14px; }
+[data-look='ink'] .brand { font-size: 32px; font-weight: 700; color: #111; letter-spacing: -0.5px; }
+[data-look='ink'] .thread-inner { gap: 26px; }
+[data-look='ink'] .turn { grid-template-columns: 3px 1fr; gap: 16px; }
+[data-look='ink'] .turn .bar { display: block; background: #b8892b; }
+[data-look='ink'] .turn.me { grid-template-columns: 1fr; justify-items: end; }
+[data-look='ink'] .turn.me .bar { display: none; }
+[data-look='ink'] .turn.me .say { background: #111; color: #fff; border-radius: 18px 18px 4px 18px; padding: 10px 16px; max-width: 85%; }
+[data-look='ink'] .turn.them .say { line-height: 1.7; letter-spacing: -0.1px; }
+[data-look='ink'] .composer-inner { border: 1px solid #111; border-radius: 999px; padding: 4px 4px 4px 18px; align-items: center; background: #fff; }
+[data-look='ink'] .send { border-radius: 50%; width: 42px; height: 42px; padding: 0; background: #111; color: #fff; }
+[data-look='stone'] .turn.me > div, [data-look='leather'] .turn.me > div, [data-look='vilna'] .turn.me > div, [data-look='ink'] .turn.me > div { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; max-width: 100%; }
