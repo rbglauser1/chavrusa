@@ -72,28 +72,57 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   const canTranslate = settings.display !== 'off';
 
-  // Commentary on one part, opened right under it (free, straight from Sefaria).
-  const [comm, setComm] = useState<Record<string, { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string }>>({});
+  // Commentaries on each part, like Sefaria's side panel: which ones exist comes from Sefaria's links for this
+  // perek / amud / siman; tapping one opens its words right under the line (free, straight from Sefaria, no AI).
+  type Comm = { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string; refs?: string[] };
+  const [comm, setComm] = useState<Record<string, Comm>>({});
+  const [conns, setConns] = useState<Record<string, { title: string; refs: string[] }[]> | null>(null);
+  const [listOpen, setListOpen] = useState<number | null>(null);
   const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles)\b/;
-  const kind = !src ? 'none' : /^Mishnah /.test(src.ref) ? 'mishnah' : / on /i.test(src.ref) ? 'none' : /\d+[ab](:|$)/.test(src.ref) ? 'gemara' : TANAKH.test(src.ref) ? 'tanakh' : 'none';
-  const buttons: [string, string][] = kind === 'mishnah' ? [['bartenura', 'Bartenura'], ['tyt', 'Tosfos Yom Tov']]
+  const isComm = !!src && / on /i.test(src.ref);
+  const kind = !src || isComm ? 'none' : /^Mishnah /.test(src.ref) ? 'mishnah' : /\d+[ab](:|$)/.test(src.ref) ? 'gemara' : TANAKH.test(src.ref) ? 'tanakh' : 'other';
+  // Until Sefaria's list arrives (or if it can't be reached), the usual ones.
+  const fallback: [string, string][] = kind === 'mishnah' ? [['bartenura', 'Bartenura'], ['tyt', 'Tosfos Yom Tov']]
     : kind === 'gemara' ? [['rashi', 'Rashi'], ['tosafot', 'Tosafos']]
     : kind === 'tanakh' ? [['rashi', 'Rashi'], ['ramban', 'Ramban']] : [];
+  useEffect(() => {
+    setConns(null); setListOpen(null);
+    if (!src || isComm) return;
+    let gone = false;
+    fetch(`/api/connections?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json())
+      .then((d) => { if (!gone) setConns(d.lines && Object.keys(d.lines).length ? d.lines : d.error ? null : {}); })
+      .catch(() => {});
+    return () => { gone = true; };
+  }, [src?.ref, isComm]);
   // The reference of part i: "Mishnah Peah 1" + 4 -> "Mishnah Peah 1:4"; "Genesis 1:3-7" + 0 -> "Genesis 1:3".
   function partRef(i: number): string {
     if (!src) return '';
     const m = src.ref.match(/^(.*?):(\d+)(?:-\d+)?$/);
     return m ? `${m[1]}:${Number(m[2]) + i}` : `${src.ref}:${i + 1}`;
   }
-  async function toggleComm(i: number, who: string) {
-    const key = `${i}:${who}`;
+  const partNum = (i: number) => partRef(i).match(/:(\d+)$/)?.[1] ?? String(i + 1);
+  // Printed-sefer names for Sefaria's titles.
+  const NICE: Record<string, string> = { Tosafot: 'Tosafos', 'Tosafot Yom Tov': 'Tosfos Yom Tov', 'Turei Zahav': 'Taz', 'Siftei Kohen': 'Shach', 'Magen Avraham': 'Magen Avraham', 'Be\'er HaGolah': 'Be\'er HaGolah', 'Mishnah Berurah': 'Mishnah Berurah', 'Sha\'ar HaTziyun': 'Sha\'ar HaTziyun', 'Biur Halacha': 'Biur Halacha', 'Onkelos': 'Onkelos', 'Rabbeinu Bahya': 'Rabbeinu Bachya', 'Sforno': 'Sforno', 'Rashbam': 'Rashbam' };
+  const nice = (t: string) => NICE[t] ?? t;
+  const FIRST = ['Rashi', 'Tosafot', 'Bartenura', 'Onkelos', 'Ramban', 'Mishnah Berurah', 'Magen Avraham', 'Turei Zahav', 'Siftei Kohen', 'Tosafot Yom Tov', 'Rashbam', 'Ibn Ezra', 'Sforno', 'Biur Halacha', 'Sha\'ar HaTziyun', 'Ba\'er Hetev', 'Be\'er Hetev'];
+  const rank = (t: string) => { const k = FIRST.indexOf(t); return k < 0 ? 99 : k; };
+  function lineComms(i: number) {
+    const list = [...(conns?.[partNum(i)] ?? [])];
+    return list.sort((x, y) => rank(x.title) - rank(y.title) || x.title.localeCompare(y.title));
+  }
+  async function openComm(i: number, label: string, url: string, refs?: string[]) {
+    const key = `${i}:${label}`;
     if (comm[key]) { setComm((c) => { const n = { ...c }; delete n[key]; return n; }); return; }
-    setComm((c) => ({ ...c, [key]: { loading: true } }));
+    setComm((c) => ({ ...c, [key]: { loading: true, refs } }));
     try {
-      const r = await fetch(`/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`).then((x) => x.json());
-      setComm((c) => ({ ...c, [key]: r.error ? { error: r.error } : r.empty ? { empty: true } : { he: r.he, en: r.en } }));
+      const r = await fetch(url).then((x) => x.json());
+      setComm((c) => ({ ...c, [key]: r.error ? { error: r.error } : r.empty ? { empty: true } : { he: r.he, en: r.en, refs } }));
     } catch { setComm((c) => ({ ...c, [key]: { error: 'Could not load it.' } })); }
   }
+  const openLinked = (i: number, x: { title: string; refs: string[] }) =>
+    openComm(i, nice(x.title), `/api/commentary?refs=${encodeURIComponent(x.refs.join('|'))}`, x.refs);
+  const openUsual = (i: number, who: string, label: string) =>
+    openComm(i, label, `/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`);
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
 
   async function aiTranslate(key: string, text: string) {
@@ -198,26 +227,51 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={() => toggleLine(i)}>
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
-                  {buttons.length > 0 && (
-                    <div className="comm-btns" onClick={(e) => e.stopPropagation()}>
-                      {buttons.map(([who, label]) => (
-                        <button key={who} className={`comm-btn ${comm[`${i}:${who}`] ? 'on' : ''}`} onClick={() => toggleComm(i, who)}>{label}</button>
+                  {(() => {
+                    if (kind === 'none') return null;
+                    const all = conns ? lineComms(i) : [];
+                    const quick = conns ? all.slice(0, 3) : [];
+                    return (
+                      <div className="comm-btns" onClick={(e) => e.stopPropagation()}>
+                        {conns === null && fallback.map(([who, label]) => (
+                          <button key={who} className={`comm-btn ${comm[`${i}:${label}`] ? 'on' : ''}`} onClick={() => openUsual(i, who, label)}>{label}</button>
+                        ))}
+                        {quick.map((x) => (
+                          <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
+                        ))}
+                        {all.length > quick.length && (
+                          <button className={`comm-btn more ${listOpen === i ? 'on' : ''}`} onClick={() => setListOpen((v) => (v === i ? null : i))}>
+                            Commentaries ({all.length}) {listOpen === i ? '▴' : '▾'}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {listOpen === i && (
+                    <div className="comm-list" onClick={(e) => e.stopPropagation()}>
+                      {lineComms(i).map((x) => (
+                        <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                       ))}
                     </div>
                   )}
-                  {buttons.map(([who, label]) => {
-                    const c = comm[`${i}:${who}`];
-                    if (!c) return null;
+                  {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).map(([k, c]) => {
+                    const label = k.slice(k.indexOf(':') + 1);
                     return (
-                      <div key={who} className="comm" onClick={(e) => e.stopPropagation()}>
-                        <div className="comm-title">{label}</div>
+                      <div key={k} className="comm" onClick={(e) => e.stopPropagation()}>
+                        <div className="comm-title">
+                          {label}
+                          {c.refs?.length && onOpenExact ? (
+                            <button className="comm-learn" onClick={() => void onOpenExact(c.refs![0].replace(/:\d+(-\d+)?$/, '') || c.refs![0])}>Learn it in the Sefer ↗</button>
+                          ) : null}
+                          <button className="comm-x" aria-label={`Close ${label}`} onClick={() => setComm((m) => { const n = { ...m }; delete n[k]; return n; })}>✕</button>
+                        </div>
                         {c.loading ? <div className="muted">Opening…</div>
                           : c.error ? <div className="muted">{c.error}</div>
                           : c.empty ? <div className="muted">No {label} on this part on Sefaria.</div>
-                          : (c.he ?? []).map((h, k) => (
-                            <div key={k} className="comm-line">
+                          : (c.he ?? []).map((h, k2) => (
+                            <div key={k2} className="comm-line">
                               <div className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>
-                              {showAll && c.en?.[k] && <div className="en">{c.en[k]}</div>}
+                              {showAll && c.en?.[k2] && <div className="en">{c.en[k2]}</div>}
                             </div>
                           ))}
                       </div>

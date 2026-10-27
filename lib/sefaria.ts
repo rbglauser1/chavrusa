@@ -137,9 +137,9 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
 }
 
 // ---------- Connections ----------
-export interface LinkItem { ref: string; category: string; title: string }
+export interface LinkItem { ref: string; category: string; title: string; anchor?: string }
 
-export async function getLinks(ref: string, list: ApprovedEntry[], categories?: string[]): Promise<{ allowed: LinkItem[]; excluded: string[] }> {
+export async function getLinks(ref: string, list: ApprovedEntry[], categories?: string[], max = 80): Promise<{ allowed: LinkItem[]; excluded: string[] }> {
   const data = await getJson(`${BASE}/api/links/${enc(ref)}?with_text=0`);
   const raw: any[] = Array.isArray(data) ? data : [];
   let items: LinkItem[] = raw.map((l) => ({
@@ -147,6 +147,7 @@ export async function getLinks(ref: string, list: ApprovedEntry[], categories?: 
     category: String(l.category ?? ''),
     title: String(l.collectiveTitle?.en ?? l.index_title ?? ''),
     index: String(l.index_title ?? ''),
+    anchor: String(l.anchorRef ?? ''),
   })).filter((l) => l.ref) as (LinkItem & { index: string })[];
   if (categories?.length) {
     const want = categories.map((c) => c.toLowerCase());
@@ -154,17 +155,17 @@ export async function getLinks(ref: string, list: ApprovedEntry[], categories?: 
   }
 
   // Judge each distinct book once (in parallel), drop anything not approved.
-  const books = [...new Set(items.map((l) => (l as any).index || bookTitleFromRef(l.ref)))].slice(0, 40);
+  const books = [...new Set(items.map((l) => (l as any).index || bookTitleFromRef(l.ref)))].slice(0, max > 80 ? 120 : 40);
   const verdicts = new Map<string, boolean>();
   await Promise.all(books.map(async (b) => verdicts.set(b, (await judgeRef(`${b} 1`, list, b)).allowed)));
   const allowed: LinkItem[] = [];
   const excluded = new Set<string>();
   for (const l of items) {
     const b = (l as any).index || bookTitleFromRef(l.ref);
-    if (verdicts.get(b) === true) allowed.push({ ref: l.ref, category: l.category, title: l.title });
+    if (verdicts.get(b) === true) allowed.push({ ref: l.ref, category: l.category, title: l.title, anchor: l.anchor });
     else excluded.add(b);
   }
-  return { allowed: allowed.slice(0, 80), excluded: [...excluded] };
+  return { allowed: allowed.slice(0, max), excluded: [...excluded] };
 }
 
 // ---------- Search ----------

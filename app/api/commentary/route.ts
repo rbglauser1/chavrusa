@@ -8,6 +8,16 @@ export const runtime = 'nodejs';
 const NAMES: Record<string, string> = { bartenura: 'Bartenura', rashi: 'Rashi', tosafot: 'Tosafot', ramban: 'Ramban', tyt: 'Tosafot Yom Tov' };
 
 export async function GET(req: NextRequest) {
+  // A list of exact commentary references (from /api/connections): fetch them all.
+  const refs = (req.nextUrl.searchParams.get('refs') ?? '').split('|').filter(Boolean).slice(0, 12);
+  if (refs.length) {
+    const list = await approvedList();
+    const got = await Promise.all(refs.map((r: string) => getText(r, list).catch(() => null)));
+    type T = Awaited<ReturnType<typeof getText>>;
+    const ok = got.filter((x: T | null) => !!x && x.verdict.allowed) as T[];
+    if (!ok.length) return NextResponse.json({ empty: true });
+    return NextResponse.json({ he: ok.flatMap((x: T) => x.he), en: ok.flatMap((x: T) => (x.en.length === x.he.length ? x.en : x.he.map((_: string, k: number) => x.en[k] ?? ''))) });
+  }
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   const who = NAMES[String(req.nextUrl.searchParams.get('who') ?? '').toLowerCase()];
   if (!ref || !who) return NextResponse.json({ error: 'Missing reference.' }, { status: 400 });
