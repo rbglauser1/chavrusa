@@ -35,7 +35,7 @@ const V = {
 };
 const VOWEL_SOUND: Record<string, string> = {
   [V.chatafSegol]: 'e', [V.chatafPatach]: 'a', [V.chatafKamatz]: 'o', [V.chirik]: 'i', [V.tzeirei]: 'ei', [V.segol]: 'e',
-  [V.patach]: 'a', [V.kamatz]: 'o', [V.cholam]: 'oi', [V.cholamHaser]: 'oi', [V.kubutz]: 'u', [V.kamatzKatan]: 'o',
+  [V.patach]: 'a', [V.kamatz]: 'o', [V.cholam]: 'oh', [V.cholamHaser]: 'oh', [V.kubutz]: 'u', [V.kamatzKatan]: 'o',
 };
 function consonant(letter: string, marks: string, final: boolean): string {
   const dg = marks.includes(V.dagesh);
@@ -92,7 +92,7 @@ function wordToSyllables(word: string): Syl[] {
   for (let i = 0; i < units.length; i++) {
     const { l, m } = units[i];
     const last = i === units.length - 1;
-    if (i > 0 && l === 'ו' && m.includes(V.cholam)) { vowelSyllable('oi'); continue; }                            // cholam male
+    if (i > 0 && l === 'ו' && m.includes(V.cholam)) { vowelSyllable('oh'); continue; }                            // cholam male
     if (i > 0 && l === 'ו' && m.includes(V.dagesh) && !hasVowel(m) && !hasVowel(units[i - 1].m)) { vowelSyllable('u'); continue; } // shuruk
     if (l === 'י' && !hasVowel(m) && !m.includes(V.shva) && i > 0 && /[\u05B4\u05B5\u05B6]/.test(units[i - 1].m)) continue;    // yud of chirik/tzeirei
     const c = consonant(l, m, last);
