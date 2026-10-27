@@ -101,7 +101,7 @@ export async function textInHand(place: Place, sources: SourceRow[], approved: A
         const en = nx.en[k - 1] ? clip(nx.en[k - 1], 450) : '';
         nl.push(`[${nb} ${k}] ${he}${en ? `\n    ${en}` : ''}`);
       }
-      more = `\n[That is the end of ${place.base}. The text continues straight on in ${nb}; just keep going into it, without stopping or asking. If you finish on a line there, mark it like [[line:${nb}:2]].]\n${nl.join('\n')}`;
+      more = `\n[That is the end of ${place.base}. The text continues in ${nb}: when the learner goes on past the last line, his next piece is ${nb} line 1. Keep the usual pace (one piece at a time, with the basic formula); don't stop to ask whether to go on to the next amud. If you finish on a line there, mark it like [[line:${nb}:2]].]\n${nl.join('\n')}`;
     }
   }
   return `[TEXT IN HAND: ${place.base}${sec.translation ? ` (translation: ${sec.translation.replace(/,.*$/, '')})` : ''}. The learner is on line ${place.n} of ${total}. These numbered lines are the real text; use and quote them, and do not call get_text for ${place.base} unless you need a line not shown.]\n${lines.join('\n')}${more}`;

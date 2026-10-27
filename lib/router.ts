@@ -381,7 +381,7 @@ async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
 }
 
 // ---------- 7. Read-through ----------
-const READ_THROUGH = /\bshn?a?yim mikra\b|\bshnayim\b|\bmikra v'?echad targum\b|\bread (it |them |the pesukim |the psukim |the pasuk(im)? |the parsha |the perek |through|straight|along|it straight|it through)|\bsay over the (pesukim|psukim|pasuk|parsha)\b|\bkeep reading\b|\bcontinue reading\b|\bgo on reading\b|\bread (with|in) (the )?english\b|\bread (just|only) (the )?hebrew\b/;
+const READ_THROUGH = /\bshn?a?yim mikra\b|\bshnayim\b|\bmikra v'?echad targum\b|\bread (?:it |them |the (?:pesukim|psukim|pasuk(?:im)?|parsha|perek|mishna(?:h|yos)?|gemara|amud) )?(?:through|straight(?: through)?|along|all the way)\b|\bread the (?:pesukim|psukim|parsha)\b|\bsay over the (?:pesukim|psukim|pasuk|parsha)\b|\bkeep reading\b|\bcontinue reading\b|\bgo on reading\b|\bread (?:with|in) (?:the )?english\b|\bread (?:just|only) (?:the )?hebrew\b/;
 
 // ---------- The router ----------
 export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
@@ -390,10 +390,10 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   if (!s) return null;
 
   // "Read / say over the Tosafos (Rashi…)": read the commentary itself straight through, word for word, no AI.
-  if (/\b(read|say over|say it over|read it|read me|go through|read out)\b/.test(s) && COMMENTARIES.some(([re]) => re.test(s)) && !/\b(why|explain|what does|what is|mean|asking|bothered)\b/.test(s)) {
+  if (/\b(read|say over|say it over|read it|read me|go through|read out)\b/.test(s) && COMMENTARIES.some(([re]) => re.test(s)) && !/\b(why|explain|what|mean|means|asking|bothered|says|say about|translate|hold|holds)\b/.test(s)) {
     const found = await findCommentary(s, ctx.sources, ctx.approved, ctx.history);
     if (found && 'src' in found) {
-      return { reply: spoken ? 'Sure.' : `Reading ${found.src.ref}.`, readThrough: { mode: 'he', base: found.src.ref, from: 1 }, source: found.src };
+      return { reply: spoken ? 'Sure.' : `Reading ${found.src.ref}.`, readThrough: { mode: found.src.en.length ? 'he-en' : 'he', base: found.src.ref, from: 1 }, source: found.src };
     }
     if (found && 'missing' in found) return { reply: missingReply(found) };
   }
