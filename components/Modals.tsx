@@ -46,7 +46,7 @@ export function Help({ onClose }: { onClose: () => void }) {
         <p>Just talk to your chavrusa. For example:</p>
         <ul>
           <li><b>Start:</b> “Let’s learn today’s daf,” “Teach me about bishul on Shabbos,” “Pick a topic for me.”</li>
-          <li><b>Move:</b> “Next,” “Go back,” “Read it again,” “Skip this one,” “What does the Ramban say?”</li>
+          <li><b>Move:</b> “Next” (just reads the next line, free), “Continue” (next piece with explanation and a question, uses AI), “Go back,” “Read it again,” “Open the Taz.”</li>
           <li><b>Depth:</b> “Go deeper,” “Simpler please,” “Let’s speed up.”</li>
           <li><b>Style:</b> “Push me harder,” “Be gentler,” “Quiz me,” “Give me the Chassidic angle,” “You explain first.”</li>
           <li><b>Memory:</b> “Don’t translate Rashi for me,” “What do you remember about me?,” “Forget that.”</li>

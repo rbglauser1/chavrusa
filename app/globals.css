@@ -561,3 +561,7 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .guide-style dt { font-weight: 600; }
 .guide-style dd { margin: 0; line-height: 1.5; }
 @media (max-width: 520px) { .guide-style dl > div { grid-template-columns: 1fr; gap: 2px; } }
+.guide h3 { font-size: 15px; margin: 14px 0 4px; }
+.guide .tag { display: inline-block; font-size: 11px; border-radius: 999px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; border: 1px solid currentColor; }
+.guide .tag.free { color: #2e7d4f; }
+.guide .tag.ai { color: #b26a00; }
