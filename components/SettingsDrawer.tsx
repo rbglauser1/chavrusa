@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { CustomStyle, DEFAULT_VOICE_DESIGN, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
+import { CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -131,6 +131,17 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
+            </div>
+            <div className="field">
+              <label htmlFor="font-en">English font for this look</label>
+              <select id="font-en" value={s.fonts?.[s.theme]?.en ?? ''} onChange={(e) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), en: e.target.value } } })}>
+                {FONTS_EN.map((f) => <option key={f.id} value={f.id} style={f.stack ? { fontFamily: f.stack } : undefined}>{f.name}</option>)}
+              </select>
+              <label htmlFor="font-he" style={{ marginTop: 10 }}>Hebrew font for this look</label>
+              <select id="font-he" value={s.fonts?.[s.theme]?.he ?? ''} onChange={(e) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), he: e.target.value } } })}>
+                {FONTS_HE.map((f) => <option key={f.id} value={f.id} style={f.stack ? { fontFamily: f.stack } : undefined}>{f.name}</option>)}
+              </select>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Each look remembers its own fonts. Rashi and Tosafos keep the Rashi script.</div>
             </div>
             <div className="field">
               <label>Screen during voice conversations</label>

@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { allStyles, DEFAULT_SETTINGS, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { allStyles, DEFAULT_SETTINGS, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import SeferPanel from '@/components/SeferPanel';
@@ -172,12 +172,17 @@ export default function Home() {
     if (settings === DEFAULT_SETTINGS) return; // not loaded yet: keep the look the page opened with
     const root = document.documentElement;
     root.dataset.look = settings.theme;
-    try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
+    try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.style.setProperty('--he-size', `${settings.heSize}px`);
     root.style.setProperty('--en-size', `${settings.enSize}px`);
     root.style.setProperty('--comm-size', `${settings.commSize ?? 20}px`);
-  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript]);
+    // Fonts chosen for this look (or the look's own).
+    const f = settings.fonts?.[settings.theme] ?? {};
+    const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
+    if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
+    if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
+  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 

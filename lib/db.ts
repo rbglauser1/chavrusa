@@ -31,6 +31,7 @@ export async function getSettings(userId = OWNER_ID): Promise<Settings> {
   if (!VOICES.some((v) => v.id === s.voice)) s.voice = DEFAULT_SETTINGS.voice;
   if (!Array.isArray(s.customVoices)) s.customVoices = [];
   if (!Array.isArray(s.customStyles)) s.customStyles = [];
+  if (!s.fonts || typeof s.fonts !== 'object') s.fonts = {};
   if (!LIVE_VOICES.some((v) => v.id === s.liveVoice) && !s.customVoices.some((v) => v.id === s.liveVoice)) s.liveVoice = DEFAULT_SETTINGS.liveVoice;
   return s;
 }

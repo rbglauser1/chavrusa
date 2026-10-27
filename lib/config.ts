@@ -235,6 +235,30 @@ export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'ink', name: 'Ink and paper (new)', blurb: 'Crisp white, true black, one thin gold line' },
 ];
 
+// Fonts the learner can choose for each look (Settings → Look → Fonts). "" = the look's own font.
+export const FONTS_EN: { id: string; name: string; stack: string }[] = [
+  { id: '', name: "The look's own", stack: '' },
+  { id: 'spectral', name: 'Spectral', stack: "'Spectral', Georgia, serif" },
+  { id: 'crimson', name: 'Crimson Pro', stack: "'Crimson Pro', Georgia, serif" },
+  { id: 'cormorant', name: 'Cormorant Garamond', stack: "'Cormorant Garamond', Georgia, serif" },
+  { id: 'garamond', name: 'EB Garamond', stack: "'EB Garamond', Georgia, serif" },
+  { id: 'baskerville', name: 'Libre Baskerville', stack: "'Libre Baskerville', Georgia, serif" },
+  { id: 'alegreya', name: 'Alegreya', stack: "'Alegreya', Georgia, serif" },
+  { id: 'inter', name: 'Inter (clean sans)', stack: "'Inter', system-ui, sans-serif" },
+  { id: 'assistant', name: 'Assistant (soft sans)', stack: "'Assistant', system-ui, sans-serif" },
+  { id: 'rubik', name: 'Rubik (round sans)', stack: "'Rubik', system-ui, sans-serif" },
+];
+export const FONTS_HE: { id: string; name: string; stack: string }[] = [
+  { id: '', name: "The look's own", stack: '' },
+  { id: 'frank', name: 'Frank Ruhl (classic sefer)', stack: "'Frank Ruhl Libre', 'Times New Roman', serif" },
+  { id: 'david', name: 'David', stack: "'David Libre', 'Frank Ruhl Libre', serif" },
+  { id: 'notoserif', name: 'Noto Serif Hebrew', stack: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif" },
+  { id: 'bellefair', name: 'Bellefair (elegant)', stack: "'Bellefair', 'Frank Ruhl Libre', serif" },
+  { id: 'heebo', name: 'Heebo (modern sans)', stack: "'Heebo', 'Assistant', sans-serif" },
+  { id: 'assistant', name: 'Assistant (soft sans)', stack: "'Assistant', sans-serif" },
+];
+export const fontStack = (list: { id: string; stack: string }[], id?: string) => list.find((f) => f.id === id)?.stack ?? '';
+
 // Older saved values from the first version map onto the new looks.
 export function normalizeLook(v: unknown): Look {
   if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink') return v;
@@ -274,6 +298,7 @@ export interface Settings {
   saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   customStyles: CustomStyle[];   // learning styles the learner wrote himself
+  fonts: Record<string, { en?: string; he?: string }>; // per look: chosen English and Hebrew fonts (ids from FONTS_EN / FONTS_HE)
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
 }
@@ -309,6 +334,7 @@ export const DEFAULT_SETTINGS: Settings = {
   saver: true,
   customVoices: [],
   customStyles: [],
+  fonts: {},
   autoSpeak: false,
   speechRate: 1,
 };
