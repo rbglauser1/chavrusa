@@ -148,13 +148,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [prevSrc, setPrevSrc] = useState<SourceData | null>(null);
   const [prevState, setPrevState] = useState<'idle' | 'loading' | 'none'>('idle');
   const prevHeight = useRef<number | null>(null);
+  // The amud before and after are fetched quietly as soon as this one opens, so the pull shows them at once.
+  const ahead = useRef<Record<string, Promise<SourceData | null>>>({});
+  const fetchAhead = (ref: string) => (ahead.current[ref] ??= fetch(`/api/peek?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => (d.source ?? null) as SourceData | null).catch(() => { delete ahead.current[ref]; return null; }));
   useEffect(() => { setPrevSrc(null); setPrevState('idle'); setInView('main'); }, [src?.ref]);
   function loadPrev() {
     if (!prevRef || prevSrc || prevState !== 'idle') return;
     setPrevState('loading');
-    fetch(`/api/peek?ref=${encodeURIComponent(prevRef)}`).then((r) => r.json())
-      .then((d) => { if (d.source) { prevHeight.current = bodyRef.current?.scrollHeight ?? null; setPrevSrc(d.source); setPrevState('idle'); } else setPrevState('none'); })
-      .catch(() => setPrevState('idle'));
+    void fetchAhead(prevRef).then((s) => { if (s) { prevHeight.current = bodyRef.current?.scrollHeight ?? null; setPrevSrc(s); setPrevState('idle'); } else setPrevState('none'); });
   }
   // Keep the page where it was: push the scroll down by however much was added above.
   useEffect(() => {
@@ -230,12 +231,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   function loadNext() {
     if (!nextRef || nextSrc || nextState !== 'idle') return;
     setNextState('loading');
-    fetch(`/api/peek?ref=${encodeURIComponent(nextRef)}`).then((r) => r.json())
-      .then((d) => { if (d.source) { setNextSrc(d.source); setNextState('idle'); } else setNextState('none'); })
-      .catch(() => setNextState('idle'));
+    void fetchAhead(nextRef).then((s) => { if (s) { setNextSrc(s); setNextState('idle'); } else setNextState('none'); });
   }
-  // Near the end of what's open: load what comes next.
-  useEffect(() => { if (src?.focus && src.he.length && src.focus >= src.he.length - 2) loadNext(); }, [src?.ref, src?.focus]);
+  // Fetch the neighbors quietly (a moment after opening, so the amud itself comes first). Nothing is shown until the pull.
+  useEffect(() => {
+    if (!src || isComm) return;
+    const t = window.setTimeout(() => { if (nextRef) void fetchAhead(nextRef); if (prevRef) void fetchAhead(prevRef); }, 700);
+    return () => window.clearTimeout(t);
+  }, [src?.ref]);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   async function aiTranslate(key: string, text: string) {
