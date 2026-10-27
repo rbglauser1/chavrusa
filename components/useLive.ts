@@ -204,9 +204,28 @@ export function useLive(opts: {
   const useReader = () => optsRef.current.exactReader?.() !== false;
   // "be-REI-shis BO-ro" -> "bereishis boro" (the reading voice would spell out capital letters).
   const plain = (t: string) => t.replace(/[\p{L}']+(?:-[\p{L}']+)+/gu, (w) => w.replace(/-/g, '').toLowerCase()).replace(/\s*\|\s*/g, '. ');
+  const readerWarned = useRef(0);
+  const readerProblem = (why: string) => {
+    if (Date.now() - readerWarned.current < 60_000) return; // once a minute at most
+    readerWarned.current = Date.now();
+    optsRef.current.onError(`The reading voice couldn't read the text (${why}). Tell Claude what this says.`);
+  };
   const fetchClip = (text: string): Promise<string | null> =>
     fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: plain(text), sessionId: optsRef.current.sessionId?.() ?? null }) })
-      .then((r) => (r.ok ? r.blob() : null)).then((b) => (b ? URL.createObjectURL(b) : null)).catch(() => null);
+      .then(async (r) => { if (r.ok) return r.blob(); const d = await r.json().catch(() => ({})); readerProblem(d.error ?? `status ${r.status}`); return null; })
+      .then((b) => (b ? URL.createObjectURL(b) : null)).catch((e) => { readerProblem((e as Error).message); return null; });
+  // Phones only let a page play sound after a tap: unlock the reading voice when Talk is tapped.
+  const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+  const unlockReader = () => {
+    if (!readerEl.current) {
+      const el = document.createElement('audio');
+      el.setAttribute('playsinline', '');
+      el.style.display = 'none';
+      document.body.appendChild(el);
+      readerEl.current = el;
+    }
+    try { readerEl.current.src = SILENT; void readerEl.current.play().catch(() => {}); } catch { /* ignore */ }
+  };
   const muteLive = (on: boolean) => { if (audio.current) audio.current.muted = on; };
   const finishReader = () => {
     readerBusy.current = false;
@@ -236,7 +255,7 @@ export function useLive(opts: {
     el.src = url;
     bump();
     setS('speaking');
-    el.play().catch(() => { if (gen === readerGen.current) void playNext(); });
+    el.play().catch((err) => { readerProblem(`the phone blocked playback: ${(err as Error).name}`); if (gen === readerGen.current) void playNext(); });
   };
   const sayExact = (text: string) => {
     const t = text.trim();
@@ -412,6 +431,7 @@ export function useLive(opts: {
     const resuming = stateRef.current === 'paused'; // coming back from a pause: no new greeting
     stopWakeWatch();
     closingTo.current = null;
+    if (useReader()) unlockReader();
     setS('connecting');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
