@@ -164,6 +164,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="range"><input type="range" min={16} max={36} value={s.heSize} onChange={(e) => onChange({ heSize: Number(e.target.value) })} /><span className="he" style={{ fontSize: s.heSize }}>אבג</span></div>
             </div>
             <div className="field">
+              <label>Commentary text size (Rashi, Tosafos…)</label>
+              <div className="range"><input type="range" min={14} max={36} value={s.commSize ?? 20} onChange={(e) => onChange({ commSize: Number(e.target.value) })} /><span className="he rashi" style={{ fontSize: s.commSize ?? 20 }}>אבג</span></div>
+            </div>
+            <div className="field">
               <label>English text size</label>
               <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
             </div>

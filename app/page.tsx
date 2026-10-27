@@ -172,11 +172,12 @@ export default function Home() {
     if (settings === DEFAULT_SETTINGS) return; // not loaded yet: keep the look the page opened with
     const root = document.documentElement;
     root.dataset.look = settings.theme;
-    try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
+    try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.style.setProperty('--he-size', `${settings.heSize}px`);
     root.style.setProperty('--en-size', `${settings.enSize}px`);
-  }, [settings.theme, settings.heSize, settings.enSize, settings.rashiScript]);
+    root.style.setProperty('--comm-size', `${settings.commSize ?? 20}px`);
+  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 

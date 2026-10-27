@@ -251,6 +251,7 @@ export interface Settings {
   theme: Look;
   heSize: number;           // px
   enSize: number;           // px
+  commSize: number;         // px: Rashi, Tosafos and other commentaries
   costWarnUsd: number | null;
   disclaimerAccepted: boolean;
   voice: string;            // voice for Basic talk mode (OpenAI text-to-speech)
@@ -285,6 +286,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'daf',
   heSize: 22,
   enSize: 16,
+  commSize: 20,
   costWarnUsd: null,
   disclaimerAccepted: false,
   voice: 'ash',

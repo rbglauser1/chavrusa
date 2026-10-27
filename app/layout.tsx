@@ -20,9 +20,9 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@40
 // (instead of flashing the default colors until Settings load).
 const LOOKS = ['daf', 'shtender', 'techelet', 'midnight'];
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [look, he, en, rashi] = ((await cookies()).get('ui')?.value ?? '').split('|');
+  const [look, he, en, rashi, comm] = ((await cookies()).get('ui')?.value ?? '').split('|');
   const num = (v: string | undefined) => (v && /^\d{1,2}$/.test(v) ? `${v}px` : undefined);
-  const style = { ...(num(he) ? { '--he-size': num(he) } : {}), ...(num(en) ? { '--en-size': num(en) } : {}) } as React.CSSProperties;
+  const style = { ...(num(he) ? { '--he-size': num(he) } : {}), ...(num(en) ? { '--en-size': num(en) } : {}), ...(num(comm) ? { '--comm-size': num(comm) } : {}) } as React.CSSProperties;
   return (
     <html lang="en" data-look={LOOKS.includes(look) ? look : 'daf'} data-rashi={rashi === 'off' ? 'off' : 'on'} style={style} suppressHydrationWarning>
       <head>
