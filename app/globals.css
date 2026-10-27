@@ -829,3 +829,11 @@ table.costs td.n, table.costs th.n { text-align: right; }
 [data-look='ink'] .sefer { background-color: #f8f8f6; background-image: var(--tx-paper); }
 [data-look='stone'] .sefer { background-color: #f4eee2; }
 [data-look='stone'] .drawer, [data-look='ink'] .drawer, [data-look='stone'] .modal-card, [data-look='ink'] .modal-card { background-color: var(--surface); }
+
+/* The daf counter: small, low, out of the way. In full screen it sits in the corner, level with Talk and Exit. */
+.sefer .daf-bar { bottom: 2px; margin: 12px 0 0; gap: 0; padding: 1px 2px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.14); opacity: 0.92; }
+.sefer .daf-bar button { font-size: 16px; width: 26px; height: 24px; }
+.sefer .daf-now { gap: 4px; padding: 0 2px; }
+.sefer .daf-now .he { font-size: 12px; font-weight: 600; }
+.sefer .daf-now small { font-size: 11px; }
+.sefer.full .daf-bar { position: fixed; left: 14px; bottom: max(18px, env(safe-area-inset-bottom)); margin: 0; z-index: 61; }
