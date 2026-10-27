@@ -823,3 +823,9 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .daf-now { display: inline-flex; align-items: baseline; gap: 6px; padding: 0 4px; }
 .sefer .daf-now .he { font-size: 15px; font-weight: 600; }
 .sefer .daf-now small { font-size: 12px; color: var(--soft); }
+
+/* Panels over the conversation (the Sefer, drawers) must be solid: nothing showing through from behind. */
+[data-look='ink'] { --surface: #fbfbf9; }
+[data-look='ink'] .sefer { background-color: #f8f8f6; background-image: var(--tx-paper); }
+[data-look='stone'] .sefer { background-color: #f4eee2; }
+[data-look='stone'] .drawer, [data-look='ink'] .drawer, [data-look='stone'] .modal-card, [data-look='ink'] .modal-card { background-color: var(--surface); }
