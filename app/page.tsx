@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_SETTINGS, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { allStyles, DEFAULT_SETTINGS, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import SeferPanel from '@/components/SeferPanel';
@@ -480,8 +480,8 @@ export default function Home() {
     }
   }
 
-  const style = styleById(settings.style);
-  const blend = settings.blend ? styleById(settings.blend) : null;
+  const style = styleById(settings.style, settings.customStyles);
+  const blend = settings.blend ? styleById(settings.blend, settings.customStyles) : null;
   const model = MODELS[settings.provider][settings.tier];
   const replies = items.filter((x): x is Extract<Item, { kind: 'assistant' }> => x.kind === 'assistant' && !!x.usage);
   const allTurns = replies.length;
@@ -581,7 +581,7 @@ export default function Home() {
               <button className={`quick-opt ${settings.leads === 'chavrusa' ? 'on' : ''}`} onClick={() => updateSettings({ leads: 'chavrusa' })}>Chavrusa explains first</button>
             </div>
             <div className="quick-list">
-              {STYLES.map((st) => (
+              {allStyles(settings.customStyles).map((st) => (
                 <button key={st.id} className={`quick-item ${settings.style === st.id ? 'on' : ''}`} onClick={() => { updateSettings({ style: st.id, blend: null }); setQuick(null); }}>
                   <b>{st.name}</b><span>{st.blurb}</span>
                 </button>

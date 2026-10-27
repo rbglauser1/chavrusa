@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { BASE_EXCEPTIONS, BASE_FORMULA, STYLES } from '@/lib/config';
+import { allStyles, BASE_EXCEPTIONS, BASE_FORMULA, CustomStyle } from '@/lib/config';
 
 type Cost = 'free' | 'ai';
 const DIRECTIONS: [string, [string, string, Cost][]][] = [
@@ -49,9 +49,11 @@ const DIRECTIONS: [string, [string, string, Cost][]][] = [
 // the same definitions the AI is given, so this page is always up to date.
 export default function Guide() {
   const [current, setCurrent] = useState<string | null>(null);
+  const [custom, setCustom] = useState<CustomStyle[]>([]);
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then((s) => {
       if (s.style) setCurrent(s.style);
+      if (Array.isArray(s.customStyles)) setCustom(s.customStyles);
       if (s.theme) document.documentElement.dataset.look = s.theme;
     }).catch(() => {});
   }, []);
@@ -104,7 +106,7 @@ export default function Guide() {
       <section>
         <h2>Learning styles</h2>
         <p className="muted">Each style is its own addition on top of the basic formula. Switch in Settings, or just say it (“switch to Simple Explainer,” “be gentler,” “quiz me”).</p>
-        {STYLES.map((s) => (
+        {allStyles(custom).map((s) => (
           <details key={s.id} className={`guide-style ${current === s.id ? 'on' : ''}`} open={current === s.id}>
             <summary><b>{s.name}</b>{current === s.id && <span className="guide-now">your style</span>}<span className="muted"> · {s.blurb}</span></summary>
             <dl>

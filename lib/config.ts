@@ -205,8 +205,21 @@ AVOID: stories for their own sake, sources you haven't retrieved, losing the tex
   },
 ];
 
-export function styleById(id: string | undefined): Style {
-  return STYLES.find((s) => s.id === id) ?? STYLES[0];
+// Styles the learner made himself (Settings → Create your own style): his own words are the playbook.
+export interface CustomStyle { id: string; name: string; blurb: string; behavior: string }
+export function customToStyle(c: CustomStyle): Style {
+  return {
+    id: c.id, name: c.name, short: c.name.length > 14 ? `${c.name.slice(0, 13)}…` : c.name,
+    blurb: c.blurb || 'Your own style',
+    behavior: `This style was written by the learner himself. Follow it exactly; where it differs from the basic formula or the defaults, his description wins.\n${c.behavior}`,
+    example: '(No sample: follow the learner\'s description above.)',
+  };
+}
+export function allStyles(custom?: CustomStyle[] | null): Style[] {
+  return [...STYLES, ...(custom ?? []).filter((c) => c && c.id && c.name).map(customToStyle)];
+}
+export function styleById(id: string | undefined, custom?: CustomStyle[] | null): Style {
+  return allStyles(custom).find((s) => s.id === id) ?? STYLES[0];
 }
 
 export type Look = 'daf' | 'shtender' | 'techelet' | 'midnight';
@@ -255,6 +268,7 @@ export interface Settings {
   approveAll: boolean;      // allow every sefer on Sefaria (off: only classic and approved works)     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
   saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
+  customStyles: CustomStyle[];   // learning styles the learner wrote himself
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
 }
@@ -288,6 +302,7 @@ export const DEFAULT_SETTINGS: Settings = {
   approveAll: true,
   saver: true,
   customVoices: [],
+  customStyles: [],
   autoSpeak: false,
   speechRate: 1,
 };

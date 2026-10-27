@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { DEFAULT_VOICE_DESIGN, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
+import { CustomStyle, DEFAULT_VOICE_DESIGN, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -16,6 +16,7 @@ function Seg<T extends string>({ value, options, onPick }: { value: T; options: 
 }
 
 export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive }: Props) {
+  const [editing, setEditing] = useState<CustomStyle | null>(null);
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [newMem, setNewMem] = useState('');
   const [costs, setCosts] = useState<{ totalUsd: number; byModel: Record<string, { exchanges: number; usd: number }> } | null>(null);
@@ -60,7 +61,28 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   <b>{st.name}</b><span>{st.blurb}</span>
                 </button>
               ))}
+              {(s.customStyles ?? []).map((c) => (
+                <div key={c.id} className={`style-opt custom ${s.style === c.id ? 'on' : ''}`}>
+                  <button className="style-pick" onClick={() => onChange({ style: c.id, blend: null })}>
+                    <b>{c.name}</b><span>{c.blurb || 'Your own style'}</span>
+                  </button>
+                  <span className="style-acts">
+                    <button onClick={() => setEditing(c)}>Edit</button>
+                    <button onClick={() => onChange({ customStyles: (s.customStyles ?? []).filter((x) => x.id !== c.id), ...(s.style === c.id ? { style: STYLES[0].id } : {}) })}>Delete</button>
+                  </span>
+                </div>
+              ))}
             </div>
+            {editing ? (
+              <StyleMaker key={editing.id || 'new'} start={editing} onCancel={() => setEditing(null)} onSave={(c) => {
+                const list = s.customStyles ?? [];
+                const next = list.some((x) => x.id === c.id) ? list.map((x) => (x.id === c.id ? c : x)) : [...list, c];
+                onChange({ customStyles: next, style: c.id, blend: null });
+                setEditing(null);
+              }} />
+            ) : (
+              <button className="btn" style={{ marginTop: 8 }} onClick={() => setEditing({ id: '', name: '', blurb: '', behavior: '' })}>+ Create your own style</button>
+            )}
             <div className="field" style={{ marginTop: 14 }}>
               <label>Who explains first</label>
               <Seg value={s.leads} options={[['learner', 'I do'], ['chavrusa', 'Chavrusa does']]} onPick={(v) => onChange({ leads: v })} />
@@ -226,6 +248,30 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 }
 
 // Design a Live voice from a description (OpenAI creates it in your account).
+// Create or edit a learning style in your own words. Free: it's saved as you wrote it, no AI.
+function StyleMaker({ start, onSave, onCancel }: { start: CustomStyle; onSave: (c: CustomStyle) => void; onCancel: () => void }) {
+  const [name, setName] = useState(start.name);
+  const [blurb, setBlurb] = useState(start.blurb);
+  const [behavior, setBehavior] = useState(start.behavior);
+  const ok = name.trim() && behavior.trim();
+  return (
+    <div className="style-maker">
+      <div className="field"><label htmlFor="sm-name">Name</label><input id="sm-name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Shiur style" /></div>
+      <div className="field"><label htmlFor="sm-blurb">Short description (optional)</label><input id="sm-blurb" type="text" value={blurb} onChange={(e) => setBlurb(e.target.value)} placeholder="e.g. Reads it all, then one big question" /></div>
+      <div className="field">
+        <label htmlFor="sm-how">How should your chavrusa learn with you?</label>
+        <textarea id="sm-how" rows={7} value={behavior} onChange={(e) => setBehavior(e.target.value)}
+          placeholder={'In your own words. For example:\nRead the whole piece of Gemara first, Hebrew and English phrase by phrase. Don\'t stop to explain in the middle. When the piece is done, tell me in two sentences what the Gemara said, then ask me one hard question. If I get it wrong, give me a hint before the answer.'} />
+        <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Your words become the style's rules. Where they differ from the basic formula, yours win.</div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button className="btn primary" disabled={!ok} onClick={() => onSave({ id: start.id || `custom-${Date.now().toString(36)}`, name: name.trim(), blurb: blurb.trim(), behavior: behavior.trim() })}>{start.id ? 'Save changes' : 'Save and use it'}</button>
+        <button className="btn" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 function VoiceDesigner({ onCreated, hasCustom }: { onCreated: (p: Partial<Settings>) => void; hasCustom: boolean }) {
   const [open, setOpen] = useState(!hasCustom);
   const [name, setName] = useState(DEFAULT_VOICE_DESIGN.name);

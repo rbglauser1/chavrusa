@@ -287,6 +287,15 @@ const MODEL_WORDS: [RegExp, Provider, Tier | null][] = [
 ];
 
 function styleSwitch(ctx: RouteCtx, s: string): Routed | null {
+  // One of the learner's own styles, by its name ("switch to my Bekius plus").
+  for (const c of ctx.settings.customStyles ?? []) {
+    const name = norm(c.name);
+    if (!name) continue;
+    const re = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    if (re.test(s) && onlyWords(s, re, new Set([...STYLE_FILLER, 'my', 'own']))) {
+      return { settings: { style: c.id, blend: null }, reply: ctx.spoken ? 'Sure.' : `Switched to ${c.name}.` };
+    }
+  }
   const hit = STYLE_WORDS.find(([re]) => re.test(s));
   if (!hit || !onlyWords(s, hit[0], STYLE_FILLER)) return null;
   const st = styleById(hit[1]);

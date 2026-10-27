@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
           execute,
           // Spoken turns need quick answers: think one level less.
           // Deep styles (Iyun, Sevara) think one level more; fast ones (Bekius, Farher) and spoken turns one level less.
-          effort: shiftEffort(model.effort, (styleById(settings.style).effortShift ?? 0) - (spoken ? 1 : 0), settings.provider, settings.tier),
+          effort: shiftEffort(model.effort, (styleById(settings.style, settings.customStyles).effortShift ?? 0) - (spoken ? 1 : 0), settings.provider, settings.tier),
           thinking: model.thinking,
           maxSteps: lean ? 3 : 5,
           onText: (d) => marks.push(d),

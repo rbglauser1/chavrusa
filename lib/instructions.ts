@@ -96,9 +96,9 @@ function pronunciation(s: Settings): string {
 }
 
 export function buildSystemPrompt(s: Settings, memories: Memory[], sessionSources: string[], today: string, spoken = false, sessionId: string | null = null): string {
-  const style = styleById(s.style);
+  const style = styleById(s.style, s.customStyles);
   const core = CORE.replace('<<PURPOSE>>', style.asks === false ? PURPOSE_EXPLAIN : PURPOSE_ASK);
-  const blend = s.blend ? styleById(s.blend) : null;
+  const blend = s.blend ? styleById(s.blend, s.customStyles) : null;
   const sessionReqs = memories.filter((m) => m.scope === `session:${sessionId}`);
   const saved = memories.filter((m) => !m.scope?.startsWith('session:'));
   const reqLines = sessionReqs.length ? sessionReqs.map((m) => `- ${m.content} (id ${m.id})`).join('\n') : '(none)';
@@ -114,7 +114,7 @@ Today's date: ${today}.
 ${BASE_FORMULA.map((f, i) => `${i + 1}. ${f.label.toUpperCase()}: ${f.text}`).join('\n')}
 ${BASE_EXCEPTIONS}
 
-# Learning style: ${style.name} (its unique addition on top of the basic formula)
+${s.customStyles?.length ? `The learner's own styles (switch with set_mode, using the id): ${s.customStyles.map((c) => `${c.id} (${c.name})`).join(', ')}.\n` : ''}# Learning style: ${style.name} (its unique addition on top of the basic formula)
 ${style.behavior}
 Length for this style: up to about ${style.maxWords ?? 150} words per message.
 ${style.asks === false ? 'This style explains and does not quiz: ignore any instruction in this document to ask the learner questions, push back, or have them explain first (unless the learner asks for that).' : style.explainFirst ? 'This style explains briefly before asking (unless the learner has chosen to explain first, or asks otherwise).' : ''}

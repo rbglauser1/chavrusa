@@ -565,3 +565,9 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .guide .tag { display: inline-block; font-size: 11px; border-radius: 999px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; border: 1px solid currentColor; }
 .guide .tag.free { color: #2e7d4f; }
 .guide .tag.ai { color: #b26a00; }
+.style-opt.custom { display: flex; align-items: stretch; gap: 8px; padding: 0; }
+.style-opt.custom .style-pick { flex: 1; text-align: left; background: none; border: none; padding: 10px 12px; display: grid; gap: 2px; color: inherit; font: inherit; cursor: pointer; }
+.style-opt.custom .style-acts { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding-right: 10px; }
+.style-opt.custom .style-acts button { background: none; border: none; color: var(--accent); font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; }
+.style-maker { margin-top: 10px; padding: 12px; border: 1px dashed var(--rule); border-radius: var(--radius); }
+.style-maker textarea { width: 100%; font: inherit; }

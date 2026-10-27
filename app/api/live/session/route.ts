@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       const [memories, history, sources] = await Promise.all([
         listMemories(), sid ? listMessages(sid, 30) : Promise.resolve([]), sid ? listSources(sid) : Promise.resolve([]),
       ]);
-      const st = styleById(s.style);
+      const st = styleById(s.style, s.customStyles);
       const place = sid ? currentPlace(history, sources) : null;
       context = liveContext({
         styleName: st.name,

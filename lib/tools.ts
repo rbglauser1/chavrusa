@@ -1,8 +1,8 @@
 import 'server-only';
 import { ApprovedEntry, COMMENTARY_BOOK } from './approval';
-import { Settings, STYLES, styleById } from './config';
+import { allStyles, Settings, STYLES, styleById } from './config';
 import { forPanel } from './place';
-import { addMemory, addSource, forgetMemory, listSessionRequests, SourceData } from './db';
+import { addMemory, addSource, forgetMemory, getSettings, listSessionRequests, SourceData } from './db';
 import { bookOutline, getLinks, getText, resolveName, search, todaysLearning } from './sefaria';
 import { stripNikud } from './hebrew';
 import { ToolDef } from './llm/types';
@@ -73,7 +73,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'set_mode',
-    description: `Change the learning style when the learner asks (e.g. "be gentler", "quiz me", "go deeper"). This updates the label they see. Style ids: ${STYLES.map((s) => `${s.id} (${s.name})`).join(', ')}. Use "blend" to combine a second style, or null to clear it. Use "leads" to change who explains first.`,
+    description: `Change the learning style when the learner asks (e.g. "be gentler", "quiz me", "go deeper"). This updates the label they see. Style ids: ${STYLES.map((s) => `${s.id} (${s.name})`).join(', ')}, or one of the learner's own styles (ids starting with custom-, listed in your instructions). Use "blend" to combine a second style, or null to clear it. Use "leads" to change who explains first.`,
     parameters: {
       type: 'object',
       properties: {
@@ -219,13 +219,14 @@ export function makeExecutor(ctx: {
       }
       case 'set_mode': {
         const patch: Partial<Settings> = {};
-        if (typeof args.style === 'string' && STYLES.some((s) => s.id === args.style)) patch.style = args.style;
+        const known = allStyles((await getSettings().catch(() => null))?.customStyles);
+        if (typeof args.style === 'string' && known.some((s) => s.id === args.style)) patch.style = args.style;
         if (args.blend === null) patch.blend = null;
-        else if (typeof args.blend === 'string' && STYLES.some((s) => s.id === args.blend)) patch.blend = args.blend;
+        else if (typeof args.blend === 'string' && known.some((s) => s.id === args.blend)) patch.blend = args.blend;
         if (args.leads === 'learner' || args.leads === 'chavrusa') patch.leads = args.leads;
         const s = await ctx.saveSettings(patch);
         ctx.emit({ type: 'mode', settings: patch });
-        return `Mode is now: ${styleById(s.style).name}${s.blend ? ` + ${styleById(s.blend).name}` : ''}; ${s.leads === 'learner' ? 'learner explains first' : 'Chavrusa explains first'}. Follow this style from now on.`;
+        return `Mode is now: ${styleById(s.style, s.customStyles).name}${s.blend ? ` + ${styleById(s.blend, s.customStyles).name}` : ''}; ${s.leads === 'learner' ? 'learner explains first' : 'Chavrusa explains first'}. Follow this style from now on.`;
       }
       default:
         return `Unknown tool ${name}.`;
