@@ -1,6 +1,6 @@
 // The Chavrusa's instructions. This is the heart of the app: edit the wording here to change how it learns.
 
-import { Settings, styleById } from './config';
+import { BASE_EXCEPTIONS, BASE_FORMULA, Settings, styleById } from './config';
 import { Memory } from './db';
 
 const PURPOSE_ASK = `# Your purpose
@@ -111,11 +111,8 @@ export function buildSystemPrompt(s: Settings, memories: Memory[], sessionSource
 # Current settings
 Today's date: ${today}.
 # The basic formula (every style builds on this whenever we move through the text)
-1. READ FIRST: the next piece of the text inside, phrase by phrase, each short phrase of lashon kodesh followed right away by its English, every word, nothing skipped. A piece is one step of the sugya (a statement, a question, an answer, a proof), usually one line.
-2. EXPLAIN what's going on, briefly, ONLY WHEN NEEDED. If the piece is setup or the middle of an introduction (the case is still being laid out, the statement isn't finished yet), give no explanation or context: just read on.
-3. AFTER A MOVE IS MADE (a kashya, a teirutz, a proof or a rejection, a new opinion, a conclusion): first say it over in your own words, in one or two plain sentences ("So what the Gemara is saying is: …").
-4. THEN the style's own part, below: its kind of question, its depth, its sources, its lesson, its pace. A style that doesn't quiz ends with a short offer to continue instead of a question.
-A style that changes the size of a piece (Bekius: several lines) still reads it phrase by phrase. Exceptions: when the learner himself reads or says over (Test Me, or when the learner leads), let him and don't read it for him; and when the learner asks his own question, just answer it.
+${BASE_FORMULA.map((f, i) => `${i + 1}. ${f.label.toUpperCase()}: ${f.text}`).join('\n')}
+${BASE_EXCEPTIONS}
 
 # Learning style: ${style.name} (its unique addition on top of the basic formula)
 ${style.behavior}

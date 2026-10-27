@@ -640,7 +640,7 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-                <p style={{ fontSize: 14 }}><a href="#" onClick={(e) => { e.preventDefault(); setHelp(true); }}>What can I ask for?</a></p>
+                <p style={{ fontSize: 14 }}><a href="/guide">How we learn</a> · <a href="#" onClick={(e) => { e.preventDefault(); setHelp(true); }}>What can I ask for?</a></p>
               </div>
             )}
             {items.map((it, i) => {

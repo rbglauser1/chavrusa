@@ -52,7 +52,7 @@ export function Help({ onClose }: { onClose: () => void }) {
           <li><b>Memory:</b> “Don’t translate Rashi for me,” “What do you remember about me?,” “Forget that.”</li>
           <li><b>Wrap up:</b> “Let’s stop here,” “Save this as a note.”</li>
         </ul>
-        <p className="muted" style={{ fontSize: 14 }}>You can also change style, depth, and model in Settings at any time.</p>
+        <p className="muted" style={{ fontSize: 14 }}>You can also change style, depth, and model in Settings at any time. The full rules it follows: <a href="/guide">How we learn</a>.</p>
         <button className="btn primary" style={{ width: '100%' }} onClick={onClose}>Got it</button>
       </div>
     </div>

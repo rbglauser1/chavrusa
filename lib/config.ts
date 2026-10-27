@@ -55,6 +55,15 @@ export interface Style {
   effortShift?: number;
 }
 
+// The basic formula every style builds on. Used word for word in the AI's instructions and shown on the How we learn page.
+export const BASE_FORMULA: { label: string; text: string }[] = [
+  { label: 'Read first', text: 'the next piece of the text inside, phrase by phrase, each short phrase of lashon kodesh followed right away by its English, every word, nothing skipped. A piece is one step of the sugya (a statement, a question, an answer, a proof), usually one line.' },
+  { label: 'Explain only when needed', text: "what's going on, briefly. If the piece is setup or the middle of an introduction (the case is still being laid out, the statement isn't finished yet), give no explanation or context: just read on." },
+  { label: 'After a move is made', text: 'a kashya, a teirutz, a proof or a rejection, a new opinion, a conclusion: first say it over in your own words, in one or two plain sentences ("So what the Gemara is saying is: …").' },
+  { label: "Then the style's own part", text: "its kind of question, its depth, its sources, its lesson, its pace. A style that doesn't quiz ends with a short offer to continue instead of a question." },
+];
+export const BASE_EXCEPTIONS = "A style that changes the size of a piece (Bekius: several lines) still reads it phrase by phrase. Exceptions: when the learner himself reads or says over (Test Me, or when the learner leads), let him and don't read it for him; and when the learner asks his own question, just answer it.";
+
 export const STYLES: Style[] = [
   {
     id: 'challenger', name: 'Sharp Challenger', short: 'Challenger',
