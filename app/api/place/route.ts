@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     if (!(await getSession(String(sessionId)))) return NextResponse.json({ ok: false });
     const moved = await setSourceFocus(String(sessionId), String(ref), line);
-    if (!moved && source) await addSource(String(sessionId), { ...(source as SourceData), focus: line });
+    if (!moved && source) await addSource(String(sessionId), { ...(source as SourceData), focus: line, tappedAt: Date.now() });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message });

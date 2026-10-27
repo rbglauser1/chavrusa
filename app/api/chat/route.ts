@@ -227,7 +227,10 @@ export async function POST(req: NextRequest) {
         // The AI marks the line it finished on ([[line:N]]); remember it as the learner's place, and hide the mark.
         const marked = readMark(result.text || '');
         const reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
-        const newPlace = marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
+        // The learner tapped a line while this answer was being written: his tap wins, so don't move the place.
+        const tappedSince = (await listSources(sid).catch(() => [])).some((x) => (x.data?.tappedAt ?? 0) > Date.parse(startedAt));
+        const newPlace0 = marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
+        const newPlace = tappedSince ? null : newPlace0;
         // It went on into the next amud / perek: open it in the Sefer, at that line.
         if (newPlace && place && newPlace.base !== place.base) {
           try {

@@ -31,7 +31,13 @@ export function currentPlace(history: MessageRow[], sources: SourceRow[]): Place
   }
   // A line the AI (or app) opened since then: either a line ref, or a whole perek/amud shown at a line (focus).
   const at = (x: SourceRow): Place => (x.data?.focus ? { base: x.ref, n: x.data.focus } : splitRef(x.ref));
+  // A line the learner tapped wins over anything recorded before the tap.
+  const tap = sources.filter((x) => x.data?.tappedAt && x.data?.focus).sort((a, b) => (b.data.tappedAt ?? 0) - (a.data.tappedAt ?? 0))[0];
+  const tapAt = tap?.data.tappedAt ?? 0;
   const later = sources.filter((x) => isMain(x.ref) && (/:\d+$/.test(x.ref) || !!x.data?.focus) && x.created_at > since);
+  if (tap && tapAt > Date.parse(since || '1970-01-01') && !later.some((x) => x !== tap && Date.parse(x.created_at) > tapAt + 1000)) {
+    return { base: tap.ref, n: tap.data.focus as number };
+  }
   if (later.length) {
     const base = at(later[later.length - 1]).base;
     const n = Math.max(...later.map(at).filter((p) => p.base === base).map((p) => p.n));

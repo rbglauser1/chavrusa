@@ -251,6 +251,9 @@ export default function Home() {
   // The learner tapped a line in the Sefer: learn from there. Saved to the session (so the Chavrusa and a new
   // call start there), and if a call is going, the voice is told right away.
   function pointAt(src: SourceData, n: number) {
+    // The tap wins: drop what was waiting and any read-through; an answer still being written isn't spoken.
+    if (live.active) { liveQueue.current = []; liveDelegation.current = null; }
+    if (readingRef.current) { readingRef.current = null; setReadingOn(false); }
     showSource({ ...src, focus: n }); // also the next amud / perek shown under the text: it becomes its own tab
     const sid = sessionIdRef.current;
     if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src }) }).catch(() => {});

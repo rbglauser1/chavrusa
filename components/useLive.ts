@@ -244,8 +244,17 @@ export function useLive(opts: {
   // The learner pointed to a line mid-call: go there now (the line's words are given, so nothing is said from memory).
   const pointTo = useCallback((ref: string, n: number, he: string, en: string) => {
     bump();
-    const words = he ? `It reads: ${toSpeech(he)}${en ? ` — in English: "${en.slice(0, 600)}"` : ''}` : '';
-    send({ type: 'session.commentary.append', delegation_id: null, content: `The learner just pointed to ${ref}, line ${n}. Go there now: stop what you were doing and start learning from this line. ${words} Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop and wait for the learner. Do not go past this line by yourself.` });
+    // The tap overrides everything: stop a read-through, and drop any answer still on its way (closing it for the voice).
+    const r = reading.current; reading.current = null; r?.(false);
+    pending.current.forEach((id) => send({ type: 'session.commentary.append', delegation_id: id, content: '(Skip this: the learner just moved to a different place.)' }));
+    pending.current.clear(); partial.current.clear(); exactTold.current.clear();
+    userBuf.current = ''; voiceBuf.current = ''; setHeard('');
+    setS('speaking');
+    const exact = he ? `${toSpeech(he)}${en ? ` — ${en.slice(0, 900)}` : ''}` : '';
+    answering.current = true;
+    handed.current = { text: exact, at: Date.now() };
+    send({ type: 'session.instructions.append', delegation_id: null, content: `STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${exact ? `Immediately say the following exactly and in full, word for word, every phrase in order, the lashon kodesh and then its English, without skipping anything: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.` });
+    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: `READ EXACTLY: ${exact} END.` });
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 

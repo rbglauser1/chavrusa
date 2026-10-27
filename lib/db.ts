@@ -85,6 +85,7 @@ export interface SourceData {
   focus?: number;                // Sefer panel: the line to scroll to and highlight
   altEn?: string[];              // Sefaria's English when it isn't an approved translation (shown labeled; not given to the AI)
   altTitle?: string;             // that translation's name
+  tappedAt?: number;  // when the learner tapped a line here (a tap wins over the AI's place)
 }
 
 export async function listSessions(userId = OWNER_ID): Promise<SessionRow[]> {
@@ -135,7 +136,7 @@ export async function setSourceFocus(sessionId: string, ref: string, n: number):
   const rows = check(await db().from('session_sources').select('id, data').eq('session_id', sessionId).eq('ref', ref)
     .order('created_at', { ascending: false }).limit(1)) as { id: string; data: SourceData }[];
   if (!rows.length) return false;
-  check(await db().from('session_sources').update({ data: { ...rows[0].data, focus: n }, created_at: new Date().toISOString() }).eq('id', rows[0].id));
+  check(await db().from('session_sources').update({ data: { ...rows[0].data, focus: n, tappedAt: Date.now() }, created_at: new Date().toISOString() }).eq('id', rows[0].id));
   return true;
 }
 
