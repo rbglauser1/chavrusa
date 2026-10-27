@@ -861,3 +861,8 @@ table.costs td.n, table.costs th.n { text-align: right; }
 @media (max-width: 999px) {
   .sefer .daf-bar { position: fixed; left: 14px; bottom: max(14px, env(safe-area-inset-bottom)); }
 }
+@media (max-width: 999px) {
+  /* Safari's floating bottom bar covers the last strip of the screen: sit a little higher, clear of it. */
+  .sefer .daf-bar, .sefer.full .daf-bar { position: fixed; left: 12px; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 22px); }
+  .sefer.full .full-bar { bottom: calc(max(10px, env(safe-area-inset-bottom)) + 22px); }
+}
