@@ -256,11 +256,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         <button className="icon-btn" onClick={onClose} aria-label="Close sefer">✕</button>
       </div>
 
-      <form className="goto" onSubmit={submitGoto}>
-        <input id="goto-ref" value={goto} onChange={(e) => setGoto(e.target.value)} placeholder="Go to… e.g. Berachos 36a" dir="auto" aria-label="Open a source" />
-        <button className="btn" disabled={!goto.trim() || gotoBusy}>{gotoBusy ? 'Opening…' : 'Open'}</button>
-      </form>
-      {gotoMsg && <div className="goto-msg">{gotoMsg}</div>}
+      {/* (The "Go to" box was removed: open places from the Library, or just tell the chavrusa.) */}
 
       {/* The library stays where you left it (hidden, not closed), so you can go back up a level later. */}
       {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library onOpen={onOpenExact ?? onOpenRef} onClose={() => setShowLib(false)} /></div>}
