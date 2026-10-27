@@ -133,14 +133,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>
             <div className="field">
-              <label htmlFor="font-en">English font for this look</label>
-              <select id="font-en" value={s.fonts?.[s.theme]?.en ?? ''} onChange={(e) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), en: e.target.value } } })}>
-                {FONTS_EN.map((f) => <option key={f.id} value={f.id} style={f.stack ? { fontFamily: f.stack } : undefined}>{f.name}</option>)}
-              </select>
-              <label htmlFor="font-he" style={{ marginTop: 10 }}>Hebrew font for this look</label>
-              <select id="font-he" value={s.fonts?.[s.theme]?.he ?? ''} onChange={(e) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), he: e.target.value } } })}>
-                {FONTS_HE.map((f) => <option key={f.id} value={f.id} style={f.stack ? { fontFamily: f.stack } : undefined}>{f.name}</option>)}
-              </select>
+              <label>English font for this look</label>
+              <FontPicker list={FONTS_EN} sample="Let's learn the Gemara together" value={s.fonts?.[s.theme]?.en ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), en: id } } })} />
+              <label style={{ marginTop: 10 }}>Hebrew font for this look</label>
+              <FontPicker list={FONTS_HE} sample="בְּרֵאשִׁית בָּרָא אֱלֹקִים" rtl value={s.fonts?.[s.theme]?.he ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), he: id } } })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Each look remembers its own fonts. Rashi and Tosafos keep the Rashi script.</div>
             </div>
             <div className="field">
@@ -263,6 +259,30 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 }
 
 // Design a Live voice from a description (OpenAI creates it in your account).
+// Fonts, each shown in its own letters: the current one, and a list to choose from when tapped.
+function FontPicker({ list, sample, value, onPick, rtl }: { list: { id: string; name: string; stack: string }[]; sample: string; value: string; onPick: (id: string) => void; rtl?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const cur = list.find((f) => f.id === value) ?? list[0];
+  const row = (f: { id: string; name: string; stack: string }) => (
+    <>
+      <span className="fp-sample" dir={rtl ? 'rtl' : 'ltr'} style={{ fontFamily: f.stack || (rtl ? 'var(--f-he)' : 'var(--f-body)') }}>{sample}</span>
+      <span className="fp-name">{f.name}</span>
+    </>
+  );
+  return (
+    <div className="fp">
+      <button className="fp-cur" onClick={() => setOpen((v) => !v)} aria-expanded={open}>{row(cur)}<span className="fp-arrow" aria-hidden="true">{open ? '▴' : '▾'}</span></button>
+      {open && (
+        <div className="fp-list" role="listbox">
+          {list.map((f) => (
+            <button key={f.id || 'own'} role="option" aria-selected={f.id === value} className={`fp-opt ${f.id === value ? 'on' : ''}`} onClick={() => { onPick(f.id); setOpen(false); }}>{row(f)}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Create or edit a learning style in your own words. Free: it's saved as you wrote it, no AI.
 function StyleMaker({ start, onSave, onCancel }: { start: CustomStyle; onSave: (c: CustomStyle) => void; onCancel: () => void }) {
   const [name, setName] = useState(start.name);
