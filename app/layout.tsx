@@ -18,7 +18,7 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@40
 
 // The look and text sizes are remembered in a cookie, so the page opens in your colors right away
 // (instead of flashing the default colors until Settings load).
-const LOOKS = ['daf', 'shtender', 'techelet', 'midnight'];
+const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink'];
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [look, he, en, rashi, comm] = ((await cookies()).get('ui')?.value ?? '').split('|');
   const num = (v: string | undefined) => (v && /^\d{1,2}$/.test(v) ? `${v}px` : undefined);

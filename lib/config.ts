@@ -222,18 +222,22 @@ export function styleById(id: string | undefined, custom?: CustomStyle[] | null)
   return allStyles(custom).find((s) => s.id === id) ?? STYLES[0];
 }
 
-export type Look = 'daf' | 'shtender' | 'techelet' | 'midnight';
+export type Look = 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink';
 
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
   { id: 'shtender', name: 'Shtender at night', blurb: 'Warm wood and lamplight, easy on the eyes at night' },
   { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
   { id: 'midnight', name: 'Midnight', blurb: 'Navy and gold, clean and modern, with quoted passages' },
+  { id: 'stone', name: 'Yerushalayim stone (new)', blurb: 'Warm limestone, bronze and gold: bright and calm' },
+  { id: 'leather', name: 'Leather Shas (new)', blurb: 'Oxblood leather and gold leaf, the text on a cream page' },
+  { id: 'vilna', name: 'Vilna green (new)', blurb: 'Deep bottle green and brass, the text on a cream page' },
+  { id: 'ink', name: 'Ink and paper (new)', blurb: 'Crisp white, true black, one thin gold line' },
 ];
 
 // Older saved values from the first version map onto the new looks.
 export function normalizeLook(v: unknown): Look {
-  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight') return v;
+  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink') return v;
   if (v === 'dark') return 'shtender';
   if (v === 'light') return 'techelet';
   return 'daf';

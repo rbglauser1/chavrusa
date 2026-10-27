@@ -576,3 +576,90 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .next-head .he { font-size: 1.05em; }
 .sefer .next-head small { color: var(--soft); margin-inline-start: 6px; }
 .sefer .next-load { width: 100%; }
+
+/* ---------- New looks to try: Yerushalayim stone, Leather Shas, Vilna green, Ink and paper ---------- */
+[data-look='stone'] {
+  --bg: #ece3d2; --surface: #f6f0e4; --surface-2: #e3d7c1;
+  --ink: #2a241c; --soft: #6e5f48; --rule: #d3c19c;
+  --accent: #8a6a2f; --accent-ink: #fbf6ec; --accent-soft: rgba(138, 106, 47, 0.12);
+  --me: #6e5f48; --src-bg: #f6f0e4; --src-ink: #2a241c; --src-rule: #c9b48a;
+  --danger: #a3361f; --scrim: rgba(42, 36, 28, 0.35); --shadow: 0 12px 30px rgba(60, 45, 20, 0.16);
+  --f-body: 'Crimson Pro', Georgia, serif; --f-ui: 'Assistant', system-ui, sans-serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Frank Ruhl Libre', serif;
+  --radius: 8px; color-scheme: light;
+}
+[data-look='stone'] .topbar { background: var(--surface-2); border-bottom: 1px solid var(--rule); }
+[data-look='stone'] .brand { color: #5a4520; }
+[data-look='stone'] .pin-inner { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; }
+[data-look='stone'] .quote { background: var(--surface); border-inline-start: 3px solid var(--accent); border-radius: 0; }
+[data-look='stone'] .turn .say strong { color: #5a4520; }
+
+[data-look='leather'] {
+  --bg: #2a1215; --surface: #3a171b; --surface-2: #4a2025;
+  --ink: #f0e2be; --soft: #c2a883; --rule: rgba(201, 162, 74, 0.3);
+  --accent: #c9a24a; --accent-ink: #2a1215; --accent-soft: rgba(201, 162, 74, 0.14);
+  --me: #e8d6ae; --src-bg: #f3e9d2; --src-ink: #2a1a12; --src-rule: #c9a24a;
+  --danger: #f0907a; --scrim: rgba(0, 0, 0, 0.55); --shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+  --f-body: 'Crimson Pro', Georgia, serif; --f-ui: 'Assistant', system-ui, sans-serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Frank Ruhl Libre', serif;
+  --radius: 10px; color-scheme: dark;
+}
+[data-look='leather'] .topbar { background: #3a171b; border-bottom: 1px solid #8c6a2a; }
+[data-look='leather'] .brand { color: #e9d49a; }
+
+[data-look='vilna'] {
+  --bg: #0f2620; --surface: #143129; --surface-2: #1b3d33;
+  --ink: #ede6cc; --soft: #a9b49c; --rule: rgba(212, 180, 92, 0.26);
+  --accent: #d4b45c; --accent-ink: #0f2620; --accent-soft: rgba(212, 180, 92, 0.14);
+  --me: #e2dcc0; --src-bg: #f2eedf; --src-ink: #1c241f; --src-rule: #b79a4c;
+  --danger: #f0907a; --scrim: rgba(0, 0, 0, 0.55); --shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  --f-body: 'Spectral', Georgia, serif; --f-ui: 'Spectral', Georgia, serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Frank Ruhl Libre', serif;
+  --radius: 8px; color-scheme: dark;
+}
+[data-look='vilna'] .topbar { background: #143129; border-bottom: 1px solid #7c6a33; }
+[data-look='vilna'] .brand { color: #e4cf8e; }
+
+/* The two dark looks: the text itself sits on a cream page, like a real sefer, in the pinned line and the Sefer. */
+[data-look='leather'] .pin-inner, [data-look='vilna'] .pin-inner { background: var(--src-bg); color: var(--src-ink); border: 1px solid var(--src-rule); border-radius: 10px; }
+[data-look='leather'] .pin-inner .pin-head, [data-look='vilna'] .pin-inner .pin-head { color: var(--src-ink); }
+[data-look='leather'] .quote, [data-look='vilna'] .quote { background: var(--src-bg); color: var(--src-ink); border-inline-start: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 12px 16px; }
+[data-look='leather'] .quote .q-he, [data-look='vilna'] .quote .q-he, [data-look='leather'] .quote .q-en, [data-look='vilna'] .quote .q-en { color: var(--src-ink); }
+[data-look='leather'] .sefer { --bg: #f3e9d2; --surface: #f8f0dd; --surface-2: #eadcbc; --ink: #2a1a12; --soft: #6b4e2e; --rule: #d9c398; --accent: #7a2a30; --accent-ink: #fff8ea; --accent-soft: rgba(122, 42, 48, 0.1); background: var(--bg); color: var(--ink); }
+[data-look='vilna'] .sefer { --bg: #f2eedf; --surface: #f8f5ea; --surface-2: #e6e0c9; --ink: #1c241f; --soft: #4f5a4e; --rule: #d3caa6; --accent: #1f5a48; --accent-ink: #f8f5ea; --accent-soft: rgba(31, 90, 72, 0.1); background: var(--bg); color: var(--ink); }
+
+[data-look='ink'] {
+  --bg: #f7f7f5; --surface: #ffffff; --surface-2: #efefec;
+  --ink: #111111; --soft: #6b6b66; --rule: #e2e2de;
+  --accent: #111111; --accent-ink: #ffffff; --accent-soft: rgba(17, 17, 17, 0.06);
+  --me: #6b6b66; --src-bg: #ffffff; --src-ink: #111111; --src-rule: #b8892b;
+  --danger: #b4322a; --scrim: rgba(17, 17, 17, 0.35); --shadow: 0 12px 30px rgba(17, 17, 17, 0.12);
+  --f-body: 'Assistant', system-ui, sans-serif; --f-ui: 'Assistant', system-ui, sans-serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Frank Ruhl Libre', serif;
+  --radius: 6px; color-scheme: light;
+}
+[data-look='ink'] .topbar { background: #ffffff; border-bottom: 1px solid var(--rule); }
+[data-look='ink'] .pin-inner { background: #ffffff; border: 1px solid var(--rule); border-inline-start: 3px solid #b8892b; border-radius: 0; }
+[data-look='ink'] .quote { background: #ffffff; border: 1px solid var(--rule); border-inline-start: 3px solid #b8892b; border-radius: 0; }
+[data-look='ink'] .turn .say strong { color: #8a6418; }
+[data-look='ink'] .sefer .line.focus, [data-look='ink'] .comm { border-inline-start-color: #b8892b; }
+
+/* Previews in the look picker */
+.mini.stone { background: #ece3d2; }
+.mini.stone .m-head { background: #e3d7c1; border-bottom: 1px solid #c9b48a; }
+.mini.stone .m-src { background: #f6f0e4; border: 1px solid #d6c39b; }
+.mini.stone .m-line { background: #8a6a2f; opacity: 0.6; }
+.mini.leather { background: #2a1215; }
+.mini.leather .m-head { background: #3a171b; border-bottom: 1px solid #8c6a2a; }
+.mini.leather .m-src { background: #f3e9d2; border: 1px solid #c9a24a; }
+.mini.leather .m-line { background: #c9a24a; opacity: 0.75; }
+.mini.vilna { background: #0f2620; }
+.mini.vilna .m-head { background: #143129; border-bottom: 1px solid #7c6a33; }
+.mini.vilna .m-src { background: #f2eedf; border: 1px solid #b79a4c; }
+.mini.vilna .m-line { background: #d4b45c; opacity: 0.7; }
+.mini.ink { background: #f7f7f5; }
+.mini.ink .m-head { background: #ffffff; border-bottom: 1px solid #e2e2de; }
+.mini.ink .m-src { background: #ffffff; border: 1px solid #e2e2de; border-left: 3px solid #b8892b; }
+.mini.ink .m-line { background: #111111; opacity: 0.5; }
+[data-look='leather'] .pin-head .ref, [data-look='leather'] .pin-head .en-ref, [data-look='leather'] .pin-head button { color: #7a2a30; }
+[data-look='vilna'] .pin-head .ref, [data-look='vilna'] .pin-head .en-ref, [data-look='vilna'] .pin-head button { color: #1f5a48; }
