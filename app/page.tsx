@@ -291,6 +291,17 @@ export default function Home() {
     } catch (e) { return (e as Error).message; }
   }
 
+  // Open an exact Sefaria reference (from the Library), with a reason and an approve option if it's not approved.
+  async function openExact(ref: string): Promise<string | { message: string; approvable?: string } | null> {
+    try {
+      const res = await fetch('/api/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: ref, direct: true, exact: true, sessionId: sessionIdRef.current }) });
+      const d = await res.json();
+      if (d.session?.id) { sessionIdRef.current = d.session.id; setSessionId(d.session.id); refreshSessions(); }
+      if (d.source) { showSource(d.source); return null; }
+      return d.approvable ? { message: d.message ?? 'Not on the approved list.', approvable: d.approvable } : (d.message ?? `Couldn't open ${ref}.`);
+    } catch (e) { return (e as Error).message; }
+  }
+
   async function send(text: string, opts: { live?: boolean } = {}) {
     const msg = text.trim();
     if (!msg || busyRef.current) return;
@@ -740,6 +751,7 @@ export default function Home() {
           onPoint={pointAt}
           talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}
           onOpenRef={(q) => openRef(q, true)}
+          onOpenExact={openExact}
         />
       )}
 

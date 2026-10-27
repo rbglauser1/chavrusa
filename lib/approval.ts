@@ -61,7 +61,8 @@ export function judgeWork(info: IndexInfo, list: ApprovedEntry[]): Verdict {
   }
 
   // 6. Unknown date: allow if Sefaria files it under Rishonim/Acharonim-era categories, otherwise require approval.
-  if (info.categories.some((c) => /Rishonim|Acharonim|Geonim|Tannaim|Amoraim/.test(c)) || CLASSIC_ROOTS.includes(info.categories[0] ?? '')) {
+  // Musar, Chasidut, Halakhah, Kabbalah and Liturgy on Sefaria are traditional works; modern ones are already caught by date above.
+  if (info.categories.some((c) => /Rishonim|Acharonim|Geonim|Tannaim|Amoraim/.test(c)) || CLASSIC_ROOTS.includes(info.categories[0] ?? '') || /^(Musar|Chasidut|Halakhah|Kabbalah|Liturgy)$/.test(info.categories[0] ?? '')) {
     return { allowed: true, reason: 'Classic work (by category).', lean: 'general' };
   }
   return { allowed: false, reason: `Could not confirm that "${info.title}" is a classic work, and it is not on the approved list.`, lean: 'general' };

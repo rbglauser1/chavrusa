@@ -247,3 +247,7 @@ export async function sefariaToc(): Promise<any[]> {
 export async function rawIndex(title: string): Promise<any> {
   return getJson(`${BASE}/api/v2/raw/index/${enc(title)}`);
 }
+// The index with the number of sections in each part (used when the plain index doesn't list lengths).
+export async function indexWithCounts(title: string): Promise<any> {
+  return getJson(`${BASE}/api/v2/index/${enc(title)}?with_content_counts=1`);
+}

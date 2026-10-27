@@ -10,7 +10,7 @@ const UNIT_LABEL: Record<string, string> = { Chapter: 'Perek', Perek: 'Perek', S
 // Where the learner was in the library, kept for the whole visit (even when the Sefer is closed and reopened).
 const memory: { path: string[]; book: { title: string; part?: string } | null } = { path: [], book: null };
 
-export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => Promise<string | null>; onClose: () => void }) {
+export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void }) {
   const [path, setPathState] = useState<string[]>(memory.path);
   const setPath = (p: string[]) => { memory.path = p; setPathState(p); };
   const [items, setItems] = useState<Item[] | null>(null);
@@ -18,6 +18,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
   const setBook = (b: { title: string; part?: string } | null) => { memory.book = b; setBookState(b); };
   const [shape, setShape] = useState<Shape | null>(null);
   const [msg, setMsg] = useState('');
+  const [approvable, setApprovable] = useState<{ work: string; ref: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -37,17 +38,29 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
   }, [book]);
 
   async function open(ref: string) {
-    setBusy(true); setMsg('');
+    setBusy(true); setMsg(''); setApprovable(null);
     const err = await onOpen(ref);
     setBusy(false);
-    if (err) setMsg(err); else onClose();
+    if (!err) { onClose(); return; }
+    if (typeof err === 'string') { setMsg(err); return; }
+    setMsg(err.message);
+    if (err.approvable) setApprovable({ work: err.approvable, ref });
+  }
+  async function approveAndOpen() {
+    if (!approvable) return;
+    setBusy(true);
+    await fetch('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ work: approvable.work }) }).catch(() => {});
+    setBusy(false);
+    await open(approvable.ref);
   }
 
-  const crumbs = ['Library', ...path, ...(book ? [book.title, ...(book.part ? [book.part] : [])] : [])];
+  const partPath = book?.part ? book.part.split('|') : [];
+  const crumbs = ['Library', ...path, ...(book ? [book.title, ...partPath] : [])];
   function goCrumb(i: number) {
     if (i === 0) { setBook(null); setPath([]); return; }
     if (i <= path.length) { setBook(null); setPath(path.slice(0, i)); return; }
-    if (book && i === path.length + 1) setBook({ title: book.title });
+    if (book && i === path.length + 1) { setBook({ title: book.title }); return; }
+    if (book && i > path.length + 1) setBook({ title: book.title, part: partPath.slice(0, i - path.length - 1).join('|') });
   }
 
   return (
@@ -59,6 +72,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
         <button className="lib-close" onClick={onClose} aria-label="Close library">✕</button>
       </div>
       {msg && <div className="goto-msg">{msg}</div>}
+      {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
       {!book && (
         <div className="lib-list">
@@ -105,7 +119,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
           {shape?.kind === 'parts' && (
             <div className="lib-list">
               {shape.parts?.map((p) => (
-                <button key={p.name} className="lib-item category" onClick={() => setBook({ title: book.title, part: p.name })}>
+                <button key={p.name} className="lib-item category" onClick={() => setBook({ title: book.title, part: book.part ? `${book.part}|${p.name}` : p.name })}>
                   <span className="en">{p.name}</span>{p.he && <span className="he" dir="rtl">{p.he}</span>}<span className="chev">›</span>
                 </button>
               ))}

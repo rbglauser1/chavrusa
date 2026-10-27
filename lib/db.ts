@@ -166,6 +166,10 @@ export async function costSummary(userId = OWNER_ID) {
 }
 
 // ---------- Approved list ----------
+export async function approveWork(title: string): Promise<void> {
+  check(await db().from('approved_sources').insert({ kind: 'work', name: title, status: 'approved', lean: 'general', notes: 'Approved by the learner in the Library' }));
+  approvedCache = null;
+}
 export async function approveTranslation(versionTitle: string): Promise<void> {
   check(await db().from('approved_sources').insert({ kind: 'translation', name: versionTitle, status: 'approved', lean: 'general', notes: 'Approved by the learner in the Sefer' }));
   approvedCache = null;

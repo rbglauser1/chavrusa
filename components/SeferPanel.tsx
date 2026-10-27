@@ -14,12 +14,13 @@ interface Props {
   onSettings: (p: Partial<Settings>) => void;
   sessionId: string | null;
   onOpenRef: (q: string) => Promise<string | null>; // returns an error message, or null when opened
+  onOpenExact?: (ref: string) => Promise<string | { message: string; approvable?: string } | null>; // an exact Sefaria reference (Library)
   libraryRequest?: number; // changes when the page asks to open the Library
   talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, libraryRequest, talk, onPoint }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -125,7 +126,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {gotoMsg && <div className="goto-msg">{gotoMsg}</div>}
 
       {/* The library stays where you left it (hidden, not closed), so you can go back up a level later. */}
-      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library onOpen={onOpenRef} onClose={() => setShowLib(false)} /></div>}
+      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library onOpen={onOpenExact ?? onOpenRef} onClose={() => setShowLib(false)} /></div>}
 
       {!showLib && sources.length > 0 && (
         <div className="sefer-tabs">
