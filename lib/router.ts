@@ -274,6 +274,7 @@ const STYLE_WORDS: [RegExp, string][] = [
   [/\b(bekius|bekiyus|bekiut|quick review|review mode)\b/, 'bekius'],
   [/\b(mussar|inspirational|inspire me)\b/, 'mussar'],
   [/\b(farher|test me|quiz me|test mode|quiz mode)\b/, 'farher'],
+  [/\b(read explain ask|read and explain|read (and|&) ask|read translate explain|reader)\b/, 'reader'],
   [/\b(simple( explainer)?|simpler|explainer)\b/, 'simple'],
   [/\b(chassidic|chasidic|chassidish|chasidish|chassidus|chasidus)\b/, 'chassidic'],
 ];
