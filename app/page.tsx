@@ -113,7 +113,7 @@ export default function Home() {
   }
 
   function toggleTalk() {
-    if (settings.talkMode === 'live' && live.supported) {
+    if (live.supported) { // the live voice only
       if (convo) setConvoMode(false);
       if (live.active) live.stop(); else { voice.shutdown(); live.start(); }
     } else {
@@ -324,7 +324,7 @@ export default function Home() {
     liveText.current = ''; liveSpeech.current = { buf: '', out: '', sent: false }; exactSent.current = 0; afterSay.current = false; preStreamed.current = false;
     speechBuf.current = '';
     turnRefs.current = [];
-    speakTurn.current = !opts.live && (convoRef.current || settingsRef.current.autoSpeak || spokeLast.current);
+    speakTurn.current = !opts.live && (convoRef.current || spokeLast.current);
     spokeLast.current = false;
     if (speakTurn.current) voice.beginSpeech();
     // Show any source the message names right away, without waiting for the AI.

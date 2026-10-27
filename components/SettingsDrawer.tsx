@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { DEFAULT_VOICE_DESIGN, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS, VOICES } from '@/lib/config';
+import { DEFAULT_VOICE_DESIGN, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -149,16 +149,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           <div className="section">
             <h3>Voice</h3>
-            <div className="field">
-              <label>Talk mode</label>
-              <Seg value={s.talkMode} options={[['live', 'Live (most natural)'], ['basic', 'Basic (cheapest)']]} onPick={(v) => onChange({ talkMode: v })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                {s.talkMode === 'live'
-                  ? 'Live: natural voice that answers almost instantly and can be interrupted. About $0.05 per minute for the voice, plus the AI model.'
-                  : 'Basic: step-by-step voice. Slower and less natural, but costs only a few cents per hour for the voice.'}
-              </div>
-            </div>
-            {s.talkMode === 'live' && (
+            <div className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>Live voice: natural, answers almost instantly, and can be interrupted. About $0.05 per minute for the voice, plus the AI model.</div>
+            {(
               <div className="field">
                 <label>Live voice (tap ▶ to hear it; a sample costs about 1 cent)</label>
                 <VoicePicker kind="live" voices={[...(s.customVoices ?? []).map((v) => ({ id: v.id, name: `${v.name} (your design)` })), ...LIVE_VOICES]} value={s.liveVoice} onPick={(v) => onChange({ liveVoice: v })} disabled={liveActive} />
@@ -166,7 +158,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
-            {s.talkMode === 'live' && (
+            {(
               <div className="field">
                 <label>Speaking speed</label>
                 <Seg value={s.livePace ?? 'natural'} options={[['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
@@ -182,25 +174,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 {s.saver !== false && s.liveIdleSec > 30 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 30 seconds.</div>}
               </div>
             )}
-            {s.talkMode === 'live' && s.liveIdleSec > 0 && (
+            {s.liveIdleSec > 0 && (
               <div className="field">
                 <label>When paused</label>
                 <Seg value={s.liveWake ? 'wake' : 'tap'} options={[['wake', 'Start talking to resume'], ['tap', 'Tap Resume']]} onPick={(v) => onChange({ liveWake: v === 'wake' })} />
                 {s.liveWake && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Your first second or two may be missed while it reconnects. While paused, the microphone listens only on your device; nothing is sent until you speak.</div>}
               </div>
             )}
-            <div className="field">
-              <label>Basic voice (also used for Listen; tap ▶ to hear it)</label>
-              <VoicePicker kind="basic" voices={VOICES} value={s.voice} onPick={(v) => onChange({ voice: v })} />
-            </div>
-            <div className="field">
-              <label>Read every reply aloud</label>
-              <Seg value={s.autoSpeak ? 'on' : 'off'} options={[['off', 'Only when I tap Listen or Talk'], ['on', 'Always']]} onPick={(v) => onChange({ autoSpeak: v === 'on' })} />
-            </div>
-            <div className="field">
-              <label>Speaking speed</label>
-              <div className="range"><input type="range" min={0.8} max={1.3} step={0.05} value={s.speechRate} onChange={(e) => onChange({ speechRate: Number(e.target.value) })} /><span style={{ fontVariantNumeric: 'tabular-nums' }}>{s.speechRate.toFixed(2)}×</span></div>
-            </div>
             <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
           </div>
 
