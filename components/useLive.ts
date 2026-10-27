@@ -28,6 +28,7 @@ export function useLive(opts: {
   idleSeconds: () => number;                    // pause after this much quiet (0 = never)
   wakeOnSpeech: () => boolean;
   sessionId?: () => string | null;
+  exactReader?: () => boolean;                  // read exact text (lines, read-through) with a reading voice that never skips
   onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
@@ -71,6 +72,8 @@ export function useLive(opts: {
     if (audio.current) audio.current.srcObject = null;
     if (speakTimer.current) clearTimeout(speakTimer.current);
     pending.current.clear();
+    readerFor.current.clear();
+    stopReader();
     userBuf.current = '';
     setHeard('');
   }, []);
@@ -133,10 +136,12 @@ export function useLive(opts: {
           if (stateRef.current === 'speaking') setS('listening');
           // The learner spoke during a read-through: stop reading and let him talk.
           if (reading.current && e.delta.trim()) { const r = reading.current; reading.current = null; r(false); }
+          if (e.delta.trim()) stopReader();
         }
         break;
       case 'session.output_transcript.delta':
         bump();
+        lastOutputAt.current = Date.now();
         setS('speaking');
         if (typeof e.delta === 'string' && !answering.current && !pending.current.size) voiceBuf.current += e.delta;
         if (speakTimer.current) clearTimeout(speakTimer.current);
@@ -183,6 +188,81 @@ export function useLive(opts: {
     }
   }, [finish, handleDelegation]);
 
+  // ---------- Exact reader ----------
+  // The live voice is a conversational model: told to read a text "exactly," it still sometimes skips or jumps.
+  // So exact text (the line, phrase by phrase with its English; a read-through) is read by a reading voice
+  // (text-to-speech), which says exactly what it is given. The live voice is muted meanwhile, then says the rest.
+  type Clip = { text: string; audio: Promise<string | null> };
+  const readerQ = useRef<Clip[]>([]);
+  const readerEl = useRef<HTMLAudioElement | null>(null);
+  const readerBusy = useRef(false);
+  const readerGen = useRef(0);                         // bumps when reading is stopped, so old clips are dropped
+  const readerDone = useRef<(() => void)[]>([]);        // waiting for the reader to finish
+  const readerFor = useRef<Set<string>>(new Set());     // delegations whose exact text the reader is reading
+  const laterParts = useRef<Map<string, string[]>>(new Map()); // what the live voice says after the reading
+  const lastOutputAt = useRef(0);
+  const useReader = () => optsRef.current.exactReader?.() !== false;
+  // "be-REI-shis BO-ro" -> "bereishis boro" (the reading voice would spell out capital letters).
+  const plain = (t: string) => t.replace(/[\p{L}']+(?:-[\p{L}']+)+/gu, (w) => w.replace(/-/g, '').toLowerCase()).replace(/\s*\|\s*/g, '. ');
+  const fetchClip = (text: string): Promise<string | null> =>
+    fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: plain(text), sessionId: optsRef.current.sessionId?.() ?? null }) })
+      .then((r) => (r.ok ? r.blob() : null)).then((b) => (b ? URL.createObjectURL(b) : null)).catch(() => null);
+  const muteLive = (on: boolean) => { if (audio.current) audio.current.muted = on; };
+  const finishReader = () => {
+    readerBusy.current = false;
+    muteLive(false);
+    const waiting = readerDone.current; readerDone.current = [];
+    waiting.forEach((f) => f());
+    if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
+  };
+  const playNext = async () => {
+    const gen = readerGen.current;
+    const clip = readerQ.current.shift();
+    if (!clip) { finishReader(); return; }
+    const url = await clip.audio;
+    if (gen !== readerGen.current) return;
+    if (!url) { void playNext(); return; }
+    if (!readerEl.current) {
+      const el = document.createElement('audio');
+      el.setAttribute('playsinline', '');
+      el.style.display = 'none';
+      document.body.appendChild(el);
+      readerEl.current = el;
+    }
+    const el = readerEl.current;
+    el.onended = () => { URL.revokeObjectURL(url); if (gen === readerGen.current) void playNext(); };
+    el.onerror = el.onended;
+    el.src = url;
+    bump();
+    setS('speaking');
+    el.play().catch(() => { if (gen === readerGen.current) void playNext(); });
+  };
+  const sayExact = (text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    readerQ.current.push({ text: t, audio: fetchClip(t) }); // fetched right away, so the next piece is ready in time
+    handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${t}` : t, at: Date.now() };
+    if (!readerBusy.current) {
+      readerBusy.current = true;
+      const gen = readerGen.current;
+      // If the live voice is in the middle of a sentence, let it finish first (its audio runs a little behind).
+      const go = (tries: number) => {
+        if (gen !== readerGen.current) return;
+        if (tries < 40 && Date.now() - lastOutputAt.current < 1100) { window.setTimeout(() => go(tries + 1), 200); return; }
+        muteLive(true); void playNext();
+      };
+      go(0);
+    }
+  };
+  const whenReaderDone = () => new Promise<void>((r) => { if (!readerBusy.current) r(); else readerDone.current.push(r); });
+  function stopReader() {
+    if (!readerBusy.current) return;
+    readerGen.current++;
+    readerQ.current = [];
+    try { readerEl.current?.pause(); } catch { /* ignore */ }
+    finishReader();
+  }
+
   // Sentence by sentence: hand the voice the first part of the answer while the brain is still writing the rest,
   // so it can start speaking sooner. (GPT-Live accepts several updates for one delegation.)
   const partial = useRef<Set<string>>(new Set());
@@ -190,6 +270,7 @@ export function useLive(opts: {
     if (!pending.current.has(delegationId)) return;
     const t = forSpeech(text);
     if (!t) return;
+    if (readerFor.current.has(delegationId)) { laterParts.current.set(delegationId, [...(laterParts.current.get(delegationId) ?? []), t]); return; }
     partial.current.add(delegationId);
     handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${t}` : t, at: Date.now() };
     answering.current = true;
@@ -222,6 +303,14 @@ export function useLive(opts: {
     voiceBuf.current = '';
     handed.current = { text, at: Date.now() };
     bump();
+    if (useReader()) {
+      return new Promise<boolean>((resolve) => {
+        reading.current = resolve;
+        const gen = readerGen.current;
+        sayExact(text);
+        void whenReaderDone().then(() => { if (reading.current === resolve) { reading.current = null; resolve(gen === readerGen.current); } });
+      });
+    }
     const words = text.split(/\s+/).length;
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
     return new Promise<boolean>((resolve) => {
@@ -233,14 +322,43 @@ export function useLive(opts: {
   // The learner pointed to a line mid-call: go there now (the line's words are given, so nothing is said from memory).
   const pointTo = useCallback((ref: string, n: number, he: string, en: string) => {
     bump();
+    if (useReader() && he) {
+      stopReader();
+      send({ type: 'session.commentary.append', delegation_id: null, content: `The learner just pointed to ${ref}, line ${n}. The app is reading that line aloud to him now: stay quiet until it finishes, and do not read it yourself.` });
+      sayExact(`${toSpeech(he)}${en ? ` — ${en.slice(0, 600)}` : ''}`);
+      void whenReaderDone().then(() => send({ type: 'session.commentary.append', delegation_id: null, content: `The line has been read aloud (${ref}, line ${n}). Don't read it again. Continue from it in the learning style.` }));
+      return;
+    }
     const words = he ? `It reads: ${toSpeech(he)}${en ? ` — in English: "${en.slice(0, 600)}"` : ''}` : '';
     send({ type: 'session.commentary.append', delegation_id: null, content: `The learner just pointed to ${ref}, line ${n}. Go there now: stop what you were doing and start learning from this line. ${words} Say it phrase by phrase (lashon kodesh, then English) and continue in the learning style.` });
   }, [send]);
-  const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
+  const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); stopReader(); }, []);
 
   // The rest of the brain's answer (or all of it, if nothing went ahead): give it to the voice to say.
   const answer = useCallback((delegationId: string, text: string) => {
     if (!pending.current.has(delegationId)) return;
+    if (readerFor.current.has(delegationId)) {
+      // The reading voice read the text: once it's done, the live voice says the rest (and knows it was read).
+      readerFor.current.delete(delegationId);
+      const rest = [...(laterParts.current.get(delegationId) ?? []), forSpeech(text)].filter(Boolean).join(' ');
+      laterParts.current.delete(delegationId);
+      void whenReaderDone().then(() => {
+        if (!pending.current.has(delegationId)) return;
+        pending.current.delete(delegationId);
+        partial.current.delete(delegationId);
+        answering.current = true;
+        voiceBuf.current = '';
+        bump();
+        if (rest) {
+          send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the app has just read the text aloud to the learner. Do not read it or repeat it. Just say what follows, naturally.' });
+          send({ type: 'session.commentary.append', delegation_id: delegationId, content: rest });
+        } else {
+          send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the app has just read the text aloud to the learner. Say nothing more now and wait for the learner.' });
+          send({ type: 'session.commentary.append', delegation_id: delegationId, content: '(The line was read aloud.)' });
+        }
+      });
+      return;
+    }
     pending.current.delete(delegationId);
     const hadPart = partial.current.delete(delegationId);
     answering.current = true;
@@ -256,6 +374,7 @@ export function useLive(opts: {
   // for this request, to read that part exactly, every phrase and in order, and only then say the rest.
   const answerExact = useCallback((delegationId: string, exact: string, rest: string) => {
     if (!pending.current.has(delegationId)) return;
+    if (useReader()) { readerFor.current.add(delegationId); sayExact(forSpeech(exact)); answer(delegationId, rest); return; }
     pending.current.delete(delegationId);
     partial.current.delete(delegationId);
     answering.current = true;
@@ -266,11 +385,12 @@ export function useLive(opts: {
     handed.current = { text: `${ex} ${more}`, at: Date.now() };
     send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: first read the part between READ EXACTLY and END word for word, every phrase, in order, the lashon kodesh and then its English exactly as written. Do not skip, shorten, summarize, or translate it differently, and do not drop the Hebrew. Then say the rest naturally.' });
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: `READ EXACTLY: ${ex} END.${more ? ` Then: ${more}` : ''}` });
-  }, [send]);
+  }, [send, answer]);
 
   const exactTold = useRef<Set<string>>(new Set());
   const answerExactPart = useCallback((delegationId: string, exact: string) => {
     if (!pending.current.has(delegationId)) return;
+    if (useReader()) { readerFor.current.add(delegationId); sayExact(forSpeech(exact)); return; }
     const ex = forSpeech(exact.replace(/\s*\|\s*/g, ' … '));
     if (!ex) return;
     if (!exactTold.current.has(delegationId)) {

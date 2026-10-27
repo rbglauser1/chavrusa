@@ -94,6 +94,7 @@ export default function Home() {
     },
     isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0 || !!readingRef.current,
     sessionId: () => sessionIdRef.current,
+    exactReader: () => settingsRef.current.exactReader !== false,
     // The voice answered by itself: show the exchange and save it, so the brain knows what was said.
     onAside: (learner, said) => {
       setItems((it) => [...it, ...(learner ? [{ kind: 'user' as const, text: learner }] : []), { kind: 'assistant' as const, text: said, usage: { ai: false, reason: 'The voice answered by itself (part of the call)' } }]);

@@ -227,6 +227,7 @@ export interface Settings {
   talkMode: 'live' | 'basic'; // live = natural speech-to-speech (GPT-Live); basic = cheaper step-by-step voice
   liveVoice: string;        // voice for Live mode
   livePace: 'relaxed' | 'natural' | 'brisk'; // how fast the Live voice speaks
+  exactReader: boolean;    // Live: the text itself is read by a reading voice that never skips (the live voice talks)
   liveAccent: boolean;      // Live: yeshivish accent and Gemara niggun in English (off: natural English, yeshivish Hebrew words)
   liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
   liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
@@ -260,6 +261,7 @@ export const DEFAULT_SETTINGS: Settings = {
   talkMode: 'live',
   liveVoice: 'meridian',
   livePace: 'natural',
+  exactReader: true,
   liveAccent: false,
   liveIdleSec: 60,
   liveWake: true,
