@@ -232,7 +232,7 @@ export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'stone', name: 'Yerushalayim stone (new)', blurb: 'Warm limestone, bronze and gold: bright and calm' },
   { id: 'leather', name: 'Leather Shas (new)', blurb: 'Oxblood leather and gold leaf, the text on a cream page' },
   { id: 'vilna', name: 'Vilna green (new)', blurb: 'Deep bottle green and brass, the text on a cream page' },
-  { id: 'ink', name: 'Ink and paper (new)', blurb: 'Crisp white, true black, one thin gold line' },
+  { id: 'ink', name: 'Ink and stone (new)', blurb: 'Light grey limestone, crisp black ink, one thin gold line' },
 ];
 
 // Fonts the learner can choose for each look (Settings → Look → Fonts). "" = the look's own font.
