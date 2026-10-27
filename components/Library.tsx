@@ -10,6 +10,26 @@ const UNIT_LABEL: Record<string, string> = { Chapter: 'Perek', Perek: 'Perek', S
 // Where the learner was in the library, kept for the whole visit (even when the Sefer is closed and reopened).
 const memory: { path: string[]; book: { title: string; part?: string } | null } = { path: [], book: null };
 
+// The trail to where the learner is in the library (shown above the text in the Sefer, to jump back to any level).
+export function libraryTrail(): string[] {
+  return [...memory.path, ...(memory.book ? [memory.book.title, ...(memory.book.part ? memory.book.part.split('|') : [])] : [])];
+}
+export function jumpLibrary(level: number) {
+  // level counts the trail above (0 = the first category).
+  const n = memory.path.length;
+  if (level < n) { memory.path = memory.path.slice(0, level + 1); memory.book = null; }
+  else if (memory.book && level === n) memory.book = { title: memory.book.title };
+  else if (memory.book?.part) memory.book = { title: memory.book.title, part: memory.book.part.split('|').slice(0, level - n).join('|') };
+  window.dispatchEvent(new Event('lib-jump'));
+}
+
+// Recently opened places (kept on this device), to go back to with one tap.
+type Recent = { ref: string; trail: string[] };
+function loadRecent(): Recent[] { try { return JSON.parse(localStorage.getItem('lib-recent') ?? '[]'); } catch { return []; } }
+function saveRecent(r: Recent) {
+  try { localStorage.setItem('lib-recent', JSON.stringify([r, ...loadRecent().filter((x) => x.ref !== r.ref)].slice(0, 8))); } catch { /* optional */ }
+}
+
 export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void }) {
   const [path, setPathState] = useState<string[]>(memory.path);
   const setPath = (p: string[]) => { memory.path = p; setPathState(p); };
@@ -19,6 +39,14 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
   const [shape, setShape] = useState<Shape | null>(null);
   const [msg, setMsg] = useState('');
   const [approvable, setApprovable] = useState<{ work: string; ref: string } | null>(null);
+  const [recent, setRecent] = useState<Recent[]>([]);
+  useEffect(() => { setRecent(loadRecent()); }, [path, book]);
+  // Jumps from the trail shown in the Sefer.
+  useEffect(() => {
+    const on = () => { setPathState(memory.path); setBookState(memory.book); };
+    window.addEventListener('lib-jump', on);
+    return () => window.removeEventListener('lib-jump', on);
+  }, []);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -41,7 +69,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
     setBusy(true); setMsg(''); setApprovable(null);
     const err = await onOpen(ref);
     setBusy(false);
-    if (!err) { onClose(); return; }
+    if (!err) { saveRecent({ ref, trail: libraryTrail() }); onClose(); return; }
     if (typeof err === 'string') { setMsg(err); return; }
     setMsg(err.message);
     if (err.approvable) setApprovable({ work: err.approvable, ref });
@@ -74,6 +102,18 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
       {msg && <div className="goto-msg">{msg}</div>}
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
+      {!book && !path.length && recent.length > 0 && (
+        <div className="lib-recent">
+          <div className="muted lib-hint">Recent</div>
+          {recent.map((r) => (
+            <button key={r.ref} className="lib-item book" disabled={busy} onClick={() => open(r.ref)}>
+              <span className="en">{r.ref}</span>
+              <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{r.trail.slice(0, -1).join(' › ')}</span>
+            </button>
+          ))}
+          <div className="muted lib-hint" style={{ marginTop: 14 }}>All seforim</div>
+        </div>
+      )}
       {!book && (
         <div className="lib-list">
           {!items && !msg && <div className="muted">Opening the library…</div>}

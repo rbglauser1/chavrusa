@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { SourceData } from '@/lib/db';
-import Library from './Library';
+import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud } from '@/lib/hebrew';
 
@@ -177,6 +177,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="alt-note">
                 English shown: <b>{src.altTitle}</b>. It isn't on your approved list yet, so the Chavrusa won't quote it.
                 <button className="btn" disabled={approving} onClick={() => approve(src.altTitle as string, src.ref)}>{approving ? 'Approving…' : 'Approve this translation'}</button>
+              </div>
+            )}
+            {libUsed && libraryTrail().length > 0 && (
+              <div className="lib-trail">
+                <button onClick={() => setShowLib(true)}>📚</button>
+                {libraryTrail().map((c, i) => (
+                  <span key={i}><span className="sep">›</span><button onClick={() => { jumpLibrary(i); setShowLib(true); }}>{c}</button></span>
+                ))}
               </div>
             )}
             <div className="sefer-title">

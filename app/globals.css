@@ -531,3 +531,9 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .full-bar { position: fixed; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); z-index: 61; display: flex; gap: 8px; }
 .sefer .full-bar .chip { box-shadow: 0 2px 10px rgba(0,0,0,.25); background: var(--surface); }
 .sefer .full-bar .chip.live { background: var(--accent); color: var(--surface); }
+
+/* The library trail above the text: tap a level to go back to it */
+.sefer .lib-trail { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-family: var(--f-ui); font-size: 12px; padding: 2px 0 8px; }
+.sefer .lib-trail button { background: none; border: 0; color: var(--accent); padding: 2px 3px; font: inherit; }
+.sefer .lib-trail .sep { opacity: .5; }
+.lib-recent .lib-item .en { font-weight: 500; }
