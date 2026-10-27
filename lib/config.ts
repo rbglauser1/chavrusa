@@ -247,6 +247,10 @@ export const FONTS_EN: { id: string; name: string; stack: string }[] = [
   { id: 'inter', name: 'Inter (clean sans)', stack: "'Inter', system-ui, sans-serif" },
   { id: 'assistant', name: 'Assistant (soft sans)', stack: "'Assistant', system-ui, sans-serif" },
   { id: 'rubik', name: 'Rubik (round sans)', stack: "'Rubik', system-ui, sans-serif" },
+  { id: 'comic', name: 'Comic (Comic Sans style)', stack: "'Comic Sans MS', 'Comic Neue', 'Chalkboard SE', cursive" },
+  { id: 'patrick', name: 'Patrick Hand (handwritten)', stack: "'Patrick Hand', 'Comic Neue', cursive" },
+  { id: 'caveat', name: 'Caveat (marker)', stack: "'Caveat', 'Patrick Hand', cursive" },
+  { id: 'fredoka', name: 'Fredoka (bubbly)', stack: "'Fredoka', 'Rubik', sans-serif" },
 ];
 export const FONTS_HE: { id: string; name: string; stack: string }[] = [
   { id: '', name: "The look's own", stack: '' },
@@ -256,6 +260,11 @@ export const FONTS_HE: { id: string; name: string; stack: string }[] = [
   { id: 'bellefair', name: 'Bellefair (elegant)', stack: "'Bellefair', 'Frank Ruhl Libre', serif" },
   { id: 'heebo', name: 'Heebo (modern sans)', stack: "'Heebo', 'Assistant', sans-serif" },
   { id: 'assistant', name: 'Assistant (soft sans)', stack: "'Assistant', sans-serif" },
+  { id: 'playpen', name: 'Playpen (comic, handwritten)', stack: "'Playpen Sans Hebrew', 'Varela Round', sans-serif" },
+  { id: 'amatic', name: 'Amatic (chalk)', stack: "'Amatic SC', 'Playpen Sans Hebrew', sans-serif" },
+  { id: 'fredoka', name: 'Fredoka (bubbly)', stack: "'Fredoka', 'Varela Round', sans-serif" },
+  { id: 'varela', name: 'Varela Round (rounded)', stack: "'Varela Round', sans-serif" },
+  { id: 'secular', name: 'Secular One (bold)', stack: "'Secular One', sans-serif" },
 ];
 export const fontStack = (list: { id: string; stack: string }[], id?: string) => list.find((f) => f.id === id)?.stack ?? '';
 
