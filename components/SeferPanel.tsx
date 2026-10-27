@@ -148,7 +148,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [prevSrc, setPrevSrc] = useState<SourceData | null>(null);
   const [prevState, setPrevState] = useState<'idle' | 'loading' | 'none'>('idle');
   const prevHeight = useRef<number | null>(null);
-  useEffect(() => { setPrevSrc(null); setPrevState('idle'); }, [src?.ref]);
+  useEffect(() => { setPrevSrc(null); setPrevState('idle'); setInView('main'); }, [src?.ref]);
   function loadPrev() {
     if (!prevRef || prevSrc || prevState !== 'idle') return;
     setPrevState('loading');
@@ -165,9 +165,17 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     requestAnimationFrame(() => { el.scrollTop += el.scrollHeight - before; });
   }, [prevSrc]);
   const scrolled = useRef(false);
+  // Which amud / perek is in the middle of the screen right now (the one above, this one, or the one below).
+  const prevElRef = useRef<HTMLDivElement | null>(null);
+  const [inView, setInView] = useState<'prev' | 'main' | 'next'>('main');
   function onBodyScroll() {
     const el = bodyRef.current;
     if (!el) return;
+    const box = el.getBoundingClientRect();
+    const mid = box.top + box.height / 2;
+    const pv = prevElRef.current?.getBoundingClientRect(), nx = endRef.current?.getBoundingClientRect();
+    const where = prevSrc && pv && pv.bottom > mid ? 'prev' : nextSrc && nx && nx.top < mid ? 'next' : 'main';
+    if (where !== inView) setInView(where);
     if (el.scrollTop > 60) scrolled.current = true;
     if (scrolled.current && el.scrollTop < 30) loadPrev();
   }
@@ -296,7 +304,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               </div>
             )}
             {prevRef && (
-              <div className="prev-sec">
+              <div className="prev-sec" ref={prevElRef}>
                 {prevSrc ? (
                   <>
                     <div className="next-head"><span className="he">{prevSrc.heRef}</span> <small>{prevSrc.ref} · before this {sectionWord(src.ref)}</small></div>
@@ -431,6 +439,19 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             {src.he.length === 0 && src.en.map((l, i) => <div key={i} className="line"><div>{l}</div></div>)}
           </>
         )}
+        {src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && (() => {
+          // Always in view while scrolling: which amud you're looking at, with the page turns.
+          const v = inView === 'prev' && prevSrc ? prevSrc : inView === 'next' && nextSrc ? nextSrc : src;
+          const pv = prevSection(v.ref), nx = nextSection(v.ref);
+          const word = sectionWord(v.ref);
+          return (
+            <div className="daf-bar">
+              <button disabled={!nx || turning} onClick={() => nx && turn(nx)} aria-label={`Next ${word}`} title={`Next ${word}`}>‹</button>
+              <span className="daf-now"><span className="he">{v.heRef}</span><small>{v.ref.replace(/^.*? (\d+[ab]?)$/, '$1')}</small></span>
+              <button disabled={!pv || turning} onClick={() => pv && turn(pv)} aria-label={`Previous ${word}`} title={`Previous ${word}`}>›</button>
+            </div>
+          );
+        })()}
       </div>
     </aside>
   );

@@ -817,3 +817,9 @@ table.costs td.n, table.costs th.n { text-align: right; }
 [data-look='ink'] .sefer { background: rgba(250, 250, 248, 0.92); background-image: none; }
 [data-look='ink'] .composer-inner { background: rgba(255, 255, 255, 0.88); }
 .mini.ink { background: #e6e5e1; }
+.sefer .daf-bar { position: sticky; bottom: 8px; margin: 18px 0 0; width: max-content; display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 999px; background: var(--surface); border: 1px solid var(--rule); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); z-index: 5; font-family: var(--f-ui); }
+.sefer .daf-bar button { background: none; border: none; color: var(--accent); font-size: 20px; line-height: 1; width: 34px; height: 30px; border-radius: 999px; cursor: pointer; }
+.sefer .daf-bar button:disabled { opacity: 0.3; }
+.sefer .daf-now { display: inline-flex; align-items: baseline; gap: 6px; padding: 0 4px; }
+.sefer .daf-now .he { font-size: 15px; font-weight: 600; }
+.sefer .daf-now small { font-size: 12px; color: var(--soft); }
