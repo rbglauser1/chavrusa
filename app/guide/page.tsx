@@ -120,6 +120,7 @@ export default function Guide() {
       <section>
         <h2>How it learns with you</h2>
         <ul>
+          <li><b>It reads your cues, no commands needed:</b> start reading and it listens; start explaining and it lets you finish; hesitate and it gives a hint; say “got it” and it moves faster; get questions right and they get harder. It quietly remembers how you tend to learn (see Settings → what it remembers) and starts that way next time.</li>
           <li>One step at a time: one phrase, one line, or one step of logic per turn. Never a whole sugya, perek or Rashi at once.</li>
           <li>Short turns: about 150 words unless the style or you say otherwise; shorter in a voice call.</li>
           <li>Plain, modern English: never “thou,” “hath,” “unto.”</li>
