@@ -230,8 +230,9 @@ export function useLive(opts: {
       readerEl.current = el;
     }
     const el = readerEl.current;
-    el.onended = () => { URL.revokeObjectURL(url); if (gen === readerGen.current) void playNext(); };
-    el.onerror = el.onended;
+    const next = () => { URL.revokeObjectURL(url); if (gen === readerGen.current) void playNext(); };
+    el.onended = next;
+    el.onerror = next;
     el.src = url;
     bump();
     setS('speaking');
