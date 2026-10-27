@@ -792,3 +792,5 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .fp-name { grid-column: 1; font-family: var(--f-ui); font-size: 12px; color: var(--soft); }
 .fp-list { display: grid; gap: 6px; max-height: 360px; overflow-y: auto; padding: 2px; }
 .fp-opt.on { border-color: var(--accent); background: var(--accent-soft); }
+.sefer .page-turn { display: flex; justify-content: space-between; gap: 8px; margin: -4px 0 14px; }
+.sefer .page-turn .btn { font-size: 13px; padding: 6px 12px; }

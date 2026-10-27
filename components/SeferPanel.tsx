@@ -4,7 +4,7 @@ import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
-import { nextSection } from '@/lib/refs';
+import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 
 interface Props {
   sources: SourceData[];
@@ -143,6 +143,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     openComm(i, label, `/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`);
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
 
+  // Previous / next amud, perek or siman: open it as the page in front of you.
+  const [turning, setTurning] = useState(false);
+  async function turn(ref: string) {
+    if (!onOpenExact) { void onOpenRef(ref); return; }
+    setTurning(true);
+    try { await onOpenExact(ref); bodyRef.current?.scrollTo({ top: 0 }); } finally { setTurning(false); }
+  }
+
   // The text keeps going: under the last line, the next amud / perek appears by itself (when you reach the end
   // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
   const nextRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? nextSection(src.ref) : null;
@@ -262,6 +270,20 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
+            {(() => {
+              // Turn the page: the previous or next amud / perek / siman, one tap.
+              const whole = !isComm && !/:\d+(-\d+)?$/.test(src.ref);
+              const prev = whole ? prevSection(src.ref) : null, next = whole ? nextSection(src.ref) : null;
+              if (!prev && !next) return null;
+              const word = sectionWord(src.ref);
+              const short = (r: string) => r.replace(/^.*? (\d+[ab]?)$/, '$1');
+              return (
+                <div className="page-turn">
+                  {next ? <button className="btn" disabled={turning} onClick={() => turn(next)}>‹ Next {word} · {short(next)}</button> : <span />}
+                  {prev ? <button className="btn" disabled={turning} onClick={() => turn(prev)}>{short(prev)} · Previous {word} ›</button> : <span />}
+                </div>
+              );
+            })()}
             {src.he.map((line, i) => {
               const isOpen = canTranslate && (showAll || open.has(i));
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
