@@ -2,6 +2,10 @@ import 'server-only';
 import { ApprovedEntry } from './approval';
 import { SourceData } from './db';
 import { getLinks, getText, resolveName, todaysLearning } from './sefaria';
+import { namesForSpeech, namesForSpeechEn, yeshivishTranslit } from './hebrew';
+
+// For the voice: the line itself, lashon kodesh then English, inside [[say]] so it is read exactly, not retold.
+const sayLine = (he: string, en: string) => `[[say]]${yeshivishTranslit(namesForSpeech(he.trim()), false)}${en ? ` — ${namesForSpeechEn(en.trim())}` : ''}[[/say]]`;
 
 // When the learner names a source ("Bava Metzia 21a") or asks for today's daf or this week's parsha,
 // open it right away so the text appears instantly and the AI doesn't need an extra round trip to fetch it.
@@ -189,14 +193,14 @@ export function openingReply(s: SourceData, spoken: boolean): string {
   if (!/\d+[ab](:|$)/.test(s.ref) && /:\d+$/.test(s.ref)) {
     const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
     const en = s.en.join(' ').trim();
-    if (spoken) return en ? `${name}. ${en} Any question on it, or next ${unit}?` : `Okay, I've opened ${name}. Want me to explain it, or go on to the next ${unit}?`;
+    if (spoken) return `${name}. ${sayLine(s.he.join(' '), en)} ${en ? `Any question on it, or next ${unit}?` : `There's no approved translation for this one. Want me to explain it?`}`;
     return `**${name}**\n\n> ${s.he.join(' ').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
   }
   // A perek of Mishnah (or of Tanach): start right in, with the first mishnah / pasuk and its translation.
   if (!/\d+[ab](:|$)/.test(s.ref) && s.he.length > 1) {
     const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
     const en = (s.en[0] ?? '').trim();
-    if (spoken) return en ? `${name}. The first ${unit} says: ${en} Any question on it, or next ${unit}?` : `Okay, I've opened ${name}. Want me to explain the first ${unit}, or go on to the next?`;
+    if (spoken) return `${name}. ${sayLine(s.he[0] ?? '', en)} ${en ? `Any question on it, or next ${unit}?` : `There's no approved translation for this one. Want me to explain it?`}`;
     return `**${name}:1**\n\n> ${(s.he[0] ?? '').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
   }
   if (spoken) return `Okay, I've opened ${name}. Do you want to start from the top, or is there a specific place you want to look at?`;

@@ -13,11 +13,22 @@ export type LiveState = 'off' | 'connecting' | 'listening' | 'thinking' | 'speak
 const MAX_CHARS = 1800; // the voice accepts about 500 tokens per hand-back
 
 function forSpeech(text: string): string {
-  const t = text.replace(/\[\[\/?say\]\]/gi, '').replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
-  if (t.length <= MAX_CHARS) return t;
-  const cut = t.slice(0, MAX_CHARS);
-  const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('\n'));
-  return end > 400 ? cut.slice(0, end + 1) : cut;
+  return text.replace(/\[\[\/?say\]\]/gi, '').replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
+}
+// A long answer is handed over in several pieces (each within what the voice accepts at once), split at the end
+// of a sentence, so nothing is cut off in the middle.
+function chunks(t: string): string[] {
+  const out: string[] = [];
+  let rest = t;
+  while (rest.length > MAX_CHARS) {
+    const cut = rest.slice(0, MAX_CHARS);
+    const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '), cut.lastIndexOf('\n'), cut.lastIndexOf(' | '));
+    const at = end > 400 ? end + 1 : cut.lastIndexOf(' ') > 400 ? cut.lastIndexOf(' ') : MAX_CHARS;
+    out.push(rest.slice(0, at).trim());
+    rest = rest.slice(at).trim();
+  }
+  if (rest) out.push(rest);
+  return out;
 }
 
 export function useLive(opts: {
@@ -195,7 +206,7 @@ export function useLive(opts: {
     answering.current = true;
     voiceBuf.current = '';
     bump();
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: t });
+    for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: c });
   }, [send]);
 
   // Is what the voice just said really the answer we handed it (spoken after a pause), not its own reply?
@@ -234,7 +245,7 @@ export function useLive(opts: {
   const pointTo = useCallback((ref: string, n: number, he: string, en: string) => {
     bump();
     const words = he ? `It reads: ${toSpeech(he)}${en ? ` — in English: "${en.slice(0, 600)}"` : ''}` : '';
-    send({ type: 'session.commentary.append', delegation_id: null, content: `The learner just pointed to ${ref}, line ${n}. Go there now: stop what you were doing and start learning from this line. ${words} Say it phrase by phrase (lashon kodesh, then English) and continue in the learning style.` });
+    send({ type: 'session.commentary.append', delegation_id: null, content: `The learner just pointed to ${ref}, line ${n}. Go there now: stop what you were doing and start learning from this line. ${words} Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop and wait for the learner. Do not go past this line by yourself.` });
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
@@ -249,7 +260,8 @@ export function useLive(opts: {
     const t = forSpeech(text);
     if (t) handed.current = { text: hadPart ? `${handed.current.text} ${t}` : t, at: Date.now() };
     if (!t && hadPart) return; // everything was already handed over
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: t || 'Let’s keep going.' });
+    if (!t) send({ type: 'session.commentary.append', delegation_id: delegationId, content: 'Let’s keep going.' });
+    else for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: c });
   }, [send]);
 
   // The answer has text to say word for word (lashon kodesh phrase by phrase, with its English): the voice is told,
