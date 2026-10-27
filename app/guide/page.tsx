@@ -71,6 +71,7 @@ export default function Guide() {
       <section>
         <h2>What's free and what uses AI</h2>
         <ul>
+          <li><b>“Next” vs “continue”:</b> say <b>“next”</b> to just read the next line with its English, free. Say <b>“continue”</b> to go on with the full formula (read, explain if needed, say the move over, then the style's question): that uses AI.</li>
           <li><b>Free (no AI):</b> opening a place, “next” and “go back,” tapping a line, the Library, commentary buttons in the Sefer, reading straight through (shnayim mikra), switching style.</li>
           <li><b>Uses AI:</b> questions, explanations, and anything that needs understanding. With Saver on, everyday turns use the middle model; “go deeper” uses the top model for that turn and the next two. Under each reply you can see if AI was used and why.</li>
         </ul>

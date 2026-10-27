@@ -28,6 +28,8 @@ function shiftEffort(effort: string | undefined, delta: number, provider: string
   if (i < 0) return effort;
   return ladder[Math.max(0, Math.min(ladder.length - 1, i + delta))];
 }
+// "Continue" = the next piece with the AI and the full formula. ("Next" moves on for free, reading only.)
+const CONTINUE = /^\s*(ok(ay)?,? |so,? |please |let'?s |lets )?continue( learning| on| please| the gemara)?[.!]?\s*$/i;
 export const maxDuration = 300; // deep models with several source lookups can take a while
 
 // Streams newline-delimited JSON events: status, source, memory, mode, session, reply, cost, error.
@@ -207,6 +209,7 @@ export async function POST(req: NextRequest) {
                 ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}`
                 : message)
               + commNote
+              + (CONTINUE.test(message) || (spoken && /\bcontinue\b/i.test(message) && !/continue reading|continue from|where we left/i.test(message)) ? '\n\n[The learner said "continue": that means move on to the next piece of the text, right after the line he is on, and follow the full basic formula: read it phrase by phrase with its English, explain only if needed, and if a move was made, say it over in your own words, then your style\'s part. ("Next" is the free way that only reads.)]' : '')
               + (prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : '') },
           ],
           tools: allowCommentary ? TOOLS : TOOLS.filter((t) => t.name !== 'get_connections'),

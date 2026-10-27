@@ -311,9 +311,9 @@ function modelSwitch(s: string): Routed | null {
 // ---------- 6. Line by line ----------
 // The learner moves one line (one Sefaria segment, usually ending at the "two dots") at a time.
 // The app shows the line with its approved translation itself; the AI is only needed for a question about it.
-const NEXT_LINE = /^(the )?(next|following) (line|sentence|piece|part|statement)$|^(go |move |continue |keep going |on )?(on )?(to )?the (next|following) (line|sentence|piece|statement)$|^read the next (line|piece)$/;
+const NEXT_LINE = /^(the )?(next|following) (line|sentence|piece|part|statement)$|^(go |move |keep going |on )?(on )?(to )?the (next|following) (line|sentence|piece|statement)$|^read the next (line|piece)$/;
 const PREV_LINE = /^(the )?(previous|last|prior) (line|sentence|piece|statement)$|^(go )?back (a|one) (line|sentence)$|^(go )?(back )?to the (previous|last) (line|sentence)$/;
-const YES = /^(yes|yeah|yep|yup|sure|ok|okay|next|go ahead|go on|please do|continue|keep going|let's go|go for it|yes please|sounds good)$/;
+const YES = /^(yes|yeah|yep|yup|sure|ok|okay|next|go ahead|go on|please do|keep going|let's go|go for it|yes please|sounds good)$/;
 const ASKED_NEXT = /\b(next line|next piece|next sentence|next mishna|next mishnah|next pasuk|next posuk|next verse|the next one|continue|keep going|go on|move on)\b[^.?!]*\?\s*$/i;
 
 function lineFromSource(src: SourceData): LineText {
@@ -446,8 +446,8 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     const r = await moveLine(ctx, -1);
     if (r) return r;
   }
-  // Plain "next": the next mishnah / pasuk / line, with its translation, for free. ("Explain" brings the AI in.)
-  if (/^(next|next one|the next one|next please|onward|onwards|forward|go on|continue|keep going|moving on|move on)$/.test(s)) {
+  // Plain "next": the next mishnah / pasuk / line, with its translation, for free. ("Continue" brings the AI in: the full formula.)
+  if (/^(next|next one|the next one|next please|onward|onwards|forward|go on|keep going|moving on|move on)$/.test(s)) {
     const r = await moveLine(ctx, 1);
     if (r) return r;
   }
