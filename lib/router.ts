@@ -275,6 +275,7 @@ const STYLE_WORDS: [RegExp, string][] = [
   [/\b(mussar|inspirational|inspire me)\b/, 'mussar'],
   [/\b(farher|test me|quiz me|test mode|quiz mode)\b/, 'farher'],
   [/\b(read explain ask|read and explain|read (and|&) ask|read translate explain|reader)\b/, 'reader'],
+  [/\b(follow my lead|follow me|my lead|i'?ll lead|let me lead)\b/, 'lead'],
   [/\b(simple( explainer)?|simpler|explainer)\b/, 'simple'],
   [/\b(chassidic|chasidic|chassidish|chasidish|chassidus|chasidus)\b/, 'chassidic'],
 ];

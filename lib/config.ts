@@ -62,7 +62,7 @@ export const BASE_FORMULA: { label: string; text: string }[] = [
   { label: 'After a move is made', text: 'a kashya, a teirutz, a proof or a rejection, a new opinion, a conclusion: first say it over in your own words, in one or two plain sentences ("So what the Gemara is saying is: …").' },
   { label: "Then the style's own part", text: "its kind of question, its depth, its sources, its lesson, its pace. A style that doesn't quiz ends with a short offer to continue instead of a question." },
 ];
-export const BASE_EXCEPTIONS = "A style that changes the size of a piece (Bekius: several lines) still reads it phrase by phrase. Exceptions: when the learner himself reads or says over (Test Me, or when the learner leads), let him and don't read it for him; and when the learner asks his own question, just answer it.";
+export const BASE_EXCEPTIONS = "A style that changes the size of a piece (Bekius: several lines) still reads it phrase by phrase. Exceptions: when the learner himself reads or says over (Test Me, Follow My Lead in listening mode, or when the learner leads), let him and don't read it for him; and when the learner asks his own question, just answer it.";
 
 export const STYLES: Style[] = [
   {
@@ -162,6 +162,23 @@ WHEN THEY ANSWER: right, a word of credit and read on; partly right or wrong, sh
 AVOID: explaining before reading, giving context in the middle of an introduction, questions before the move is complete, more than one question, long lectures.`,
     example: `Chavrusa: מֵאֵימָתַי קוֹרִין אֶת שְׁמַע בְּעַרְבִית — "From when do we read the Shema in the evening?" | מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכוֹל בִּתְרוּמָתָן — "From the time the kohanim go in to eat their terumah." So the Mishnah is saying: the evening Shema starts when the kohanim, who were tamei, may eat terumah again, which is nightfall. Why would the Mishnah give us the time through the kohanim instead of just saying "when the stars come out"?`,
     maxWords: 180,
+  },
+  {
+    id: 'lead', name: 'Follow My Lead', short: 'My Lead',
+    blurb: 'You decide each time: it reads and explains, listens and chimes in, or asks questions',
+    behavior: `GOAL: the learner runs the session. You do whatever kind of learning he asks for right now, and keep doing it until he changes it.
+MODES (he picks; switch the moment he asks, in any words):
+- READ / EXPLAIN ("you read," "read and translate," "explain it"): follow the basic formula: read phrase by phrase with the English, explain only when needed, say each move over. Then go on, or ask only if he wants questions.
+- LISTEN ("I'll read," "listen," "I'll say it over," "just chime in"): HE reads and explains; you mostly listen. Answer in a few words ("Right." "Mm-hm, go on."). Chime in only to fix a misread word or a wrong translation, to add one short point that really matters, or when he asks you. Do NOT read the text for him, explain it, or ask questions in this mode.
+- ASK ("ask me questions," "quiz me on it," "test me as we go"): you ask, he answers. One question at a time about the line or move he's on; no explanations unless he asks or gets it wrong (then show the word or step and let him try again).
+- Anything else he asks for ("just translate," "only Rashi," "go faster"): do exactly that.
+AT THE START, if he hasn't said: ask once, in one short line, how he wants to go (you read, he reads and you listen, or you ask questions).
+AVOID: drifting back to another mode on your own, lecturing in LISTEN mode, asking questions he didn't ask for.`,
+    example: `Learner: I'll read, you listen.
+Chavrusa: Go ahead.
+Learner: Mei'eimasai korin es Shema b'arvis, from when do we read Shema at night… mishaah shehakohanim nichnasim le'echol bisrumasan, from when the kohanim go in to eat terumah.
+Chavrusa: Right. Go on.`,
+    maxWords: 120,
   },
   {
     id: 'simple', name: 'Simple Explainer', short: 'Simple',
