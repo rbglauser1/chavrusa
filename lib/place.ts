@@ -7,8 +7,9 @@ import { MessageRow, SourceData, SourceRow } from './db';
 import { stripNikud } from './hebrew';
 import { getText } from './sefaria';
 import { nextSection } from './refs';
+import { splitPieces } from './pieces';
 
-export interface Place { base: string; n: number }  // base: "Berakhot 36b" / "Genesis 1"; n: line (segment) number
+export interface Place { base: string; n: number; part?: number }  // base: "Berakhot 36b" / "Genesis 1"; n: line (segment) number; part: which piece of a long line (1, 2…)
 
 // "Berakhot 36b:3" -> Berakhot 36b, line 3. "Genesis 1:1-5" -> Genesis 1, line 1. "Berakhot 36b" -> line 1.
 export function splitRef(ref: string): Place {
@@ -25,8 +26,8 @@ export function currentPlace(history: MessageRow[], sources: SourceRow[]): Place
   let place: Place | null = null;
   let since = '';
   if (msg) {
-    const meta = msg.meta as { pos?: Place; line?: { ref: string }; opened?: string };
-    place = meta.pos ?? (meta.line ? splitRef(meta.line.ref) : meta.opened ? splitRef(meta.opened) : null);
+    const meta = msg.meta as { pos?: Place; line?: { ref: string; part?: number }; opened?: string };
+    place = meta.pos ?? (meta.line ? { ...splitRef(meta.line.ref), ...(meta.line.part ? { part: meta.line.part } : {}) } : meta.opened ? splitRef(meta.opened) : null);
     since = msg.created_at;
   }
   // A line the AI (or app) opened since then: either a line ref, or a whole perek/amud shown at a line (focus).
@@ -36,7 +37,7 @@ export function currentPlace(history: MessageRow[], sources: SourceRow[]): Place
   const tapAt = tap?.data.tappedAt ?? 0;
   const later = sources.filter((x) => isMain(x.ref) && (/:\d+$/.test(x.ref) || !!x.data?.focus) && x.created_at > since);
   if (tap && tapAt > Date.parse(since || '1970-01-01') && !later.some((x) => x !== tap && Date.parse(x.created_at) > tapAt + 1000)) {
-    return { base: tap.ref, n: tap.data.focus as number };
+    return { base: tap.ref, n: tap.data.focus as number, ...(tap.data.focusPart ? { part: tap.data.focusPart } : {}) };
   }
   if (later.length) {
     const base = at(later[later.length - 1]).base;
@@ -83,11 +84,20 @@ export async function textInHand(place: Place, sources: SourceRow[], approved: A
   const start = Math.max(1, from ?? place.n - 1);
   const end = Math.min(total, start + count - 1);
   const lines: string[] = [];
+  let hasParts = false;
   for (let k = start; k <= end; k++) {
-    const he = clip(stripNikud(sec.he[k - 1] ?? ''), 500);
-    const en = sec.en[k - 1] ? clip(sec.en[k - 1], 450) : '';
-    lines.push(`[${k}] ${he}${en ? `\n    ${en}` : ''}`);
+    // A long line is given in its parts ([5.1], [5.2]…), the same bite-size pieces the app reads aloud.
+    const parts = splitPieces(stripNikud(sec.he[k - 1] ?? ''), sec.en[k - 1] ?? '');
+    if (parts.length > 1) {
+      hasParts = true;
+      parts.forEach((p, j) => lines.push(`[${k}.${j + 1}] ${clip(p.he, 400)}${p.en ? `\n    ${clip(p.en, 400)}` : ''}`));
+    } else {
+      const he = clip(stripNikud(sec.he[k - 1] ?? ''), 500);
+      const en = sec.en[k - 1] ? clip(sec.en[k - 1], 450) : '';
+      lines.push(`[${k}] ${he}${en ? `\n    ${en}` : ''}`);
+    }
   }
+  const partNote = hasParts ? ` Long lines are given in parts ([5.1], [5.2]…): take one part per piece, and mark the part you finished on like [[line:5.1]].` : '';
   // Near the end of the amud / perek: the text simply goes on into the next one, so hand over its first lines too.
   let more = '';
   const nb = end >= total ? nextSection(place.base) : null;
@@ -104,17 +114,18 @@ export async function textInHand(place: Place, sources: SourceRow[], approved: A
       more = `\n[That is the end of ${place.base}. The text continues in ${nb}: when the learner goes on past the last line, his next piece is ${nb} line 1. Keep the usual pace (one piece at a time, with the basic formula); don't stop to ask whether to go on to the next amud. If you finish on a line there, mark it like [[line:${nb}:2]].]\n${nl.join('\n')}`;
     }
   }
-  return `[TEXT IN HAND: ${place.base}${sec.translation ? ` (translation: ${sec.translation.replace(/,.*$/, '')})` : ''}. The learner is on line ${place.n} of ${total}. These numbered lines are the real text; use and quote them, and do not call get_text for ${place.base} unless you need a line not shown.]\n${lines.join('\n')}${more}`;
+  return `[TEXT IN HAND: ${place.base}${sec.translation ? ` (translation: ${sec.translation.replace(/,.*$/, '')})` : ''}. The learner is on line ${place.n}${place.part ? `, part ${place.part}` : ''} of ${total}.${partNote} These numbered lines are the real text; use and quote them, and do not call get_text for ${place.base} unless you need a line not shown.]\n${lines.join('\n')}${more}`;
 }
 
 // The AI ends its reply with [[line:N]] (the line it finished on). The app reads it and hides it.
-// [[line:7]], or [[line:Berakhot 37a:2]] when it went on into the next amud / perek.
-export const LINE_MARK = /\s*\[\[\s*line\s*:\s*(?:([^\]]*?)\s*:\s*)?(\d+)\s*\]\]\s*/gi;
-export function readMark(text: string): { text: string; n: number | null; base: string | null } {
+// [[line:7]], [[line:7.2]] (part 2 of a long line), or [[line:Berakhot 37a:2]] when it went on into the next amud / perek.
+export const LINE_MARK = /\s*\[\[\s*line\s*:\s*(?:([^\]]*?)\s*:\s*)?(\d+)(?:\.(\d+))?\s*\]\]\s*/gi;
+export function readMark(text: string): { text: string; n: number | null; base: string | null; part: number | null } {
   let n: number | null = null;
   let base: string | null = null;
-  const clean = text.replace(LINE_MARK, (_, b, d) => { n = Number(d); base = b ? String(b).trim() : null; return ' '; }).replace(/[ \t]+\n/g, '\n').trim();
-  return { text: clean, n, base };
+  let part: number | null = null;
+  const clean = text.replace(LINE_MARK, (_, b, d, pt) => { n = Number(d); base = b ? String(b).trim() : null; part = pt ? Number(pt) : null; return ' '; }).replace(/[ \t]+\n/g, '\n').trim();
+  return { text: clean, n, base, part };
 }
 
 // Streaming: pass text through, but hold back anything that might be the start of a [[line:N]] mark.

@@ -3,9 +3,24 @@ import { ApprovedEntry } from './approval';
 import { SourceData } from './db';
 import { getLinks, getText, resolveName, todaysLearning } from './sefaria';
 import { namesForSpeech, namesForSpeechEn, yeshivishTranslit } from './hebrew';
+import { splitPieces } from './pieces';
 
 // For the voice: the line itself, lashon kodesh then English, inside [[say]] so it is read exactly, not retold.
-const sayLine = (he: string, en: string) => `[[say]]${yeshivishTranslit(namesForSpeech(he.trim()), false)}${en ? ` — ${namesForSpeechEn(en.trim())}` : ''}[[/say]]`;
+// A long line: just its first bite-size piece ("next" goes on to the rest).
+const sayLine = (he: string, en: string) => {
+  const p = splitPieces(he, en)[0];
+  return `[[say]]${yeshivishTranslit(namesForSpeech(p.he.trim()), false)}${p.en ? ` — ${namesForSpeechEn(p.en.trim())}` : ''}[[/say]]`;
+};
+
+// Where the learner is after an opening was read aloud: on piece 1 of a long first line (so "next" goes to piece 2).
+export function openingPlace(s: SourceData): { base: string; n: number; part: number } | null {
+  if (/\d+[ab](:|$)/.test(s.ref)) return null; // a Gemara amud opens with a question, not a reading
+  const single = /:\d+$/.test(s.ref);
+  const he = single ? s.he.join(' ') : s.he[0] ?? '', en = single ? s.en.join(' ') : s.en[0] ?? '';
+  if (splitPieces(he, en).length < 2) return null;
+  const m = s.ref.match(/^(.*):(\d+)$/);
+  return m ? { base: m[1], n: Number(m[2]), part: 1 } : { base: s.ref, n: 1, part: 1 };
+}
 
 // When the learner names a source ("Bava Metzia 21a") or asks for today's daf or this week's parsha,
 // open it right away so the text appears instantly and the AI doesn't need an extra round trip to fetch it.

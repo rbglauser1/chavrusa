@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+import { splitPieces } from '@/lib/pieces';
 
 const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
 
@@ -237,7 +238,7 @@ export function useLive(opts: {
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
     return new Promise<boolean>((resolve) => {
       reading.current = resolve;
-      send({ type: 'session.instructions.append', delegation_id: null, content: `Immediately read the following aloud, exactly as written, word for word and in full, at a steady pace, with no pauses between verses. Do not add, explain, comment, or ask anything. The lashon kodesh is written in English letters, syllables split by hyphens, with the STRESSED syllable in CAPITALS (be-REI-shis BO-ro e-LOI-kim): say it as written and stress the capitalized syllable strongly and clearly; that is the yeshivish stress. Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${text}` });
+      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: naturally and steadily, with the right stress and rhythm, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. The lashon kodesh is written in English letters, syllables split by hyphens, with the stressed syllable in capitals (be-REI-shis BO-ro e-LOH-kim): lean on the capitalized syllable naturally; that is the yeshivish stress. Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${text}` });
       window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
     });
   }, [send]);
@@ -250,11 +251,12 @@ export function useLive(opts: {
     pending.current.clear(); partial.current.clear(); exactTold.current.clear();
     userBuf.current = ''; voiceBuf.current = ''; setHeard('');
     setS('speaking');
-    const exact = he ? `${toSpeech(he)}${en ? ` — ${en.slice(0, 900)}` : ''}` : '';
+    const first = he ? splitPieces(he, en)[0] : null; // a long line: its first piece ("next" goes on)
+    const exact = first ? `${toSpeech(first.he)}${first.en ? ` — ${first.en.slice(0, 900)}` : ''}` : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: null, content: `STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${exact ? `Immediately say the following exactly and in full, word for word, every phrase in order, the lashon kodesh and then its English, without skipping anything: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.` });
-    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: `READ EXACTLY: ${exact} END.` });
+    send({ type: 'session.instructions.append', delegation_id: null, content: `STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${exact ? `Read it now, the way a chavrusa reads inside: naturally, with the right stress and rhythm, phrase by phrase, the lashon kodesh and then its English, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.` });
+    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: `TEXT: ${exact} END.` });
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
@@ -285,8 +287,8 @@ export function useLive(opts: {
     const ex = forSpeech(exact);
     const more = forSpeech(rest);
     handed.current = { text: `${ex} ${more}`, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: first read the part between READ EXACTLY and END word for word, every phrase, in order, the lashon kodesh and then its English exactly as written. Do not skip, shorten, summarize, or translate it differently, and do not drop the Hebrew. Then say the rest naturally.' });
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `READ EXACTLY: ${ex} END.${more ? ` Then: ${more}` : ''}` });
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the part between TEXT and END is the text itself. Read it first, the way a chavrusa reads inside: naturally, with the right stress and rhythm, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Then say the rest in your own words.' });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `TEXT: ${ex} END.${more ? ` Then: ${more}` : ''}` });
   }, [send]);
 
   const exactTold = useRef<Set<string>>(new Set());
@@ -296,15 +298,14 @@ export function useLive(opts: {
     if (!ex) return;
     if (!exactTold.current.has(delegationId)) {
       exactTold.current.add(delegationId);
-      send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: whatever comes between READ EXACTLY and END, read word for word, every phrase, in order, the lashon kodesh and then its English exactly as written, as soon as it arrives. Do not skip, shorten, summarize, or translate it differently, and do not drop the Hebrew. Other parts you may say naturally.' });
+      send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: whatever comes between TEXT and END is the text itself. Read it as it arrives, the way a chavrusa reads inside: naturally, with the right stress and rhythm, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Say the other parts in your own words.' });
     }
     partial.current.add(delegationId);
     answering.current = true;
     voiceBuf.current = '';
     handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${ex}` : ex, at: Date.now() };
     bump();
-    send({ type: 'session.instructions.append', delegation_id: delegationId, content: `Immediately say the following exactly and in full, word for word, before anything else, without leaving out any Hebrew word: ${ex}` });
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `READ EXACTLY: ${ex} END.` });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `TEXT: ${ex} END.` });
   }, [send]);
 
   const start = useCallback(async () => {

@@ -8,6 +8,7 @@ import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCos
 import { isJustOpening, openingReply } from './prefetch';
 import { getLinks, getText, todaysLearning } from './sefaria';
 import { currentPlace, splitRef } from './place';
+import { splitPieces } from './pieces';
 import { namesForSpeech, yeshivishTranslit } from './hebrew';
 
 export interface RouteCtx {
@@ -30,7 +31,7 @@ export interface Routed {
   line?: LineText;                // the line the learner is now on (saved, so the AI gets it without a lookup)
   readThrough?: { mode: 'he-en' | 'shnayim' | 'he'; base: string; from: number }; // start reading straight through, no AI
 }
-export interface LineText { ref: string; he: string; en: string; translation: string | null }
+export interface LineText { ref: string; he: string; en: string; translation: string | null; part?: number; parts?: number }
 
 // Lowercase, no punctuation, without polite padding at either end.
 function norm(m: string): string {
@@ -357,25 +358,38 @@ function lineReply(l: LineText, spoken: boolean): string {
   return `**${l.ref}**\n\n> ${l.he}${en}\n\n${ask}`;
 }
 
+// In a call, a long line is read in bite-size pieces (lib/pieces): "next" goes to the next piece, then the next line.
+function piecesOf(src: SourceData) { return splitPieces(src.he.join(' '), src.en.join(' ')); }
+
 async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
-  const cur = currentLine(ctx);
-  if (!cur) return null; // we don't know where they are: let the AI work it out
-  const base = cur.replace(/:\d+$/, '');
-  const n = Number(cur.split(':').pop());
+  const place = currentPlace(ctx.history, ctx.sources);
+  if (!place) return null; // we don't know where they are: let the AI work it out
+  const { base, n } = place;
+  const reply = async (src: SourceData, part: number | null): Promise<Routed> => {
+    const p = splitRef(src.ref);
+    const pcs = ctx.spoken ? piecesOf(src) : [];
+    const usePart = ctx.spoken && pcs.length > 1 ? Math.min(Math.max(part ?? 1, 1), pcs.length) : null;
+    const line: LineText = usePart
+      ? { ref: src.ref, he: pcs[usePart - 1].he, en: pcs[usePart - 1].en, translation: src.translation, part: usePart, parts: pcs.length }
+      : lineFromSource(src);
+    // Show the whole perek / amud in the Sefer, scrolled to this line, so the learner can look around it.
+    const whole = await tryText(p.base, ctx.approved);
+    // Went on into the next amud / perek: say so in a word, and carry straight on.
+    const crossed = p.base !== base;
+    const text = lineReply(line, ctx.spoken);
+    return { reply: crossed && ctx.spoken ? `${p.base}. ${text}` : crossed ? text.replace(/^\*\*[^*]+\*\*/, `**${src.ref}** (${p.base} begins)`) : text, line, ...(whole ? { source: { ...whole, focus: p.n } } : {}) };
+  };
+  // The next (or previous) piece of this same long line.
+  if (ctx.spoken && place.part) {
+    const here = await tryText(`${base}:${n}`, ctx.approved);
+    const count = here ? piecesOf(here).length : 1;
+    if (here && dir === 1 && place.part < count) return reply(here, place.part + 1);
+    if (here && dir === -1 && place.part > 1) return reply(here, place.part - 1);
+  }
   const tries = dir === 1 ? [`${base}:${n + 1}`, ...stepRef(base, 1, 'amud').map((r) => `${r}:1`)] : n > 1 ? [`${base}:${n - 1}`] : [];
   for (const ref of tries) {
     const src = await tryText(ref, ctx.approved);
-    if (src) {
-      const line = lineFromSource(src);
-      // Show the whole perek / amud in the Sefer, scrolled to this line, so the learner can look around it.
-      const p = splitRef(src.ref);
-      const whole = await tryText(p.base, ctx.approved);
-      // Went on into the next amud / perek: say so in a word, and carry straight on.
-      const crossed = p.base !== base;
-      const lead = crossed ? `${ctx.spoken ? '' : '**'}${p.base}${ctx.spoken ? '.' : '**'} ` : '';
-      const reply = lineReply(line, ctx.spoken);
-      return { reply: crossed && ctx.spoken ? `${lead}${reply}` : crossed ? reply.replace(/^\*\*[^*]+\*\*/, `**${src.ref}** (${p.base} begins)`) : reply, line, ...(whole ? { source: { ...whole, focus: p.n } } : {}) };
-    }
+    if (src) return reply(src, 1);
   }
   return { reply: dir === 1 ? `That's the end of ${base.replace(/\s\d.*$/, '')}.` : `We're already at the first ${unitWord(base)}.` };
 }

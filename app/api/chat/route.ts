@@ -8,7 +8,7 @@ import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
-import { prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
+import { openingPlace, prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
 import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
 import { after } from 'next/server';
@@ -116,7 +116,8 @@ export async function POST(req: NextRequest) {
             try { after(async () => { const p = await prepareCommentaries(src.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
           }
           const usage = { ai: false, reason: routed.line ? `Showed ${routed.line.ref} with its translation` : routed.source ? `Opened ${routed.source.ref}` : routed.settings ? 'Changed a setting' : 'Handled by the app' };
-          await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(routed.source ? { opened: routed.source.ref } : {}), ...(routed.line ? { line: routed.line } : {}) });
+          const opPlace = spoken && routed.source && !routed.line ? openingPlace(routed.source) : null; // read aloud in pieces
+          await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(routed.source ? { opened: routed.source.ref } : {}), ...(routed.line ? { line: routed.line } : {}), ...(opPlace ? { pos: opPlace } : {}) });
           send({ type: 'reply', text: routed.reply, model: 'No AI needed (free)', usage });
           await touchSession(sid);
           send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
@@ -229,7 +230,7 @@ export async function POST(req: NextRequest) {
         const reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
         // The learner tapped a line while this answer was being written: his tap wins, so don't move the place.
         const tappedSince = (await listSources(sid).catch(() => [])).some((x) => (x.data?.tappedAt ?? 0) > Date.parse(startedAt));
-        const newPlace0 = marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
+        const newPlace0 = marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n, ...(marked.part ? { part: marked.part } : {}) } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
         const newPlace = tappedSince ? null : newPlace0;
         // It went on into the next amud / perek: open it in the Sefer, at that line.
         if (newPlace && place && newPlace.base !== place.base) {

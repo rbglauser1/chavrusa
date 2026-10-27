@@ -261,7 +261,7 @@ export default function Home() {
     if (readingRef.current) { readingRef.current = null; setReadingOn(false); }
     showSource({ ...src, focus: n }); // also the next amud / perek shown under the text: it becomes its own tab
     const sid = sessionIdRef.current;
-    if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src }) }).catch(() => {});
+    if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src, ...(live.active ? { part: 1 } : {}) }) }).catch(() => {});
     if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', src.en[n - 1] ?? src.altEn?.[n - 1] ?? '');
     setItems((it) => [...it, { kind: 'event', text: `📍 Learning from ${src.ref}, line ${n}.` }]);
   }
