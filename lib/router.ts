@@ -420,7 +420,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   }
   if (HELLO.test(s)) return { reply: await greeting(ctx) };
 
-  if (/^(say (that|it) again|repeat( that| it)?( again)?|come again|what did you say|can you repeat( that)?|one more time|again)$/.test(s)) {
+  if (/^(say (that|it) again|repeat( that| it)?( again)?|come again|what did you say|can you repeat( that)?|one more time|again|read (it|that) again|read it one more time)$/.test(s)) {
     const last = [...ctx.history].reverse().find((m) => m.role === 'assistant');
     if (last) return { reply: last.content };
   }
