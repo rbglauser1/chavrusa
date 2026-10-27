@@ -176,8 +176,34 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const pv = prevElRef.current?.getBoundingClientRect(), nx = endRef.current?.getBoundingClientRect();
     const where = prevSrc && pv && pv.bottom > mid ? 'prev' : nextSrc && nx && nx.top < mid ? 'next' : 'main';
     if (where !== inView) setInView(where);
-    if (el.scrollTop > 60) scrolled.current = true;
-    if (scrolled.current && el.scrollTop < 30) loadPrev();
+  }
+
+  // The bumper: at the very top or bottom of an amud the page stops. A gentle extra push (pulling a little further
+  // with your finger, or scrolling a little further with a mouse) brings in the previous / next amud.
+  const touch = useRef<{ y: number; top: boolean; bottom: boolean } | null>(null);
+  const atTop = (el: HTMLElement) => el.scrollTop <= 2;
+  const atBottom = (el: HTMLElement) => el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+  function onTouchStart(e: React.TouchEvent) {
+    const el = bodyRef.current;
+    if (!el) return;
+    touch.current = { y: e.touches[0].clientY, top: atTop(el), bottom: atBottom(el) };
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    const t = touch.current;
+    if (!t) return;
+    const dy = e.touches[0].clientY - t.y;
+    if (t.bottom && dy < -45) { touch.current = null; loadNext(); }
+    else if (t.top && dy > 45) { touch.current = null; loadPrev(); }
+  }
+  const wheelPush = useRef(0);
+  function onWheel(e: React.WheelEvent) {
+    const el = bodyRef.current;
+    if (!el) return;
+    if ((e.deltaY > 0 && atBottom(el)) || (e.deltaY < 0 && atTop(el))) {
+      wheelPush.current += e.deltaY;
+      if (wheelPush.current > 160) { wheelPush.current = 0; loadNext(); }
+      else if (wheelPush.current < -160) { wheelPush.current = 0; loadPrev(); }
+    } else wheelPush.current = 0;
   }
 
   // Previous / next amud, perek or siman: open it as the page in front of you.
@@ -185,8 +211,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   async function turn(ref: string) {
     if (!onOpenExact) { void onOpenRef(ref); return; }
     setTurning(true);
-    try { await onOpenExact(ref); bodyRef.current?.scrollTo({ top: 0 }); } finally { setTurning(false); }
+    try { await onOpenExact(ref); } finally { setTurning(false); }
   }
+  // A new amud opened: start at its top (unless the chavrusa put us on a later line).
+  useEffect(() => {
+    scrolled.current = false;
+    if (src?.focus && src.focus > 1) return;
+    const t = window.setTimeout(() => { bodyRef.current?.scrollTo({ top: 0 }); }, 30);
+    return () => window.clearTimeout(t);
+  }, [src?.ref]);
 
   // The text keeps going: under the last line, the next amud / perek appears by itself (when you reach the end
   // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
@@ -204,13 +237,6 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Near the end of what's open: load what comes next.
   useEffect(() => { if (src?.focus && src.he.length && src.focus >= src.he.length - 2) loadNext(); }, [src?.ref, src?.focus]);
   const endRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = endRef.current;
-    if (!el || !nextRef || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) loadNext(); }, { rootMargin: '300px' });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [nextRef, nextSrc, nextState, selected]);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
@@ -281,7 +307,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       )}
 
-      <div className="sefer-body" ref={bodyRef} onScroll={onBodyScroll} style={showLib ? { display: 'none' } : undefined}>
+      <div className="sefer-body" ref={bodyRef} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
         {!src && <div className="empty">Sources your chavrusa brings will appear here.</div>}
         {src && (
           <>
@@ -316,7 +342,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   </>
                 ) : prevState === 'loading' ? <div className="muted next-head">Bringing {prevRef}…</div>
                   : prevState === 'none' ? null
-                  : <button className="btn next-load" onClick={loadPrev}>↑ Show the end of {prevRef}</button>}
+                  : <button className="bumper" onClick={loadPrev}><span>Top of {src.ref}</span><small>↑ Pull down a little more (or tap) for {prevRef}</small></button>}
               </div>
             )}
             <div className="sefer-title">
@@ -429,7 +455,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   </>
                 ) : nextState === 'loading' ? <div className="muted next-head">Bringing {nextRef}…</div>
                   : nextState === 'none' ? <div className="muted next-head">End of the sefer.</div>
-                  : <button className="btn next-load" onClick={loadNext}>Continue to {nextRef} ↓</button>}
+                  : <button className="bumper" onClick={loadNext}><span>End of {src.ref}</span><small>↓ Pull up a little more (or tap) for {nextRef}</small></button>}
               </div>
             )}
             {src.he.length === 0 && src.en.map((l, i) => <div key={i} className="line"><div>{l}</div></div>)}
