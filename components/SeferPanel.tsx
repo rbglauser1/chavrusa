@@ -77,6 +77,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   type Comm = { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string; refs?: string[] };
   const [comm, setComm] = useState<Record<string, Comm>>({});
   const [conns, setConns] = useState<Record<string, { title: string; refs: string[] }[]> | null>(null);
+  const [connState, setConnState] = useState<'loading' | 'ok' | 'failed'>('loading');
+  const [connTry, setConnTry] = useState(0);
   const [listOpen, setListOpen] = useState<number | null>(null);
   const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles)\b/;
   const isComm = !!src && / on /i.test(src.ref);
@@ -86,14 +88,18 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     : kind === 'gemara' ? [['rashi', 'Rashi'], ['tosafot', 'Tosafos']]
     : kind === 'tanakh' ? [['rashi', 'Rashi'], ['ramban', 'Ramban']] : [];
   useEffect(() => {
-    setConns(null); setListOpen(null);
+    setConns(null); setListOpen(null); setConnState('loading');
     if (!src || isComm) return;
     let gone = false;
     fetch(`/api/connections?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json())
-      .then((d) => { if (!gone) setConns(d.lines && Object.keys(d.lines).length ? d.lines : d.error ? null : {}); })
-      .catch(() => {});
+      .then((d) => {
+        if (gone) return;
+        if (d.error) { setConnState('failed'); return; }
+        setConns(d.lines ?? {}); setConnState('ok');
+      })
+      .catch(() => { if (!gone) setConnState('failed'); });
     return () => { gone = true; };
-  }, [src?.ref, isComm]);
+  }, [src?.ref, isComm, connTry]);
   // The reference of part i: "Mishnah Peah 1" + 4 -> "Mishnah Peah 1:4"; "Genesis 1:3-7" + 0 -> "Genesis 1:3".
   function partRef(i: number): string {
     if (!src) return '';
@@ -239,6 +245,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {quick.map((x) => (
                           <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                         ))}
+                        {conns === null && !fallback.length && i === 0 && connState === 'loading' && <span className="muted comm-note">Finding commentaries…</span>}
+                        {conns === null && i === 0 && connState === 'failed' && (
+                          <button className="comm-btn more" onClick={() => setConnTry((n) => n + 1)}>Couldn't load commentaries · try again</button>
+                        )}
                         {all.length > quick.length && (
                           <button className={`comm-btn more ${listOpen === i ? 'on' : ''}`} onClick={() => setListOpen((v) => (v === i ? null : i))}>
                             Commentaries ({all.length}) {listOpen === i ? '▴' : '▾'}

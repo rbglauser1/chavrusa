@@ -3,6 +3,7 @@ import { approvedList } from '@/lib/db';
 import { getLinks } from '@/lib/sefaria';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 // Which commentaries Sefaria has on each part of a text (like Sefaria's side panel): { "3": [{ title, refs }] }.
 // Straight from Sefaria, no AI.

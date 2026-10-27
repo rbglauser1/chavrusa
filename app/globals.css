@@ -543,3 +543,4 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .comm-learn { margin-inline-start: auto; background: none; border: none; color: var(--accent); font-family: var(--f-ui); font-size: 12px; text-decoration: underline; padding: 0; cursor: pointer; }
 .sefer .comm-x { background: none; border: none; color: inherit; opacity: .6; font-size: 12px; cursor: pointer; padding: 0 2px; }
 .sefer .comm-title .comm-x:first-of-type:last-child { margin-inline-start: auto; }
+.sefer .comm-note { font-size: 12px; align-self: center; }

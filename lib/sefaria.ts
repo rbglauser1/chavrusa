@@ -1,5 +1,5 @@
 import 'server-only';
-import { ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationApproved, translationRank, Verdict } from './approval';
+import { ALL_WORKS, ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationApproved, translationRank, Verdict } from './approval';
 import { SourceData } from './db';
 
 const BASE = 'https://www.sefaria.org';
@@ -155,9 +155,13 @@ export async function getLinks(ref: string, list: ApprovedEntry[], categories?: 
   }
 
   // Judge each distinct book once (in parallel), drop anything not approved.
-  const books = [...new Set(items.map((l) => (l as any).index || bookTitleFromRef(l.ref)))].slice(0, max > 80 ? 120 : 40);
+  // With "allow every sefer" on (and no blocked authors to check), no need to look each book up: much faster.
+  const quick = list.some((e) => e.kind === 'work' && e.status === 'approved' && e.name === ALL_WORKS) && !list.some((e) => e.kind === 'author' && e.status === 'blocked');
+  const books = [...new Set(items.map((l) => (l as any).index || bookTitleFromRef(l.ref)))].slice(0, quick ? 1000 : max > 80 ? 120 : 40);
   const verdicts = new Map<string, boolean>();
-  await Promise.all(books.map(async (b) => verdicts.set(b, (await judgeRef(`${b} 1`, list, b)).allowed)));
+  await Promise.all(books.map(async (b) => verdicts.set(b, quick
+    ? judgeWork({ title: b, categories: [], authors: [], year: null }, list).allowed
+    : (await judgeRef(`${b} 1`, list, b)).allowed)));
   const allowed: LinkItem[] = [];
   const excluded = new Set<string>();
   for (const l of items) {
