@@ -34,6 +34,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
   const src = sources[selected];
   const [showLib, setShowLib] = useState(false);
+  // Full screen: just the text, with a small bar for Talk and Exit. (Also asks the browser for full screen where it can.)
+  const [full, setFullState] = useState(false);
+  function setFull(on: boolean) {
+    setFullState(on);
+    try {
+      if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) void document.documentElement.requestFullscreen().catch(() => {});
+      if (!on && document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    } catch { /* not supported (e.g. iPhone): the app's own full screen still works */ }
+  }
   const [libUsed, setLibUsed] = useState(false); // load the library only once it's first opened
   useEffect(() => { if (showLib) setLibUsed(true); }, [showLib]);
   useEffect(() => { if (libraryRequest) setShowLib(true); }, [libraryRequest]);
@@ -105,10 +114,22 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
 
   return (
-    <aside className="sefer" aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''}`} aria-label="Sefer">
+      {full && (
+        <div className="full-bar">
+          {talk && (
+            <button className={`chip talk ${talk.on ? 'live' : ''}`} onClick={talk.toggle} aria-pressed={talk.on}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+              {talk.on ? (talk.status ? `${talk.status} · End` : 'End talk') : 'Talk'}
+            </button>
+          )}
+          <button className="chip" onClick={() => setFull(false)} aria-label="Exit full screen">⤡ Exit</button>
+        </div>
+      )}
       <div className="sefer-head">
         <h2>Sefer</h2>
         <button className="btn lib-open" onClick={() => setShowLib((v) => !v)} aria-pressed={showLib}>📚 Library</button>
+        <button className="btn" onClick={() => setFull(true)} aria-label="Full screen" title="Full screen">⤢</button>
         {talk && (
           <button className={`chip talk ${talk.on ? 'live' : ''}`} onClick={talk.toggle} aria-pressed={talk.on} title={talk.status || undefined}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
