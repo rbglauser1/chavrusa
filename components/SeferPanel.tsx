@@ -243,6 +243,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     return () => window.clearTimeout(t);
   }, [src?.ref]);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const nextOutline = useOutline(nextSrc?.ref, !!settings.outline && !!nextSrc);
+  const prevOutline = useOutline(prevSrc?.ref, !!settings.outline && !!prevSrc);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
@@ -325,6 +327,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       )}
 
       {settings.outline && outline.loading && !showLib && <div className="move-loading">Summarizing the steps of this {src ? sectionWord(src.ref) : 'page'}…</div>}
+      {settings.outline && outline.failed && !outline.loading && !showLib && !isComm && <div className="move-loading">Couldn&apos;t summarize the steps of this {src ? sectionWord(src.ref) : 'page'}. <button className="linklike" onClick={outline.retry}>Try again</button></div>}
       <div className="sefer-body" ref={bodyRef} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
         {!src && (home
           ? <div className="empty home-empty"><div className="he" style={{ fontSize: 44, fontWeight: 700 }}>שלום</div><p>What shall we learn? Open the <button className="linklike" onClick={() => setShowLib(true)}>📚 Library</button>, tap Talk, or type below (for example “Berachos 2a” or “today's daf”).</p></div>
@@ -353,9 +356,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     {prevSrc.he.map((line, i) => {
                       const en = prevSrc.en[i] || (prevSrc.en.length ? undefined : prevSrc.altEn?.[i]);
                       return (
-                        <div key={`p${i}`} data-line={`p${i + 1}`} className="line" onClick={() => onPoint?.(prevSrc, i + 1)}>
+                        <div key={`p${i}`} style={{ display: 'contents' }}>
+                        {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`pm${k}`} className="move">{m}</div>)}
+                        <div data-line={`p${i + 1}`} className="line" onClick={() => onPoint?.(prevSrc, i + 1)}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                           {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
+                        </div>
                         </div>
                       );
                     })}
@@ -469,9 +475,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     {nextSrc.he.map((line, i) => {
                       const en = nextSrc.en[i] || (nextSrc.en.length ? undefined : nextSrc.altEn?.[i]);
                       return (
-                        <div key={`n${i}`} data-line={`n${i + 1}`} className="line" onClick={() => onPoint?.(nextSrc, i + 1)}>
+                        <div key={`n${i}`} style={{ display: 'contents' }}>
+                        {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`nm${k}`} className="move">{m}</div>)}
+                        <div data-line={`n${i + 1}`} className="line" onClick={() => onPoint?.(nextSrc, i + 1)}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                           {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
+                        </div>
                         </div>
                       );
                     })}

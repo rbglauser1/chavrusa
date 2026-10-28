@@ -39,11 +39,12 @@ async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }>
       .filter((m) => m && Number.isFinite(Number(m.line)) && typeof m.summary === 'string')
       .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: m.summary.trim().slice(0, 160) }));
   } catch { moves = []; }
+  if (!moves.length) throw new Error('The summary did not come back in the right form.'); // not kept: tried again next time
   return { moves, usd };
 }
 
 // Kept for a month on the server: the same amud's outline is never paid for twice.
-const cached = (ref: string) => unstable_cache(() => makeOutline(ref), ['outline-v1', ref], { revalidate: 60 * 60 * 24 * 30 })();
+const cached = (ref: string) => unstable_cache(() => makeOutline(ref), ['outline-v2', ref], { revalidate: 60 * 60 * 24 * 30 })();
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
