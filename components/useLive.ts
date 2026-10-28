@@ -238,7 +238,7 @@ export function useLive(opts: {
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
     return new Promise<boolean>((resolve) => {
       reading.current = resolve;
-      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. The lashon kodesh is written in English letters, syllables split by hyphens, with the stressed syllable in capitals (be-REI-shis BO-ro e-LOH-kim): lean on the capitalized syllable naturally; that is the yeshivish stress. Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${text}` });
+      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. The lashon kodesh is written in English letters, syllables split by hyphens, with the stressed syllable in capitals (be-REI-shis BAW-raw e-LOI-kim): lean on the capitalized syllable naturally; that is the yeshivish stress. Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${text}` });
       window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
     });
   }, [send]);
