@@ -193,7 +193,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const place = () => {
       const pv = prevElRef.current;
       if (!pv) return;
-      const target = Math.max(0, pv.offsetTop + pv.offsetHeight - el.clientHeight * 0.55);
+      const bottom = pv.getBoundingClientRect().bottom - el.getBoundingClientRect().top + el.scrollTop; // the end of the amud above, in the page
+      const target = Math.max(0, bottom - el.clientHeight * 0.55);
       if (Math.abs(el.scrollTop - target) > 40 && el.scrollTop < target) el.scrollTop = target;
     };
     requestAnimationFrame(place);
