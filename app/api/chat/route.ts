@@ -8,7 +8,7 @@ import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
-import { openingPlace, prefetchSource, prepareCommentaries, warmTexts } from '@/lib/prefetch';
+import { openingPlace, prefetchSource, prepareCommentaries, prepareLamdan, warmTexts } from '@/lib/prefetch';
 import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
 import { after } from 'next/server';
@@ -132,11 +132,21 @@ export async function POST(req: NextRequest) {
         // so it doesn't spend a lookup (time and money) fetching them. When the learner points somewhere
         // inside a page just opened ("at the two dots", "where it says…"), it gets a bigger piece to search.
         const place = pre ? splitRef(pre.ref) : currentPlace(history, sources);
+        // Lamdan (prepared): the commentaries on the line are handed over every turn.
+        const lamdan = !!styleById(settings.style, settings.customStyles).preload || (!!settings.blend && !!styleById(settings.blend, settings.customStyles).preload);
         const pointing = /\btwo dots\b|\bwhere it says\b|\bline (that )?(starts|starting|begins|beginning)\b|\bthe (mishna|mishnah|gemara)\b|\bamud (bet|beis|b)\b|\bthe (end|bottom|middle)\b/i.test(message);
         const inHand = place && !(pre && pointing) ? await textInHand(place, sources, approved, pre ? 1 : undefined).catch(() => null) : null;
         // A question about a commentary ("what is Tosafos asking?"): the app finds and opens it, and hands the AI its text.
         const comm = !pre && askedCommentary ? await findCommentary(message, sources, approved, history).catch(() => null) : null;
         let commNote = '';
+        // Lamdan: the real words of the Rishonim and Acharonim on the line we're on (and the next), from Sefaria.
+        if (lamdan && place && !/ on /i.test(place.base)) {
+          const prep = await Promise.race([
+            prepareLamdan(place.base, [place.n, place.n + 1], approved).catch(() => null),
+            new Promise<null>((r) => setTimeout(() => r(null), 6000)),
+          ]);
+          if (prep) commNote += `\n\n[PREPARED: the commentaries on ${place.base}, lines ${place.n} and ${place.n + 1}, from Sefaria. Work from these; name who says what; say it in your own words.]\n${prep}`;
+        }
         if (comm && 'src' in comm) {
           if (!sources.some((x) => x.ref === comm.src.ref)) {
             await addSource(sid, comm.src);
@@ -166,9 +176,11 @@ export async function POST(req: NextRequest) {
         // Mussar and Chassidic bring their seforim on Chumash and Tanach (on Gemara/Mishnah they stay with the text).
         const mainRef = pre?.ref ?? [...sources].reverse().find((x) => !/ on /i.test(x.ref))?.ref ?? '';
         const onTanakh = TANAKH.test(mainRef);
-        const styleSources = settings.style === 'iyun' || (['mussar', 'chassidic'].includes(settings.style) && onTanakh);
+        const styleSources = settings.style === 'iyun' || lamdan || (['mussar', 'chassidic'].includes(settings.style) && onTanakh);
         const allowCommentary = askedCommentary || styleSources;
-        const styleNote = settings.style === 'iyun' && !askedCommentary
+        const styleNote = lamdan
+          ? '\n\n# Sources in this style\nLamdan: the commentaries on the line we are on are handed to you as PREPARED. Raise their kashyos yourself and give the answers, one at a time, naming who says what, in your own words (no quoting their lashon kodesh unless asked). Bring nothing that is not in front of you.'
+          : settings.style === 'iyun' && !askedCommentary
           ? '\n\n# Sources in this style\nIn Iyun you may bring the main Rishonim and Acharonim without being asked, but only ONE at a time and only when it moves the analysis forward. Never survey commentaries.'
           : ['mussar', 'chassidic'].includes(settings.style) && !askedCommentary
             ? (onTanakh

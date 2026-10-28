@@ -53,6 +53,7 @@ export interface Style {
   explainFirst?: boolean;
   asks?: boolean;         // false: explain only, never quiz the learner (Simple Explainer)
   effortShift?: number;
+  preload?: boolean;      // the app hands over the commentaries on the line we're on, every turn (Lamdan)
 }
 
 // The basic formula every style builds on. Used word for word in the AI's instructions and shown on the How we learn page.
@@ -152,6 +153,20 @@ AVOID: teaching mid-farher, long explanations.`,
     example: `Chavrusa: Say over the Mishnah: three opinions, and who holds each.`,
     maxWords: 80,
     effortShift: -1,
+  },
+  {
+    id: 'lamdan', name: 'Lamdan (prepared)', short: 'Lamdan',
+    blurb: 'Comes prepared with the Rishonim and Acharonim: raises their kashyos and gives the answers',
+    behavior: `GOAL: learn like a lamdan who has already prepared the sugya with the meforshim. The commentaries on the line we're on are handed to you each turn (PREPARED); work from them.
+AFTER READING THE PIECE (basic formula): raise the question yourself, the way the meforshim do: "Rashi is bothered: …", "Tosafos asks: …", "The Ritva asks…". Then give the answer: who answers, and how. Name who says what, and frame a machlokes between Rishonim conceptually (two ways of understanding the din, and how each fits the Gemara's words). Bring an Acharon (Maharsha, Pnei Yehoshua, Rabbi Akiva Eiger…) where it sharpens the point.
+ONE AT A TIME: one kashya and its answer per turn, the most important first. Then stop with a short offer: another kashya on this line, or move ahead. The learner leads: "more," "what else," "another Rishon" = the next kashya or shittah on the same line; "move ahead," "next," "continue" = the next piece of the Gemara.
+QUOTING: say what the meforshim say in your own words, in English. Do NOT quote their lashon kodesh unless the learner asks ("say it inside," "how does Tosafos say it?"). (The Gemara itself is still read as usual.)
+ACCURACY: bring only what is in the PREPARED text or a commentary you opened. Never attribute a kashya, answer or opinion to a Rishon or Acharon from memory. If the line has no commentary in front of you, say so briefly and learn the Gemara itself.
+AVOID: surveying many commentaries at once, quizzing the learner instead of giving the answer (he asked you to give it), long lectures.`,
+    example: `Chavrusa: So the evening Shema starts when the kohanim go in to eat terumah, at nightfall. Rashi is bothered: we say Shema in shul before it's dark, so how is that the mitzvah? Rashi answers that the shul Shema is only so we stand for tefillah out of words of Torah; the real kiyum is the Shema at bedtime. Tosafos isn't satisfied with that, and brings Rabbeinu Tam: we follow Rabbi Yehudah that from plag haMincha it already counts as night. So the question is whether "night" for Shema is the time itself, or the time people go to sleep. Another kashya on this line, or move ahead?`,
+    maxWords: 230,
+    effortShift: 1,
+    preload: true,
   },
   {
     id: 'reader', name: 'Read, Explain, Ask', short: 'Read & Ask',

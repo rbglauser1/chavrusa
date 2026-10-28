@@ -2,7 +2,7 @@ import 'server-only';
 import { ApprovedEntry } from './approval';
 import { SourceData } from './db';
 import { getLinks, getText, resolveName, todaysLearning } from './sefaria';
-import { namesForSpeech, namesForSpeechEn, yeshivishTranslit } from './hebrew';
+import { namesForSpeech, namesForSpeechEn, stripNikud, yeshivishTranslit } from './hebrew';
 import { splitPieces } from './pieces';
 
 // For the voice: the line itself, lashon kodesh then English, inside [[say]] so it is read exactly, not retold.
@@ -180,6 +180,45 @@ export async function prepareCommentaries(ref: string, approved: ApprovedEntry[]
   }).join('\n');
   return { list, refs: chosen.map((l) => l.ref) };
 }
+
+// Lamdan: the actual words of the Rishonim and Acharonim on the line(s) we're on, for the AI to work from.
+// Straight from Sefaria (free); kept to a sensible size so each turn doesn't get expensive.
+const LAMDAN_ORDER = ['Rashi', 'Tosafot', 'Rashbam', 'Ramban', 'Rashba', 'Ritva', 'Ran', 'Rosh', 'Meiri', 'Tosafot HaRosh', 'Rabbeinu Chananel', 'Shita Mekubetzet', 'Maharsha', 'Maharam', 'Maharshal', 'Penei Yehoshua', 'Rabbi Akiva Eiger', 'Tosafot Yom Tov', 'Bartenura', 'Tiferet Yisrael', 'Mishnah Berurah', 'Magen Avraham', 'Turei Zahav', 'Siftei Kohen', 'Ibn Ezra', 'Sforno', 'Or HaChaim', 'Kli Yakar'];
+export async function prepareLamdan(base: string, lines: number[], approved: ApprovedEntry[], budget = 9000): Promise<string | null> {
+  const res = await withTimeout(getLinks(base, approved, ['Commentary'], 600), 3500);
+  if (!res || !res.allowed.length) return null;
+  const want = new Set(lines);
+  const at = (a?: string) => Number(a?.match(/:(\d+)(?:-\d+)?$/)?.[1] ?? 0);
+  const hits = res.allowed.filter((l) => want.has(at(l.anchor)));
+  if (!hits.length) return '(No commentaries on these lines on Sefaria.)';
+  const rank = (t: string) => { const i = LAMDAN_ORDER.findIndex((x) => t.toLowerCase().startsWith(x.toLowerCase())); return i < 0 ? 99 : i; };
+  // Group by commentator and line, best-known first.
+  const groups = new Map<string, { title: string; line: number; refs: string[] }>();
+  for (const l of hits) {
+    const k = `${l.title}|${at(l.anchor)}`;
+    if (!groups.has(k)) groups.set(k, { title: l.title, line: at(l.anchor), refs: [] });
+    groups.get(k)!.refs.push(l.ref);
+  }
+  const ordered = [...groups.values()].sort((a, b) => a.line - b.line || rank(a.title) - rank(b.title)).slice(0, 10);
+  const texts = await Promise.all(ordered.map(async (g) => {
+    const got = await Promise.all(g.refs.slice(0, 4).map((r) => withTimeout(getText(r, approved), 4000).catch(() => null)));
+    const he = got.filter((x) => x && x.verdict.allowed).map((x) => x!.he.map(stripNikud).join(' ')).join(' ').trim();
+    return { g, he };
+  }));
+  let used = 0;
+  const out: string[] = [];
+  for (const { g, he } of texts) {
+    if (!he) continue;
+    const room = Math.min(1800, budget - used);
+    if (room < 300) break;
+    const t = he.length > room ? he.slice(0, room).replace(/\s+\S*$/, '') + ' …' : he;
+    used += t.length;
+    out.push(`${g.title} on line ${g.line}: ${t}`);
+  }
+  const others = [...new Set(hits.map((l) => l.title))].filter((t) => !out.some((o) => o.startsWith(`${t} on`)));
+  return out.join('\n') + (others.length ? `\n(Also on these lines, not shown: ${others.slice(0, 12).join(', ')}. Open one with get_text if the learner wants more.)` : '');
+}
+const stripNikudLocal = (t: string) => t.replace(/[֑-ׇ]/g, '');
 
 export function warmTexts(refs: string[], approved: ApprovedEntry[]): Promise<unknown> {
   return Promise.allSettled(refs.slice(0, 8).map((r) => getText(r, approved)));
