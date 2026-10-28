@@ -12,14 +12,8 @@ export const maxDuration = 60;
 
 // The outline of an amud / perek: each "move" (a question, an answer, a proof, a new opinion…) summarized in one line,
 // to show above the line where it begins. Made once per amud by the AI and then kept (so it costs once, not each time).
-const PROMPT = `You outline a section of Gemara, Mishnah or another sefer for a learner, so that a heading can be shown above the line where each step begins.
-Divide the numbered lines into its moves: a statement or din, a question (kashya), an answer (teirutz), a proof, a rejection, a new opinion, a story, a conclusion.
-For each move write a fuller summary, two or three short sentences (about 25 to 45 words), in plain modern English:
-- start with what kind of move it is: "Kashya:", "Teirutz:", "Proof:", "Rejection:", "Din:", "New opinion:", "Story:", "Conclusion:" (or "Mishnah:" / "Braisa:" when one is quoted);
-- say who says it and what exactly is said, including the source or pasuk it relies on;
-- say why: what bothers the Gemara, or what the answer accomplishes, and how it connects to the step before.
-Example: "Kashya: The Gemara asks why the Mishnah begins with the evening Shema instead of the morning one. It assumes the morning comes first, since the day's mitzvos usually start then."
-Give each move the number of the line where it begins. Several moves may begin on the same line. Use yeshivish Ashkenazi transliteration for names and terms (Shabbos, Rav Yehudah, Tosafos, braisa), say Hashem for G-d's Name, and add nothing that is not in the text.
+const PROMPT = `You outline a section of Gemara, Mishnah or another sefer for a learner, so that a one-line heading can be shown above the line where each step begins.
+Divide the numbered lines into its moves: a statement or din, a question (kashya), an answer (teirutz), a proof, a rejection, a new opinion, a story, a conclusion. Give each move the number of the line where it begins and a summary of at most 14 words, in plain modern English, for example "The Gemara asks: why does the Mishnah begin with the evening Shema?" Several moves may begin on the same line. Use yeshivish Ashkenazi transliteration for names and terms (Shabbos, Rav Yehudah, Tosafos), say Hashem for G-d's Name, and add nothing that is not in the text.
 Reply with JSON only, no other words: [{"line": 1, "summary": "..."}, ...] in order.`;
 
 type Move = { line: number; summary: string };
@@ -43,14 +37,14 @@ async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }>
   try {
     moves = (JSON.parse(json) as Move[])
       .filter((m) => m && Number.isFinite(Number(m.line)) && typeof m.summary === 'string')
-      .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: m.summary.trim().slice(0, 500) }));
+      .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: m.summary.trim().slice(0, 160) }));
   } catch { moves = []; }
   if (!moves.length) throw new Error('The summary did not come back in the right form.'); // not kept: tried again next time
   return { moves, usd };
 }
 
 // Kept for a month on the server: the same amud's outline is never paid for twice.
-const cached = (ref: string) => unstable_cache(() => makeOutline(ref), ['outline-v3', ref], { revalidate: 60 * 60 * 24 * 30 })();
+const cached = (ref: string) => unstable_cache(() => makeOutline(ref), ['outline-v2', ref], { revalidate: 60 * 60 * 24 * 30 })();
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
