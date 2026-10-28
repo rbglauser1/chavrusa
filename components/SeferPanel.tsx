@@ -183,13 +183,22 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     setPrevState('loading');
     void fetchAhead(prevRef).then((s) => { if (s) { prevHeight.current = bodyRef.current?.scrollHeight ?? null; setPrevSrc(s); setPrevState('idle'); } else setPrevState('none'); });
   }
-  // Keep the page where it was: push the scroll down by however much was added above.
+  // The amud above appeared: show its END (where you were heading), not its top. The view is placed so the last
+  // lines of the amud above sit just above where you were. Done again after the phone's pull-down bounce settles,
+  // since the bounce would otherwise snap the page back to the top.
   useEffect(() => {
     const el = bodyRef.current;
     if (!el || !prevSrc || prevHeight.current === null) return;
-    const before = prevHeight.current;
     prevHeight.current = null;
-    requestAnimationFrame(() => { el.scrollTop += el.scrollHeight - before; });
+    const place = () => {
+      const pv = prevElRef.current;
+      if (!pv) return;
+      const target = Math.max(0, pv.offsetTop + pv.offsetHeight - el.clientHeight * 0.55);
+      if (Math.abs(el.scrollTop - target) > 40 && el.scrollTop < target) el.scrollTop = target;
+    };
+    requestAnimationFrame(place);
+    const t1 = window.setTimeout(place, 150), t2 = window.setTimeout(place, 450), t3 = window.setTimeout(place, 800);
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2); window.clearTimeout(t3); };
   }, [prevSrc]);
   const scrolled = useRef(false);
   // Which amud / perek is in the middle of the screen right now (the one above, this one, or the one below).
