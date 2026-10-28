@@ -982,3 +982,5 @@ table.costs td.n, table.costs th.n { text-align: right; }
 /* Commentary summaries: the gist of each comment, in plain English, under its Hebrew. */
 .sefer .gist { font-family: var(--f-body); font-size: var(--en-size, 16px); line-height: 1.5; margin: 6px 0 2px; color: var(--ink); }
 .sefer .gist span { font-family: var(--f-ui); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-right: 4px; }
+.sefer .tr-toggle { display: inline-block; margin: 4px 0 2px; padding: 2px 0; background: none; border: 0; color: var(--accent); font-family: var(--f-ui); font-size: 13px; cursor: pointer; }
+.sefer .en.tr { font-size: calc(var(--en-size, 16px) - 1px); color: var(--soft); }

@@ -133,6 +133,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Commentary summaries (optional): for a commentator opened on this amud, the AI summarizes all its comments here
   // once (then kept), and each comment shows its gist in plain English.
   const [gists, setGists] = useState<Record<string, string>>({});
+  const [trOpen, setTrOpen] = useState<Set<string>>(new Set()); // comments whose translation was opened (with summaries on)
   const [gistState, setGistState] = useState<Record<string, 'loading' | 'failed' | 'done'>>({});
   useEffect(() => { setGists({}); setGistState({}); }, [src?.ref]);
   function wantGists(title: string) {
@@ -484,19 +485,23 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             return (
                               <div key={k2} className="comm-line">
                                 {pt.he.map((h, k3) => <div key={k3} className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>)}
-                                {settings.commSummary && c.title
-                                  ? (gists[pt.ref] ? <div className="gist"><span>Summary</span> {gists[pt.ref]}</div>
-                                    : gistState[gk] === 'loading' ? <div className="gist muted">Summarizing…</div>
-                                    : gistState[gk] === 'failed' ? <div className="gist muted">Couldn&apos;t summarize this. <button className="linklike" onClick={() => { setGistState((g) => { const n = { ...g }; delete n[gk]; return n; }); wantGists(c.title!); }}>Try again</button></div>
-                                    : null)
-                                  : showAll && pt.en.map((e, k3) => e ? <div key={`e${k3}`} className="en">{yeshivishEnglish(e)}</div> : null)}
+                                {settings.commSummary && c.title && (gists[pt.ref] ? <div className="gist"><span>Summary</span> {gists[pt.ref]}</div>
+                                  : gistState[gk] === 'loading' ? <div className="gist muted">Summarizing…</div>
+                                  : gistState[gk] === 'failed' ? <div className="gist muted">Couldn&apos;t summarize this. <button className="linklike" onClick={() => { setGistState((g) => { const n = { ...g }; delete n[gk]; return n; }); wantGists(c.title!); }}>Try again</button></div>
+                                  : null)}
+                                {/* Sefaria's translation: always shown when summaries are off; with summaries on, one tap away. */}
+                                {pt.en.some(Boolean) && (settings.commSummary && c.title
+                                  ? (trOpen.has(`${k}#${k2}`)
+                                    ? <>{pt.en.map((e, k3) => e ? <div key={`e${k3}`} className="en tr">{yeshivishEnglish(e)}</div> : null)}<button className="tr-toggle" onClick={() => setTrOpen((t) => { const n = new Set(t); n.delete(`${k}#${k2}`); return n; })}>translation ▴</button></>
+                                    : <button className="tr-toggle" onClick={() => setTrOpen((t) => new Set(t).add(`${k}#${k2}`))}>translation ▾</button>)
+                                  : pt.en.map((e, k3) => e ? <div key={`e${k3}`} className="en">{yeshivishEnglish(e)}</div> : null))}
                               </div>
                             );
                           })
                           : (c.he ?? []).map((h, k2) => (
                             <div key={k2} className="comm-line">
                               <div className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>
-                              {showAll && c.en?.[k2] && <div className="en">{yeshivishEnglish(c.en[k2])}</div>}
+                              {c.en?.[k2] && <div className="en">{yeshivishEnglish(c.en[k2])}</div>}
                             </div>
                           ))}
                       </div>
