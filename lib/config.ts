@@ -305,6 +305,7 @@ export interface Settings {
   theme: Look;
   layout: 'classic' | 'sefer' | 'page' | 'quiet' | 'shtender'; // the screen's arrangement (Settings → Look → Layout)
   outline: boolean;        // a one-line summary of each move above its line in the Sefer (AI, made once per amud)
+  commSummary: boolean;    // Rashi, Tosafos, Bartenura…: a short English summary under each comment (AI, made once per amud)
   heSize: number;           // px
   enSize: number;           // px
   commSize: number;         // px: Rashi, Tosafos and other commentaries
@@ -343,6 +344,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'daf',
   layout: 'classic',
   outline: false,
+  commSummary: false,
   heSize: 22,
   enSize: 16,
   commSize: 20,

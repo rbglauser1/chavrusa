@@ -78,7 +78,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Commentaries on each part, like Sefaria's side panel: which ones exist comes from Sefaria's links for this
   // perek / amud / siman; tapping one opens its words right under the line (free, straight from Sefaria, no AI).
-  type Comm = { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string; refs?: string[] };
+  type Comm = { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string; refs?: string[]; title?: string; parts?: { ref: string; he: string[]; en: string[] }[] };
   const [comm, setComm] = useState<Record<string, Comm>>({});
   const [conns, setConns] = useState<Record<string, { title: string; refs: string[] }[]> | null>(null);
   const [connState, setConnState] = useState<'loading' | 'ok' | 'failed'>('loading');
@@ -120,15 +120,38 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const list = [...(conns?.[partNum(i)] ?? [])];
     return list.sort((x, y) => rank(x.title) - rank(y.title) || x.title.localeCompare(y.title));
   }
-  async function openComm(i: number, label: string, url: string, refs?: string[]) {
+  async function openComm(i: number, label: string, url: string, refs?: string[], title?: string) {
     const key = `${i}:${label}`;
     if (comm[key]) { setComm((c) => { const n = { ...c }; delete n[key]; return n; }); return; }
-    setComm((c) => ({ ...c, [key]: { loading: true, refs } }));
+    setComm((c) => ({ ...c, [key]: { loading: true, refs, title } }));
     try {
       const r = await fetch(url).then((x) => x.json());
-      setComm((c) => ({ ...c, [key]: r.error ? { error: r.error } : r.empty ? { empty: true } : { he: r.he, en: r.en, refs } }));
+      setComm((c) => ({ ...c, [key]: r.error ? { error: r.error } : r.empty ? { empty: true } : { he: r.he, en: r.en, refs, title, parts: r.parts } }));
     } catch { setComm((c) => ({ ...c, [key]: { error: 'Could not load it.' } })); }
   }
+
+  // Commentary summaries (optional): for a commentator opened on this amud, the AI summarizes all its comments here
+  // once (then kept), and each comment shows its gist in plain English.
+  const [gists, setGists] = useState<Record<string, string>>({});
+  const [gistState, setGistState] = useState<Record<string, 'loading' | 'failed' | 'done'>>({});
+  useEffect(() => { setGists({}); setGistState({}); }, [src?.ref]);
+  function wantGists(title: string) {
+    if (!src || !conns) return;
+    const k = `${src.ref}|${title}`;
+    if (gistState[k] === 'loading' || gistState[k] === 'done') return;
+    const refs = Object.values(conns).flatMap((list) => list.filter((x) => x.title === title).flatMap((x) => x.refs));
+    if (!refs.length) return;
+    setGistState((g) => ({ ...g, [k]: 'loading' }));
+    fetch('/api/gist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, section: src.ref, refs }) })
+      .then((r) => r.json())
+      .then((d) => { const n = Object.keys(d.gists ?? {}).length; setGists((g) => ({ ...g, ...(d.gists ?? {}) })); setGistState((g) => ({ ...g, [k]: n ? 'done' : 'failed' })); })
+      .catch(() => setGistState((g) => ({ ...g, [k]: 'failed' })));
+  }
+  // Switched on (or a box opened) while summaries are on: summarize what's open.
+  useEffect(() => {
+    if (!settings.commSummary) return;
+    for (const c of Object.values(comm)) if (c.title && !c.loading) wantGists(c.title);
+  }, [settings.commSummary, comm, conns]);
   // The Chavrusa opened a commentary on a line: open it right there under the line, and scroll to it.
   useEffect(() => {
     if (!inlineComm || !src || src.ref !== inlineComm.main) return;
@@ -140,7 +163,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     return () => window.clearTimeout(t);
   }, [inlineComm?.key, src?.ref]);
   const openLinked = (i: number, x: { title: string; refs: string[] }) =>
-    openComm(i, nice(x.title), `/api/commentary?refs=${encodeURIComponent(x.refs.join('|'))}`, x.refs);
+    openComm(i, nice(x.title), `/api/commentary?refs=${encodeURIComponent(x.refs.join('|'))}`, x.refs, x.title);
   const openUsual = (i: number, who: string, label: string) =>
     openComm(i, label, `/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`);
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
@@ -318,6 +341,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             <button className={`toggle ${showAll ? 'on' : ''}`} onClick={() => setShowAll((v) => !v)}>Translation {showAll ? 'on' : 'off'}</button>
           )}
           {!isComm && (
+            <button className={`toggle ${settings.commSummary ? 'on' : ''}`} onClick={() => onSettings({ commSummary: !settings.commSummary })} title="Rashi, Tosafos… summarized in short English under each comment">Summaries {settings.commSummary ? 'on' : 'off'}</button>
+          )}
+          {!isComm && (
             <button className={`toggle ${settings.outline ? 'on' : ''}`} onClick={() => onSettings({ outline: !settings.outline })} title="A one-line summary of each step, above its line">Steps {settings.outline ? 'on' : 'off'}</button>
           )}
           <span className="muted" style={{ alignSelf: 'center' }}>
@@ -443,6 +469,20 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {c.loading ? <div className="muted">Opening…</div>
                           : c.error ? <div className="muted">{c.error}</div>
                           : c.empty ? <div className="muted">No {label} on this part on Sefaria.</div>
+                          : c.parts?.length ? c.parts.map((pt, k2) => {
+                            const gk = src ? `${src.ref}|${c.title}` : '';
+                            return (
+                              <div key={k2} className="comm-line">
+                                {pt.he.map((h, k3) => <div key={k3} className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>)}
+                                {settings.commSummary && c.title
+                                  ? (gists[pt.ref] ? <div className="gist"><span>Summary</span> {gists[pt.ref]}</div>
+                                    : gistState[gk] === 'loading' ? <div className="gist muted">Summarizing…</div>
+                                    : gistState[gk] === 'failed' ? <div className="gist muted">Couldn&apos;t summarize this. <button className="linklike" onClick={() => { setGistState((g) => { const n = { ...g }; delete n[gk]; return n; }); wantGists(c.title!); }}>Try again</button></div>
+                                    : null)
+                                  : showAll && pt.en.map((e, k3) => e ? <div key={`e${k3}`} className="en">{yeshivishEnglish(e)}</div> : null)}
+                              </div>
+                            );
+                          })
                           : (c.he ?? []).map((h, k2) => (
                             <div key={k2} className="comm-line">
                               <div className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>
