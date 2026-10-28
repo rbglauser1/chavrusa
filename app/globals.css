@@ -963,3 +963,19 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .move-loading { font-family: var(--f-ui); font-size: 12px; color: var(--soft); padding: 4px 18px; }
 /* Steps: larger, following the English text size (Settings → English text size). */
 .sefer .move, .min .move { font-size: calc(var(--en-size, 16px) + 1px); font-weight: 500; line-height: 1.45; margin: 18px 0 8px; }
+
+/* ---------- Sefer only: the Sefer is the whole app, the chavrusa in a small dock below ---------- */
+.app.is-sefer-home { flex-direction: column; height: 100dvh; }
+.sefer.home { position: relative; inset: auto; z-index: auto; flex: 1; min-height: 0; width: 100%; max-width: 900px; min-width: 0; margin: 0 auto; border: 0; }
+.sefer.home .sefer-head { padding-top: max(10px, env(safe-area-inset-top)); }
+.sefer.home .daf-bar { position: absolute; left: 12px; bottom: 10px; }
+.sefer.full.home { position: fixed; inset: 0; z-index: 60; max-width: none; }
+.sefer.full.home .daf-bar { position: fixed; bottom: max(14px, env(safe-area-inset-bottom)); }
+.min-dock { flex: none; width: 100%; max-width: 900px; margin: 0 auto; background: var(--surface); border-top: 1px solid var(--rule); font-family: var(--f-ui); color: var(--ink); }
+.min-dock .min-caption { padding: 8px 22px 0; }
+.min-dock .min-caption-text { max-height: 2.9em; font-size: var(--en-size, 16px); }
+.min-status.inline { padding: 0; min-height: 0; }
+.min-dock .min-compose { padding-top: 8px; }
+.home-empty { text-align: center; padding: 10vh 10px 0; }
+.home-empty p { font-size: 17px; line-height: 1.6; color: var(--soft); }
+.linklike { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }

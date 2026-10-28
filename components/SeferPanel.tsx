@@ -21,9 +21,10 @@ interface Props {
   talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
   inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
+  home?: { onMenu: () => void; onSettings: () => void } | null; // Sefer only: the Sefer is the whole app (sessions and settings in its header, no close)
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -261,7 +262,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
 
   return (
-    <aside className={`sefer ${full ? 'full' : ''}`} aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''}`} aria-label="Sefer">
       {full && (
         <div className="full-bar">
           {talk && (
@@ -274,7 +275,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       )}
       <div className="sefer-head">
-        <h2>Sefer</h2>
+        {home ? (
+          <button className="icon-btn" onClick={home.onMenu} aria-label="Sessions">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+        ) : <h2>Sefer</h2>}
         <button className="btn lib-open" onClick={() => setShowLib((v) => !v)} aria-pressed={showLib}>📚 Library</button>
         <button className="btn" onClick={() => setFull(true)} aria-label="Full screen" title="Full screen">⤢</button>
         {talk && (
@@ -284,7 +289,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
           </button>
         )}
         {src && <a href={src.url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open on Sefaria ↗</a>}
-        <button className="icon-btn" onClick={onClose} aria-label="Close sefer">✕</button>
+        {home ? (
+          <button className="icon-btn" onClick={home.onSettings} aria-label="Settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+          </button>
+        ) : <button className="icon-btn" onClick={onClose} aria-label="Close sefer">✕</button>}
       </div>
 
       {/* (The "Go to" box was removed: open places from the Library, or just tell the chavrusa.) */}
@@ -317,7 +326,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
       {settings.outline && outline.loading && !showLib && <div className="move-loading">Summarizing the steps of this {src ? sectionWord(src.ref) : 'page'}…</div>}
       <div className="sefer-body" ref={bodyRef} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
-        {!src && <div className="empty">Sources your chavrusa brings will appear here.</div>}
+        {!src && (home
+          ? <div className="empty home-empty"><div className="he" style={{ fontSize: 44, fontWeight: 700 }}>שלום</div><p>What shall we learn? Open the <button className="linklike" onClick={() => setShowLib(true)}>📚 Library</button>, tap Talk, or type below (for example “Berachos 2a” or “today's daf”).</p></div>
+          : <div className="empty">Sources your chavrusa brings will appear here.</div>)}
         {src && (
           <>
             {!src.en.length && src.altEn?.length && src.altTitle && canTranslate && (

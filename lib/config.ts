@@ -303,7 +303,7 @@ export interface Settings {
   display: 'toggle' | 'original' | 'off';  // off = voice/listen-only, no text shown
   nikud: boolean;
   theme: Look;
-  layout: 'classic' | 'page' | 'quiet' | 'shtender'; // the screen's arrangement (Settings → Look → Layout)
+  layout: 'classic' | 'sefer' | 'page' | 'quiet' | 'shtender'; // the screen's arrangement (Settings → Look → Layout)
   outline: boolean;        // a one-line summary of each move above its line in the Sefer (AI, made once per amud)
   heSize: number;           // px
   enSize: number;           // px

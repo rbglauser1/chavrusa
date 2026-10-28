@@ -11,7 +11,7 @@ import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 
-export type Layout = 'page' | 'quiet' | 'shtender';
+export type Layout = 'page' | 'quiet' | 'shtender' | 'dock';
 type Msg = { kind: string; text: string };
 type InlineComm = { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null;
 
@@ -178,6 +178,32 @@ export default function Minimal(p: Props) {
       </div>
     </div>
   );
+
+  // ---------- The dock under the Sefer (Sefer only): the last words, a box, and the conversation when pulled up ----------
+  if (p.layout === 'dock') {
+    return (
+      <div className="min-dock">
+        {(caption || label) && (
+          <button className="min-caption" onClick={() => setSheet(true)} aria-label="Show the conversation">
+            <span className="min-grip" aria-hidden="true" />
+            {label && <span className="min-status inline">{label}</span>}
+            {caption && <span className="min-caption-text">{caption.length > 200 ? `${caption.slice(0, 200).replace(/\s+\S*$/, '')}…` : caption}</span>}
+          </button>
+        )}
+        {composer()}
+        {sheet && (
+          <>
+            <div className="min-scrim" onClick={() => setSheet(false)} />
+            <section className="min-sheet" aria-label="Conversation">
+              <button className="min-grip-btn" onClick={() => setSheet(false)} aria-label="Back to the text"><span className="min-grip" /></button>
+              <Thread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />
+              {composer(true)}
+            </section>
+          </>
+        )}
+      </div>
+    );
+  }
 
   // ---------- A · The page ----------
   if (p.layout === 'page') {

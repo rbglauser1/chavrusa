@@ -131,7 +131,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Layout</label>
               <div className="layout-pick">
-                {([['classic', 'Classic', 'Everything on one screen, as now'], ['page', 'The page', 'The sefer is home; one Talk button'], ['quiet', 'Quiet chat', 'The conversation, like a book'], ['shtender', 'Shtender', 'Text on top, conversation below']] as const).map(([id, name, blurb]) => (
+                {([['sefer', 'Sefer only', 'Just the Sefer; the chavrusa below it'], ['classic', 'Classic', 'Conversation screen, Sefer on the side'], ['page', 'The page', 'The sefer is home; one Talk button'], ['quiet', 'Quiet chat', 'The conversation, like a book'], ['shtender', 'Shtender', 'Text on top, conversation below']] as const).map(([id, name, blurb]) => (
                   <button key={id} className={`style-opt ${(s.layout ?? 'classic') === id ? 'on' : ''}`} onClick={() => onChange({ layout: id })}>
                     <b>{name}</b><span>{blurb}</span>
                   </button>

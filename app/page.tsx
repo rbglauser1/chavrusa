@@ -522,12 +522,13 @@ export default function Home() {
   const current = sources[selected];
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
-  const minimal = !!settings.layout && settings.layout !== 'classic';
+  const seferHome = settings.layout === 'sefer' && settings.display !== 'off';
+  const minimal = !!settings.layout && settings.layout !== 'classic' && !seferHome;
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
   return (
-    <div className={`app ${minimal ? 'is-min' : ''}`}>
-      {minimal ? (
+    <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
+      {seferHome ? null : minimal ? (
         <div className="main">
           <Minimal
             layout={settings.layout as 'page' | 'quiet' | 'shtender'}
@@ -810,7 +811,7 @@ export default function Home() {
       </div>
       )}
 
-      {showSefer && (
+      {(showSefer || seferHome) && (
         <SeferPanel
           sources={sources} selected={selected} onSelect={setSelected}
           onClose={() => { setSeferOpen(false); setLibReq(0); }}
@@ -821,6 +822,29 @@ export default function Home() {
           onOpenRef={(q) => openRef(q, true)}
           onOpenExact={openExact}
           inlineComm={inlineComm}
+          home={seferHome ? { onMenu: () => setDrawer('sessions'), onSettings: () => setDrawer('settings') } : null}
+        />
+      )}
+      {seferHome && (
+        <Minimal
+          layout="dock"
+          settings={settings}
+          current={current ?? null}
+          items={items}
+          busy={busy}
+          status={status}
+          input={input}
+          setInput={setInput}
+          send={(t) => { spokeLast.current = false; if (!live.active) voice.unlock(); send(t); }}
+          talk={{ supported: voice.supported, on: talking, state: live.active ? live.state : convo ? voice.state : 'off', heard: live.heard, toggle: toggleTalk, resume: () => live.start() }}
+          pointAt={pointAt}
+          inlineComm={inlineComm}
+          onMenu={() => setDrawer('sessions')}
+          onSettings={() => setDrawer('settings')}
+          onLibrary={openLibrary}
+          onSefer={() => setSeferOpen(true)}
+          onNewSession={newSession}
+          starters={STARTERS}
         />
       )}
 
