@@ -961,3 +961,5 @@ table.costs td.n, table.costs th.n { text-align: right; }
 /* Steps: a one-line summary of each move, above the line where it begins. */
 .sefer .move, .min .move { font-family: var(--f-ui); font-size: 13px; line-height: 1.4; color: var(--accent); margin: 14px 0 6px; padding-left: 10px; border-left: 2px solid var(--accent); }
 .move-loading { font-family: var(--f-ui); font-size: 12px; color: var(--soft); padding: 4px 18px; }
+/* Steps: larger, following the English text size (Settings → English text size). */
+.sefer .move, .min .move { font-size: calc(var(--en-size, 16px) + 1px); font-weight: 500; line-height: 1.45; margin: 18px 0 8px; }
