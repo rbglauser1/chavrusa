@@ -223,6 +223,7 @@ export async function POST(req: NextRequest) {
                 ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}`
                 : message)
               + commNote
+              + (lamdan && /^\s*(ok(ay)?|yes|yeah|next|go on|keep going|move on|moving on|continue|next one|onward)[.!]?\s*$/i.test(message) ? '\n\n[The learner is moving on. If an important kashya on this line is still waiting, bring it now with its answer; otherwise read the next piece and bring the kashya on it. Do not ask whether he wants it.]' : '')
               + (CONTINUE.test(message) || (spoken && /\bcontinue\b/i.test(message) && !/continue reading|continue from|where we left/i.test(message)) ? '\n\n[The learner said "continue": that means move on to the next piece of the text, right after the line he is on, and follow the full basic formula: read it phrase by phrase with its English, explain only if needed, and if a move was made, say it over in your own words, then your style\'s part. ("Next" is the free way that only reads.)]' : '')
               + (prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : '') },
           ],

@@ -465,9 +465,11 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     return { reply: `Last time we were learning ${last.source.ref}. I've opened it again.${tail}\n\nWant to pick up from there?`.trim(), source: last.source };
   }
 
+  // Lamdan: moving on is where it brings the meforshim's kashyos, so "next" goes to the chavrusa (AI), not the free reader.
+  const lamdanStyle = !!styleById(ctx.settings.style, ctx.settings.customStyles).preload;
   // Line by line: "next line", or "yes" when the Chavrusa just asked whether to continue to the next line.
   const lastBotText = [...ctx.history].reverse().find((m) => m.role === 'assistant')?.content ?? '';
-  if (NEXT_LINE.test(s) || (YES.test(s) && ASKED_NEXT.test(lastBotText.trim()))) {
+  if (!lamdanStyle && (NEXT_LINE.test(s) || (YES.test(s) && ASKED_NEXT.test(lastBotText.trim())))) {
     const r = await moveLine(ctx, 1);
     if (r) return r;
   }
@@ -476,7 +478,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     if (r) return r;
   }
   // Plain "next": the next mishnah / pasuk / line, with its translation, for free. ("Continue" brings the AI in: the full formula.)
-  if (/^(next|next one|the next one|next please|onward|onwards|forward|go on|keep going|moving on|move on)$/.test(s)) {
+  if (!lamdanStyle && /^(next|next one|the next one|next please|onward|onwards|forward|go on|keep going|moving on|move on)$/.test(s)) {
     const r = await moveLine(ctx, 1);
     if (r) return r;
   }
