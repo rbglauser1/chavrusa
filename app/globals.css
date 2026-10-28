@@ -571,10 +571,10 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .style-opt.custom .style-acts button { background: none; border: none; color: var(--accent); font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; }
 .style-maker { margin-top: 10px; padding: 12px; border: 1px dashed var(--rule); border-radius: var(--radius); }
 .style-maker textarea { width: 100%; font: inherit; }
-.sefer .next-sec { margin-top: 18px; padding-top: 10px; border-top: 2px solid var(--rule); }
-.sefer .next-head { margin: 4px 0 10px; font-family: var(--f-ui); }
-.sefer .next-head .he { font-size: 1.05em; }
-.sefer .next-head small { color: var(--soft); margin-inline-start: 6px; }
+.sefer .next-sec { margin-top: 28px; padding-top: 16px; border-top: 3px solid var(--accent); }
+.sefer .next-head { margin: 6px 0 18px; font-family: var(--f-ui); font-size: 1.15em; }
+.sefer .next-head .he { font-family: var(--f-he); font-size: 2em; font-weight: 700; color: var(--accent); line-height: 1.2; }
+.sefer .next-head small { display: block; font-size: 1.15em; font-weight: 600; color: var(--ink); margin-top: 4px; }
 .sefer .next-load { width: 100%; }
 
 /* ---------- New looks to try: Yerushalayim stone, Leather Shas, Vilna green, Ink and paper ---------- */
