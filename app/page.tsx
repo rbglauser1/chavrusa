@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { allStyles, DEFAULT_SETTINGS, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
+import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { Disclaimer, Help } from '@/components/Modals';
@@ -521,10 +522,35 @@ export default function Home() {
   const current = sources[selected];
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
+  const minimal = !!settings.layout && settings.layout !== 'classic';
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
   return (
-    <div className="app">
+    <div className={`app ${minimal ? 'is-min' : ''}`}>
+      {minimal ? (
+        <div className="main">
+          <Minimal
+            layout={settings.layout as 'page' | 'quiet' | 'shtender'}
+            settings={settings}
+            current={current ?? null}
+            items={items}
+            busy={busy}
+            status={status}
+            input={input}
+            setInput={setInput}
+            send={(t) => { spokeLast.current = false; if (!live.active) voice.unlock(); send(t); }}
+            talk={{ supported: voice.supported, on: talking, state: live.active ? live.state : convo ? voice.state : 'off', heard: live.heard, toggle: toggleTalk, resume: () => live.start() }}
+            pointAt={pointAt}
+            inlineComm={inlineComm}
+            onMenu={() => setDrawer('sessions')}
+            onSettings={() => setDrawer('settings')}
+            onLibrary={openLibrary}
+            onSefer={() => { setSeferOpen(true); setLibReq(0); }}
+            onNewSession={newSession}
+            starters={STARTERS}
+          />
+        </div>
+      ) : (
       <div className="main">
         <header className="topbar">
           <button className="icon-btn" onClick={() => setDrawer('sessions')} aria-label="Sessions">
@@ -782,6 +808,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      )}
 
       {showSefer && (
         <SeferPanel

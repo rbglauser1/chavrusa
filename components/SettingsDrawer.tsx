@@ -129,6 +129,15 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           <div className="section">
             <h3>Display</h3>
             <div className="field">
+              <label>Layout</label>
+              <div className="layout-pick">
+                {([['classic', 'Classic', 'Everything on one screen, as now'], ['page', 'The page', 'The sefer is home; one Talk button'], ['quiet', 'Quiet chat', 'The conversation, like a book'], ['shtender', 'Shtender', 'Text on top, conversation below']] as const).map(([id, name, blurb]) => (
+                  <button key={id} className={`style-opt ${(s.layout ?? 'classic') === id ? 'on' : ''}`} onClick={() => onChange({ layout: id })}>
+                    <b>{name}</b><span>{blurb}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>New, minimal layouts to try. Everything still works the same underneath; the classic screen stays.</div>
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>

@@ -303,6 +303,7 @@ export interface Settings {
   display: 'toggle' | 'original' | 'off';  // off = voice/listen-only, no text shown
   nikud: boolean;
   theme: Look;
+  layout: 'classic' | 'page' | 'quiet' | 'shtender'; // the screen's arrangement (Settings → Look → Layout)
   heSize: number;           // px
   enSize: number;           // px
   commSize: number;         // px: Rashi, Tosafos and other commentaries
@@ -339,6 +340,7 @@ export const DEFAULT_SETTINGS: Settings = {
   display: 'toggle',
   nikud: true,
   theme: 'daf',
+  layout: 'classic',
   heSize: 22,
   enSize: 16,
   commSize: 20,
