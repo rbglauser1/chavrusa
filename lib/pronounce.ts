@@ -35,7 +35,7 @@ export function prepareForSpeech(text: string, nusach: 'ashkenaz' | 'sephardi'):
 
 export function speechInstructions(nusach: 'ashkenaz' | 'sephardi'): string {
   return nusach === 'ashkenaz'
-    ? 'You are a warm, thoughtful yeshiva chavrusa speaking English. Pronounce Hebrew and Aramaic words and any Hebrew-letter text with traditional Ashkenazi yeshivish pronunciation: stress usually on the second-to-last syllable, tav without dagesh as "s" (Shabbos, Tosafos), kamatz as a light, short "o" (Boruch, Shabbos), never a drawn-out "aw", cholam as "oy". Speak at a natural, unhurried learning pace.'
+    ? 'You are a warm, thoughtful yeshiva chavrusa speaking English. Pronounce Hebrew and Aramaic words and any Hebrew-letter text with traditional Ashkenazi yeshivish pronunciation: stress usually on the second-to-last syllable, tav without dagesh as "s" (Shabbos, Tosafos), kamatz as a short "aw" (Bawruch), short and clean, never drawn out and never "oh", cholam as "oy". Speak at a natural, unhurried learning pace.'
     : 'You are a warm, thoughtful chavrusa speaking English. Pronounce Hebrew and Aramaic words and any Hebrew-letter text with traditional Sephardic pronunciation: stress usually on the last syllable, tav always "t" (Shabbat, Tosafot). Speak at a natural, unhurried learning pace.';
 }
 

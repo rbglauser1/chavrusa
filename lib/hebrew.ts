@@ -26,7 +26,7 @@ export function namesForSpeechEn(s: string): string {
 
 // ---------- Yeshivish transliteration (for the voice) ----------
 // Turns Hebrew with nikud into Ashkenazi English letters with the stressed (second-to-last) syllable in capitals:
-// בְּרֵאשִׁית בָּרָא אֱלֹקִים -> be-REI-shis BO-ro e-LO-kim. Spoken text in this form makes the voice stress the
+// בְּרֵאשִׁית בָּרָא אֱלֹקִים -> be-REI-shis BAW-raw e-LO-kim. Spoken text in this form makes the voice stress the
 // yeshivish way instead of the modern Israeli way. (Approximate: it follows the nikud, not every rule of dikduk.)
 const V = {
   shva: 'ְ', chatafSegol: 'ֱ', chatafPatach: 'ֲ', chatafKamatz: 'ֳ', chirik: 'ִ', tzeirei: 'ֵ',
@@ -35,7 +35,7 @@ const V = {
 };
 const VOWEL_SOUND: Record<string, string> = {
   [V.chatafSegol]: 'e', [V.chatafPatach]: 'a', [V.chatafKamatz]: 'o', [V.chirik]: 'i', [V.tzeirei]: 'ei', [V.segol]: 'e',
-  [V.patach]: 'a', [V.kamatz]: 'o', [V.cholam]: 'oh', [V.cholamHaser]: 'oh', [V.kubutz]: 'u', [V.kamatzKatan]: 'o',
+  [V.patach]: 'a', [V.kamatz]: 'aw', [V.cholam]: 'oh', [V.cholamHaser]: 'oh', [V.kubutz]: 'u', [V.kamatzKatan]: 'o',
 };
 function consonant(letter: string, marks: string, final: boolean): string {
   const dg = marks.includes(V.dagesh);
