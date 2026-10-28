@@ -958,3 +958,6 @@ table.costs td.n, table.costs th.n { text-align: right; }
 
 /* On a wide screen the Sefer can still sit beside the minimal layout. */
 .app.is-min .main { align-items: stretch; }
+/* Steps: a one-line summary of each move, above the line where it begins. */
+.sefer .move, .min .move { font-family: var(--f-ui); font-size: 13px; line-height: 1.4; color: var(--accent); margin: 14px 0 6px; padding-left: 10px; border-left: 2px solid var(--accent); }
+.move-loading { font-family: var(--f-ui); font-size: 12px; color: var(--soft); padding: 4px 18px; }

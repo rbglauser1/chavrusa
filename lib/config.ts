@@ -304,6 +304,7 @@ export interface Settings {
   nikud: boolean;
   theme: Look;
   layout: 'classic' | 'page' | 'quiet' | 'shtender'; // the screen's arrangement (Settings → Look → Layout)
+  outline: boolean;        // a one-line summary of each move above its line in the Sefer (AI, made once per amud)
   heSize: number;           // px
   enSize: number;           // px
   commSize: number;         // px: Rashi, Tosafos and other commentaries
@@ -341,6 +342,7 @@ export const DEFAULT_SETTINGS: Settings = {
   nikud: true,
   theme: 'daf',
   layout: 'classic',
+  outline: false,
   heSize: 22,
   enSize: 16,
   commSize: 20,

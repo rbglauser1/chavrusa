@@ -9,6 +9,7 @@ import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { Formatted } from './Message';
+import { useOutline } from './useOutline';
 
 export type Layout = 'page' | 'quiet' | 'shtender';
 type Msg = { kind: string; text: string };
@@ -69,6 +70,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
   }, [src.ref, focus]);
   const comm = /\s(on)\s/i.test(src.ref);
   const showEn = settings.display !== 'off';
+  const outline = useOutline(src.ref, !!settings.outline);
   return (
     <div className="min-text" ref={box}>
       {src.he.map((line, i) => {
@@ -77,6 +79,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const c = inlineComm && inlineComm.main === src.ref && inlineComm.line === n ? inlineComm : null;
         return (
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''}`}>
+            {(outline.byLine[n] ?? []).map((m, k) => <div key={k} className="move">{m}</div>)}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {settings.nikud ? line : stripNikud(line)}
             </button>

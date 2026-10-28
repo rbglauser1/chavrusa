@@ -5,6 +5,7 @@ import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
+import { useOutline } from './useOutline';
 
 interface Props {
   sources: SourceData[];
@@ -142,6 +143,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const openUsual = (i: number, who: string, label: string) =>
     openComm(i, label, `/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`);
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
+  const outline = useOutline(src?.ref, !!settings.outline);
 
   // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).
   const prevRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? prevSection(src.ref) : null;
@@ -304,12 +306,16 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
           {canTranslate && (
             <button className={`toggle ${showAll ? 'on' : ''}`} onClick={() => setShowAll((v) => !v)}>Translation {showAll ? 'on' : 'off'}</button>
           )}
+          {!isComm && (
+            <button className={`toggle ${settings.outline ? 'on' : ''}`} onClick={() => onSettings({ outline: !settings.outline })} title="A one-line summary of each step, above its line">Steps {settings.outline ? 'on' : 'off'}</button>
+          )}
           <span className="muted" style={{ alignSelf: 'center' }}>
             {onPoint ? 'Tap a line to learn from there' : canTranslate ? (showAll ? 'Translation under each part' : 'Tap a line to translate it') : 'Original only'}
           </span>
         </div>
       )}
 
+      {settings.outline && outline.loading && !showLib && <div className="move-loading">Summarizing the steps of this {src ? sectionWord(src.ref) : 'page'}…</div>}
       <div className="sefer-body" ref={bodyRef} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
         {!src && <div className="empty">Sources your chavrusa brings will appear here.</div>}
         {src && (
@@ -371,7 +377,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
               const key = `${src.ref}#${i}`;
               return (
-                <div key={i} data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={() => toggleLine(i)}>
+                <div key={i} style={{ display: 'contents' }}>
+                {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
+                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={() => toggleLine(i)}>
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                   {(() => {
                     if (kind === 'none') return null;
@@ -438,6 +446,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       )}
                     </div>
                   )}
+                </div>
                 </div>
               );
             })}
