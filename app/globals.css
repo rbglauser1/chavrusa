@@ -1126,8 +1126,15 @@ table.costs td.n, table.costs th.n { text-align: right; }
   mask-image: linear-gradient(to bottom, transparent 0, #000 calc(env(safe-area-inset-top) + 34px));
 }
 /* Quiet chat: the daf counter sits in the bottom row, level with Talk (after the keyboard). */
-.min-quiet .sefer.embedded .daf-bar {
-  position: fixed; z-index: 45; margin: 0;
-  left: max(56px, calc(50% - 360px + 56px));
-  bottom: calc(max(6px, env(safe-area-inset-bottom)) + 6px);
+.daf-dock .daf-bar {
+  position: fixed; z-index: 45; margin: 0; width: max-content; display: flex; align-items: center; gap: 0; padding: 1px 2px;
+  left: max(56px, calc(50% - 360px + 56px)); bottom: calc(max(6px, env(safe-area-inset-bottom)) + 6px);
+  border-radius: 999px; background: var(--surface); border: 1px solid var(--rule); box-shadow: 0 1px 6px rgba(0, 0, 0, 0.14);
+  font-family: var(--f-ui); color: var(--ink);
 }
+.daf-dock .daf-bar button { background: none; border: none; color: var(--accent); font-size: 16px; line-height: 1; width: 26px; height: 24px; border-radius: 999px; cursor: pointer; }
+.daf-dock .daf-bar button:disabled { opacity: 0.3; }
+.daf-dock .daf-now { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 2px; }
+.daf-dock .daf-now .he { font-size: 12px; font-weight: 600; font-family: var(--f-he); }
+.daf-dock .daf-now small { font-size: 11px; color: var(--soft); }
+body[data-hide-daf] .daf-dock { display: none; }

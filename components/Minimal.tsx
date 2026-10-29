@@ -156,6 +156,11 @@ export default function Minimal(p: Props) {
   const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation (from the ⋯ menu)
   // The Library or the Sefer was asked for, or a new place opened: show the text.
   useEffect(() => { if (p.textTick) setTab('text'); }, [p.textTick]);
+  // Quiet chat: the daf counter (in the bottom row) only shows with the text, not over the conversation or the keyboard.
+  useEffect(() => {
+    document.body.toggleAttribute('data-hide-daf', p.layout === 'quiet' && (tab !== 'text' || typing));
+    return () => document.body.removeAttribute('data-hide-daf');
+  }, [p.layout, tab, typing]);
   const endRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing, tab]);
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';

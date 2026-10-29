@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -567,13 +568,16 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
           const v = inView === 'prev' && prevSrc ? prevSrc : inView === 'next' && nextSrc ? nextSrc : src;
           const pv = prevSection(v.ref), nx = nextSection(v.ref);
           const word = sectionWord(v.ref);
-          return (
+          const bar = (
             <div className="daf-bar">
               <button disabled={!nx || turning} onClick={() => nx && turn(nx)} aria-label={`Next ${word}`} title={`Next ${word}`}>‹</button>
               <span className="daf-now"><span className="he">{v.heRef}</span><small>{v.ref.replace(/^.*? (\d+[ab]?)$/, '$1')}</small></span>
               <button disabled={!pv || turning} onClick={() => pv && turn(pv)} aria-label={`Previous ${word}`} title={`Previous ${word}`}>›</button>
             </div>
           );
+          // Quiet chat: the counter lives in the bottom row, level with Talk (outside the text, so the top fade never touches it).
+          if (embedded && typeof document !== 'undefined') return showLib ? null : createPortal(<div className="daf-dock">{bar}</div>, document.body);
+          return bar;
         })()}
       </div>
     </aside>
