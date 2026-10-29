@@ -1316,3 +1316,24 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 .aliyah { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 9px 12px; border-radius: var(--radius); border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; text-align: left; }
 .aliyah small { color: var(--soft); font-size: 12px; }
 .aliyah.first { grid-column: 1 / -1; border-color: var(--accent); }
+
+/* Onkelos under each pasuk (Chumash, Settings → Onkelos). */
+.tg { margin-top: 8px; padding: 6px 0 2px 0; border-top: 1px dotted var(--rule); }
+.tg-label { display: block; font-family: var(--f-ui); font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--soft); margin-bottom: 2px; }
+.tg-he { font-size: calc(var(--he-size, 22px) * 0.82); color: color-mix(in srgb, var(--ink) 82%, transparent); }
+.tg-en { direction: ltr; text-align: left; font-family: var(--f-body); font-size: calc(var(--en-size, 16px) * 0.92); color: color-mix(in srgb, var(--ink) 74%, transparent); margin-top: 2px; }
+
+/* Continuous scroll button (Quiet chat, beside Talk): tap to start/stop; hold to pick the speed. */
+.ascroll { position: relative; flex: none; margin-right: 6px; }
+.ascroll-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--rule); background: color-mix(in srgb, var(--surface) 75%, transparent); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: transform .18s ease, background .18s ease; }
+.ascroll.on .ascroll-btn { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); border-color: var(--accent); color: var(--accent); }
+.ascroll.picking .ascroll-btn { transform: scale(1.35); background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.ascroll-n { position: absolute; right: -2px; bottom: -2px; min-width: 15px; height: 15px; border-radius: 8px; background: var(--surface); border: 1px solid var(--rule); color: var(--soft); font: 600 9.5px/13px var(--f-ui); text-align: center; }
+.ascroll.on .ascroll-n, .ascroll.picking .ascroll-n { color: var(--accent); border-color: var(--accent); }
+.ascroll-pick { position: absolute; bottom: 58px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 10px 9px; border-radius: 22px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--rule); box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); z-index: 50; }
+.ascroll-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rule); transition: transform .12s ease, background .12s ease; }
+.ascroll-dot.lit { background: color-mix(in srgb, var(--accent) 55%, var(--rule)); }
+.ascroll-dot.cur { background: var(--accent); transform: scale(1.35); }
+.ascroll-word { font: 9.5px var(--f-ui); letter-spacing: .6px; text-transform: uppercase; color: var(--soft); }
+/* In full screen the row keeps only Talk and this button. */
+body[data-full] .min-quiet.full .min-row > .ascroll { display: block; }

@@ -37,3 +37,16 @@ export function useIntro(ref: string | null | undefined, on: boolean): string {
   }, [ref, on]);
   return text;
 }
+
+// Onkelos on a perek of Chumash, when switched on: the Aramaic of each pasuk and its English (from Sefaria, no AI).
+export function useTargum(ref: string | null | undefined, on: boolean): { he: string[]; en: string[] } {
+  const [t, setT] = useState<{ he: string[]; en: string[] }>({ he: [], en: [] });
+  useEffect(() => {
+    setT({ he: [], en: [] });
+    if (!on || !ref || !/^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d+$/.test(ref)) return;
+    let gone = false;
+    fetch(`/api/targum?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => { if (!gone) setT({ he: d.he ?? [], en: d.en ?? [] }); }).catch(() => {});
+    return () => { gone = true; };
+  }, [ref, on]);
+  return t;
+}

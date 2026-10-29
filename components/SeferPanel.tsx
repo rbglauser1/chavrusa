@@ -7,7 +7,7 @@ import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
-import { useIntro, useOutline } from './useOutline';
+import { useIntro, useOutline, useTargum } from './useOutline';
 
 interface Props {
   sources: SourceData[];
@@ -271,6 +271,51 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     } else wheelPush.current = 0;
   }
 
+  // Continuous scroll (the small button by Talk in Quiet chat): the text glides up at the chosen speed.
+  // At the end of an amud it brings the next one in and keeps going. Touching the text stops it.
+  const autoRef = useRef<{ speed: number; raf: number; last: number; carry: number }>({ speed: 0, raf: 0, last: 0, carry: 0 });
+  const loadNextRef = useRef(loadNext);
+  loadNextRef.current = loadNext;
+  useEffect(() => {
+    if (!embedded) return;
+    const PX = [0, 14, 22, 34, 50, 72]; // pixels a second for speeds 1..5
+    const stopAuto = () => {
+      const a = autoRef.current;
+      if (a.raf) cancelAnimationFrame(a.raf);
+      a.raf = 0; a.speed = 0;
+    };
+    const step = (t: number) => {
+      const a = autoRef.current, el = sc();
+      if (!a.speed || !el) { a.raf = 0; return; }
+      const dt = a.last ? Math.min(0.1, (t - a.last) / 1000) : 0;
+      a.last = t;
+      a.carry += PX[a.speed] * dt;
+      const move = Math.floor(a.carry);
+      if (move >= 1) { a.carry -= move; el.scrollTop += move; }
+      if (el.scrollTop + viewH(el) >= el.scrollHeight - 4) loadNextRef.current();
+      a.raf = requestAnimationFrame(step);
+    };
+    const on = (e: Event) => {
+      const speed = Number((e as CustomEvent).detail?.speed ?? 0);
+      const a = autoRef.current;
+      if (!speed) { stopAuto(); return; }
+      a.speed = Math.min(5, Math.max(1, speed));
+      a.last = 0; a.carry = 0;
+      if (!a.raf) a.raf = requestAnimationFrame(step);
+    };
+    const touched = () => { if (autoRef.current.speed) { stopAuto(); window.dispatchEvent(new Event('chavrusa-autoscroll-stopped')); } };
+    window.addEventListener('chavrusa-autoscroll', on);
+    const body = bodyRef.current;
+    body?.addEventListener('touchstart', touched, { passive: true });
+    body?.addEventListener('wheel', touched, { passive: true });
+    return () => {
+      stopAuto();
+      window.removeEventListener('chavrusa-autoscroll', on);
+      body?.removeEventListener('touchstart', touched);
+      body?.removeEventListener('wheel', touched);
+    };
+  }, [embedded, docScroll]);
+
   // Previous / next amud, perek or siman: open it as the page in front of you.
   const [turning, setTurning] = useState(false);
   async function turn(ref: string) {
@@ -310,6 +355,16 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const intro = useIntro(src?.ref, introOn && !isComm);
   const nextIntro = useIntro(nextSrc?.ref, introOn && !!nextSrc);
   const prevIntro = useIntro(prevSrc?.ref, introOn && !!prevSrc);
+  const tg = useTargum(src?.ref, !!settings.onkelos);
+  const nextTg = useTargum(nextSrc?.ref, !!settings.onkelos && !!nextSrc);
+  const prevTg = useTargum(prevSrc?.ref, !!settings.onkelos && !!prevSrc);
+  const tgBox = (t: { he: string[]; en: string[] }, i: number) => (t.he[i] ? (
+    <div className="tg" onClick={(e) => e.stopPropagation()}>
+      <span className="tg-label">Onkelos</span>
+      <div className="he tg-he">{settings.nikud ? t.he[i] : stripNikud(t.he[i])}</div>
+      {canTranslate && showAll && t.en[i] && <div className="tg-en">{yeshivishEnglish(t.en[i])}</div>}
+    </div>
+  ) : null);
   const introBox = (t: string) => (t ? <div className="amud-intro"><span>On this {sectionWord(src?.ref ?? '')}</span>{t}</div> : null);
 
   async function aiTranslate(key: string, text: string) {
@@ -440,6 +495,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(prevSrc, i + 1)); } else onPoint?.(prevSrc, i + 1); }}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                           {canTranslate && showAll && en && <div className="en">{prevSrc.enB?.[i] ? <BoldEn text={prevSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
+                          {tgBox(prevTg, i)}
                         </div>
                         </div>
                       );
@@ -564,6 +620,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       )}
                     </div>
                   )}
+                  {tgBox(tg, i)}
                 </div>
                 </div>
               );
@@ -582,6 +639,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(nextSrc, i + 1)); } else onPoint?.(nextSrc, i + 1); }}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                           {canTranslate && showAll && en && <div className="en">{nextSrc.enB?.[i] ? <BoldEn text={nextSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
+                          {tgBox(nextTg, i)}
                         </div>
                         </div>
                       );

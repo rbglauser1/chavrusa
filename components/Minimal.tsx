@@ -11,6 +11,7 @@ import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
+import AutoScroll from './AutoScroll';
 
 export type Layout = 'page' | 'quiet' | 'shtender' | 'dock';
 type Msg = { kind: string; text: string };
@@ -215,6 +216,7 @@ export default function Minimal(p: Props) {
             <>
               <button role="menuitemcheckbox" aria-checked={p.settings.seferEnglish !== false} onClick={() => p.onToggle!({ seferEnglish: p.settings.seferEnglish === false })}>Translation <span className="min-check">{p.settings.seferEnglish !== false ? 'on' : 'off'}</span></button>
               <button role="menuitemcheckbox" aria-checked={!!p.settings.nikud} onClick={() => p.onToggle!({ nikud: !p.settings.nikud })}>Nikud <span className="min-check">{p.settings.nikud ? 'on' : 'off'}</span></button>
+              {src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref) && <button role="menuitemcheckbox" aria-checked={!!p.settings.onkelos} onClick={() => p.onToggle!({ onkelos: !p.settings.onkelos })}>Onkelos <span className="min-check">{p.settings.onkelos ? 'on' : 'off'}</span></button>}
               <button role="menuitemcheckbox" aria-checked={p.settings.amudIntro !== false} onClick={() => p.onToggle!({ amudIntro: p.settings.amudIntro === false })}>Amud intro <span className="min-check">{p.settings.amudIntro !== false ? 'on' : 'off'}</span></button>
               <button role="menuitemcheckbox" aria-checked={!!p.settings.outline} onClick={() => p.onToggle!({ outline: !p.settings.outline })}>Steps <span className="min-check">{p.settings.outline ? 'on' : 'off'}</span></button>
               <button role="menuitemcheckbox" aria-checked={!!p.settings.commSummary} onClick={() => p.onToggle!({ commSummary: !p.settings.commSummary })}>Commentary summaries <span className="min-check">{p.settings.commSummary ? 'on' : 'off'}</span></button>
@@ -334,6 +336,7 @@ export default function Minimal(p: Props) {
       <footer className="min-row">
         <button className="min-icon" onClick={() => setTyping(true)} aria-label="Type instead" style={isFull ? { visibility: 'hidden' } : undefined}>{keyboard}</button>
         <div className="min-row-chips" />
+        {showText && src && <AutoScroll />}
         {p.talk.supported && (
           <button className={`min-round small ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}>
             <MicIcon size={18} />
