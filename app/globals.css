@@ -1045,3 +1045,17 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .min-status.slim { padding: 2px 20px 0; }
 .min-quiet .min-caption { padding: 6px 24px 0; }
 .min-quiet .min-typing .min-compose { padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+
+/* Ink and stone: a touch more layering, still a light stone. */
+[data-look='ink'] {
+  --grey-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .38 0 0 0 0 .38 0 0 0 0 .36 0 0 0 .27 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grey-veins: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .014' numOctaves='4' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .56 0 0 0 0 .56 0 0 0 0 .54 0 0 0 .75 -.24'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+}
+[data-look='ink'] body {
+  background-image: var(--grey-grain), var(--grey-mottle), var(--grey-veins),
+    radial-gradient(ellipse 75% 55% at 12% 6%, rgba(255, 255, 255, 0.85), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 88% 30%, rgba(160, 158, 150, 0.14), transparent 70%),
+    radial-gradient(ellipse 60% 60% at 85% 88%, rgba(150, 148, 140, 0.18), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 25% 70%, rgba(175, 172, 165, 0.12), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 55% 45%, rgba(255, 255, 255, 0.4), transparent 70%);
+}
