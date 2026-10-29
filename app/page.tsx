@@ -89,6 +89,7 @@ export default function Home() {
   const [readingOn, setReadingOn] = useState(false);
   // Open the Sefer straight into the Library (from the top bar or the start screen).
   const [libReq, setLibReq] = useState(0);
+  const [textTick, setTextTick] = useState(0); // Quiet chat: go to its Text tab
   const openLibrary = () => { setSeferOpen(true); setLibReq((n) => n + 1); };
   const live = useLive({
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
@@ -523,6 +524,7 @@ export default function Home() {
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
   const seferHome = settings.layout === 'sefer' && settings.display !== 'off';
+  const quietSefer = settings.layout === 'quiet' && settings.display !== 'off'; // Quiet chat carries the Sefer in its Text tab
   const minimal = !!settings.layout && settings.layout !== 'classic' && !seferHome;
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
@@ -546,9 +548,23 @@ export default function Home() {
             onMenu={() => setDrawer('sessions')}
             onSettings={() => setDrawer('settings')}
             onLibrary={openLibrary}
-            onSefer={() => { setSeferOpen(true); setLibReq(0); }}
+            onSefer={() => { if (quietSefer) setTextTick((n) => n + 1); else { setSeferOpen(true); setLibReq(0); } }}
             onNewSession={newSession}
             starters={STARTERS}
+            textTick={quietSefer ? textTick + libReq : undefined}
+            sefer={quietSefer ? (
+              <SeferPanel
+                embedded
+                sources={sources} selected={selected} onSelect={setSelected}
+                onClose={() => {}}
+                settings={settings} onSettings={updateSettings} sessionId={sessionId}
+                libraryRequest={libReq}
+                onPoint={pointAt}
+                onOpenRef={(q) => openRef(q, true)}
+                onOpenExact={openExact}
+                inlineComm={inlineComm}
+              />
+            ) : undefined}
           />
         </div>
       ) : (
@@ -811,7 +827,7 @@ export default function Home() {
       </div>
       )}
 
-      {(showSefer || seferHome) && (
+      {((showSefer && !quietSefer) || seferHome) && (
         <SeferPanel
           sources={sources} selected={selected} onSelect={setSelected}
           onClose={() => { setSeferOpen(false); setLibReq(0); }}

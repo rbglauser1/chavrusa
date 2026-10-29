@@ -22,9 +22,10 @@ interface Props {
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
   inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
   home?: { onMenu: () => void; onSettings: () => void } | null; // Sefer only: the Sefer is the whole app (sessions and settings in its header, no close)
+  embedded?: boolean; // inside Quiet chat: just the text and its tools (the layout has its own header)
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -298,7 +299,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
 
   return (
-    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''}`} aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''}`} aria-label="Sefer">
       {full && (
         <div className="full-bar">
           {talk && (
@@ -310,7 +311,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
           <button className="chip" onClick={() => setFull(false)} aria-label="Exit full screen">⤡ Exit</button>
         </div>
       )}
-      <div className="sefer-head">
+      <div className="sefer-head" style={embedded ? { display: 'none' } : undefined}>
         {home ? (
           <button className="icon-btn" onClick={home.onMenu} aria-label="Sessions">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>

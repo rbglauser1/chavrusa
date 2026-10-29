@@ -984,3 +984,17 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .gist span { font-family: var(--f-ui); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-right: 4px; }
 .sefer .tr-toggle { display: inline-block; margin: 4px 0 2px; padding: 2px 0; background: none; border: 0; color: var(--accent); font-family: var(--f-ui); font-size: 13px; cursor: pointer; }
 .sefer .en.tr { font-size: calc(var(--en-size, 16px) - 1px); color: var(--soft); }
+
+/* ---------- Quiet chat with the text in it ---------- */
+.min-tabs { display: flex; gap: 4px; margin: 0 22px 6px; padding: 3px; border-radius: 999px; background: var(--accent-soft); align-self: center; }
+.min-tabs button { border: 0; background: transparent; color: var(--soft); font: inherit; font-size: 13px; padding: 7px 18px; border-radius: 999px; cursor: pointer; }
+.min-tabs button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.min-sefer { flex: 1; min-height: 0; display: flex; }
+.sefer.embedded { position: relative; inset: auto; z-index: auto; flex: 1; min-height: 0; width: 100%; max-width: none; min-width: 0; border: 0; background: transparent; }
+.sefer.embedded .sefer-tabs, .sefer.embedded .sefer-tools { border-bottom: 0; padding-left: 22px; padding-right: 22px; }
+.sefer.embedded .sefer-tools .toggle { font-size: 12px; padding: 4px 10px; }
+.sefer.embedded .sefer-body { padding-left: 22px; padding-right: 22px; }
+.sefer.embedded .daf-bar { position: absolute; left: 14px; bottom: 8px; }
+.sefer.embedded .line.focus { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.min-quiet .min-caption { padding: 8px 26px 2px; }
+.min-quiet .min-caption-text { max-height: 2.9em; font-size: var(--en-size, 16px); }

@@ -34,6 +34,8 @@ interface Props {
   onSefer: () => void;      // the full Sefer (commentaries, next amud, everything)
   onNewSession: () => void;
   starters: { title: string; sub: string; he: string; prompt: string }[];
+  sefer?: React.ReactNode;  // Quiet chat: the Sefer itself (text, commentaries, steps, summaries…), shown in its Text tab
+  textTick?: number;        // changes when the Library or the Sefer is asked for: go to the Text tab
 }
 
 const MicIcon = ({ size = 22 }: { size?: number }) => (
@@ -115,6 +117,10 @@ export default function Minimal(p: Props) {
   const [menu, setMenu] = useState(false);
   const [sheet, setSheet] = useState(false);     // page: the conversation pulled up
   const [typing, setTyping] = useState(false);   // shtender: show the box for typing
+  const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation
+  // The Library or the Sefer was asked for, or a new place opened: show the text.
+  useEffect(() => { if (p.textTick) setTab('text'); }, [p.textTick]);
+  useEffect(() => { if (p.current?.ref) setTab('text'); }, [p.current?.ref]);
   const endRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing]);
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';
@@ -242,12 +248,28 @@ export default function Minimal(p: Props) {
 
   // ---------- B · Quiet chat ----------
   if (p.layout === 'quiet') {
+    const showText = !!p.sefer && tab === 'text' && (!!src || p.items.length > 0 || (p.textTick ?? 0) > 0);
     return (
       <div className="min min-quiet">
         {header}
-        <main className="min-body">
-          {p.items.length === 0 ? welcome : <Thread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}
-        </main>
+        {p.sefer && (src || (p.textTick ?? 0) > 0) && (
+          <div className="min-tabs" role="tablist">
+            <button role="tab" aria-selected={tab === 'text'} className={tab === 'text' ? 'on' : ''} onClick={() => setTab('text')}>Text</button>
+            <button role="tab" aria-selected={tab === 'talk'} className={tab === 'talk' ? 'on' : ''} onClick={() => setTab('talk')}>Conversation</button>
+          </div>
+        )}
+        {/* The text stays mounted (so it keeps its place) and is only hidden while the conversation is shown. */}
+        {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{p.sefer}</div>}
+        {!showText && (
+          <main className="min-body">
+            {p.items.length === 0 ? welcome : <Thread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}
+          </main>
+        )}
+        {showText && caption && (
+          <button className="min-caption" onClick={() => setTab('talk')} aria-label="Show the conversation">
+            <span className="min-caption-text">{caption.length > 180 ? `${caption.slice(0, 180).replace(/\s+\S*$/, '')}…` : caption}</span>
+          </button>
+        )}
         {src && (
           <div className="min-chips">
             <button onClick={() => step(1)}>Next line</button>
