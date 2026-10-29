@@ -68,7 +68,6 @@ export default function AutoScroll() {
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 6l5 5 5-5M7 13l5 5 5-5" /></svg>
         )}
-        <span className="ascroll-n">{speed}</span>
       </button>
     </div>
   );
