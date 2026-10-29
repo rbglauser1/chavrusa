@@ -258,17 +258,11 @@ export default function Minimal(p: Props) {
 
   // ---------- B · Quiet chat ----------
   if (p.layout === 'quiet') {
-    const showText = !!p.sefer && tab === 'text' && (!!src || p.items.length > 0 || (p.textTick ?? 0) > 0);
+    // One page: the text when there is one, the chavrusa's last words under it; tap them for the whole conversation.
+    const showText = !!p.sefer && (!!src || (p.textTick ?? 0) > 0);
     return (
       <div className="min min-quiet">
         {header}
-        {p.sefer && (src || (p.textTick ?? 0) > 0) && (
-          <div className="min-tabs" role="tablist">
-            <button role="tab" aria-selected={tab === 'text'} className={tab === 'text' ? 'on' : ''} onClick={() => setTab('text')}>Text</button>
-            <button role="tab" aria-selected={tab === 'talk'} className={tab === 'talk' ? 'on' : ''} onClick={() => setTab('talk')}>Conversation</button>
-          </div>
-        )}
-        {/* The text stays mounted (so it keeps its place) and is only hidden while the conversation is shown. */}
         {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{p.sefer}</div>}
         {!showText && (
           <main className="min-body">
@@ -276,9 +270,19 @@ export default function Minimal(p: Props) {
           </main>
         )}
         {showText && caption && (
-          <button className="min-caption" onClick={() => setTab('talk')} aria-label="Show the conversation">
+          <button className="min-caption" onClick={() => setSheet(true)} aria-label="Show the conversation">
             <span className="min-caption-text">{caption.length > 180 ? `${caption.slice(0, 180).replace(/\s+\S*$/, '')}…` : caption}</span>
           </button>
+        )}
+        {sheet && showText && (
+          <>
+            <div className="min-scrim" onClick={() => setSheet(false)} />
+            <section className="min-sheet" aria-label="Conversation">
+              <button className="min-grip-btn" onClick={() => setSheet(false)} aria-label="Back to the text"><span className="min-grip" /></button>
+              <Thread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />
+              {composer(true)}
+            </section>
+          </>
         )}
         {src && (
           <div className="min-chips">

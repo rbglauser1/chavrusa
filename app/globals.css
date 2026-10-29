@@ -1014,3 +1014,7 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer.embedded .bumper span { font-weight: 400; font-size: 12px; color: var(--soft); }
 .sefer.embedded .bumper small { font-size: 11px; }
 .sefer.embedded .prev-sec { border-bottom: 0; margin-bottom: 6px; }
+/* Quiet chat's text: nothing marks the line you're on — no shading, no box, no side line. */
+.sefer.embedded .line.focus, .sefer.embedded .line.open { background: none; box-shadow: none; }
+.sefer.embedded .comm { background: none; padding-left: 0; padding-right: 0; }
+.min-them .quote, [data-look] .min-them .quote { border: 0; border-inline-start: 0; background: none; border-radius: 0; padding: 0 0 12px; }
