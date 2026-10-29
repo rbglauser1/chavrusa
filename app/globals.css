@@ -1231,3 +1231,17 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 [data-look] body[data-full] .sefer.embedded { overflow: visible; }
 /* Full screen in leather / Vilna / shtender: the parchment page goes edge to edge. */
 [data-look] body[data-full] .sefer.embedded { margin: 0; width: 100%; border-radius: 0; box-shadow: none; min-height: 100dvh; }
+
+/* Quiet chat in red leather: the Gemara on a milder maroon leather (not parchment), with light ink. */
+[data-look='leather'] .sefer.embedded {
+  --bg: #64292e; --surface: #6e3035; --surface-2: #7a383d;
+  --ink: #f4e8cf; --soft: #d6bf9c; --rule: rgba(233, 205, 150, 0.24);
+  --accent: #e2bf72; --accent-ink: #2a1215; --accent-soft: rgba(226, 191, 114, 0.14);
+  color: var(--ink);
+  background-color: #64292e;
+  background-image: var(--tx-grain-dark), var(--tx-crease),
+    radial-gradient(ellipse 80% 55% at 40% 15%, rgba(176, 78, 84, 0.45), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 60%, rgba(30, 8, 10, 0.35) 100%);
+  background-size: 220px 220px, 600px 600px, auto, auto;
+  box-shadow: 0 0 0 1px rgba(201, 162, 74, 0.35), 0 4px 18px rgba(0, 0, 0, 0.4);
+}
