@@ -1214,3 +1214,6 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 [data-enmark='soft'] .en .en-x, [data-enmark='soft'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 50%, transparent); }
 [data-enmark='light'] .en .en-x, [data-enmark='light'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 70%, transparent); }
 [data-enmark='italic'] .en .en-x, [data-enmark='italic'] .min-en .en-x { font-style: italic; }
+
+/* Amud heading: the large Hebrew name and daf on the right, like a printed page. */
+.sefer .next-head .he { display: block; text-align: right; direction: rtl; }
