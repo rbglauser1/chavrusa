@@ -1217,3 +1217,15 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 
 /* Amud heading: the large Hebrew name and daf on the right, like a printed page. */
 .sefer .next-head .he { display: block; text-align: right; direction: rtl; }
+
+/* Quiet chat in the dark looks (leather, Vilna green, shtender): the text keeps its light parchment page,
+   since its ink is dark. The page sits on the leather/baize with a small margin. */
+[data-look='leather'] .sefer.embedded, [data-look='vilna'] .sefer.embedded {
+  background-color: var(--bg);
+  background-image: var(--tx-parchment), radial-gradient(ellipse 90% 80% at 30% 20%, rgba(255, 252, 240, 0.6), transparent 70%), radial-gradient(ellipse 80% 70% at 85% 90%, rgba(170, 130, 70, 0.14), transparent 70%);
+}
+[data-look='shtender'] .sefer.embedded { background: var(--src-bg); }
+[data-look='leather'] .sefer.embedded, [data-look='vilna'] .sefer.embedded, [data-look='shtender'] .sefer.embedded {
+  margin: 0 10px; width: auto; border-radius: 10px; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35); overflow: hidden;
+}
+[data-look] body[data-full] .sefer.embedded { overflow: visible; }
