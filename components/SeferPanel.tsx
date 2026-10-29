@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { BoldEn } from './BoldEn';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -432,7 +433,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`pm${k}`} className="move">{m}</div>)}
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(prevSrc, i + 1)); } else onPoint?.(prevSrc, i + 1); }}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
-                          {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
+                          {canTranslate && showAll && en && <div className="en">{prevSrc.enB?.[i] ? <BoldEn text={prevSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
                         </div>
                         </div>
                       );
@@ -545,7 +546,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   })}
                   {isOpen && (
                     <div className="en" onClick={(e) => { e.stopPropagation(); if (dbl) tap(() => {}); }}>
-                      {en ? yeshivishEnglish(en) : aiText[key] ? (
+                      {en ? (src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)) : aiText[key] ? (
                         <><span className="label-ai">AI translation</span><div>{aiText[key]}</div></>
                       ) : (
                         <button className="btn" disabled={loading === key} onClick={() => aiTranslate(key, line)}>
@@ -570,7 +571,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`nm${k}`} className="move">{m}</div>)}
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(nextSrc, i + 1)); } else onPoint?.(nextSrc, i + 1); }}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
-                          {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
+                          {canTranslate && showAll && en && <div className="en">{nextSrc.enB?.[i] ? <BoldEn text={nextSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
                         </div>
                         </div>
                       );

@@ -85,6 +85,7 @@ export interface SourceData {
   focus?: number;                // Sefer panel: the line to scroll to and highlight
   altEn?: string[];              // Sefaria's English when it isn't an approved translation (shown labeled; not given to the AI)
   altTitle?: string;             // that translation's name
+  enB?: string[];                // display only: the same English with Sefaria's bold (literal translation) marked
   tappedAt?: number;  // when the learner tapped a line here (a tap wins over the AI's place)
   focusPart?: number; // which piece of a long line was tapped (in a call)
 }

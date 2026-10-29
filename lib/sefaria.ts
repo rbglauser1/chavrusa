@@ -36,6 +36,15 @@ export function flatten(text: unknown): string[] {
   return [];
 }
 
+// Sefaria's English marks the literal translation in bold and the added explanation in plain type.
+// For display only, keep that as two private marks (B_ON … B_OFF); the AI and the voice get the plain text.
+export const B_ON = '\u0002', B_OFF = '\u0003';
+export function stripKeepBold(s: string): string {
+  const t = stripHtml(s.replace(/<(b|strong)(\s[^>]*)?>/gi, B_ON).replace(/<\/(b|strong)>/gi, B_OFF));
+  return t.replace(new RegExp(`${B_ON}\\s*${B_OFF}`, 'g'), '');
+}
+const hasBold = (lines: string[]) => lines.some((l) => l.includes(B_ON));
+
 export function stripHtml(s: string): string {
   return s.replace(/<sup[^>]*>.*?<\/sup>/gi, '').replace(/<i class="footnote">.*?<\/i>/gi, '')
     .replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
@@ -98,7 +107,8 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
   const r = enc(ref);
   // Start the approval check at the same time as the text, instead of after it.
   const earlyVerdict = judgeRef(ref, list).catch(() => null);
-  const first = await getJson(`${BASE}/api/v3/texts/${r}?version=source&version=english&return_format=text_only`);
+  // The usual format (not text_only), so the bold in the English comes through; tags are cleaned here.
+  const first = await getJson(`${BASE}/api/v3/texts/${r}?version=source&version=english`);
   const versions: V3Version[] = Array.isArray(first?.versions) ? first.versions : [];
   const heV = pick(versions, 'he') ?? versions.find((v) => v.versionTitle && !pick([v], 'en'));
   let enV = pick(versions, 'en');
@@ -114,7 +124,7 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
     .sort((a, b) => translationRank(a.versionTitle) - translationRank(b.versionTitle))[0];
   if (best?.versionTitle && best.versionTitle !== enV?.versionTitle && translationRank(best.versionTitle) < translationRank(enV?.versionTitle)) {
     try {
-      const second = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${best.versionTitle}`)}&return_format=text_only`);
+      const second = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${best.versionTitle}`)}`);
       enV = pick(Array.isArray(second?.versions) ? second.versions : [], 'en') ?? enV;
     } catch { /* keep what we have */ }
   }
@@ -128,6 +138,12 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
     heRef: first?.heRef ?? canonical,
     he: nonEmpty(flatten(heV?.text).map(stripHtml)),
     en: enV ? nonEmpty(flatten(enV.text).map(stripHtml).map(yeshivishEnglish)) : [],
+    ...(() => {
+      const src = enV ?? defaultEn;
+      if (!src) return {};
+      const b = flatten(src.text).map(stripKeepBold).map(yeshivishEnglish);
+      return hasBold(b) ? { enB: b } : {};
+    })(),
     translation: enV?.versionTitle ?? null,
     ...(!enV && defaultEn?.versionTitle && nonEmpty(flatten(defaultEn.text)).length
       ? { altEn: nonEmpty(flatten(defaultEn.text).map(stripHtml).map(yeshivishEnglish)), altTitle: defaultEn.versionTitle } : {}),

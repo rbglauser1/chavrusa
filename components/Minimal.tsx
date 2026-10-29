@@ -10,6 +10,7 @@ import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
+import { BoldEn } from './BoldEn';
 
 export type Layout = 'page' | 'quiet' | 'shtender' | 'dock';
 type Msg = { kind: string; text: string };
@@ -86,7 +87,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {settings.nikud ? line : stripNikud(line)}
             </button>
-            {showEn && en && (englishAll || on) && <p className="min-en">{yeshivishEnglish(en)}</p>}
+            {showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}</p>}
             {c && (
               <div className="min-comm">
                 <span className="min-comm-title">{c.title === 'Tosafot' ? 'Tosafos' : c.title}</span>
