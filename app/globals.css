@@ -1095,3 +1095,18 @@ table.costs td.n, table.costs th.n { text-align: right; }
 [data-look='stone'] .topbar { background: rgba(232, 223, 207, 0.55); }
 [data-look='stone'] .sefer { background-color: #f7f3eb; }
 .mini.stone { background: #f2ede3; }
+
+/* Yerushalayim stone, light but with its layers and contours back. */
+[data-look='stone'] {
+  --stone-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .36 0 0 0 0 .29 0 0 0 .4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --stone-veins: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .014' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .45 0 0 0 0 .36 0 0 0 1 -.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+  --stone-beds: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='1200'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0025 .007' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 .62 0 0 0 0 .57 0 0 0 0 .48 0 0 0 .9 -.32'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3C/svg%3E");
+}
+[data-look='stone'] body {
+  background-image: var(--stone-grain), var(--tx-mottle-light), var(--stone-veins), var(--stone-beds),
+    radial-gradient(ellipse 70% 50% at 15% 8%, rgba(255, 252, 245, 0.8), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 85% 28%, rgba(196, 184, 160, 0.22), transparent 70%),
+    radial-gradient(ellipse 60% 60% at 90% 85%, rgba(190, 176, 150, 0.3), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 20% 65%, rgba(200, 188, 165, 0.2), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 60% 45%, rgba(255, 252, 245, 0.35), transparent 70%);
+}
