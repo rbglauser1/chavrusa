@@ -323,6 +323,7 @@ export interface Settings {
   pinBar: boolean;
   blankCall: boolean;
   seferEnglish: boolean;
+  ui?: 'classic' | 'home';  // 'home': the new main screen opens first (Library, Recent, Themes, Settings, Talk)
   amudIntro?: boolean;      // a paragraph at the top of each amud: what's coming (AI, once per amud, then kept)
   introVoice?: boolean;     // Read, Explain, Ask: the voice says that intro when a new amud begins
   enMark?: 'plain' | 'soft' | 'light' | 'italic'; // English under the Gemara: how Sefaria's translation words stand apart from the added explanation
@@ -366,6 +367,7 @@ export const DEFAULT_SETTINGS: Settings = {
   blankCall: false,
   seferEnglish: true,
   enMark: 'plain',
+  ui: 'classic',
   amudIntro: true,
   introVoice: true,
   rashiScript: true,

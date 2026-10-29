@@ -6,6 +6,7 @@ import { Formatted } from '@/components/Message';
 import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
+import { Home as HomeScreen, HomePage, RecentList, type ContinueInfo } from '@/components/Home';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
@@ -147,6 +148,9 @@ export default function Home() {
   }
   const [pulse, setPulse] = useState(false);
   const [drawer, setDrawer] = useState<'sessions' | 'settings' | null>(null);
+  // The new main screen (Settings → Main screen): it opens first every time; 'learn' is the text and the chavrusa.
+  const [view, setView] = useState<'home' | 'learn' | 'recent' | 'themes' | 'settings'>('home');
+  const [contInfo, setContInfo] = useState<(ContinueInfo & { id?: string }) | null>(null);
   const [help, setHelp] = useState(false);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -194,11 +198,27 @@ export default function Home() {
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 
+  // The new main screen's "pick up where you left off": the last session's place (only when nothing is open yet).
+  useEffect(() => {
+    if (settings.ui !== 'home' || sessionId || !sessions[0]) return;
+    const top = sessions[0];
+    setContInfo({ id: top.id, title: top.title, when: top.updated_at });
+    let gone = false;
+    fetch(`/api/sessions/${top.id}`).then((r) => r.json()).then((d) => {
+      if (gone || !Array.isArray(d?.sources)) return;
+      const main = [...(d.sources as SourceData[])].reverse().find((x) => !/ on /i.test(x.ref));
+      if (main) setContInfo({ id: top.id, title: top.title, heRef: main.heRef, ref: main.ref, line: main.focus });
+    }).catch(() => {});
+    return () => { gone = true; };
+  }, [settings.ui, sessionId, sessions]);
+
   function refreshSessions() {
     fetch('/api/sessions').then((r) => r.json()).then((d) => Array.isArray(d) && setSessions(d));
   }
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
+    if (patch.ui === 'home') { setDrawer(null); setView('home'); }
+    else if (patch.ui === 'classic') setView('learn');
     setSettings((s) => ({ ...s, ...patch }));
     fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
   }, []);
@@ -524,17 +544,89 @@ export default function Home() {
   const current = sources[selected];
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
-  const seferHome = settings.layout === 'sefer' && settings.display !== 'off';
-  const quietSefer = settings.layout === 'quiet' && settings.display !== 'off'; // Quiet chat carries the Sefer in its Text tab
-  const minimal = !!settings.layout && settings.layout !== 'classic' && !seferHome;
+  const newUI = settings.ui === 'home';
+  const layoutEff = newUI ? 'quiet' : settings.layout; // the new main screen always learns in Quiet chat
+  const seferHome = layoutEff === 'sefer' && settings.display !== 'off';
+  const quietSefer = layoutEff === 'quiet' && settings.display !== 'off'; // Quiet chat carries the Sefer in its Text tab
+  const minimal = !!layoutEff && layoutEff !== 'classic' && !seferHome;
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
+
+  // ---------- The new main screen and its pages ----------
+  if (newUI && view !== 'learn') {
+    const mainSrc = [...sources].reverse().find((x) => !isCommentary(x.ref) && !/ on /i.test(x.ref));
+    const cont: ContinueInfo | null = mainSrc
+      ? { heRef: mainSrc.heRef, ref: mainSrc.ref, line: mainSrc.focus }
+      : contInfo;
+    const goLearn = () => setView('learn');
+    const homeTalk = () => {
+      if (talking) { goLearn(); return; }
+      sessionIdRef.current = null;
+      newSession();
+      goLearn();
+      window.setTimeout(() => toggleTalk(), 0); // a fresh call: the chavrusa asks what we're learning, then listens
+    };
+    const homeContinue = async () => {
+      if (sessionId && sources.length) { goLearn(); return; }
+      if (contInfo?.id) await openSession(contInfo.id);
+      goLearn();
+    };
+    return (
+      <div className="home-shell">
+        {view === 'home' && (
+          <HomeScreen
+            cont={cont}
+            onContinue={() => void homeContinue()}
+            onLibrary={() => { goLearn(); openLibrary(); }}
+            onRecent={() => { refreshSessions(); setView('recent'); }}
+            onThemes={() => setView('themes')}
+            onSettings={() => setView('settings')}
+            onTalk={homeTalk}
+            talkSupported={voice.supported}
+            talkOn={talking}
+          />
+        )}
+        {view === 'recent' && (
+          <HomePage title="Recent" onBack={() => setView('home')}>
+            <RecentList
+              sessions={sessions} currentId={sessionId} clearArmed={clearArmed}
+              onOpen={(id) => { void openSession(id).then(goLearn); }}
+              onDelete={(id) => void deleteSessionById(id)}
+              onClearAll={() => void clearAllSessions()}
+            />
+          </HomePage>
+        )}
+        {view === 'themes' && (
+          <HomePage title="Themes" onBack={() => setView('home')}>
+            <SettingsDrawer part="themes" asPage settings={settings} onChange={updateSettings} onClose={() => setView('home')} onHelp={() => setHelp(true)} liveActive={live.active} />
+          </HomePage>
+        )}
+        {view === 'settings' && (
+          <HomePage title="Settings" onBack={() => setView('home')}>
+            <SettingsDrawer part="settings" asPage settings={settings} onChange={updateSettings} onClose={() => setView('home')} onHelp={() => setHelp(true)} liveActive={live.active} />
+          </HomePage>
+        )}
+        {help && <Help onClose={() => setHelp(false)} />}
+        {loaded && !settings.disclaimerAccepted && !seenDisclaimer && (
+          <Disclaimer
+            look={settings.theme}
+            onLook={(l) => updateSettings({ theme: l })}
+            onAccept={() => {
+              setSeenDisclaimer(true);
+              try { localStorage.setItem('chavrusa_disclaimer', '1'); } catch { /* storage unavailable */ }
+              updateSettings({ disclaimerAccepted: true });
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
       {seferHome ? null : minimal ? (
         <div className="main">
           <Minimal
-            layout={settings.layout as 'page' | 'quiet' | 'shtender'}
+            layout={layoutEff as 'page' | 'quiet' | 'shtender'}
             settings={settings}
             current={current ?? null}
             items={items}
@@ -546,8 +638,8 @@ export default function Home() {
             talk={{ supported: voice.supported, on: talking, state: live.active ? live.state : convo ? voice.state : 'off', heard: live.heard, toggle: toggleTalk, resume: () => live.start() }}
             pointAt={pointAt}
             inlineComm={inlineComm}
-            onMenu={() => setDrawer('sessions')}
-            onSettings={() => setDrawer('settings')}
+            onMenu={() => (newUI ? setView('home') : setDrawer('sessions'))}
+            onSettings={() => (newUI ? setView('settings') : setDrawer('settings'))}
             onLibrary={openLibrary}
             onSefer={() => { if (quietSefer) setTextTick((n) => n + 1); else { setSeferOpen(true); setLibReq(0); } }}
             onNewSession={newSession}

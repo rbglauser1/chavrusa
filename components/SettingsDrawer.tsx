@@ -5,7 +5,12 @@ import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
 
-interface Props { settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean }
+interface Props {
+  settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
+  // The new main screen splits this in two: 'themes' (look, fonts, sizes) and 'settings' (everything else), each a full page.
+  part?: 'all' | 'themes' | 'settings';
+  asPage?: boolean;
+}
 
 function Seg<T extends string>({ value, options, onPick }: { value: T; options: [T, string][]; onPick: (v: T) => void }) {
   return (
@@ -15,7 +20,15 @@ function Seg<T extends string>({ value, options, onPick }: { value: T; options: 
   );
 }
 
-export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive }: Props) {
+export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive, part = 'all', asPage = false }: Props) {
+  const themes = part !== 'settings', rest = part !== 'themes';
+  const uiSwitch = (
+    <div className="field">
+      <label>Main screen</label>
+      <Seg value={s.ui === 'home' ? 'home' : 'classic'} options={[['home', 'New main screen'], ['classic', 'Original screens']]} onPick={(v) => onChange({ ui: v as 'home' | 'classic' })} />
+      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The new main screen opens first every time: pick up where you left off, Library, Recent, Themes, Settings and Talk. You can switch back any time.</div>
+    </div>
+  );
   const [editing, setEditing] = useState<CustomStyle | null>(null);
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [newMem, setNewMem] = useState('');
@@ -47,10 +60,12 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
   return (
     <>
-      <div className="scrim" onClick={onClose} />
-      <div className="drawer right" role="dialog" aria-label="Settings">
-        <div className="drawer-head"><h2>Settings</h2><button className="icon-btn" onClick={onClose} aria-label="Close">✕</button></div>
-        <div className="drawer-body">
+      {!asPage && <div className="scrim" onClick={onClose} />}
+      <div className={asPage ? 'settings-page' : 'drawer right'} role={asPage ? undefined : 'dialog'} aria-label="Settings">
+        {!asPage && <div className="drawer-head"><h2>Settings</h2><button className="icon-btn" onClick={onClose} aria-label="Close">✕</button></div>}
+        <div className={asPage ? '' : 'drawer-body'}>
+          {rest && (asPage ? <div className="section"><h3>Main screen</h3>{uiSwitch}</div> : null)}
+          {rest && <>
           {loadError && <div className="error">Could not reach the database: {loadError}</div>}
           <div className="section">
             <h3>Learning style</h3>
@@ -126,8 +141,12 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
           </div>
 
+          </>}
+          {themes && (
           <div className="section">
-            <h3>Display</h3>
+            <h3>{asPage ? 'Look' : 'Look and text'}</h3>
+            {!asPage && uiSwitch}
+            {!asPage && s.ui !== 'home' && (
             <div className="field">
               <label>Layout</label>
               <div className="layout-pick">
@@ -138,6 +157,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 ))}
               </div>
               <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>New, minimal layouts to try. Everything still works the same underneath; the classic screen stays.</div>
+            </div>
+            )}
+            <div className="field">
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>
@@ -149,15 +171,43 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Each look remembers its own fonts. Rashi and Tosafos keep the Rashi script.</div>
             </div>
             <div className="field">
+              <label>In the English: the translation and the added explanation</label>
+              <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics.</div>
+            </div>
+            <div className="field">
+              <label>Rashi, Tosafos and other commentaries</label>
+              <Seg value={s.rashiScript ? 'rashi' : 'regular'} options={[['regular', 'Regular letters'], ['rashi', 'Rashi script']]} onPick={(v) => onChange({ rashiScript: v === 'rashi' })} />
+            </div>
+            <div className="field">
+              <label>Hebrew text size</label>
+              <div className="range"><input type="range" min={16} max={36} value={s.heSize} onChange={(e) => onChange({ heSize: Number(e.target.value) })} /><span className="he" style={{ fontSize: s.heSize }}>אבג</span></div>
+            </div>
+            <div className="field">
+              <label>Commentary text size (Rashi, Tosafos…)</label>
+              <div className="range"><input type="range" min={14} max={36} value={s.commSize ?? 20} onChange={(e) => onChange({ commSize: Number(e.target.value) })} /><span className="he rashi" style={{ fontSize: s.commSize ?? 20 }}>אבג</span></div>
+            </div>
+            <div className="field">
+              <label>English text size</label>
+              <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
+            </div>
+          </div>
+          )}
+          {rest && (
+          <div className="section">
+            <h3>Text and display</h3>
+            <div className="field">
               <label>Screen during voice conversations</label>
               <Seg value={s.blankCall ? 'blank' : 'show'} options={[['show', 'Show the conversation'], ['blank', 'Blank (voice only)']]} onPick={(v) => onChange({ blankCall: v === 'blank' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Blank keeps the screen empty while you talk, for focus. It doesn't change the cost. Everything is still saved, so you can read it after the call.</div>
             </div>
+            {s.ui !== 'home' && (
             <div className="field">
               <label>Text box at the top of the conversation</label>
               <Seg value={s.pinBar !== false ? 'show' : 'hide'} options={[['show', 'Show'], ['hide', 'Hide']]} onPick={(v) => onChange({ pinBar: v === 'show' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The full text is always in the Sefer (the book button at the top).</div>
             </div>
+            )}
             <div className="field">
               <label>Source text</label>
               <Seg value={s.display} options={[['toggle', 'With translation'], ['original', 'Original only'], ['off', 'Off (verbal)']]} onPick={(v) => onChange({ display: v })} />
@@ -166,11 +216,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>English translation under the Gemara</label>
               <Seg value={s.seferEnglish !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ seferEnglish: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English under each line of the text. Also in the ⋯ menu as “Translation”.</div>
-            </div>
-            <div className="field">
-              <label>In the English: the translation and the added explanation</label>
-              <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics.</div>
             </div>
             <div className="field">
               <label>Amud intro (a paragraph on what&apos;s coming, at the top of each amud)</label>
@@ -195,27 +240,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>“Classic and approved only” allows works before 1900 and ones you approved. Either way, the Chavrusa speaks only from an Orthodox perspective.</div>
             </div>
             <div className="field">
-              <label>Rashi, Tosafos and other commentaries</label>
-              <Seg value={s.rashiScript ? 'rashi' : 'regular'} options={[['regular', 'Regular letters'], ['rashi', 'Rashi script']]} onPick={(v) => onChange({ rashiScript: v === 'rashi' })} />
-            </div>
-            <div className="field">
               <label>Nikud</label>
               <Seg value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ nikud: v === 'on' })} />
             </div>
-            <div className="field">
-              <label>Hebrew text size</label>
-              <div className="range"><input type="range" min={16} max={36} value={s.heSize} onChange={(e) => onChange({ heSize: Number(e.target.value) })} /><span className="he" style={{ fontSize: s.heSize }}>אבג</span></div>
-            </div>
-            <div className="field">
-              <label>Commentary text size (Rashi, Tosafos…)</label>
-              <div className="range"><input type="range" min={14} max={36} value={s.commSize ?? 20} onChange={(e) => onChange({ commSize: Number(e.target.value) })} /><span className="he rashi" style={{ fontSize: s.commSize ?? 20 }}>אבג</span></div>
-            </div>
-            <div className="field">
-              <label>English text size</label>
-              <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
-            </div>
           </div>
+          )}
 
+          {rest && <>
           <div className="section">
             <h3>Voice</h3>
             <div className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>Live voice: natural, answers almost instantly, and can be interrupted. About $0.05 per minute for the voice, plus the AI model.</div>
@@ -288,6 +319,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <p className="muted" style={{ fontSize: 13 }}>This is an AI learning tool. It can make mistakes. Do not rely on it for accuracy in Torah learning, halacha, or hashkafa. For practical questions, ask your rav.</p>
             <button className="btn" onClick={() => { window.location.href = '/api/logout'; }}>Log out</button>
           </div>
+          </>}
         </div>
       </div>
     </>
