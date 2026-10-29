@@ -1231,3 +1231,7 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 [data-look] body[data-full] .sefer.embedded { overflow: visible; }
 /* Full screen in leather / Vilna / shtender: the parchment page goes edge to edge. */
 [data-look] body[data-full] .sefer.embedded { margin: 0; width: 100%; border-radius: 0; box-shadow: none; min-height: 100dvh; }
+
+/* The amud intro: one quiet paragraph at the top of each amud, on what's coming. */
+.amud-intro { font-family: var(--f-body); font-size: var(--en-size, 16px); line-height: 1.6; color: color-mix(in srgb, var(--ink) 86%, transparent); margin: 2px 0 18px; padding: 0 0 14px; border-bottom: 1px solid var(--rule); }
+.amud-intro span { display: block; font-family: var(--f-ui); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--soft); margin-bottom: 6px; }

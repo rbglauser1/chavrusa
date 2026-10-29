@@ -8,6 +8,7 @@ import { buildSystemPrompt } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from '@/lib/tools';
+import { introSoon } from '@/lib/intro';
 import { openingPlace, prefetchSource, prepareCommentaries, prepareLamdan, warmTexts } from '@/lib/prefetch';
 import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
@@ -110,14 +111,25 @@ export async function POST(req: NextRequest) {
           send({ type: 'source', source: routed.source }); // already in this session: bring it back into view
         }
         if (routed?.readThrough) send({ type: 'readthrough', ...routed.readThrough });
+        // Read, Explain, Ask in a call: when a new amud begins, the voice first gives the amud intro (once per session).
+        const wantsIntro = spoken && (settings.style === 'reader' || settings.blend === 'reader') && settings.amudIntro !== false && settings.introVoice !== false;
+        const introSaid = (base: string) => history.some((m) => m.role === 'assistant' && (m.meta as { introFor?: string } | null)?.introFor === base);
+        const introBaseAt = (ref: string | null | undefined, part?: number) => {
+          if (!ref || / on /i.test(ref)) return null;
+          const p = splitRef(ref);
+          return p.n <= 1 && (part ?? 1) <= 1 ? p.base : null;
+        };
         if (routed?.reply && routed.then !== 'ai') {
+          const introBase = wantsIntro ? introBaseAt(routed.line?.ref ?? routed.source?.ref, routed.line?.part) : null;
+          const introText = introBase && !introSaid(introBase) ? await introSoon(introBase) : '';
+          if (introText) routed.reply = `${introText}\n\n${routed.reply}`;
           if (routed.source) {
             const src = routed.source;
             try { after(async () => { const p = await prepareCommentaries(src.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
           }
           const usage = { ai: false, reason: routed.line ? `Showed ${routed.line.ref} with its translation` : routed.source ? `Opened ${routed.source.ref}` : routed.settings ? 'Changed a setting' : 'Handled by the app' };
           const opPlace = spoken && routed.source && !routed.line ? openingPlace(routed.source) : null; // read aloud in pieces
-          await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(routed.source ? { opened: routed.source.ref } : {}), ...(routed.line ? { line: routed.line } : {}), ...(opPlace ? { pos: opPlace } : {}) });
+          await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(introText ? { introFor: introBase } : {}), ...(routed.source ? { opened: routed.source.ref } : {}), ...(routed.line ? { line: routed.line } : {}), ...(opPlace ? { pos: opPlace } : {}) });
           send({ type: 'reply', text: routed.reply, model: 'No AI needed (free)', usage });
           await touchSession(sid);
           send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
@@ -146,6 +158,14 @@ export async function POST(req: NextRequest) {
             new Promise<null>((r) => setTimeout(() => r(null), 6000)),
           ]);
           if (prep) commNote += `\n\n[PREPARED: the commentaries on ${place.base}, lines ${place.n} and ${place.n + 1}, from Sefaria. Work from these; name who says what; say it in your own words.]\n${prep}`;
+        }
+        let introFor: string | null = null;
+        if (wantsIntro && place && place.n <= 1 && (place.part ?? 1) <= 1 && !/ on /i.test(place.base) && !introSaid(place.base)) {
+          const intro = await introSoon(place.base, 5000);
+          if (intro) {
+            introFor = place.base;
+            commNote += `\n\n[AMUD INTRO: this is the start of ${place.base}. Before you read its first line, give the learner this overview of what's coming on the amud, in your own spoken words and about the same length. Then go on with the text as your style does (no second preview of the first move).]\n${intro}`;
+          }
         }
         if (comm && 'src' in comm) {
           if (!sources.some((x) => x.ref === comm.src.ref)) {
@@ -259,7 +279,7 @@ export async function POST(req: NextRequest) {
         }
         const usd = costUsd(model, result.inputTokens, result.outputTokens, result.cachedTokens ?? 0, result.cacheWriteTokens ?? 0);
         const usage = { ai: true, model: model.label, reason, usd, lookups };
-        await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend, usage, ...(newPlace ? { pos: newPlace } : {}) });
+        await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend, usage, ...(introFor ? { introFor } : {}), ...(newPlace ? { pos: newPlace } : {}) });
         send({ type: 'reply', text: reply, model: model.label, usage });
 
         await logCost({ sessionId: sid, provider: settings.provider, model: model.id, inputTokens: result.inputTokens, outputTokens: result.outputTokens, costUsd: usd });

@@ -215,6 +215,7 @@ export default function Minimal(p: Props) {
             <>
               <button role="menuitemcheckbox" aria-checked={p.settings.seferEnglish !== false} onClick={() => p.onToggle!({ seferEnglish: p.settings.seferEnglish === false })}>Translation <span className="min-check">{p.settings.seferEnglish !== false ? 'on' : 'off'}</span></button>
               <button role="menuitemcheckbox" aria-checked={!!p.settings.nikud} onClick={() => p.onToggle!({ nikud: !p.settings.nikud })}>Nikud <span className="min-check">{p.settings.nikud ? 'on' : 'off'}</span></button>
+              <button role="menuitemcheckbox" aria-checked={p.settings.amudIntro !== false} onClick={() => p.onToggle!({ amudIntro: p.settings.amudIntro === false })}>Amud intro <span className="min-check">{p.settings.amudIntro !== false ? 'on' : 'off'}</span></button>
               <button role="menuitemcheckbox" aria-checked={!!p.settings.outline} onClick={() => p.onToggle!({ outline: !p.settings.outline })}>Steps <span className="min-check">{p.settings.outline ? 'on' : 'off'}</span></button>
               <button role="menuitemcheckbox" aria-checked={!!p.settings.commSummary} onClick={() => p.onToggle!({ commSummary: !p.settings.commSummary })}>Commentary summaries <span className="min-check">{p.settings.commSummary ? 'on' : 'off'}</span></button>
               <span className="min-menu-rule" />

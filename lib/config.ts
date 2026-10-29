@@ -323,6 +323,8 @@ export interface Settings {
   pinBar: boolean;
   blankCall: boolean;
   seferEnglish: boolean;
+  amudIntro?: boolean;      // a paragraph at the top of each amud: what's coming (AI, once per amud, then kept)
+  introVoice?: boolean;     // Read, Explain, Ask: the voice says that intro when a new amud begins
   enMark?: 'plain' | 'soft' | 'light' | 'italic'; // English under the Gemara: how Sefaria's translation words stand apart from the added explanation
   rashiScript: boolean;
   approveAll: boolean;      // allow every sefer on Sefaria (off: only classic and approved works)     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
@@ -364,6 +366,8 @@ export const DEFAULT_SETTINGS: Settings = {
   blankCall: false,
   seferEnglish: true,
   enMark: 'plain',
+  amudIntro: true,
+  introVoice: true,
   rashiScript: true,
   approveAll: true,
   saver: true,

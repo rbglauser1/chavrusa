@@ -24,3 +24,16 @@ export function useOutline(ref: string | null | undefined, on: boolean): { byLin
   }, [ref, on, attempt]);
   return { byLine, loading, failed, retry: () => setAttempt((n) => n + 1) };
 }
+
+// The amud intro (a paragraph on what's coming), when switched on. Made once per amud on the server, then kept.
+export function useIntro(ref: string | null | undefined, on: boolean): string {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    setText('');
+    if (!on || !ref || / on /i.test(ref) || /:\d+(-\d+)?$/.test(ref)) return;
+    let gone = false;
+    fetch(`/api/intro?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => { if (!gone && typeof d.intro === 'string') setText(d.intro); }).catch(() => {});
+    return () => { gone = true; };
+  }, [ref, on]);
+  return text;
+}

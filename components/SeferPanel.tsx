@@ -7,7 +7,7 @@ import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
-import { useOutline } from './useOutline';
+import { useIntro, useOutline } from './useOutline';
 
 interface Props {
   sources: SourceData[];
@@ -306,6 +306,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const endRef = useRef<HTMLDivElement | null>(null);
   const nextOutline = useOutline(nextSrc?.ref, !!settings.outline && !!nextSrc);
   const prevOutline = useOutline(prevSrc?.ref, !!settings.outline && !!prevSrc);
+  const introOn = settings.amudIntro !== false;
+  const intro = useIntro(src?.ref, introOn && !isComm);
+  const nextIntro = useIntro(nextSrc?.ref, introOn && !!nextSrc);
+  const prevIntro = useIntro(prevSrc?.ref, introOn && !!prevSrc);
+  const introBox = (t: string) => (t ? <div className="amud-intro"><span>On this {sectionWord(src?.ref ?? '')}</span>{t}</div> : null);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
@@ -426,6 +431,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 {prevSrc ? (
                   <>
                     <div className="next-head"><span className="he">{prevSrc.heRef}</span> <small>{prevSrc.ref} · before this {sectionWord(src.ref)}</small></div>
+                    {introBox(prevIntro)}
                     {prevSrc.he.map((line, i) => {
                       const en = prevSrc.en[i] || (prevSrc.en.length ? undefined : prevSrc.altEn?.[i]);
                       return (
@@ -462,6 +468,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 </div>
               );
             })()}
+            {introBox(intro)}
             {src.he.map((line, i) => {
               const isOpen = canTranslate && (showAll || open.has(i));
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
@@ -564,6 +571,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 {nextSrc ? (
                   <>
                     <div className="next-head"><span className="he">{nextSrc.heRef}</span> <small>{nextSrc.ref} · the text continues</small></div>
+                    {introBox(nextIntro)}
                     {nextSrc.he.map((line, i) => {
                       const en = nextSrc.en[i] || (nextSrc.en.length ? undefined : nextSrc.altEn?.[i]);
                       return (
