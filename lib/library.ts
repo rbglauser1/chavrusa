@@ -12,6 +12,13 @@ const PARSHA_NAMES: Record<string, string[]> = {
   Numbers: ['Bamidbar', 'Naso', "Beha'aloscha", "Shelach", 'Korach', 'Chukas', 'Balak', 'Pinchas', 'Matos', "Masei"],
   Deuteronomy: ['Devarim', "Va'eschanan", 'Eikev', "Re'eh", 'Shoftim', 'Ki Seitzei', 'Ki Savo', 'Nitzavim', 'Vayeilech', "Ha'azinu", "V'zos Habracha"],
 };
+const PARSHA_HE: Record<string, string[]> = {
+  Genesis: ['בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ', 'ויגש', 'ויחי'],
+  Exodus: ['שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה', 'כי תשא', 'ויקהל', 'פקודי'],
+  Leviticus: ['ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע', 'אחרי מות', 'קדושים', 'אמור', 'בהר', 'בחוקותי'],
+  Numbers: ['במדבר', 'נשא', 'בהעלותך', 'שלח', 'קרח', 'חקת', 'בלק', 'פינחס', 'מטות', 'מסעי'],
+  Deuteronomy: ['דברים', 'ואתחנן', 'עקב', 'ראה', 'שופטים', 'כי תצא', 'כי תבוא', 'נצבים', 'וילך', 'האזינו', 'וזאת הברכה'],
+};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parshiyosOf(title: string, idx: any): Parsha[] {
   const nodes = idx?.alt_structs?.Parasha?.nodes;
@@ -21,7 +28,8 @@ function parshiyosOf(title: string, idx: any): Parsha[] {
   return nodes.map((n: any, i: number) => {
     const titles: { text: string; lang: string; primary?: boolean }[] = Array.isArray(n.titles) ? n.titles : [];
     const en = names.length === nodes.length ? names[i] : String(n.sharedTitle ?? n.title ?? titles.find((t) => t.lang === 'en')?.text ?? '');
-    const he = String(n.heTitle ?? titles.find((t) => t.lang === 'he' && t.primary)?.text ?? titles.find((t) => t.lang === 'he')?.text ?? '');
+    const heList = PARSHA_HE[title] ?? [];
+    const he = heList.length === nodes.length ? heList[i] : String(n.heTitle ?? titles.find((t) => t.lang === 'he' && t.primary)?.text ?? titles.find((t) => t.lang === 'he')?.text ?? '');
     const whole = String(n.wholeRef ?? (Array.isArray(n.refs) ? n.refs[0] : '') ?? '');
     const start = whole.replace(/-.*$/, '');
     const aliyos = Array.isArray(n.refs) ? n.refs.map((r: string) => String(r).replace(/-.*$/, '')) : [];
