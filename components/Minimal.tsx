@@ -307,25 +307,20 @@ export default function Minimal(p: Props) {
     // The text (with the chavrusa's last words under it), or — from the ⋯ menu — the conversation, casual, text included.
     const hasText = !!p.sefer && (!!src || (p.textTick ?? 0) > 0);
     const showText = hasText && tab === 'text';
+    const isFull = full && showText;
     const keyboard = (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10" /></svg>
     );
     // One low row: a small keyboard, the four small buttons (only with the text), and a small round Talk on the right.
-    const bottom = typing ? (
+    const bottom = typing && !isFull ? (
       <div className="min-typing">
         {composer(true)}
         <button className="min-icon" onClick={() => setTyping(false)} aria-label="Close the keyboard">✕</button>
       </div>
     ) : (
       <footer className="min-row">
-        <button className="min-icon" onClick={() => setTyping(true)} aria-label="Type instead">{keyboard}</button>
-        <div className="min-row-chips">
-          {showText && src && (
-            <>
-              <button onClick={() => step(1)}>Next line</button>
-            </>
-          )}
-        </div>
+        <button className="min-icon" onClick={() => setTyping(true)} aria-label="Type instead" style={isFull ? { visibility: 'hidden' } : undefined}>{keyboard}</button>
+        <div className="min-row-chips" />
         {p.talk.supported && (
           <button className={`min-round small ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}>
             <MicIcon size={18} />
@@ -336,24 +331,11 @@ export default function Minimal(p: Props) {
     const sefer = p.sefer && isValidElement(p.sefer)
       ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void }>, { onDoubleTap: () => setFull(!full) })
       : p.sefer;
-    const isFull = full && showText;
     return (
       <div className={`min min-quiet ${isFull ? 'full' : ''}`}>
         {isFull ? null : header}
         {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{sefer}</div>}
         {isFull && <div className="min-full-veil" aria-hidden="true" />}
-        {isFull && (
-          <div className="min-full-ctl">
-            <button className="min-icon min-exit" onClick={() => setFull(false)} aria-label="Leave full screen">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
-            </button>
-            {p.talk.supported && (
-              <button className={`min-round small ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}>
-                <MicIcon size={18} />
-              </button>
-            )}
-          </div>
-        )}
         {!showText && (
           <main className="min-body">
             {p.items.length === 0 ? welcome : <CasualThread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}
@@ -365,7 +347,7 @@ export default function Minimal(p: Props) {
           </button>
         )}
         {label && !isFull && <div className="min-status slim">{label}</div>}
-        {isFull ? null : bottom}
+        {bottom}
       </div>
     );
   }
