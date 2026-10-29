@@ -323,9 +323,6 @@ export default function Minimal(p: Props) {
           {showText && src && (
             <>
               <button onClick={() => step(1)}>Next line</button>
-              <button onClick={() => p.send('continue')}>Explain</button>
-              <button onClick={() => p.send("let's see the Rashi")}>Rashi</button>
-              <button onClick={() => p.send("let's see the Tosafos")}>Tosafos</button>
             </>
           )}
         </div>

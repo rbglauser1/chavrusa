@@ -1110,3 +1110,7 @@ table.costs td.n, table.costs th.n { text-align: right; }
     radial-gradient(ellipse 50% 40% at 20% 65%, rgba(200, 188, 165, 0.2), transparent 70%),
     radial-gradient(ellipse 50% 40% at 60% 45%, rgba(255, 252, 245, 0.35), transparent 70%);
 }
+
+/* Quiet chat: the text sits right on the stone in every look (no flat panel), and the daf counter is solid. */
+[data-look] .sefer.embedded { background: transparent; background-image: none; }
+.sefer.embedded .daf-bar { opacity: 1; background: var(--surface); }
