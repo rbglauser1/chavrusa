@@ -1018,3 +1018,10 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer.embedded .line.focus, .sefer.embedded .line.open { background: none; box-shadow: none; }
 .sefer.embedded .comm { background: none; padding-left: 0; padding-right: 0; }
 .min-them .quote, [data-look] .min-them .quote { border: 0; border-inline-start: 0; background: none; border-radius: 0; padding: 0 0 12px; }
+/* Quiet chat: a small, quiet top line. */
+.min-quiet .min-head { padding: max(8px, env(safe-area-inset-top)) 14px 4px; gap: 4px; }
+.min-quiet .min-brand { font-size: 16px; font-weight: 600; }
+.min-quiet .min-pill { padding: 3px 10px; font-size: 13px; border-color: transparent; }
+.min-quiet .min-pill .he { font-size: 14px; }
+.min-quiet .min-icon { width: 36px; height: 36px; }
+.min-quiet .min-icon svg { width: 18px; height: 18px; }
