@@ -998,3 +998,14 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer.embedded .line.focus { background: color-mix(in srgb, var(--accent) 9%, transparent); }
 .min-quiet .min-caption { padding: 8px 26px 2px; }
 .min-quiet .min-caption-text { max-height: 2.9em; font-size: var(--en-size, 16px); }
+
+/* Quiet chat's text: just the text. Its options are in the ⋯ menu; no toolbars, tabs of sources, page buttons or title block. */
+.sefer.embedded .sefer-tabs, .sefer.embedded .sefer-tools, .sefer.embedded .page-turn, .sefer.embedded .lib-trail, .sefer.embedded .sefer-title, .sefer.embedded .alt-note { display: none; }
+.sefer.embedded .sefer-body { padding-top: 6px; }
+.min-check { float: right; color: var(--soft); font-size: 13px; }
+.min-menu-rule { display: block; height: 1px; margin: 4px 8px; background: var(--rule); }
+
+/* No line down the left side of the text: the line you're on is just softly shaded; steps and commentaries without a side rule. */
+.sefer .line.focus { box-shadow: none; border-radius: 10px; }
+.sefer .move, .min .move { border-left: 0; padding-left: 0; }
+.sefer .comm { border-inline-start: 0; }

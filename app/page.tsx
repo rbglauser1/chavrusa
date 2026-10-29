@@ -552,6 +552,7 @@ export default function Home() {
             onNewSession={newSession}
             starters={STARTERS}
             textTick={quietSefer ? textTick + libReq : undefined}
+            onToggle={quietSefer ? updateSettings : undefined}
             sefer={quietSefer ? (
               <SeferPanel
                 embedded

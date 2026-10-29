@@ -30,6 +30,7 @@ interface Props {
   inlineComm: InlineComm;
   onMenu: () => void;       // sessions
   onSettings: () => void;
+  onToggle?: (patch: Partial<Settings>) => void; // Quiet chat: the text's options (nikud, translation, steps, summaries) live in the ⋯ menu
   onLibrary: () => void;
   onSefer: () => void;      // the full Sefer (commentaries, next amud, everything)
   onNewSession: () => void;
@@ -152,6 +153,15 @@ export default function Minimal(p: Props) {
         <div className="min-menu" role="menu">
           <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
           <button role="menuitem" onClick={() => { setMenu(false); p.onSefer(); }}>The full Sefer (commentaries, next amud)</button>
+          {p.onToggle && (
+            <>
+              <button role="menuitemcheckbox" aria-checked={p.settings.seferEnglish !== false} onClick={() => p.onToggle!({ seferEnglish: p.settings.seferEnglish === false })}>Translation <span className="min-check">{p.settings.seferEnglish !== false ? 'on' : 'off'}</span></button>
+              <button role="menuitemcheckbox" aria-checked={!!p.settings.nikud} onClick={() => p.onToggle!({ nikud: !p.settings.nikud })}>Nikud <span className="min-check">{p.settings.nikud ? 'on' : 'off'}</span></button>
+              <button role="menuitemcheckbox" aria-checked={!!p.settings.outline} onClick={() => p.onToggle!({ outline: !p.settings.outline })}>Steps <span className="min-check">{p.settings.outline ? 'on' : 'off'}</span></button>
+              <button role="menuitemcheckbox" aria-checked={!!p.settings.commSummary} onClick={() => p.onToggle!({ commSummary: !p.settings.commSummary })}>Commentary summaries <span className="min-check">{p.settings.commSummary ? 'on' : 'off'}</span></button>
+              <span className="min-menu-rule" />
+            </>
+          )}
           <button role="menuitem" onClick={() => { setMenu(false); p.onNewSession(); }}>New session</button>
           <button role="menuitem" onClick={() => { setMenu(false); p.onSettings(); }}>Settings</button>
           <a role="menuitem" href="/guide">How we learn</a>
