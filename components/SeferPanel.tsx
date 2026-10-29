@@ -66,7 +66,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [aiText, setAiText] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<string | null>(null);
 
-  useEffect(() => { setOpen(new Set()); setComm({}); }, [selected, src?.ref]);
+  // Quiet chat: a line's commentary buttons show only after you tap that line.
+  const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => { setOpen(new Set()); setComm({}); setPicked(null); }, [selected, src?.ref]);
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -293,6 +295,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Tap a line: that's where we learn from (highlighted; the Chavrusa and the voice start there).
   // With translations hidden, the tap also shows that line's translation.
   function toggleLine(i: number) {
+    if (embedded) { setPicked((p) => (p === i ? null : i)); if (listOpen === i) setListOpen(null); }
     if (src && onPoint && !/ on /i.test(src.ref)) onPoint(src, i + 1);
     if (!canTranslate || showAll) return;
     setOpen((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
@@ -438,6 +441,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                   {(() => {
                     if (kind === 'none') return null;
+                    if (embedded && picked !== i) return null;
                     const all = conns ? lineComms(i) : [];
                     const quick = conns ? all.slice(0, 3) : [];
                     return (
@@ -460,7 +464,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       </div>
                     );
                   })()}
-                  {listOpen === i && (
+                  {listOpen === i && (!embedded || picked === i) && (
                     <div className="comm-list" onClick={(e) => e.stopPropagation()}>
                       {lineComms(i).map((x) => (
                         <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
