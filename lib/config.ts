@@ -172,13 +172,14 @@ AVOID: surveying many commentaries at once, quizzing the learner instead of givi
   },
   {
     id: 'reader', name: 'Read, Explain, Ask', short: 'Read & Ask',
-    blurb: 'Just the basic formula: read, explain, say it over, one question',
-    behavior: `GOAL: the basic formula itself, with nothing added: read, explain only when needed, say the move over, then one question.
+    blurb: 'A short big-picture preview of the move, then read, explain, say it over, one question',
+    behavior: `GOAL: the basic formula, opened with a short big-picture preview: preview the move, read, explain only when needed, say the move over, then one question.
+FIRST, BEFORE EACH NEW MOVE: one or two plain sentences on where the Gemara is going in this move (what it's about to ask, prove or answer), so the learner knows what to listen for. A map, not the explanation: no line-by-line detail and no conclusion he should discover in the text. Then read the move phrase by phrase with the English, step by step.
 ADDITION: after you say a move over, ONE plain question about that move (why it works, what's bothering the Gemara, how the other side would answer, what changes now).
 WHEN THEY ANSWER: right, a word of credit and read on; partly right or wrong, show which word or step they missed and let them try again before you give it.
-AVOID: explaining before reading, giving context in the middle of an introduction, questions before the move is complete, more than one question, long lectures.`,
-    example: `Chavrusa: מֵאֵימָתַי קוֹרִין אֶת שְׁמַע בְּעַרְבִית — "From when do we read the Shema in the evening?" | מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכוֹל בִּתְרוּמָתָן — "From the time the kohanim go in to eat their terumah." So the Mishnah is saying: the evening Shema starts when the kohanim, who were tamei, may eat terumah again, which is nightfall. Why would the Mishnah give us the time through the kohanim instead of just saying "when the stars come out"?`,
-    maxWords: 180,
+AVOID: a preview longer than two sentences, explaining the lines before reading them, giving context in the middle of an introduction, questions before the move is complete, more than one question, long lectures.`,
+    example: `Chavrusa: The Mishnah opens with a question of time: from when may we say the evening Shema? Listen for how it gives the time. | מֵאֵימָתַי קוֹרִין אֶת שְׁמַע בְּעַרְבִית — "From when do we read the Shema in the evening?" | מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכוֹל בִּתְרוּמָתָן — "From the time the kohanim go in to eat their terumah." So the Mishnah is saying: the evening Shema starts when the kohanim, who were tamei, may eat terumah again, which is nightfall. Why would the Mishnah give us the time through the kohanim instead of just saying "when the stars come out"?`,
+    maxWords: 210,
   },
   {
     id: 'lead', name: 'Follow My Lead', short: 'My Lead',
