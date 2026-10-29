@@ -1151,3 +1151,9 @@ body[data-full] .min-quiet.full .sefer.embedded .sefer-body {
 body[data-full] .min-quiet.full .min-row {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 720px; box-sizing: border-box; z-index: 44;
 }
+/* Daf counter in the bottom row: a little larger, still level with Talk. */
+.daf-dock .daf-bar { bottom: calc(max(6px, env(safe-area-inset-bottom)) + 4px); padding: 2px 3px; }
+.daf-dock .daf-bar button { font-size: 19px; width: 30px; height: 28px; }
+.daf-dock .daf-now { gap: 5px; padding: 0 3px; }
+.daf-dock .daf-now .he { font-size: 14.5px; }
+.daf-dock .daf-now small { font-size: 12.5px; }
