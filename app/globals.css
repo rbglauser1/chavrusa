@@ -1157,3 +1157,7 @@ body[data-full] .min-quiet.full .min-row {
 .daf-dock .daf-now { gap: 5px; padding: 0 3px; }
 .daf-dock .daf-now .he { font-size: 14.5px; }
 .daf-dock .daf-now small { font-size: 12.5px; }
+
+/* Full screen: nothing spans the bottom edge (Safari turns a full-width bottom bar into a solid strip). Only Talk, same spot. */
+body[data-full] .min-quiet.full .min-row { left: auto; right: max(0px, calc(50% - 360px)); transform: none; width: auto; max-width: none; }
+body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet.full .min-row-chips { display: none; }
