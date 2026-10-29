@@ -1009,3 +1009,8 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .sefer .line.focus { box-shadow: none; border-radius: 10px; }
 .sefer .move, .min .move { border-left: 0; padding-left: 0; }
 .sefer .comm { border-inline-start: 0; }
+/* Quiet chat: the top / end bumpers are just a quiet line of text. */
+.sefer.embedded .bumper { background: none; border: 0; padding: 8px 0; }
+.sefer.embedded .bumper span { font-weight: 400; font-size: 12px; color: var(--soft); }
+.sefer.embedded .bumper small { font-size: 11px; }
+.sefer.embedded .prev-sec { border-bottom: 0; margin-bottom: 6px; }
