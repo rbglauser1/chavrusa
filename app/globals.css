@@ -1161,3 +1161,20 @@ body[data-full] .min-quiet.full .min-row {
 /* Full screen: nothing spans the bottom edge (Safari turns a full-width bottom bar into a solid strip). Only Talk, same spot. */
 body[data-full] .min-quiet.full .min-row { left: auto; right: max(0px, calc(50% - 360px)); transform: none; width: auto; max-width: none; }
 body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet.full .min-row-chips { display: none; }
+
+/* Ink and stone, a touch whiter: brighter base, same grain and veins, softer grey patches. */
+[data-look='ink'] { --bg: #f7f7f5; --surface-2: #f0efec; --rule: #e0ded9; }
+[data-look='ink'] body {
+  background-color: #f6f6f4;
+  background-image: var(--grey-grain), var(--grey-mottle), var(--grey-veins),
+    radial-gradient(ellipse 80% 60% at 12% 6%, rgba(255, 255, 255, 0.95), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 88% 30%, rgba(160, 158, 150, 0.1), transparent 70%),
+    radial-gradient(ellipse 60% 60% at 85% 88%, rgba(150, 148, 140, 0.13), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 25% 70%, rgba(175, 172, 165, 0.09), transparent 70%),
+    radial-gradient(ellipse 65% 55% at 55% 45%, rgba(255, 255, 255, 0.5), transparent 70%);
+}
+[data-look='ink'] .topbar { background: rgba(250, 250, 248, 0.7); }
+.mini.ink { background: #f6f6f4; }
+[data-look='ink'] {
+  --grey-veins: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .014' numOctaves='4' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .52 0 0 0 0 .52 0 0 0 0 .5 0 0 0 .95 -.27'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+}
