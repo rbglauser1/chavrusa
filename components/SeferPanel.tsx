@@ -359,7 +359,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const nextTg = useTargum(nextSrc?.ref, !!settings.onkelos && !!nextSrc);
   const prevTg = useTargum(prevSrc?.ref, !!settings.onkelos && !!prevSrc);
   const tgBox = (t: { he: string[]; en: string[] }, i: number) => (t.he[i] ? (
-    <div className="tg" onClick={(e) => e.stopPropagation()}>
+    <div className="tg" onClick={(e) => { e.stopPropagation(); if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
       <span className="tg-label">Onkelos</span>
       <div className="he tg-he">{settings.nikud ? t.he[i] : stripNikud(t.he[i])}</div>
       {canTranslate && showAll && t.en[i] && <div className="tg-en">{yeshivishEnglish(t.en[i])}</div>}
@@ -571,7 +571,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).map(([k, c]) => {
                     const label = k.slice(k.indexOf(':') + 1);
                     return (
-                      <div key={k} className="comm" onClick={(e) => e.stopPropagation()}>
+                      <div key={k} className="comm" onClick={(e) => { e.stopPropagation(); if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
                         <div className="comm-title">
                           {label}
                           {c.refs?.length && onOpenExact ? (
