@@ -1077,3 +1077,21 @@ table.costs td.n, table.costs th.n { text-align: right; }
   background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 0%, transparent));
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent); }
+
+/* Yerushalayim stone, lighter: less brown, a paler limestone (same bronze accent). */
+[data-look='stone'] {
+  --bg: #f2ede3; --surface: #f9f6ef; --surface-2: #ebe4d7; --rule: #ddd2bd; --src-bg: #f9f6ef; --src-rule: #d4c7ad;
+  --soft: #72664f;
+  --stone-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .44 0 0 0 0 .39 0 0 0 0 .3 0 0 0 .3 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --stone-veins: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .014' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .56 0 0 0 0 .5 0 0 0 0 .4 0 0 0 .8 -.28'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+}
+[data-look='stone'] body {
+  background-color: #f0eadf;
+  background-image: var(--stone-grain), var(--tx-mottle-light), var(--stone-veins),
+    radial-gradient(ellipse 70% 50% at 15% 10%, rgba(255, 252, 245, 0.8), transparent 70%),
+    radial-gradient(ellipse 60% 60% at 90% 80%, rgba(200, 186, 160, 0.26), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 60% 40%, rgba(232, 222, 204, 0.45), transparent 70%);
+}
+[data-look='stone'] .topbar { background: rgba(232, 223, 207, 0.55); }
+[data-look='stone'] .sefer { background-color: #f7f3eb; }
+.mini.stone { background: #f2ede3; }
