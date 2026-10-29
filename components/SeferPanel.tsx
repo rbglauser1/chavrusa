@@ -22,10 +22,11 @@ interface Props {
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
   inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
   home?: { onMenu: () => void; onSettings: () => void } | null; // Sefer only: the Sefer is the whole app (sessions and settings in its header, no close)
+  onDoubleTap?: () => void; // Quiet chat: a double tap on the text goes full screen (or back)
   embedded?: boolean; // inside Quiet chat: just the text and its tools (the layout has its own header)
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded, onDoubleTap }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -294,6 +295,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Tap a line: that's where we learn from (highlighted; the Chavrusa and the voice start there).
   // With translations hidden, the tap also shows that line's translation.
+  // Quiet chat: a single tap waits a moment, so a double tap (full screen) doesn't also move your place.
+  const tapRef = useRef<{ t: number; timer: number | null }>({ t: 0, timer: null });
+  function tap(run: () => void) {
+    const r = tapRef.current!; const now = Date.now();
+    if (now - r.t < 320) { if (r.timer) window.clearTimeout(r.timer); r.timer = null; r.t = 0; onDoubleTap?.(); return; }
+    r.t = now; r.timer = window.setTimeout(() => { r.timer = null; run(); }, 300);
+  }
+  const dbl = embedded && !!onDoubleTap;
   function toggleLine(i: number) {
     if (embedded) { setPicked((p) => (p === i ? null : i)); if (listOpen === i) setListOpen(null); }
     if (src && onPoint && !/ on /i.test(src.ref)) onPoint(src, i + 1);
@@ -369,7 +378,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
       {settings.outline && outline.loading && !showLib && <div className="move-loading">Summarizing the steps of this {src ? sectionWord(src.ref) : 'page'}…</div>}
       {settings.outline && outline.failed && !outline.loading && !showLib && !isComm && <div className="move-loading">Couldn&apos;t summarize the steps of this {src ? sectionWord(src.ref) : 'page'}. <button className="linklike" onClick={outline.retry}>Try again</button></div>}
-      <div className="sefer-body" ref={bodyRef} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
+      <div className="sefer-body" ref={bodyRef} onClick={dbl ? () => tap(() => {}) : undefined} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
         {!src && (home
           ? <div className="empty home-empty"><div className="he" style={{ fontSize: 44, fontWeight: 700 }}>שלום</div><p>What shall we learn? Open the <button className="linklike" onClick={() => setShowLib(true)}>📚 Library</button>, tap Talk, or type below (for example “Berachos 2a” or “today's daf”).</p></div>
           : <div className="empty">Sources your chavrusa brings will appear here.</div>)}
@@ -437,7 +446,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
-                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={() => toggleLine(i)}>
+                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                   {(() => {
                     if (kind === 'none') return null;

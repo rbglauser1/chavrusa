@@ -1059,3 +1059,12 @@ table.costs td.n, table.costs th.n { text-align: right; }
     radial-gradient(ellipse 50% 40% at 25% 70%, rgba(175, 172, 165, 0.12), transparent 70%),
     radial-gradient(ellipse 60% 50% at 55% 45%, rgba(255, 255, 255, 0.4), transparent 70%);
 }
+
+/* Quiet chat: no shading on a line under your finger (touch keeps :hover). */
+.sefer.embedded .line:hover { background: none; }
+.sefer.embedded .sefer-body { touch-action: manipulation; }
+/* Quiet chat, full screen: just the text, with exit and Talk at the bottom right. */
+.min-quiet.full .min-sefer { padding-top: env(safe-area-inset-top); }
+.min-quiet.full .sefer.embedded .sefer-body { padding-bottom: 76px; }
+.min-full-ctl { position: fixed; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; z-index: 40; }
+.min-full-ctl .min-exit { width: 40px; height: 40px; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid var(--rule); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--soft); }

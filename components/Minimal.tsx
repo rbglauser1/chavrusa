@@ -4,7 +4,7 @@
 //   page     — the sefer is the home screen; the chavrusa's last words sit under it like a caption; one Talk button.
 //   quiet    — the conversation, set like a page in a book, with lines of text appearing in it as quotes.
 //   shtender — the text on top, the conversation below, one bar at the bottom.
-import { useEffect, useRef, useState } from 'react';
+import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
@@ -150,6 +150,9 @@ export default function Minimal(p: Props) {
   const [menu, setMenu] = useState(false);
   const [sheet, setSheet] = useState(false);     // page: the conversation pulled up
   const [typing, setTyping] = useState(false);   // shtender: show the box for typing
+  const [full, setFullState] = useState(false); // quiet chat: just the text, with exit and Talk at the bottom right
+  useEffect(() => { try { if (localStorage.getItem('quiet-full') === '1') setFullState(true); } catch {} }, []);
+  const setFull = (v: boolean) => { setFullState(v); try { localStorage.setItem('quiet-full', v ? '1' : '0'); } catch {} };
   const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation (from the ⋯ menu)
   // The Library or the Sefer was asked for, or a new place opened: show the text.
   useEffect(() => { if (p.textTick) setTab('text'); }, [p.textTick]);
@@ -186,6 +189,7 @@ export default function Minimal(p: Props) {
             <>
               <button role="menuitemradio" aria-checked={tab === 'text'} onClick={() => { setMenu(false); setTab('text'); }}>The text <span className="min-check">{tab === 'text' ? '✓' : ''}</span></button>
               <button role="menuitemradio" aria-checked={tab === 'talk'} onClick={() => { setMenu(false); setTab('talk'); }}>The conversation <span className="min-check">{tab === 'talk' ? '✓' : ''}</span></button>
+              <button role="menuitem" onClick={() => { setMenu(false); setTab('text'); setFull(true); }}>Full screen <span className="min-check">double-tap</span></button>
               <span className="min-menu-rule" />
               <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
             </>
@@ -332,22 +336,38 @@ export default function Minimal(p: Props) {
         )}
       </footer>
     );
+    const sefer = p.sefer && isValidElement(p.sefer)
+      ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void }>, { onDoubleTap: () => setFull(!full) })
+      : p.sefer;
+    const isFull = full && showText;
     return (
-      <div className="min min-quiet">
-        {header}
-        {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{p.sefer}</div>}
+      <div className={`min min-quiet ${isFull ? 'full' : ''}`}>
+        {isFull ? null : header}
+        {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{sefer}</div>}
+        {isFull && (
+          <div className="min-full-ctl">
+            <button className="min-icon min-exit" onClick={() => setFull(false)} aria-label="Leave full screen">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
+            </button>
+            {p.talk.supported && (
+              <button className={`min-round small ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}>
+                <MicIcon size={18} />
+              </button>
+            )}
+          </div>
+        )}
         {!showText && (
           <main className="min-body">
             {p.items.length === 0 ? welcome : <CasualThread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}
           </main>
         )}
-        {showText && caption && (
+        {showText && !isFull && caption && (
           <button className="min-caption" onClick={() => setTab('talk')} aria-label="Show the conversation">
             <span className="min-caption-text">{caption.length > 180 ? `${caption.slice(0, 180).replace(/\s+\S*$/, '')}…` : caption}</span>
           </button>
         )}
-        {label && <div className="min-status slim">{label}</div>}
-        {bottom}
+        {label && !isFull && <div className="min-status slim">{label}</div>}
+        {isFull ? null : bottom}
       </div>
     );
   }
