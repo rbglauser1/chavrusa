@@ -1036,3 +1036,12 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .min-them-group .c-say p { margin: 0 0 6px; } .min-them-group .c-say p:last-child { margin: 0; }
 .min-them-group .c-he { margin: 4px 0 0; font-family: var(--f-he); font-size: var(--he-size, 22px); line-height: 1.7; text-align: right; }
 .min-them-group .c-en { margin: 0; font-family: var(--f-body); font-style: italic; font-size: var(--en-size, 16px); line-height: 1.5; color: var(--soft); }
+/* Quiet chat: one low row at the bottom. */
+.min-row { display: flex; align-items: center; gap: 6px; padding: 4px 12px max(6px, env(safe-area-inset-bottom)); }
+.min-row-chips { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.min-row-chips::-webkit-scrollbar { display: none; }
+.min-row-chips button { flex: none; height: 32px; padding: 0 11px; border-radius: 16px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: inherit; font-size: 12.5px; cursor: pointer; }
+.min-round.small { width: 40px; height: 40px; }
+.min-status.slim { padding: 2px 20px 0; }
+.min-quiet .min-caption { padding: 6px 24px 0; }
+.min-quiet .min-typing .min-compose { padding-bottom: max(6px, env(safe-area-inset-bottom)); }

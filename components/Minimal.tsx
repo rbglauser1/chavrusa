@@ -182,10 +182,18 @@ export default function Minimal(p: Props) {
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {menu && (
         <div className="min-menu" role="menu">
-          <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
-          <button role="menuitem" onClick={() => { setMenu(false); p.onSefer(); }}>The full Sefer (commentaries, next amud)</button>
-          {p.layout === 'quiet' && (
-            <button role="menuitem" onClick={() => { setMenu(false); setTab((t) => (t === 'talk' ? 'text' : 'talk')); }}>{tab === 'talk' ? 'Back to the text' : 'Conversation'}</button>
+          {p.layout === 'quiet' ? (
+            <>
+              <button role="menuitemradio" aria-checked={tab === 'text'} onClick={() => { setMenu(false); setTab('text'); }}>The text <span className="min-check">{tab === 'text' ? '✓' : ''}</span></button>
+              <button role="menuitemradio" aria-checked={tab === 'talk'} onClick={() => { setMenu(false); setTab('talk'); }}>The conversation <span className="min-check">{tab === 'talk' ? '✓' : ''}</span></button>
+              <span className="min-menu-rule" />
+              <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
+            </>
+          ) : (
+            <>
+              <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
+              <button role="menuitem" onClick={() => { setMenu(false); p.onSefer(); }}>The full Sefer (commentaries, next amud)</button>
+            </>
           )}
           {p.onToggle && (
             <>
@@ -298,21 +306,30 @@ export default function Minimal(p: Props) {
     const keyboard = (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10" /></svg>
     );
-    // Just Talk, and a small keyboard for typing when you want it.
+    // One low row: a small keyboard, the four small buttons (only with the text), and a small round Talk on the right.
     const bottom = typing ? (
       <div className="min-typing">
         {composer(true)}
         <button className="min-icon" onClick={() => setTyping(false)} aria-label="Close the keyboard">✕</button>
       </div>
     ) : (
-      <footer className="min-bar quiet">
+      <footer className="min-row">
         <button className="min-icon" onClick={() => setTyping(true)} aria-label="Type instead">{keyboard}</button>
+        <div className="min-row-chips">
+          {showText && src && (
+            <>
+              <button onClick={() => step(1)}>Next line</button>
+              <button onClick={() => p.send('continue')}>Explain</button>
+              <button onClick={() => p.send("let's see the Rashi")}>Rashi</button>
+              <button onClick={() => p.send("let's see the Tosafos")}>Tosafos</button>
+            </>
+          )}
+        </div>
         {p.talk.supported && (
-          <button className={`min-talk-pill ${p.talk.on ? 'live' : ''}`} onClick={onTalk}>
-            <MicIcon size={18} /> {p.talk.on ? (p.talk.state === 'paused' ? 'Resume' : 'End') : 'Talk'}
+          <button className={`min-round small ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}>
+            <MicIcon size={18} />
           </button>
         )}
-        <span style={{ width: 36 }} aria-hidden="true" />
       </footer>
     );
     return (
@@ -329,15 +346,7 @@ export default function Minimal(p: Props) {
             <span className="min-caption-text">{caption.length > 180 ? `${caption.slice(0, 180).replace(/\s+\S*$/, '')}…` : caption}</span>
           </button>
         )}
-        {showText && src && (
-          <div className="min-chips">
-            <button onClick={() => step(1)}>Next line</button>
-            <button onClick={() => p.send('continue')}>Explain</button>
-            <button onClick={() => p.send("let's see the Rashi")}>Rashi</button>
-            <button onClick={() => p.send("let's see the Tosafos")}>Tosafos</button>
-          </div>
-        )}
-        {label && <div className="min-status">{label}</div>}
+        {label && <div className="min-status slim">{label}</div>}
         {bottom}
       </div>
     );
