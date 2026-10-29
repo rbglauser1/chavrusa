@@ -161,6 +161,12 @@ export default function Minimal(p: Props) {
     document.body.toggleAttribute('data-hide-daf', p.layout === 'quiet' && (tab !== 'text' || typing));
     return () => document.body.removeAttribute('data-hide-daf');
   }, [p.layout, tab, typing]);
+  // Full screen: the whole page scrolls, so on the iPhone the words slide up under the top edge and fade.
+  const fullOn = full && p.layout === 'quiet' && tab === 'text';
+  useEffect(() => {
+    document.body.toggleAttribute('data-full', fullOn);
+    return () => document.body.removeAttribute('data-full');
+  }, [fullOn]);
   const endRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing, tab]);
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';
@@ -334,7 +340,7 @@ export default function Minimal(p: Props) {
       </footer>
     );
     const sefer = p.sefer && isValidElement(p.sefer)
-      ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void }>, { onDoubleTap: () => setFull(!full) })
+      ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void; docScroll?: boolean }>, { onDoubleTap: () => setFull(!full), docScroll: isFull })
       : p.sefer;
     return (
       <div className={`min min-quiet ${isFull ? 'full' : ''}`}>

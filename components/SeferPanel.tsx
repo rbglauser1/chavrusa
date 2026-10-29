@@ -23,11 +23,12 @@ interface Props {
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
   inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
   home?: { onMenu: () => void; onSettings: () => void } | null; // Sefer only: the Sefer is the whole app (sessions and settings in its header, no close)
-  onDoubleTap?: () => void; // Quiet chat: a double tap on the text goes full screen (or back)
+  onDoubleTap?: () => void;
+  docScroll?: boolean; // Quiet chat full screen: the whole page scrolls (so Safari lets the text slide up under its top edge) // Quiet chat: a double tap on the text goes full screen (or back)
   embedded?: boolean; // inside Quiet chat: just the text and its tools (the layout has its own header)
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded, onDoubleTap }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -73,6 +74,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useEffect(() => { setOpen(new Set()); setComm({}); setPicked(null); }, [selected, src?.ref]);
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  // What scrolls: the Sefer's own body, or (full screen in Quiet chat) the whole page.
+  const sc = (): HTMLElement | null => (docScroll && typeof document !== 'undefined' ? (document.scrollingElement as HTMLElement) : bodyRef.current);
+  const viewTop = (el: HTMLElement) => (docScroll ? 0 : el.getBoundingClientRect().top);
+  const viewH = (el: HTMLElement) => (docScroll ? window.innerHeight : el.clientHeight);
   useEffect(() => {
     if (!src?.focus) return;
     const t = window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${src.focus}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120);
@@ -187,20 +192,20 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   function loadPrev() {
     if (!prevRef || prevSrc || prevState !== 'idle') return;
     setPrevState('loading');
-    void fetchAhead(prevRef).then((s) => { if (s) { prevHeight.current = bodyRef.current?.scrollHeight ?? null; setPrevSrc(s); setPrevState('idle'); } else setPrevState('none'); });
+    void fetchAhead(prevRef).then((s) => { if (s) { prevHeight.current = sc()?.scrollHeight ?? null; setPrevSrc(s); setPrevState('idle'); } else setPrevState('none'); });
   }
   // The amud above appeared: show its END (where you were heading), not its top. The view is placed so the last
   // lines of the amud above sit just above where you were. Done again after the phone's pull-down bounce settles,
   // since the bounce would otherwise snap the page back to the top.
   useEffect(() => {
-    const el = bodyRef.current;
+    const el = sc();
     if (!el || !prevSrc || prevHeight.current === null) return;
     prevHeight.current = null;
     const place = () => {
       const pv = prevElRef.current;
       if (!pv) return;
-      const bottom = pv.getBoundingClientRect().bottom - el.getBoundingClientRect().top + el.scrollTop; // the end of the amud above, in the page
-      const target = Math.max(0, bottom - el.clientHeight * 0.55);
+      const bottom = pv.getBoundingClientRect().bottom - viewTop(el) + el.scrollTop; // the end of the amud above, in the page
+      const target = Math.max(0, bottom - viewH(el) * 0.55);
       if (Math.abs(el.scrollTop - target) > 40 && el.scrollTop < target) el.scrollTop = target;
     };
     requestAnimationFrame(place);
@@ -211,11 +216,19 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Which amud / perek is in the middle of the screen right now (the one above, this one, or the one below).
   const prevElRef = useRef<HTMLDivElement | null>(null);
   const [inView, setInView] = useState<'prev' | 'main' | 'next'>('main');
+  const lastTop = useRef(0);
+  // Going in or out of full screen: keep your place on the page.
+  useEffect(() => {
+    const t = lastTop.current;
+    if (!t) return;
+    const r = requestAnimationFrame(() => { const el = sc(); if (el) el.scrollTop = t; });
+    return () => cancelAnimationFrame(r);
+  }, [docScroll]);
   function onBodyScroll() {
-    const el = bodyRef.current;
+    const el = sc();
     if (!el) return;
-    const box = el.getBoundingClientRect();
-    const mid = box.top + box.height / 2;
+    lastTop.current = el.scrollTop;
+    const mid = viewTop(el) + viewH(el) / 2;
     const pv = prevElRef.current?.getBoundingClientRect(), nx = endRef.current?.getBoundingClientRect();
     const where = prevSrc && pv && pv.bottom > mid ? 'prev' : nextSrc && nx && nx.top < mid ? 'next' : 'main';
     if (where !== inView) setInView(where);
@@ -225,9 +238,17 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // with your finger, or scrolling a little further with a mouse) brings in the previous / next amud.
   const touch = useRef<{ y: number; top: boolean; bottom: boolean } | null>(null);
   const atTop = (el: HTMLElement) => el.scrollTop <= 2;
-  const atBottom = (el: HTMLElement) => el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+  const atBottom = (el: HTMLElement) => el.scrollTop + viewH(el) >= el.scrollHeight - 2;
+  const scrollFn = useRef(onBodyScroll);
+  scrollFn.current = onBodyScroll;
+  useEffect(() => {
+    if (!docScroll) return;
+    const f = () => scrollFn.current();
+    window.addEventListener('scroll', f, { passive: true });
+    return () => window.removeEventListener('scroll', f);
+  }, [docScroll]);
   function onTouchStart(e: React.TouchEvent) {
-    const el = bodyRef.current;
+    const el = sc();
     if (!el) return;
     touch.current = { y: e.touches[0].clientY, top: atTop(el), bottom: atBottom(el) };
   }
@@ -240,7 +261,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
   const wheelPush = useRef(0);
   function onWheel(e: React.WheelEvent) {
-    const el = bodyRef.current;
+    const el = sc();
     if (!el) return;
     if ((e.deltaY > 0 && atBottom(el)) || (e.deltaY < 0 && atTop(el))) {
       wheelPush.current += e.deltaY;
@@ -260,7 +281,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useEffect(() => {
     scrolled.current = false;
     if (src?.focus && src.focus > 1) return;
-    const t = window.setTimeout(() => { bodyRef.current?.scrollTo({ top: 0 }); }, 30);
+    const t = window.setTimeout(() => { sc()?.scrollTo({ top: 0 }); }, 30);
     return () => window.clearTimeout(t);
   }, [src?.ref]);
 

@@ -1138,3 +1138,16 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .daf-dock .daf-now .he { font-size: 12px; font-weight: 600; font-family: var(--f-he); }
 .daf-dock .daf-now small { font-size: 11px; color: var(--soft); }
 body[data-hide-daf] .daf-dock { display: none; }
+
+/* Full screen in Quiet chat: the page itself scrolls (not a box inside it), so Safari slides the words up under its top edge. */
+body[data-full] .app, body[data-full] .main { height: auto; min-height: 100dvh; overflow: visible; display: block; }
+body[data-full] .min-quiet.full { height: auto; min-height: 100dvh; display: block; }
+body[data-full] .min-quiet.full .min-sefer { display: block; }
+body[data-full] .min-quiet.full .sefer.embedded { display: block; overflow: visible; }
+body[data-full] .min-quiet.full .sefer.embedded .sefer-body {
+  overflow: visible; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 110px;
+  -webkit-mask-image: none; mask-image: none;
+}
+body[data-full] .min-quiet.full .min-row {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 720px; box-sizing: border-box; z-index: 44;
+}
