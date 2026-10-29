@@ -344,6 +344,7 @@ export default function Minimal(p: Props) {
       <div className={`min min-quiet ${isFull ? 'full' : ''}`}>
         {isFull ? null : header}
         {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{sefer}</div>}
+        {isFull && <div className="min-full-veil" aria-hidden="true" />}
         {isFull && (
           <div className="min-full-ctl">
             <button className="min-icon min-exit" onClick={() => setFull(false)} aria-label="Leave full screen">

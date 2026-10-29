@@ -1068,3 +1068,12 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .min-quiet.full .sefer.embedded .sefer-body { padding-bottom: 76px; }
 .min-full-ctl { position: fixed; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; z-index: 40; }
 .min-full-ctl .min-exit { width: 40px; height: 40px; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid var(--rule); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--soft); }
+
+/* Full screen: the text runs all the way to the top and slides under a soft, blurred edge (like the Claude app). */
+.min-quiet.full { position: fixed; inset: 0; height: auto; max-width: none; }
+.min-quiet.full .min-sefer { padding-top: 0; }
+.min-quiet.full .sefer.embedded .sefer-body { padding-top: calc(env(safe-area-inset-top) + 14px); max-width: 720px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.min-full-veil { position: fixed; top: 0; left: 0; right: 0; height: calc(env(safe-area-inset-top) + 22px); z-index: 35; pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 0%, transparent));
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent); }
