@@ -450,6 +450,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   : <button className="bumper" onClick={loadPrev}><span>Top of {src.ref}</span><small>↑ Pull down a little more (or tap) for {prevRef}</small></button>}
               </div>
             )}
+            {/* Scrolled up into the amud before: this amud gets its own heading too, so the change is clear both ways. */}
+            {prevSrc && <div className="next-head here-head"><span className="he">{src.heRef}</span> <small>{src.ref}</small></div>}
             <div className="sefer-title">
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>

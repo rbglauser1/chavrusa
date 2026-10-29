@@ -1235,3 +1235,8 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 /* The amud intro: one quiet paragraph at the top of each amud, on what's coming. */
 .amud-intro { font-family: var(--f-body); font-size: var(--en-size, 16px); line-height: 1.6; color: color-mix(in srgb, var(--ink) 86%, transparent); margin: 2px 0 18px; padding: 0 0 14px; border-bottom: 1px solid var(--rule); }
 .amud-intro span { display: block; font-family: var(--f-ui); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--soft); margin-bottom: 6px; }
+
+/* A clear line between amudim in every layout (Quiet chat included): a strong rule and the big Hebrew heading. */
+.sefer.embedded .prev-sec:has(.line) { border-bottom: 3px solid var(--accent); padding-bottom: 16px; margin-bottom: 22px; }
+.sefer.embedded .next-sec { margin-top: 28px; padding-top: 16px; border-top: 3px solid var(--accent); }
+.sefer .here-head { margin-top: 0; }
