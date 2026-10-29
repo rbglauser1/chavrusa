@@ -1025,3 +1025,14 @@ table.costs td.n, table.costs th.n { text-align: right; }
 .min-quiet .min-pill .he { font-size: 14px; }
 .min-quiet .min-icon { width: 36px; height: 36px; }
 .min-quiet .min-icon svg { width: 18px; height: 18px; }
+
+/* Quiet chat: Talk and a small keyboard; the casual conversation. */
+.min-bar.quiet { justify-content: space-between; padding-top: 6px; }
+.min-typing { display: flex; align-items: center; gap: 4px; padding-right: 10px; }
+.min-typing .min-compose { flex: 1; padding-right: 4px; }
+.min-thread.casual { gap: 12px; }
+.min-them-group { display: flex; flex-direction: column; gap: 8px; max-width: 92%; }
+.min-them-group .c-say { font-family: var(--f-body); font-size: calc(var(--en-size, 16px) + 1px); line-height: 1.55; }
+.min-them-group .c-say p { margin: 0 0 6px; } .min-them-group .c-say p:last-child { margin: 0; }
+.min-them-group .c-he { margin: 4px 0 0; font-family: var(--f-he); font-size: var(--he-size, 22px); line-height: 1.7; text-align: right; }
+.min-them-group .c-en { margin: 0; font-family: var(--f-body); font-style: italic; font-size: var(--en-size, 16px); line-height: 1.5; color: var(--soft); }

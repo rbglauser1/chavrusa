@@ -114,16 +114,47 @@ function Thread({ items, busy, status, endRef }: { items: Msg[]; busy: boolean; 
   );
 }
 
+// Quiet chat's conversation: casual, in small pieces, the text included (each Hebrew line and its English on their
+// own), nothing to click on.
+function CasualThread({ items, busy, status, endRef }: { items: Msg[]; busy: boolean; status: string; endRef: React.RefObject<HTMLDivElement | null> }) {
+  const pieces = (text: string) => {
+    const out: { kind: 'he' | 'en' | 'say'; text: string }[] = [];
+    for (const chunk of text.replace(/\[\[\/?say\]\]/gi, '').split(/\n{2,}/)) {
+      const lines = chunk.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (!lines.length) continue;
+      if (lines.every((l) => l.startsWith('>'))) {
+        for (const l of lines) { const t = l.replace(/^>\s?/, '').trim(); if (t) out.push({ kind: /[\u05D0-\u05EA]/.test(t) ? 'he' : 'en', text: t.replace(/^"|"$/g, '') }); }
+      } else if (/^\*[^*].*\*$/.test(lines.join(' ')) && /translation/i.test(chunk)) {
+        continue; // "Translation: …" notes: not needed here
+      } else out.push({ kind: 'say', text: lines.join('\n') });
+    }
+    return out;
+  };
+  return (
+    <div className="min-thread casual">
+      {items.map((it, i) => it.kind === 'user'
+        ? <div key={i} className="min-me" dir="auto">{it.text}</div>
+        : it.kind === 'assistant'
+          ? <div key={i} className="min-them-group">{pieces(it.text).map((pc, k) => pc.kind === 'he'
+              ? <p key={k} className="c-he" dir="rtl">{pc.text}</p>
+              : pc.kind === 'en' ? <p key={k} className="c-en">{pc.text}</p>
+              : <div key={k} className="c-say"><Formatted text={pc.text} /></div>)}</div>
+          : it.kind === 'error' ? <div key={i} className="min-error">{it.text}</div> : null)}
+      {busy && <div className="min-event">{status || 'Thinking…'}</div>}
+      <div ref={endRef} />
+    </div>
+  );
+}
+
 export default function Minimal(p: Props) {
   const [menu, setMenu] = useState(false);
   const [sheet, setSheet] = useState(false);     // page: the conversation pulled up
   const [typing, setTyping] = useState(false);   // shtender: show the box for typing
-  const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation
+  const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation (from the ⋯ menu)
   // The Library or the Sefer was asked for, or a new place opened: show the text.
   useEffect(() => { if (p.textTick) setTab('text'); }, [p.textTick]);
-  useEffect(() => { if (p.current?.ref) setTab('text'); }, [p.current?.ref]);
   const endRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing]);
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing, tab]);
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';
   const caption = lastSaid.replace(/^\s*>.*$/gm, '').replace(/\*\*|__|`|\[\[\/?say\]\]/g, '').replace(/\s+/g, ' ').trim();
   const src = p.current;
@@ -153,6 +184,9 @@ export default function Minimal(p: Props) {
         <div className="min-menu" role="menu">
           <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
           <button role="menuitem" onClick={() => { setMenu(false); p.onSefer(); }}>The full Sefer (commentaries, next amud)</button>
+          {p.layout === 'quiet' && (
+            <button role="menuitem" onClick={() => { setMenu(false); setTab((t) => (t === 'talk' ? 'text' : 'talk')); }}>{tab === 'talk' ? 'Back to the text' : 'Conversation'}</button>
+          )}
           {p.onToggle && (
             <>
               <button role="menuitemcheckbox" aria-checked={p.settings.seferEnglish !== false} onClick={() => p.onToggle!({ seferEnglish: p.settings.seferEnglish === false })}>Translation <span className="min-check">{p.settings.seferEnglish !== false ? 'on' : 'off'}</span></button>
@@ -258,33 +292,44 @@ export default function Minimal(p: Props) {
 
   // ---------- B · Quiet chat ----------
   if (p.layout === 'quiet') {
-    // One page: the text when there is one, the chavrusa's last words under it; tap them for the whole conversation.
-    const showText = !!p.sefer && (!!src || (p.textTick ?? 0) > 0);
+    // The text (with the chavrusa's last words under it), or — from the ⋯ menu — the conversation, casual, text included.
+    const hasText = !!p.sefer && (!!src || (p.textTick ?? 0) > 0);
+    const showText = hasText && tab === 'text';
+    const keyboard = (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10" /></svg>
+    );
+    // Just Talk, and a small keyboard for typing when you want it.
+    const bottom = typing ? (
+      <div className="min-typing">
+        {composer(true)}
+        <button className="min-icon" onClick={() => setTyping(false)} aria-label="Close the keyboard">✕</button>
+      </div>
+    ) : (
+      <footer className="min-bar quiet">
+        <button className="min-icon" onClick={() => setTyping(true)} aria-label="Type instead">{keyboard}</button>
+        {p.talk.supported && (
+          <button className={`min-talk-pill ${p.talk.on ? 'live' : ''}`} onClick={onTalk}>
+            <MicIcon size={18} /> {p.talk.on ? (p.talk.state === 'paused' ? 'Resume' : 'End') : 'Talk'}
+          </button>
+        )}
+        <span style={{ width: 36 }} aria-hidden="true" />
+      </footer>
+    );
     return (
       <div className="min min-quiet">
         {header}
         {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{p.sefer}</div>}
         {!showText && (
           <main className="min-body">
-            {p.items.length === 0 ? welcome : <Thread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}
+            {p.items.length === 0 ? welcome : <CasualThread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}
           </main>
         )}
         {showText && caption && (
-          <button className="min-caption" onClick={() => setSheet(true)} aria-label="Show the conversation">
+          <button className="min-caption" onClick={() => setTab('talk')} aria-label="Show the conversation">
             <span className="min-caption-text">{caption.length > 180 ? `${caption.slice(0, 180).replace(/\s+\S*$/, '')}…` : caption}</span>
           </button>
         )}
-        {sheet && showText && (
-          <>
-            <div className="min-scrim" onClick={() => setSheet(false)} />
-            <section className="min-sheet" aria-label="Conversation">
-              <button className="min-grip-btn" onClick={() => setSheet(false)} aria-label="Back to the text"><span className="min-grip" /></button>
-              <Thread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />
-              {composer(true)}
-            </section>
-          </>
-        )}
-        {src && (
+        {showText && src && (
           <div className="min-chips">
             <button onClick={() => step(1)}>Next line</button>
             <button onClick={() => p.send('continue')}>Explain</button>
@@ -293,7 +338,7 @@ export default function Minimal(p: Props) {
           </div>
         )}
         {label && <div className="min-status">{label}</div>}
-        {composer()}
+        {bottom}
       </div>
     );
   }
