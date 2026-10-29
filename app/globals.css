@@ -1207,3 +1207,10 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 }
 [data-look='daf'] body { background: #ffffff; }
 .mini.daf { background: #ffffff; }
+
+/* English under the Gemara: how the translation words stand apart from Sefaria's added explanation (Settings). */
+.en b, .min-en b { font-weight: inherit; color: inherit; }
+.en .en-x, .min-en .en-x { color: inherit; }
+[data-enmark='soft'] .en .en-x, [data-enmark='soft'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 50%, transparent); }
+[data-enmark='light'] .en .en-x, [data-enmark='light'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 70%, transparent); }
+[data-enmark='italic'] .en .en-x, [data-enmark='italic'] .min-en .en-x { font-style: italic; }
