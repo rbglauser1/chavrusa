@@ -3,7 +3,34 @@ import 'server-only';
 import { indexWithCounts, rawIndex, sefariaToc } from './sefaria';
 
 export interface LibItem { kind: 'category' | 'book'; name: string; he: string }
+// The parshiyos of a sefer of Chumash, from Sefaria's "Parasha" structure, in yeshivish names, with their aliyos.
+export interface Parsha { name: string; he: string; start: string; aliyos: string[] }
+const PARSHA_NAMES: Record<string, string[]> = {
+  Genesis: ['Bereishis', 'Noach', 'Lech Lecha', 'Vayeira', 'Chayei Sarah', 'Toldos', 'Vayeitzei', 'Vayishlach', 'Vayeishev', 'Mikeitz', 'Vayigash', 'Vayechi'],
+  Exodus: ['Shemos', "Va'eira", 'Bo', 'Beshalach', 'Yisro', 'Mishpatim', 'Terumah', 'Tetzaveh', 'Ki Sisa', 'Vayakhel', 'Pekudei'],
+  Leviticus: ['Vayikra', 'Tzav', 'Shemini', 'Tazria', 'Metzora', 'Acharei Mos', 'Kedoshim', 'Emor', 'Behar', 'Bechukosai'],
+  Numbers: ['Bamidbar', 'Naso', "Beha'aloscha", "Shelach", 'Korach', 'Chukas', 'Balak', 'Pinchas', 'Matos', "Masei"],
+  Deuteronomy: ['Devarim', "Va'eschanan", 'Eikev', "Re'eh", 'Shoftim', 'Ki Seitzei', 'Ki Savo', 'Nitzavim', 'Vayeilech', "Ha'azinu", "V'zos Habracha"],
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parshiyosOf(title: string, idx: any): Parsha[] {
+  const nodes = idx?.alt_structs?.Parasha?.nodes;
+  if (!Array.isArray(nodes)) return [];
+  const names = PARSHA_NAMES[title] ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return nodes.map((n: any, i: number) => {
+    const titles: { text: string; lang: string; primary?: boolean }[] = Array.isArray(n.titles) ? n.titles : [];
+    const en = names.length === nodes.length ? names[i] : String(n.sharedTitle ?? n.title ?? titles.find((t) => t.lang === 'en')?.text ?? '');
+    const he = String(n.heTitle ?? titles.find((t) => t.lang === 'he' && t.primary)?.text ?? titles.find((t) => t.lang === 'he')?.text ?? '');
+    const whole = String(n.wholeRef ?? (Array.isArray(n.refs) ? n.refs[0] : '') ?? '');
+    const start = whole.replace(/-.*$/, '');
+    const aliyos = Array.isArray(n.refs) ? n.refs.map((r: string) => String(r).replace(/-.*$/, '')) : [];
+    return { name: en, he, start, aliyos };
+  }).filter((p: Parsha) => p.name && /\d+:\d+$/.test(p.start));
+}
+
 export interface BookShape {
+  parshiyos?: Parsha[];
   title: string; he: string;
   // chapters: perek/chapter numbers 1..count; talmud: dapim 2..lastDaf (a/b); parts: named sections
   kind: 'chapters' | 'talmud' | 'parts' | 'open';
@@ -78,7 +105,11 @@ export async function bookShape(title: string, part?: string): Promise<BookShape
   const [idx, counted] = await Promise.all([rawIndex(title), indexWithCounts(title).catch(() => null)]);
   const name = String(idx?.title ?? title);
   const he = String(idx?.heTitle ?? idx?.schema?.heTitle ?? '');
-  if (!part) return shapeOf(name, he, idx?.schema, counted?.schema);
+  if (!part) {
+    const sh = shapeOf(name, he, idx?.schema, counted?.schema);
+    const parshiyos = parshiyosOf(name, idx);
+    return parshiyos.length ? { ...sh, parshiyos } : sh;
+  }
   const names = part.split('|');
   const node = findPart(idx?.schema, names);
   const cnode = findPart(counted?.schema, names);

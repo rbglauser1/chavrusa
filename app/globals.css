@@ -1309,3 +1309,10 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 .recent-clear.armed { color: var(--danger); }
 .recent-empty { margin-top: 30px; text-align: center; font-family: var(--f-body); font-style: italic; color: var(--soft); }
 .settings-page { color: var(--ink); }
+
+/* Library: Chumash by parsha, with its aliyos. */
+.parsha-list .parsha.on > .lib-item { border-color: var(--accent); }
+.aliyos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 8px 2px 12px; }
+.aliyah { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 9px 12px; border-radius: var(--radius); border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; text-align: left; }
+.aliyah small { color: var(--soft); font-size: 12px; }
+.aliyah.first { grid-column: 1 / -1; border-color: var(--accent); }

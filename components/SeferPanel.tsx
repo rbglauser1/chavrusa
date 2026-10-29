@@ -18,7 +18,7 @@ interface Props {
   onSettings: (p: Partial<Settings>) => void;
   sessionId: string | null;
   onOpenRef: (q: string) => Promise<string | null>; // returns an error message, or null when opened
-  onOpenExact?: (ref: string) => Promise<string | { message: string; approvable?: string } | null>; // an exact Sefaria reference (Library)
+  onOpenExact?: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; // an exact Sefaria reference (Library)
   libraryRequest?: number; // changes when the page asks to open the Library
   talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here

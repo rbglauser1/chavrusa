@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 
 // Browse Sefaria's library inside the Sefer: category -> sefer -> perek / daf / part. Free (no AI).
 type Item = { kind: 'category' | 'book'; name: string; he: string };
-type Shape = { title: string; he: string; kind: 'chapters' | 'talmud' | 'parts' | 'open'; count?: number; lastDaf?: number; unit?: string; parts?: { name: string; he: string }[]; error?: string };
+type Parsha = { name: string; he: string; start: string; aliyos: string[] };
+const ALIYOS = ['Rishon', 'Sheni', 'Shlishi', "Revi'i", 'Chamishi', 'Shishi', "Shevi'i", 'Maftir'];
+type Shape = { parshiyos?: Parsha[]; title: string; he: string; kind: 'chapters' | 'talmud' | 'parts' | 'open'; count?: number; lastDaf?: number; unit?: string; parts?: { name: string; he: string }[]; error?: string };
 
 const UNIT_LABEL: Record<string, string> = { Chapter: 'Perek', Perek: 'Perek', Siman: 'Siman', Daf: 'Daf', Parasha: 'Parsha' };
 
@@ -30,7 +32,8 @@ function saveRecent(r: Recent) {
   try { localStorage.setItem('lib-recent', JSON.stringify([r, ...loadRecent().filter((x) => x.ref !== r.ref)].slice(0, 8))); } catch { /* optional */ }
 }
 
-export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void }) {
+export default function Library({ onOpen, onClose }: { onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void }) {
+  const [openParsha, setOpenParsha] = useState<number | null>(null);
   const [path, setPathState] = useState<string[]>(memory.path);
   const setPath = (p: string[]) => { memory.path = p; setPathState(p); };
   const [items, setItems] = useState<Item[] | null>(null);
@@ -65,9 +68,9 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
       .catch(() => setMsg("Couldn't load this sefer."));
   }, [book]);
 
-  async function open(ref: string) {
+  async function open(ref: string, focus?: number) {
     setBusy(true); setMsg(''); setApprovable(null);
-    const err = await onOpen(ref);
+    const err = await onOpen(ref, focus);
     setBusy(false);
     if (!err) { saveRecent({ ref, trail: libraryTrail() }); onClose(); return; }
     if (typeof err === 'string') { setMsg(err); return; }
@@ -135,9 +138,38 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string) => 
         <div className="lib-book">
           {!shape && !msg && <div className="muted">Opening…</div>}
           {shape && <div className="lib-title"><span>{shape.title}</span>{shape.he && <span className="he" dir="rtl">{shape.he}</span>}</div>}
+          {shape?.parshiyos && shape.parshiyos.length > 0 && (
+            <>
+              <div className="muted lib-hint">Parsha</div>
+              <div className="lib-list parsha-list">
+                {shape.parshiyos.map((p, i) => {
+                  // A parsha (or an aliyah) opens its perek, at the pasuk where it begins.
+                  const at = (ref: string) => { const m = ref.match(/^(.*) (\d+):(\d+)$/); if (m) void open(`${m[1]} ${m[2]}`, Number(m[3])); };
+                  return (
+                    <div key={p.name} className={`parsha ${openParsha === i ? 'on' : ''}`}>
+                      <button className="lib-item book" onClick={() => setOpenParsha((v) => (v === i ? null : i))} aria-expanded={openParsha === i}>
+                        <span className="en">{p.name}</span>
+                        {p.he && <span className="he" dir="rtl">{p.he}</span>}
+                        <span className="chev" aria-hidden="true">{openParsha === i ? '▴' : '▾'}</span>
+                      </button>
+                      {openParsha === i && (
+                        <div className="aliyos">
+                          {!p.aliyos.length && <button className="aliyah first" disabled={busy} onClick={() => at(p.start)}>From the beginning <small>{p.start.replace(/^.* /, '')}</small></button>}
+                          {p.aliyos.map((a, k) => (
+                            <button key={a + k} className="aliyah" disabled={busy} onClick={() => at(a)}>{ALIYOS[k] ?? `Aliyah ${k + 1}`} <small>{a.replace(/^.* /, '')}</small></button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="muted lib-hint" style={{ marginTop: 16 }}>Or by perek</div>
+            </>
+          )}
           {shape?.kind === 'chapters' && (
             <>
-              <div className="muted lib-hint">{UNIT_LABEL[shape.unit ?? ''] ?? shape.unit}</div>
+              {!shape.parshiyos?.length && <div className="muted lib-hint">{UNIT_LABEL[shape.unit ?? ''] ?? shape.unit}</div>}
               <div className="lib-grid">
                 {Array.from({ length: shape.count ?? 0 }, (_, i) => i + 1).map((n) => (
                   <button key={n} disabled={busy} onClick={() => open(`${shape.title} ${n}`)}>{n}</button>

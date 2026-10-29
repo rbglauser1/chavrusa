@@ -372,12 +372,16 @@ export default function Home() {
   }
 
   // Open an exact Sefaria reference (from the Library), with a reason and an approve option if it's not approved.
-  async function openExact(ref: string): Promise<string | { message: string; approvable?: string } | null> {
+  async function openExact(ref: string, focus?: number): Promise<string | { message: string; approvable?: string } | null> {
     try {
       const res = await fetch('/api/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: ref, direct: true, exact: true, sessionId: sessionIdRef.current }) });
       const d = await res.json();
       if (d.session?.id) { sessionIdRef.current = d.session.id; setSessionId(d.session.id); refreshSessions(); }
-      if (d.source) { showSource(d.source); return null; }
+      if (d.source) {
+        // Opened at a pasuk (a parsha or aliyah from the Library): learn from there.
+        if (focus && focus > 1 && d.source.he?.length >= focus) pointAt(d.source, focus); else showSource(d.source);
+        return null;
+      }
       return d.approvable ? { message: d.message ?? 'Not on the approved list.', approvable: d.approvable } : (d.message ?? `Couldn't open ${ref}.`);
     } catch (e) { return (e as Error).message; }
   }
