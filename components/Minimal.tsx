@@ -335,7 +335,6 @@ export default function Minimal(p: Props) {
       <div className={`min min-quiet ${isFull ? 'full' : ''}`}>
         {isFull ? null : header}
         {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{sefer}</div>}
-        {isFull && <div className="min-full-veil" aria-hidden="true" />}
         {!showText && (
           <main className="min-body">
             {p.items.length === 0 ? welcome : <CasualThread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}

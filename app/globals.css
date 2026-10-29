@@ -1118,3 +1118,16 @@ table.costs td.n, table.costs th.n { text-align: right; }
 /* Full screen keeps the same frame as Quiet chat, so Talk stays exactly where it was. */
 .min-quiet.full { position: relative; inset: auto; height: 100dvh; max-width: 720px; }
 .min-quiet.full .sefer.embedded .sefer-body { padding-bottom: 40px; }
+
+/* Full screen: the words run right up to the top edge and fade out softly as they leave. */
+.min-quiet.full .sefer.embedded .sefer-body {
+  padding-top: calc(env(safe-area-inset-top) + 10px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 calc(env(safe-area-inset-top) + 34px));
+  mask-image: linear-gradient(to bottom, transparent 0, #000 calc(env(safe-area-inset-top) + 34px));
+}
+/* Quiet chat: the daf counter sits in the bottom row, level with Talk (after the keyboard). */
+.min-quiet .sefer.embedded .daf-bar {
+  position: fixed; z-index: 45; margin: 0;
+  left: max(56px, calc(50% - 360px + 56px));
+  bottom: calc(max(6px, env(safe-area-inset-bottom)) + 6px);
+}
