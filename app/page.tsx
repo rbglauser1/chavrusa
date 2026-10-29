@@ -44,6 +44,9 @@ const STARTERS = [
 export default function Home() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loaded, setLoaded] = useState(false);
+  // Nothing is drawn until the settings are known (from this phone's copy, or the server), so the default
+  // screen never flashes before the one you chose.
+  const [ready, setReady] = useState(false);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -165,11 +168,18 @@ export default function Home() {
 
   // ---------- Load ----------
   useEffect(() => {
+    try {
+      const kept = localStorage.getItem('chavrusa_settings');
+      if (kept) { setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(kept) }); setReady(true); }
+    } catch { /* storage unavailable */ }
+    const fallback = window.setTimeout(() => setReady(true), 2500); // never stay blank
     fetch('/api/settings').then((r) => r.json()).then((s) => {
-      if (s && !s.error) setSettings(s);
+      window.clearTimeout(fallback);
+      setReady(true);
+      if (s && !s.error) { setSettings(s); try { localStorage.setItem('chavrusa_settings', JSON.stringify(s)); } catch { /* optional */ } }
       else setItems([{ kind: 'error', text: `Could not reach the database: ${s?.error ?? 'unknown error'}` }]);
       setLoaded(true);
-    }).catch((e) => { setItems([{ kind: 'error', text: `Could not load settings: ${String(e)}` }]); setLoaded(true); });
+    }).catch((e) => { window.clearTimeout(fallback); setReady(true); setItems([{ kind: 'error', text: `Could not load settings: ${String(e)}` }]); setLoaded(true); });
     refreshSessions();
     try { if (localStorage.getItem('chavrusa_disclaimer') === '1') setSeenDisclaimer(true); } catch { /* storage unavailable */ }
     const mq = window.matchMedia('(min-width: 1000px)');
@@ -215,6 +225,12 @@ export default function Home() {
   function refreshSessions() {
     fetch('/api/sessions').then((r) => r.json()).then((d) => Array.isArray(d) && setSessions(d));
   }
+
+  // Keep this phone's copy of the settings current, for the next time the app opens.
+  useEffect(() => {
+    if (!loaded) return;
+    try { localStorage.setItem('chavrusa_settings', JSON.stringify(settings)); } catch { /* optional */ }
+  }, [settings, loaded]);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
     if (patch.ui === 'home') { setDrawer(null); setView('home'); }
@@ -550,6 +566,8 @@ export default function Home() {
   const quietSefer = layoutEff === 'quiet' && settings.display !== 'off'; // Quiet chat carries the Sefer in its Text tab
   const minimal = !!layoutEff && layoutEff !== 'classic' && !seferHome;
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
+
+  if (!ready) return <div className="app boot" aria-busy="true" />;
 
   // ---------- The new main screen and its pages ----------
   if (newUI && view !== 'learn') {
