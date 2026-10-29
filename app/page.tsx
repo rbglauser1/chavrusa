@@ -300,7 +300,7 @@ export default function Home() {
     if (idx < 0 || !Number.isFinite(line) || !src.he.length) return false;
     setSelected(idx);
     setSources((s) => s.map((x, i) => (i === idx ? { ...x, focus: line } : x)));
-    setInlineComm({ main, line, title: m[1], ref: src.ref, he: src.he, en: src.en, key: Date.now() });
+    setInlineComm({ main, line, title: m[1], ref: src.ref, he: src.he, en: src.en.length ? src.en : (src.altEn ?? []), key: Date.now() });
     if (window.matchMedia('(min-width: 1000px)').matches) setSeferOpen(true);
     return true;
   }
