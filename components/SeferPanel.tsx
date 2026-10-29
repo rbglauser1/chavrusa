@@ -408,7 +408,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
                         {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`pm${k}`} className="move">{m}</div>)}
-                        <div data-line={`p${i + 1}`} className="line" onClick={() => onPoint?.(prevSrc, i + 1)}>
+                        <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(prevSrc, i + 1)); } else onPoint?.(prevSrc, i + 1); }}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                           {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
                         </div>
@@ -522,7 +522,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     );
                   })}
                   {isOpen && (
-                    <div className="en" onClick={(e) => e.stopPropagation()}>
+                    <div className="en" onClick={(e) => { e.stopPropagation(); if (dbl) tap(() => {}); }}>
                       {en ? yeshivishEnglish(en) : aiText[key] ? (
                         <><span className="label-ai">AI translation</span><div>{aiText[key]}</div></>
                       ) : (
@@ -546,7 +546,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
                         {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`nm${k}`} className="move">{m}</div>)}
-                        <div data-line={`n${i + 1}`} className="line" onClick={() => onPoint?.(nextSrc, i + 1)}>
+                        <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(nextSrc, i + 1)); } else onPoint?.(nextSrc, i + 1); }}>
                           <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                           {canTranslate && showAll && en && <div className="en">{yeshivishEnglish(en)}</div>}
                         </div>
