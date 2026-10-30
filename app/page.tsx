@@ -98,6 +98,9 @@ export default function Home() {
   const [libReq, setLibReq] = useState(0);
   const [textTick, setTextTick] = useState(0); // Quiet chat: go to its Text tab
   const openLibrary = () => { setSeferOpen(true); setLibReq((n) => n + 1); };
+  const coachLog = useRef<{ learner: string; said: string }[]>([]);
+  const coachBusy = useRef(false);
+  const liveRef = useRef<{ note: (t: string) => void } | null>(null);
   const liveOpts: Parameters<typeof useLive>[0] = {
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => setItems((it) => [...it, { kind: 'error', text: m }]),
@@ -117,6 +120,18 @@ export default function Home() {
     // Saver pauses sooner: never later than 15 quiet seconds.
     idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,
+    // Coach notes (Steady off): after each turn, a quick brain check of the voice against the style and the learner's
+    // instructions; if it drifted, a short private note goes to the voice for its next reply. Never waited for.
+    onTurn: (learner, said) => {
+      const st = settingsRef.current;
+      coachLog.current = [...coachLog.current, { learner, said }].slice(-4);
+      if (st.liveSteady !== false || st.liveCoach === false || coachBusy.current) return;
+      coachBusy.current = true;
+      const reqs = requestsRef.current.map((r) => r.content).filter(Boolean);
+      fetch('/api/live/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ log: coachLog.current, requests: reqs, sessionId: sessionIdRef.current }) })
+        .then((r) => r.json()).then((d) => { if (d?.note) liveRef.current?.note(d.note); }).catch(() => {})
+        .finally(() => { coachBusy.current = false; });
+    },
     // What the voice is reminded of during a call: the style in a few lines, and the learner's instructions for this session.
     reminder: () => {
       const st = settingsRef.current;
@@ -130,6 +145,7 @@ export default function Home() {
   const liveGpt = useLive(liveOpts);
   const liveGem = useGeminiLive(liveOpts);
   const live = liveGem.active ? liveGem : liveGpt.active ? liveGpt : settings.liveEngine === 'gemini' ? liveGem : liveGpt;
+  liveRef.current = live;
   // The learner gave a new instruction, or changed the style, during a call: the voice is told at its next turn.
   useEffect(() => { if (live.active) live.remind(); }, [requests, settings.style, settings.blend]); // eslint-disable-line react-hooks/exhaustive-deps
 

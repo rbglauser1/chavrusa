@@ -50,6 +50,8 @@ export function useGeminiLive(opts: Opts) {
   const pending = useRef<Map<string, Seg[]>>(new Map()); // tool calls waiting for the brain
   const userBuf = useRef('');
   const voiceBuf = useRef('');
+  const heardAll = useRef(''); // for coach notes: the learner since the voice last spoke
+  const saidAll = useRef('');  // and everything the voice said this turn
   const answering = useRef(false);
   const startedAt = useRef(0);
   const lastActivity = useRef(0);
@@ -90,6 +92,11 @@ export function useGeminiLive(opts: Opts) {
     if (!turnDone.current) return;
     turnDone.current = false;
     if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
+    if (!pending.current.size && saidAll.current.trim()) {
+      const l = heardAll.current.trim(), w = saidAll.current.trim();
+      heardAll.current = ''; saidAll.current = '';
+      optsRef.current.onTurn?.(l, w);
+    }
     if (!pending.current.size && !answering.current && voiceBuf.current.trim()) {
       const learner = userBuf.current.trim(), said = voiceBuf.current.trim();
       userBuf.current = ''; voiceBuf.current = ''; setHeard('');
@@ -230,11 +237,13 @@ export function useGeminiLive(opts: Opts) {
     if (!sc) return;
     if (sc.inputTranscription?.text) {
       userBuf.current += sc.inputTranscription.text;
+      heardAll.current += sc.inputTranscription.text;
       bump();
       if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
       const r = reading.current; if (r && sc.inputTranscription.text.trim()) { reading.current = null; r(false); }
     }
     if (sc.outputTranscription?.text && !answering.current && !pending.current.size) voiceBuf.current += sc.outputTranscription.text;
+    if (sc.outputTranscription?.text) saidAll.current += sc.outputTranscription.text;
     for (const p of sc.modelTurn?.parts ?? []) if (p?.inlineData?.data && String(p.inlineData.mimeType ?? '').startsWith('audio')) playPcm(p.inlineData.data);
     if (sc.interrupted) { stopPlayback(); setS(pending.current.size ? 'thinking' : 'listening'); }
     if (sc.turnComplete) { turnDone.current = true; afterTurn(); }
@@ -420,5 +429,10 @@ export function useGeminiLive(opts: Opts) {
   const supported = typeof window !== 'undefined' && typeof WebSocket !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof AudioWorkletNode !== 'undefined';
 
   const remind = useCallback(() => { remindDirty.current = true; }, []);
-  return { remind, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  const note = useCallback((text: string) => {
+    if (!text.trim()) return;
+    send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] COACH NOTE (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` }] }], turnComplete: false } });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return { remind, note, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

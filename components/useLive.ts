@@ -42,6 +42,7 @@ export function useLive(opts: {
   wakeOnSpeech: () => boolean;
   sessionId?: () => string | null;
   reminder?: () => string; // the style card + the learner's instructions, re-sent during the call so they don't fade
+  onTurn?: (learner: string, said: string) => void; // the voice finished a turn (anything it said): for coach notes
   onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
@@ -73,6 +74,8 @@ export function useLive(opts: {
   const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
   // Reminders: the style card and the learner's instructions, re-sent every few turns (and at once when they change),
   // attached to a turn being handed to the brain, so the voice holds onto them all call long.
+  const heardAll = useRef(''); // everything the learner said since the voice last spoke (for coach notes)
+  const saidAll = useRef('');  // everything the voice said this turn
   const turns = useRef(0);
   const remindDirty = useRef(false);
   const remindNow = (delegationId: string | null) => {
@@ -158,6 +161,7 @@ export function useLive(opts: {
       case 'session.input_transcript.delta':
         if (typeof e.delta === 'string') {
           userBuf.current += e.delta;
+          heardAll.current += e.delta;
           lastInputAt.current = Date.now();
           bump();
           if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
@@ -170,9 +174,16 @@ export function useLive(opts: {
         bump();
         setS('speaking');
         if (typeof e.delta === 'string' && !answering.current && !pending.current.size) voiceBuf.current += e.delta;
+        if (typeof e.delta === 'string') saidAll.current += e.delta;
         if (speakTimer.current) clearTimeout(speakTimer.current);
         speakTimer.current = window.setTimeout(() => {
           if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
+          // The voice finished a turn: hand the exchange to the coach (if on), then start fresh.
+          if (!pending.current.size && saidAll.current.trim()) {
+            const l = heardAll.current.trim(), w = saidAll.current.trim();
+            heardAll.current = ''; saidAll.current = '';
+            optsRef.current.onTurn?.(l, w);
+          }
           // The voice finished a reply it made by itself: record the exchange so the session (and the brain) has it.
           if (!pending.current.size && !answering.current && voiceBuf.current.trim() && !echoesHanded(voiceBuf.current)) {
             const learner = userBuf.current.trim();
@@ -452,5 +463,10 @@ export function useLive(opts: {
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
   const remind = useCallback(() => { remindDirty.current = true; }, []);
-  return { remind, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  // A coach note: slipped to the voice privately, for its next reply on.
+  const note = useCallback((text: string) => {
+    if (!text.trim()) return;
+    send({ type: 'session.instructions.append', delegation_id: null, content: `COACH NOTE from the app (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` });
+  }, [send]);
+  return { remind, note, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

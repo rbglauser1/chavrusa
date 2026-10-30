@@ -69,5 +69,7 @@ export const HOUSE_SAY: SayMyWay[] = [
 
 // What the voice is handed: the spelling choice, then the learner's own list, then the standard pronunciations.
 export function forVoice(text: string, spell: GeminiSpell = 'stressed', mine: SayMyWay[] = [], house = true): string {
-  return applyMyWay(respell(text, spell), house ? [...mine, ...HOUSE_SAY] : mine);
+  // The word lists first, then the spelling choice, so the chosen spelling (be-REI-shis / beREIshis / bereishis)
+  // applies to the standard and "my way" words too.
+  return respell(applyMyWay(text, house ? [...mine, ...HOUSE_SAY] : mine), spell);
 }

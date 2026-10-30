@@ -251,9 +251,16 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Steady mode (the voice sticks to your style and instructions)</label>
               <Seg value={s.liveSteady !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveSteady: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveSteady !== false
-                ? 'On: every learning turn (reading, explaining, kashyos, your answers, your instructions) goes through the brain, which follows your style closely; the voice says its words as given. About 1–3 seconds more before an answer, and about 1–3¢ a turn for the brain.'
-                : 'Off: the voice answers quick learning turns itself. A little faster and cheaper, but it follows your style and instructions loosely.'}</div>
+                ? 'On: every learning turn (reading, explaining, kashyos, your answers, your instructions) goes through the brain, which plans it in your style; the voice reads the text inside and says the rest in its own words. About 1–3 seconds more before an answer, and about 1–3¢ a turn for the brain.'
+                : 'Off: the voice answers quick learning turns itself, faster and more natural. The coach below keeps it on your style and instructions.'}</div>
             </div>
+            {s.liveSteady === false && (
+              <div className="field">
+                <label>Coach notes</label>
+                <Seg value={s.liveCoach !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCoach: v === 'on' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>After each exchange, a quick brain check looks at what the voice said against your style and instructions. If it drifted, the voice quietly gets a short note for its next reply. It never waits for it. About a tenth of a cent an exchange.</div>
+              </div>
+            )}
             <div className="field">
               <label>Standard pronunciations</label>
               <Seg value={s.houseSay !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ houseSay: v === 'on' })} />
