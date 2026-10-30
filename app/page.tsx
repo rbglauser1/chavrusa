@@ -211,17 +211,20 @@ export default function Home() {
 
   // The new main screen's "pick up where you left off": the last session's place (only when nothing is open yet).
   useEffect(() => {
-    if (settings.ui !== 'home' || sessionId || !sessions[0]) return;
-    const top = sessions[0];
-    setContInfo({ id: top.id, title: top.title, when: top.updated_at });
+    if (view !== 'home') return;
+    const id = sessionId ?? sessions[0]?.id;
+    if (!id) { setContInfo(null); return; }
+    const row = sessions.find((x) => x.id === id);
     let gone = false;
-    fetch(`/api/sessions/${top.id}`).then((r) => r.json()).then((d) => {
-      if (gone || !Array.isArray(d?.sources)) return;
-      const main = [...(d.sources as SourceData[])].reverse().find((x) => !/ on /i.test(x.ref));
-      if (main) setContInfo({ id: top.id, title: top.title, heRef: main.heRef, ref: main.ref, line: main.focus });
+    fetch(`/api/sessions/${id}`).then((r) => r.json()).then((d) => {
+      if (gone || d?.error) return;
+      const pl = d.place as { ref: string; heRef: string; line: number } | null;
+      if (pl) { setContInfo({ id, title: row?.title, heRef: pl.heRef, ref: pl.ref, line: pl.line }); return; }
+      const main = Array.isArray(d.sources) ? [...(d.sources as SourceData[])].reverse().find((x) => !/ on /i.test(x.ref)) : null;
+      setContInfo(main ? { id, title: row?.title, heRef: main.heRef, ref: main.ref, line: main.focus } : { id, title: row?.title ?? d.session?.title, when: row?.updated_at });
     }).catch(() => {});
     return () => { gone = true; };
-  }, [settings.ui, sessionId, sessions]);
+  }, [view, sessionId, sessions]);
 
   function refreshSessions() {
     fetch('/api/sessions').then((r) => r.json()).then((d) => Array.isArray(d) && setSessions(d));
@@ -247,8 +250,12 @@ export default function Home() {
     if (d.error) return;
     setSessionId(id);
     setItems(d.messages.map((m: { role: 'user' | 'assistant'; content: string; meta?: { usage?: Usage } | null }) => ({ kind: m.role, text: m.content, usage: m.meta?.usage })));
-    setSources(d.sources);
-    setSelected(Math.max(0, d.sources.length - 1));
+    // Land on where we were: the place's amud / perek, at its line.
+    const pl = d.place as { ref: string; line: number } | null;
+    const at = pl ? (d.sources as SourceData[]).findIndex((x) => x.ref === pl.ref) : -1;
+    setSources(at >= 0 ? (d.sources as SourceData[]).map((x, k) => (k === at ? { ...x, focus: pl!.line } : x)) : d.sources);
+    setSelected(at >= 0 ? at : Math.max(0, d.sources.length - 1));
+    sessionIdRef.current = id;
     setSessionUsd(d.sessionUsd ?? 0);
     setRequests(Array.isArray(d.requests) ? d.requests : []);
     setSeferOpen(isWide && d.sources.length > 0);
@@ -579,9 +586,7 @@ export default function Home() {
   // ---------- The new main screen and its pages ----------
   if (newUI && view !== 'learn') {
     const mainSrc = [...sources].reverse().find((x) => !isCommentary(x.ref) && !/ on /i.test(x.ref));
-    const cont: ContinueInfo | null = mainSrc
-      ? { heRef: mainSrc.heRef, ref: mainSrc.ref, line: mainSrc.focus }
-      : contInfo;
+    const cont: ContinueInfo | null = contInfo ?? (mainSrc ? { heRef: mainSrc.heRef, ref: mainSrc.ref, line: mainSrc.focus } : null);
     const goLearn = () => setView('learn');
     const homeTalk = () => {
       if (talking) { goLearn(); return; }
@@ -591,8 +596,14 @@ export default function Home() {
       window.setTimeout(() => toggleTalk(), 0); // a fresh call: the chavrusa asks what we're learning, then listens
     };
     const homeContinue = async () => {
-      if (sessionId && sources.length) { goLearn(); return; }
-      if (contInfo?.id) await openSession(contInfo.id);
+      const c = contInfo;
+      if (c?.id && c.id !== sessionId) await openSession(c.id); // opens it on its place
+      else if (c?.ref) {
+        // Already open: bring that amud / perek to the front, at the line.
+        const src = sources.find((x) => x.ref === c.ref);
+        if (src) showSource({ ...src, focus: c.line ?? src.focus });
+        else await openExact(c.ref, c.line);
+      }
       goLearn();
     };
     return (
