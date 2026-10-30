@@ -47,8 +47,13 @@ const hasBold = (lines: string[]) => lines.some((l) => l.includes(B_ON));
 
 export function stripHtml(s: string): string {
   return s.replace(/<sup[^>]*>.*?<\/sup>/gi, '').replace(/<i class="footnote">.*?<\/i>/gi, '')
-    .replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
+    .replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '')
+    .replace(/&(thinsp|ensp|emsp|nbsp|zwnj|zwj|lrm|rlm);/gi, (m) => (/zw|lrm|rlm/i.test(m) ? '' : ' '))
+    .replace(/&#x([0-9a-f]+);/gi, (_m, h: string) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_m, d: string) => String.fromCodePoint(Number(d)))
+    .replace(/&(mdash|ndash|hellip|lsquo|rsquo|ldquo|rdquo|lt|gt|quot|apos);/gi, (_m, n: string) => ({ mdash: '—', ndash: '–', hellip: '…', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', lt: '<', gt: '>', quot: '"', apos: "'" } as Record<string, string>)[n.toLowerCase()] ?? '')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
 }
 
 // ---------- Index metadata (for approval) ----------
