@@ -1355,3 +1355,17 @@ body[data-full] .min-quiet.full .min-row > .ascroll { display: block; }
 .home-card { margin-top: 3.5vh; }
 .home-list { margin-top: 2.5vh; }
 .home-talk { padding-top: 3vh; }
+
+/* Quiet chat with the Sefer's tools (⋯ → Show the Sefer's tools): the same tools, set lightly as slim pills. */
+.sefer.embedded.tools .sefer-tabs, .sefer.embedded.tools .sefer-tools { display: flex; }
+.sefer.embedded.tools .sefer-tabs { gap: 6px; padding: 2px 18px 6px; border: 0; scrollbar-width: none; }
+.sefer.embedded.tools .sefer-tabs::-webkit-scrollbar { display: none; }
+.sefer.embedded.tools .sefer-tab { flex: none; padding: 5px 12px; border-radius: 999px; font-size: 12.5px; border: 1px solid color-mix(in srgb, var(--rule) 85%, transparent); background: color-mix(in srgb, var(--surface) 55%, transparent); color: var(--soft); }
+.sefer.embedded.tools .sefer-tab.on { color: var(--ink); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.sefer.embedded.tools .sefer-tools { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 2px 18px 10px; border: 0; scrollbar-width: none; }
+.sefer.embedded.tools .sefer-tools::-webkit-scrollbar { display: none; }
+.sefer.embedded.tools .sefer-tools .toggle { flex: none; font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--rule) 85%, transparent); background: transparent; color: var(--soft); }
+.sefer.embedded.tools .sefer-tools .toggle.on { color: var(--ink); border-color: color-mix(in srgb, var(--accent) 60%, var(--rule)); background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.sefer.embedded.tools .sefer-tools > .muted { display: none; }
+.sefer.embedded.tools .comm-btns .comm-btn { border-radius: 999px; font-size: 12.5px; padding: 4px 11px; background: transparent; border-color: color-mix(in srgb, var(--rule) 85%, transparent); }
+.sefer.embedded.tools .comm-btns .comm-btn.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); }

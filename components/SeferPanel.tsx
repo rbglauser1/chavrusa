@@ -394,7 +394,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
 
   return (
-    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''}`} aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.quietTools ? 'tools' : ''}`} aria-label="Sefer">
       {full && (
         <div className="full-bar">
           {talk && (
@@ -452,6 +452,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
           )}
           {!isComm && (
             <button className={`toggle ${settings.outline ? 'on' : ''}`} onClick={() => onSettings({ outline: !settings.outline })} title="A one-line summary of each step, above its line">Steps {settings.outline ? 'on' : 'off'}</button>
+          )}
+          {embedded && !isComm && (
+            <button className={`toggle ${settings.amudIntro !== false ? 'on' : ''}`} onClick={() => onSettings({ amudIntro: settings.amudIntro === false })}>Intro {settings.amudIntro !== false ? 'on' : 'off'}</button>
+          )}
+          {embedded && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref) && (
+            <button className={`toggle ${settings.onkelos ? 'on' : ''}`} onClick={() => onSettings({ onkelos: !settings.onkelos })}>Onkelos {settings.onkelos ? 'on' : 'off'}</button>
           )}
           <span className="muted" style={{ alignSelf: 'center' }}>
             {onPoint ? 'Tap a line to learn from there' : canTranslate ? (showAll ? 'Translation under each part' : 'Tap a line to translate it') : 'Original only'}
@@ -538,7 +544,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                   {(() => {
                     if (kind === 'none') return null;
-                    if (embedded && picked !== i) return null;
+                    if (embedded && !settings.quietTools && picked !== i) return null;
                     const all = conns ? lineComms(i) : [];
                     const quick = conns ? all.slice(0, 3) : [];
                     return (
@@ -561,7 +567,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       </div>
                     );
                   })()}
-                  {listOpen === i && (!embedded || picked === i) && (
+                  {listOpen === i && (!embedded || settings.quietTools || picked === i) && (
                     <div className="comm-list" onClick={(e) => e.stopPropagation()}>
                       {lineComms(i).map((x) => (
                         <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>

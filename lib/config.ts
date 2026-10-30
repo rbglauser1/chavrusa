@@ -323,6 +323,7 @@ export interface Settings {
   pinBar: boolean;
   blankCall: boolean;
   seferEnglish: boolean;
+  quietTools?: boolean;     // Quiet chat: show the Sefer's tools (open texts, Nikud, Translation…) and every line's commentaries
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk
   ui?: 'classic' | 'home';  // 'home': the new main screen opens first (Library, Recent, Themes, Settings, Talk)
   amudIntro?: boolean;      // a paragraph at the top of each amud: what's coming (AI, once per amud, then kept)
@@ -370,6 +371,7 @@ export const DEFAULT_SETTINGS: Settings = {
   enMark: 'plain',
   ui: 'classic',
   onkelos: false,
+  quietTools: false,
   amudIntro: true,
   introVoice: true,
   rashiScript: true,

@@ -149,6 +149,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 ))}
               </div>
               <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Both have the Library, Talk and the full text with its commentaries.</div>
+              {s.layout === 'quiet' && (
+                <>
+                  <label>Quiet chat: show the Sefer&apos;s tools</label>
+                  <Seg value={s.quietTools ? 'on' : 'off'} options={[['off', 'Just the text'], ['on', 'Show the tools']]} onPick={(v) => onChange({ quietTools: v === 'on' })} />
+                  <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Show the tools: the texts you have open, Nikud, Translation, Summaries, Steps and the like at the top, and each line&apos;s commentaries under it. Also in Quiet chat&apos;s ⋯ menu.</div>
+                </>
+              )}
             </div>
             )}
             <div className="field">
