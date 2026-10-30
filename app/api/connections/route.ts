@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   if (!ref) return NextResponse.json({ lines: {} });
   try {
-    const { allowed } = await getLinks(ref, await approvedList(), ['Commentary', 'Targum', 'Halakhah'], 600);
+    // No cut-off: a perek of Chumash can have thousands of links, and a cut-off dropped whole commentators.
+    const { allowed } = await getLinks(ref, await approvedList(), ['Commentary', 'Targum', 'Halakhah'], 100000);
     const lines: Record<string, Record<string, string[]>> = {};
     for (const l of allowed) {
       // "Shulchan Arukh, Orach Chayim 1:1" / "Berakhot 2a:3" / "Genesis 1:3-5" -> part 1 / 3 / 3
