@@ -564,10 +564,10 @@ export default function Home() {
   const current = sources[selected];
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
-  const newUI = settings.ui === 'home';
+  const newUI = true; // one main screen for everyone: it opens first, and learning happens in Classic or Quiet chat
   // The new main screen always learns in Quiet chat. Otherwise: Quiet chat, or the classic screen, which is now
   // just the Sefer (Library, Talk, the text) with no separate conversation screen.
-  const layoutEff = newUI || settings.layout === 'quiet' ? 'quiet' : 'sefer';
+  const layoutEff = settings.layout === 'quiet' ? 'quiet' : 'sefer';
   const seferHome = layoutEff === 'sefer' && settings.display !== 'off';
   const quietSefer = layoutEff === 'quiet' && settings.display !== 'off'; // Quiet chat carries the Sefer in its Text tab
   const minimal = !seferHome; // Quiet chat (or, with the text off, the voice-only screen)
@@ -956,7 +956,7 @@ export default function Home() {
           onOpenRef={(q) => openRef(q, true)}
           onOpenExact={openExact}
           inlineComm={inlineComm}
-          home={seferHome ? { onMenu: () => setDrawer('sessions'), onSettings: () => setDrawer('settings') } : null}
+          home={seferHome ? { onMenu: () => setView('home'), onSettings: () => setView('settings') } : null}
         />
       )}
 

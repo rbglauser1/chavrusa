@@ -48,11 +48,11 @@ export function Home(p: {
   talkOn: boolean;
 }) {
   const c = p.cont;
-  const circles: [keyof typeof ICONS, string, () => void][] = [
-    ['library', 'Library', p.onLibrary],
-    ['recent', 'Recent', p.onRecent],
-    ['themes', 'Themes', p.onThemes],
-    ['settings', 'Settings', p.onSettings],
+  const rows: [keyof typeof ICONS, string, string, () => void][] = [
+    ['library', 'Library', 'Gemara, Chumash and every sefer', p.onLibrary],
+    ['recent', 'Recent', 'Your sessions, newest first', p.onRecent],
+    ['themes', 'Themes', 'Look, layout, fonts and text size', p.onThemes],
+    ['settings', 'Settings', 'Learning style, voice, display', p.onSettings],
   ];
   return (
     <div className="home">
@@ -79,11 +79,12 @@ export function Home(p: {
         )}
       </button>
 
-      <nav className="home-circles" aria-label="Main">
-        {circles.map(([k, label, go]) => (
-          <button key={k} className="home-circle" onClick={go}>
-            <span className="home-circle-dot"><Icon d={ICONS[k]} /></span>
-            <span className="home-circle-label">{label}</span>
+      <nav className="home-list" aria-label="Main">
+        {rows.map(([k, label, sub, go]) => (
+          <button key={k} className="home-row" onClick={go}>
+            <span className="home-row-icon"><Icon d={ICONS[k]} size={20} /></span>
+            <span className="home-row-text"><span className="home-row-title">{label}</span><span className="home-row-sub">{sub}</span></span>
+            <span className="home-row-chev"><Icon d={ICONS.chevron} size={16} /></span>
           </button>
         ))}
       </nav>

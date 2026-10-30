@@ -1337,3 +1337,21 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 .ascroll-word { font: 9.5px var(--f-ui); letter-spacing: .6px; text-transform: uppercase; color: var(--soft); }
 /* In full screen the row keeps only Talk and this button. */
 body[data-full] .min-quiet.full .min-row > .ascroll { display: block; }
+
+/* Main screen: the options as one clean list (one rounded group, thin dividers). */
+.home-list { margin-top: 3.5vh; border-radius: 22px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--rule) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 50%, transparent) inset, 0 10px 30px -16px rgba(0, 0, 0, 0.28); }
+.home-row { width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: none; border: 0; color: var(--ink); font: inherit; text-align: left; cursor: pointer; position: relative; }
+.home-row + .home-row::before { content: ''; position: absolute; top: 0; left: 62px; right: 0; height: 1px; background: color-mix(in srgb, var(--rule) 75%, transparent); }
+.home-row:active { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.home-row-icon { width: 34px; height: 34px; flex: none; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: var(--accent); background: color-mix(in srgb, var(--accent) 11%, transparent); }
+.home-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.home-row-title { font-size: 16px; font-weight: 600; letter-spacing: .1px; }
+.home-row-sub { font-size: 12.5px; color: var(--soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-row-chev { color: var(--soft); flex: none; display: inline-flex; }
+.home-card { margin-top: 5vh; }
+.home-top { margin-top: 4vh; }
+.home-card { margin-top: 3.5vh; }
+.home-list { margin-top: 2.5vh; }
+.home-talk { padding-top: 3vh; }

@@ -22,13 +22,6 @@ function Seg<T extends string>({ value, options, onPick }: { value: T; options: 
 
 export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive, part = 'all', asPage = false }: Props) {
   const themes = part !== 'settings', rest = part !== 'themes';
-  const uiSwitch = (
-    <div className="field">
-      <label>Main screen</label>
-      <Seg value={s.ui === 'home' ? 'home' : 'classic'} options={[['home', 'New main screen'], ['classic', 'Original screens']]} onPick={(v) => onChange({ ui: v as 'home' | 'classic' })} />
-      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The new main screen opens first every time: pick up where you left off, Library, Recent, Themes, Settings and Talk. You can switch back any time.</div>
-    </div>
-  );
   const [editing, setEditing] = useState<CustomStyle | null>(null);
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [newMem, setNewMem] = useState('');
@@ -64,7 +57,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
       <div className={asPage ? 'settings-page' : 'drawer right'} role={asPage ? undefined : 'dialog'} aria-label="Settings">
         {!asPage && <div className="drawer-head"><h2>Settings</h2><button className="icon-btn" onClick={onClose} aria-label="Close">✕</button></div>}
         <div className={asPage ? '' : 'drawer-body'}>
-          {rest && (asPage ? <div className="section"><h3>Main screen</h3>{uiSwitch}</div> : null)}
           {rest && <>
           {loadError && <div className="error">Could not reach the database: {loadError}</div>}
           <div className="section">
@@ -145,8 +137,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           {themes && (
           <div className="section">
             <h3>{asPage ? 'Look' : 'Look and text'}</h3>
-            {!asPage && uiSwitch}
-            {!asPage && s.ui !== 'home' && (
+            {(
+
             <div className="field">
               <label>Layout</label>
               <div className="layout-pick">
@@ -201,13 +193,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.blankCall ? 'blank' : 'show'} options={[['show', 'Show the conversation'], ['blank', 'Blank (voice only)']]} onPick={(v) => onChange({ blankCall: v === 'blank' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Blank keeps the screen empty while you talk, for focus. It doesn't change the cost. Everything is still saved, so you can read it after the call.</div>
             </div>
-            {s.ui !== 'home' && (
-            <div className="field">
-              <label>Text box at the top of the conversation</label>
-              <Seg value={s.pinBar !== false ? 'show' : 'hide'} options={[['show', 'Show'], ['hide', 'Hide']]} onPick={(v) => onChange({ pinBar: v === 'show' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The full text is always in the Sefer (the book button at the top).</div>
-            </div>
-            )}
             <div className="field">
               <label>Source text</label>
               <Seg value={s.display} options={[['toggle', 'With translation'], ['original', 'Original only'], ['off', 'Off (verbal)']]} onPick={(v) => onChange({ display: v })} />
