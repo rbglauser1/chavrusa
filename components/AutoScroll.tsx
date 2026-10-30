@@ -27,7 +27,15 @@ export default function AutoScroll() {
     start(v);
   };
 
+  // No text selection while holding or choosing (a press-and-slide on a phone can select the whole page).
+  const noSelect = (on: boolean) => {
+    document.body.classList.toggle('no-select', on);
+    if (!on) { try { window.getSelection()?.removeAllRanges(); } catch { /* optional */ } }
+  };
+  useEffect(() => { noSelect(picking); return () => noSelect(false); }, [picking]);
   function down(e: React.PointerEvent) {
+    e.preventDefault();
+    noSelect(true);
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     const s0 = speed;
     if (picking) return; // the picker is open: choose a dot (or tap outside to close)
@@ -42,6 +50,7 @@ export default function AutoScroll() {
   function up() {
     const h = hold.current;
     hold.current = null;
+    if (!picking && !h?.picked) noSelect(false);
     if (!h) return;
     window.clearTimeout(h.timer);
     if (h.picked) {
@@ -54,12 +63,12 @@ export default function AutoScroll() {
 
   return (
     <div className={`ascroll ${on ? 'on' : ''} ${picking ? 'picking' : ''}`}>
-      {picking && <div className="ascroll-scrim" onClick={() => setPicking(false)} aria-hidden="true" />}
+      {picking && <div className="ascroll-scrim" onPointerDown={(e) => e.preventDefault()} onClick={() => setPicking(false)} aria-hidden="true" />}
       {picking && (
         <div className="ascroll-pick" role="radiogroup" aria-label="Scrolling speed">
           <span className="ascroll-word">Faster</span>
           {Array.from({ length: SPEEDS }, (_, k) => SPEEDS - k).map((v) => (
-            <button key={v} role="radio" aria-checked={v === speed} aria-label={`Speed ${v}`} className="ascroll-tap" onClick={() => choose(v)}>
+            <button key={v} role="radio" aria-checked={v === speed} aria-label={`Speed ${v}`} className="ascroll-tap" onPointerDown={(e) => e.preventDefault()} onClick={() => choose(v)}>
               <span className={`ascroll-dot ${v <= speed ? 'lit' : ''} ${v === speed ? 'cur' : ''}`} />
             </button>
           ))}
