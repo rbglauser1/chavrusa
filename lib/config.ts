@@ -435,6 +435,24 @@ export const DEFAULT_VOICE_DESIGN = {
   script: "Nu. Let's look inside. Me'eimasai korin es Shema b'arvin. From when, from what time, do we read Shema at night. Okay. Now, a kashya. Why does the Tanna begin with arvis? The Gemara asks it: Tanna heicha kai? Where is the Tanna standing? And there are two teirutzim. B'shochbecha uv'kumecha, the pasuk says lying down first. V'i ba'is eima, vayehi erev vayehi voker. Now hear what's going on here. These are not the same thing at all! The first teirutz is a din in the parsha of Shema. The second is the seder of the briah. So there's a chakira, no? Is the zman of Kerias Shema at night defined by b'shochbecha, when people lie down to sleep, or is it simply laylah, the night, the beginning of the day? Tzvei dinim. Now look in Rashi. Rashi says the Shema we say in shul, before it's even dark, that's not the real kiyum. It's only so we can stand for tefillah mitoch divrei Torah. So according to Rashi, the ikar is the Shema you say at home, at night. Fine. But Tosafos has a kashya on Rashi. A geshmake kashya, mamash. So what's pshat? Think it through. Take your time. Say it over, slowly, word by word. What is the yesod here? What does Rashi hold the zman depends on? Good. Very good. That's exactly the point. Now, we go further, and we'll see how Rabbi Eliezer fits into this.",
 };
 
+// Gemini Live (a test, side by side with GPT-Live): Google's top live voice, and its male voices.
+export const GEMINI_LIVE = { model: 'gemini-3.8-live-extended-thinking' };
+export const GEMINI_VOICES: { id: string; name: string }[] = [
+  { id: 'Charon', name: 'Charon (informative)' },
+  { id: 'Orus', name: 'Orus (firm)' },
+  { id: 'Iapetus', name: 'Iapetus (clear)' },
+  { id: 'Algenib', name: 'Algenib (gravelly)' },
+  { id: 'Alnilam', name: 'Alnilam (firm)' },
+  { id: 'Sadaltager', name: 'Sadaltager (knowledgeable)' },
+  { id: 'Schedar', name: 'Schedar (even)' },
+  { id: 'Algieba', name: 'Algieba (smooth)' },
+  { id: 'Rasalgethi', name: 'Rasalgethi (informative)' },
+  { id: 'Achird', name: 'Achird (friendly)' },
+  { id: 'Umbriel', name: 'Umbriel (easy-going)' },
+  { id: 'Puck', name: 'Puck (upbeat)' },
+  { id: 'Fenrir', name: 'Fenrir (excitable)' },
+  { id: 'Enceladus', name: 'Enceladus (breathy)' },
+];
 export const VOICE_SAMPLE = "Shalom! I'm your chavrusa. Let's open the Gemara together. What do you think is bothering Rashi here?";
 
 // Short acknowledgments that don't need the deep model. "Next", "yes" and "no" are NOT included:

@@ -4,6 +4,7 @@ import { CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_EN, FONTS_HE, LIVE_VOICES, MOD
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
+import GeminiSample from './GeminiSample';
 
 interface Props {
   settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
@@ -244,6 +245,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
+            <GeminiSample />
             {(
               <div className="field">
                 <label>Speaking speed</label>
