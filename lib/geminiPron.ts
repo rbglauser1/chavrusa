@@ -18,3 +18,13 @@ export function geminiLine(text: string, s: Settings): string {
   const spelled = text.replace(/[֐-׿"׳״־]+(?:\s+[֐-׿"׳״־]+)*/g, (he) => yeshivishTranslit(namesForSpeech(he), false));
   return forGemini(spelled, s.geminiSpell ?? 'stressed', s.geminiMyWay ?? []);
 }
+
+// GPT-Live: the "say it my way" note for its instructions, and a test line spelled the way a GPT-Live call would get it.
+export function myWayNoteFor(list: { word: string; say: string }[] = []): string {
+  const l = list.filter((x) => x.word?.trim() && x.say?.trim());
+  return l.length ? `\n# Say these words exactly this way (the learner's own list; it wins over everything above)\n${l.map((x) => `- ${x.word.trim()} = ${x.say.trim()}`).join('\n')}` : '';
+}
+export function gptLine(text: string, s: Settings): string {
+  const spelled = text.replace(/[\u0590-\u05FF"׳״־]+(?:\s+[\u0590-\u05FF"׳״־]+)*/g, (he) => yeshivishTranslit(namesForSpeech(he), false));
+  return forGemini(spelled, s.gptSpell ?? 'stressed', s.gptMyWay ?? []);
+}

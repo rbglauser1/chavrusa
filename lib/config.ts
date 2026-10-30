@@ -323,6 +323,8 @@ export interface Settings {
   pinBar: boolean;
   blankCall: boolean;
   seferEnglish: boolean;
+  gptSpell?: 'stressed' | 'joined' | 'plain';       // GPT-Live: how lashon kodesh is spelled out for it
+  gptMyWay?: { word: string; say: string }[];       // GPT-Live: "say it my way" list
   liveEngine?: 'gpt' | 'gemini'; // which live voice Talk uses (Gemini is a test, side by side)
   geminiVoice?: string;          // Gemini's voice (one of GEMINI_VOICES)
   geminiPron?: 'gemini' | 'same' | 'plain';           // Gemini's pronunciation guide: its own, GPT-Live's, or none
@@ -379,6 +381,8 @@ export const DEFAULT_SETTINGS: Settings = {
   onkelos: false,
   lineRules: false,
   liveEngine: 'gpt',
+  gptSpell: 'stressed',
+  gptMyWay: [],
   geminiVoice: 'Achird',
   geminiPron: 'gemini',
   geminiSpell: 'stressed',

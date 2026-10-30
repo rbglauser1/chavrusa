@@ -6,6 +6,7 @@ import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
 import GeminiSample from './GeminiSample';
 import GeminiPronunciation from './GeminiPronunciation';
+import GptPronunciation from './GptPronunciation';
 
 interface Props {
   settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
@@ -246,6 +247,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
+            <GptPronunciation s={s} onChange={onChange} disabled={liveActive} />
             <div className="field">
               <label>Live voice for calls</label>
               <Seg value={s.liveEngine === 'gemini' ? 'gemini' : 'gpt'} options={[['gpt', 'GPT-Live (current)'], ['gemini', 'Gemini Live (test)']]} onPick={(v) => onChange({ liveEngine: v as 'gpt' | 'gemini' })} />

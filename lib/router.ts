@@ -404,6 +404,27 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   const s = norm(message);
   if (!s) return null;
 
+  // Fixing how the voice says a word ("it's TOSS-fis, not Tosafos"; "pronounce Tosafos as TOSS-fis"): saved to the
+  // learner's "say it my way" list for the voice in use, so it's said his way from now on. No AI.
+  {
+    const raw = message.trim().replace(/[“”]/g, '"');
+    const a = raw.match(/^(?:no[,.!]?\s*|actually[,]?\s*)?(?:it'?s|it is|it'?s pronounced|say|say it|you say|we say)\s+"?([^",]{1,40}?)"?\s*,?\s+not\s+"?([^".!?,]{1,40}?)"?[.!?]*$/i);
+    const b = raw.match(/^(?:please\s+)?(?:pronounce|say)\s+"?([^"]{1,40}?)"?\s+(?:as|like)\s+"?([^".!?]{1,40}?)"?[.!?]*$/i);
+    const fix = a ? { word: a[2].trim(), say: a[1].trim() } : b ? { word: b[1].trim(), say: b[2].trim() } : null;
+    // A real fix sounds like the word it fixes: short, and starting with the same letter ("not really" is not a fix).
+    const first = (x: string) => x.replace(/^[^a-z]+/i, '').charAt(0).toLowerCase();
+    const short = (x: string) => x.trim().split(/\s+/).length <= 3;
+    if (fix && fix.word && fix.say && fix.word.toLowerCase() !== fix.say.toLowerCase() && short(fix.word) && short(fix.say) && first(fix.word) === first(fix.say)) {
+      const gem = ctx.settings.liveEngine === 'gemini';
+      const list = (gem ? ctx.settings.geminiMyWay : ctx.settings.gptMyWay) ?? [];
+      const next = [...list.filter((x) => x.word.toLowerCase() !== fix.word.toLowerCase()), fix];
+      return {
+        settings: gem ? { geminiMyWay: next } : { gptMyWay: next },
+        reply: spoken ? `Got it: ${fix.say}.` : `Got it. From now on the voice says “${fix.say}” for “${fix.word}” (Settings → Voice → Say it my way).`,
+      };
+    }
+  }
+
   // "Read / say over the Tosafos (Rashi…)": read the commentary itself straight through, word for word, no AI.
   if (/\b(read|say over|say it over|read it|read me|go through|read out)\b/.test(s) && COMMENTARIES.some(([re]) => re.test(s)) && !/\b(why|explain|what|mean|means|asking|bothered|says|say about|translate|hold|holds)\b/.test(s)) {
     const found = await findCommentary(s, ctx.sources, ctx.approved, ctx.history);

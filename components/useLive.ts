@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
+import { forGemini, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 
 const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
 
@@ -69,6 +70,9 @@ export function useLive(opts: {
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
   const startWakeRef = useRef<(() => void) | null>(null);
   const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
+  // The learner's spelling choice and "say it my way" list (Settings → Voice), applied to everything the voice is given.
+  const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[] }>({ spell: 'stressed', myWay: [] });
+  const g = (t: string) => forGemini(t, speech.current.spell, speech.current.myWay);
 
   const send = useCallback((obj: Record<string, unknown>) => {
     const ch = dc.current;
@@ -207,7 +211,7 @@ export function useLive(opts: {
     answering.current = true;
     voiceBuf.current = '';
     bump();
-    for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: c });
+    for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
 
   // Is what the voice just said really the answer we handed it (spoken after a pause), not its own reply?
@@ -238,7 +242,7 @@ export function useLive(opts: {
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
     return new Promise<boolean>((resolve) => {
       reading.current = resolve;
-      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. The lashon kodesh is written in English letters, syllables split by hyphens, with the stressed syllable in capitals (be-REI-shis BAW-raw e-LOI-kim): lean on the capitalized syllable naturally; that is the yeshivish stress. Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${text}` });
+      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. The lashon kodesh is written in English letters, syllables split by hyphens, with the stressed syllable in capitals (be-REI-shis BAW-raw e-LOI-kim): lean on the capitalized syllable naturally; that is the yeshivish stress. Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${g(text)}` });
       window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
     });
   }, [send]);
@@ -255,8 +259,8 @@ export function useLive(opts: {
     const exact = first ? `${toSpeech(first.he)}${first.en ? ` — ${first.en.slice(0, 900)}` : ''}` : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: null, content: `STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${exact ? `Read it now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.` });
-    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: `TEXT: ${exact} END.` });
+    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${exact ? `Read it now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
+    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`TEXT: ${exact} END.`) });
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
@@ -272,7 +276,7 @@ export function useLive(opts: {
     if (t) handed.current = { text: hadPart ? `${handed.current.text} ${t}` : t, at: Date.now() };
     if (!t && hadPart) return; // everything was already handed over
     if (!t) send({ type: 'session.commentary.append', delegation_id: delegationId, content: 'Let’s keep going.' });
-    else for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: c });
+    else for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
 
   // The answer has text to say word for word (lashon kodesh phrase by phrase, with its English): the voice is told,
@@ -288,7 +292,7 @@ export function useLive(opts: {
     const more = forSpeech(rest);
     handed.current = { text: `${ex} ${more}`, at: Date.now() };
     send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the part between TEXT and END is the text itself. Read it first, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Then say the rest in your own words.' });
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `TEXT: ${ex} END.${more ? ` Then: ${more}` : ''}` });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`TEXT: ${ex} END.${more ? ` Then: ${more}` : ''}`) });
   }, [send]);
 
   const exactTold = useRef<Set<string>>(new Set());
@@ -305,7 +309,7 @@ export function useLive(opts: {
     voiceBuf.current = '';
     handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${ex}` : ex, at: Date.now() };
     bump();
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: `TEXT: ${ex} END.` });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`TEXT: ${ex} END.`) });
   }, [send]);
 
   const start = useCallback(async () => {
@@ -349,6 +353,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
+      if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [] };
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
     } catch (err) {
       const msg = (err as Error).name === 'NotAllowedError'
