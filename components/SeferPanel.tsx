@@ -81,7 +81,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const viewH = (el: HTMLElement) => (docScroll ? window.innerHeight : el.clientHeight);
   useEffect(() => {
     if (!src?.focus) return;
-    const t = window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${src.focus}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120);
+    // Land at the start of the line (its Hebrew first), with the step heading above it when Steps are on.
+    const t = window.setTimeout(() => {
+      let el = bodyRef.current?.querySelector(`[data-line="${src.focus}"]`) as HTMLElement | null;
+      while (el?.previousElementSibling && (el.previousElementSibling as HTMLElement).classList.contains('move')) el = el.previousElementSibling as HTMLElement;
+      el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }, 120);
     return () => window.clearTimeout(t);
   }, [src?.ref, src?.focus, selected]);
 
@@ -355,6 +360,24 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const intro = useIntro(src?.ref, introOn && !isComm);
   const nextIntro = useIntro(nextSrc?.ref, introOn && !!nextSrc);
   const prevIntro = useIntro(prevSrc?.ref, introOn && !!prevSrc);
+  // A commentary opened as its own text ("Learn it in the Sefer"): with summaries on, each comment gets its summary here too.
+  const [ownGists, setOwnGists] = useState<{ ref: string; list: string[]; state: 'loading' | 'done' | 'failed' } | null>(null);
+  useEffect(() => {
+    setOwnGists(null);
+    if (!src || !isComm || !settings.commSummary || !src.he.length) return;
+    const title = src.ref.split(/ on /i)[0];
+    const refs = src.he.map((_, i) => `${src.ref}:${i + 1}`);
+    let gone = false;
+    setOwnGists({ ref: src.ref, list: [], state: 'loading' });
+    fetch('/api/gist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, section: src.ref, refs }) })
+      .then((r) => r.json())
+      .then((d) => { if (gone) return; const g = d.gists ?? {}; const list = refs.map((r) => g[r] ?? ''); setOwnGists({ ref: src.ref, list, state: list.some(Boolean) ? 'done' : 'failed' }); })
+      .catch(() => { if (!gone) setOwnGists({ ref: src.ref, list: [], state: 'failed' }); });
+    return () => { gone = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src?.ref, isComm, settings.commSummary]);
+  // …and a way back to the text you were learning.
+  const mainIdx = (() => { for (let k = sources.length - 1; k >= 0; k--) if (!/ on /i.test(sources[k].ref)) return k; return -1; })();
   const tg = useTargum(src?.ref, !!settings.onkelos);
   const nextTg = useTargum(nextSrc?.ref, !!settings.onkelos && !!nextSrc);
   const prevTg = useTargum(prevSrc?.ref, !!settings.onkelos && !!prevSrc);
@@ -532,6 +555,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 </div>
               );
             })()}
+            {embedded && isComm && mainIdx >= 0 && (
+              <button className="back-to-main" onClick={() => onSelect(mainIdx)}>‹ Back to <span className="he">{sources[mainIdx].heRef}</span></button>
+            )}
+            {isComm && ownGists?.state === 'loading' && <div className="gist muted">Summarizing…</div>}
             {introBox(intro)}
             {src.he.map((line, i) => {
               const isOpen = canTranslate && (showAll || open.has(i));
@@ -542,6 +569,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                  {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>Summary</span> {ownGists.list[i]}</div>}
                   {(() => {
                     if (kind === 'none') return null;
                     if (embedded && !settings.autoComms && picked !== i) return null;

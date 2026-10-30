@@ -160,7 +160,10 @@ export default function Home() {
   // The new main screen (Settings → Main screen): it opens first every time; 'learn' is the text and the chavrusa.
   const [view, setView] = useState<'home' | 'learn' | 'recent' | 'themes' | 'settings'>('home');
   const [settingsFrom, setSettingsFrom] = useState<'home' | 'learn'>('home'); // where Settings' back arrow returns to
-  const [contInfo, setContInfo] = useState<(ContinueInfo & { id?: string }) | null>(null);
+  const [contInfo, setContInfoState] = useState<(ContinueInfo & { id?: string }) | null>(null);
+  // Kept on the phone too, so the main screen shows the right place at once, not something else first.
+  const setContInfo = (c: (ContinueInfo & { id?: string }) | null) => { setContInfoState(c); try { if (c) localStorage.setItem('chavrusa_cont', JSON.stringify(c)); } catch { /* optional */ } };
+  useEffect(() => { try { const k = localStorage.getItem('chavrusa_cont'); if (k) setContInfoState(JSON.parse(k)); } catch { /* optional */ } }, []);
   const [help, setHelp] = useState(false);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -591,8 +594,7 @@ export default function Home() {
 
   // ---------- The new main screen and its pages ----------
   if (newUI && view !== 'learn') {
-    const mainSrc = [...sources].reverse().find((x) => !isCommentary(x.ref) && !/ on /i.test(x.ref));
-    const cont: ContinueInfo | null = contInfo ?? (mainSrc ? { heRef: mainSrc.heRef, ref: mainSrc.ref, line: mainSrc.focus } : null);
+    const cont: ContinueInfo | null = contInfo;
     const goLearn = () => setView('learn');
     const homeTalk = () => {
       if (talking) { goLearn(); return; }
