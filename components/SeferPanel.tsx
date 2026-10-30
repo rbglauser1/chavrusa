@@ -394,7 +394,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
 
   return (
-    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.quietTools ? 'tools' : ''}`} aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''}`} aria-label="Sefer">
       {full && (
         <div className="full-bar">
           {talk && (
@@ -544,7 +544,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
                   {(() => {
                     if (kind === 'none') return null;
-                    if (embedded && !settings.quietTools && picked !== i) return null;
+                    if (embedded && !settings.autoComms && picked !== i) return null;
                     const all = conns ? lineComms(i) : [];
                     const quick = conns ? all.slice(0, 3) : [];
                     return (
@@ -567,7 +567,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       </div>
                     );
                   })()}
-                  {listOpen === i && (!embedded || settings.quietTools || picked === i) && (
+                  {listOpen === i && (!embedded || settings.autoComms || picked === i) && (
                     <div className="comm-list" onClick={(e) => e.stopPropagation()}>
                       {lineComms(i).map((x) => (
                         <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>

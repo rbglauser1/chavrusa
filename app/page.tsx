@@ -567,7 +567,7 @@ export default function Home() {
   const newUI = true; // one main screen for everyone: it opens first, and learning happens in Classic or Quiet chat
   // The new main screen always learns in Quiet chat. Otherwise: Quiet chat, or the classic screen, which is now
   // just the Sefer (Library, Talk, the text) with no separate conversation screen.
-  const layoutEff = settings.layout === 'quiet' ? 'quiet' : 'sefer';
+  const layoutEff = 'quiet' as 'quiet' | 'sefer'; // Quiet chat is the only screen
   const seferHome = layoutEff === 'sefer' && settings.display !== 'off';
   const quietSefer = layoutEff === 'quiet' && settings.display !== 'off'; // Quiet chat carries the Sefer in its Text tab
   const minimal = !seferHome; // Quiet chat (or, with the text off, the voice-only screen)

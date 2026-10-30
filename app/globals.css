@@ -1369,3 +1369,7 @@ body[data-full] .min-quiet.full .min-row > .ascroll { display: block; }
 .sefer.embedded.tools .sefer-tools > .muted { display: none; }
 .sefer.embedded.tools .comm-btns .comm-btn { border-radius: 999px; font-size: 12.5px; padding: 4px 11px; background: transparent; border-color: color-mix(in srgb, var(--rule) 85%, transparent); }
 .sefer.embedded.tools .comm-btns .comm-btn.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); }
+
+/* Lines between lines (Themes or ⋯): each line of the text, its Hebrew and English together, set off by a thin rule. */
+.sefer.embedded.rules .line { border-bottom: 1px solid color-mix(in srgb, var(--rule) 75%, transparent); border-radius: 0; padding-bottom: 16px; margin-bottom: 14px; }
+.sefer.embedded.rules .line .en { border-top: 0; padding-top: 2px; }

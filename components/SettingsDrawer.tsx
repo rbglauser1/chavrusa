@@ -137,27 +137,16 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           {themes && (
           <div className="section">
             <h3>{asPage ? 'Look' : 'Look and text'}</h3>
-            {(
-
             <div className="field">
-              <label>Layout</label>
-              <div className="layout-pick">
-                {([['classic', 'Classic', 'The Sefer: Library, Talk and the text'], ['quiet', 'Quiet chat', 'The text, quiet and simple, with Talk below']] as const).map(([id, name, blurb]) => (
-                  <button key={id} className={`style-opt ${(s.layout === 'quiet' ? 'quiet' : 'classic') === id ? 'on' : ''}`} onClick={() => onChange({ layout: id })}>
-                    <b>{name}</b><span>{blurb}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Both have the Library, Talk and the full text with its commentaries.</div>
-              {s.layout === 'quiet' && (
-                <>
-                  <label>Quiet chat: show the Sefer&apos;s tools</label>
-                  <Seg value={s.quietTools ? 'on' : 'off'} options={[['off', 'Just the text'], ['on', 'Show the tools']]} onPick={(v) => onChange({ quietTools: v === 'on' })} />
-                  <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Show the tools: the texts you have open, Nikud, Translation, Summaries, Steps and the like at the top, and each line&apos;s commentaries under it. Also in Quiet chat&apos;s ⋯ menu.</div>
-                </>
-              )}
+              <label>Lines between lines</label>
+              <Seg value={s.lineRules ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ lineRules: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line between each line of the text, with its Hebrew and English kept together above it. Also in the ⋯ menu.</div>
             </div>
-            )}
+            <div className="field">
+              <label>Show commentaries</label>
+              <Seg value={s.autoComms ? 'on' : 'off'} options={[['off', 'When I tap a line'], ['on', 'Under every line']]} onPick={(v) => onChange({ autoComms: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi, Tosafos and the other commentaries&apos; buttons under every line, without tapping it first. Also in the ⋯ menu.</div>
+            </div>
             <div className="field">
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />

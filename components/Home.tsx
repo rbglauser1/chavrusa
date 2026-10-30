@@ -51,7 +51,7 @@ export function Home(p: {
   const rows: [keyof typeof ICONS, string, string, () => void][] = [
     ['library', 'Library', 'Gemara, Chumash and every sefer', p.onLibrary],
     ['recent', 'Recent', 'Your sessions, newest first', p.onRecent],
-    ['themes', 'Themes', 'Look, layout, fonts and text size', p.onThemes],
+    ['themes', 'Themes', 'Look, fonts and text size', p.onThemes],
     ['settings', 'Settings', 'Learning style, voice, display', p.onSettings],
   ];
   return (
