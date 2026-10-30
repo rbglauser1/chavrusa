@@ -265,6 +265,19 @@ export function styleById(id: string | undefined, custom?: CustomStyle[] | null)
 
 export type Look = 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink';
 
+// Colors of the different things on the page (Settings → Look → Colors). "ink" = the same as the text.
+export type ColorPart = 'he' | 'en' | 'comm' | 'intro';
+export type ColorId = 'ink' | 'sepia' | 'slate' | 'maroon' | 'green' | 'bronze' | 'navy' | 'gray';
+export const COLOR_IDS: { id: ColorId; name: string }[] = [
+  { id: 'ink', name: 'Same as text' }, { id: 'sepia', name: 'Sepia' }, { id: 'slate', name: 'Slate blue' }, { id: 'maroon', name: 'Maroon' },
+  { id: 'green', name: 'Green' }, { id: 'bronze', name: 'Bronze' }, { id: 'navy', name: 'Navy' }, { id: 'gray', name: 'Gray' },
+];
+export const COLOR_PARTS: { id: ColorPart; name: string }[] = [
+  { id: 'he', name: 'Gemara / pasuk' }, { id: 'en', name: 'Its English' }, { id: 'comm', name: 'Meforshim' }, { id: 'intro', name: 'Amud intro' },
+];
+export const COLOR_DEFAULTS: Record<ColorPart, ColorId> = { he: 'ink', en: 'ink', comm: 'sepia', intro: 'slate' };
+export const colorOf = (s: { colors?: Partial<Record<ColorPart, ColorId>> }, p: ColorPart): ColorId => s.colors?.[p] ?? COLOR_DEFAULTS[p];
+
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
   { id: 'shtender', name: 'Shtender at night', blurb: 'Warm wood and lamplight, easy on the eyes at night' },
@@ -362,6 +375,7 @@ export interface Settings {
   ui?: 'classic' | 'home';  // 'home': the new main screen opens first (Library, Recent, Themes, Settings, Talk)
   amudIntro?: boolean;      // a paragraph at the top of each amud: what's coming (AI, once per amud, then kept)
   introVoice?: boolean;     // Read, Explain, Ask: the voice says that intro when a new amud begins
+  colors?: Partial<Record<ColorPart, ColorId>>; // Settings → Look → Colors: the color of each kind of thing on the page
   enMark?: 'plain' | 'soft' | 'light' | 'italic'; // English under the Gemara: how Sefaria's translation words stand apart from the added explanation
   rashiScript: boolean;
   approveAll: boolean;      // allow every sefer on Sefaria (off: only classic and approved works)     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
@@ -403,6 +417,7 @@ export const DEFAULT_SETTINGS: Settings = {
   blankCall: false,
   seferEnglish: true,
   enMark: 'plain',
+  colors: { he: 'ink', en: 'ink', comm: 'sepia', intro: 'slate' },
   ui: 'classic',
   onkelos: false,
   lineRules: false,

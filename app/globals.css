@@ -1406,13 +1406,24 @@ body[data-full] .sefer.embedded .line, body[data-full] .sefer.embedded .move { s
 body.no-select, body.no-select * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
 .ascroll, .ascroll * , .ascroll-scrim { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
 
-/* Meforshim in their own quiet color (warm sepia), and the amud / perek intro in another (slate blue), so both stand
-   apart from the text itself. Midnight (the one dark page) gets lighter versions. Change the two hues here. */
-:root { --comm-hue: #7a4719; --intro-hue: #2f5970; }
-[data-look='midnight'] { --comm-hue: #e3b47e; --intro-hue: #9fc6da; }
-.sefer .comm, .sefer .comm .he, .sefer .comm .en, .sefer .comm .en.tr, .sefer .comm .gist,
-.sefer .tg, .sefer .tg-he, .sefer .tg-en, .min-comm, .min-comm p, .min-he.rashi { color: color-mix(in srgb, var(--comm-hue) 72%, var(--ink)); }
-.sefer .comm .en.tr { opacity: .9; }
-.sefer .comm .gist span, .sefer .tg-label { color: var(--comm-hue); opacity: .8; }
-.amud-intro { color: color-mix(in srgb, var(--intro-hue) 78%, var(--ink)); }
-.amud-intro span { color: var(--intro-hue); opacity: .75; }
+/* Colors of the different things (Settings → Look → Colors): the Hebrew text, its English, the meforshim (Rashi etc.,
+   their translation and summaries, Onkelos) and the amud / perek intro. Each is "ink" (same as the text) or one of
+   these quiet colors; Midnight, the one dark page, gets lighter versions. The defaults: meforshim sepia, intro slate. */
+:root { --hue-sepia: #7a4719; --hue-slate: #2f5970; --hue-maroon: #7a2a30; --hue-green: #1f5a48; --hue-bronze: #8a6a2f; --hue-navy: #24325e; --hue-gray: #5d5d58; }
+[data-look='midnight'] { --hue-sepia: #e3b47e; --hue-slate: #9fc6da; --hue-maroon: #e39aa0; --hue-green: #8fd0b6; --hue-bronze: #d4b45c; --hue-navy: #a9b8e6; --hue-gray: #b0b0aa; }
+.swatch-ink { background: var(--ink); }
+[data-c-he='sepia'] { --he-hue: var(--hue-sepia); } [data-c-he='slate'] { --he-hue: var(--hue-slate); } [data-c-he='maroon'] { --he-hue: var(--hue-maroon); } [data-c-he='green'] { --he-hue: var(--hue-green); } [data-c-he='bronze'] { --he-hue: var(--hue-bronze); } [data-c-he='navy'] { --he-hue: var(--hue-navy); } [data-c-he='gray'] { --he-hue: var(--hue-gray); }
+[data-c-en='sepia'] { --en-hue: var(--hue-sepia); } [data-c-en='slate'] { --en-hue: var(--hue-slate); } [data-c-en='maroon'] { --en-hue: var(--hue-maroon); } [data-c-en='green'] { --en-hue: var(--hue-green); } [data-c-en='bronze'] { --en-hue: var(--hue-bronze); } [data-c-en='navy'] { --en-hue: var(--hue-navy); } [data-c-en='gray'] { --en-hue: var(--hue-gray); }
+[data-c-comm='sepia'] { --comm-hue: var(--hue-sepia); } [data-c-comm='slate'] { --comm-hue: var(--hue-slate); } [data-c-comm='maroon'] { --comm-hue: var(--hue-maroon); } [data-c-comm='green'] { --comm-hue: var(--hue-green); } [data-c-comm='bronze'] { --comm-hue: var(--hue-bronze); } [data-c-comm='navy'] { --comm-hue: var(--hue-navy); } [data-c-comm='gray'] { --comm-hue: var(--hue-gray); }
+[data-c-intro='sepia'] { --intro-hue: var(--hue-sepia); } [data-c-intro='slate'] { --intro-hue: var(--hue-slate); } [data-c-intro='maroon'] { --intro-hue: var(--hue-maroon); } [data-c-intro='green'] { --intro-hue: var(--hue-green); } [data-c-intro='bronze'] { --intro-hue: var(--hue-bronze); } [data-c-intro='navy'] { --intro-hue: var(--hue-navy); } [data-c-intro='gray'] { --intro-hue: var(--hue-gray); }
+[data-c-he]:not([data-c-he='ink']) .sefer .line > .he { color: color-mix(in srgb, var(--he-hue) 72%, var(--ink)); }
+[data-c-en]:not([data-c-en='ink']) .sefer .line > .en { color: color-mix(in srgb, var(--en-hue) 72%, var(--ink)); }
+[data-c-comm]:not([data-c-comm='ink']) :is(.sefer .comm, .sefer .comm .he, .sefer .comm .en, .sefer .comm .en.tr, .sefer .comm .gist, .sefer .tg, .sefer .tg-he, .sefer .tg-en, .min-comm, .min-comm p, .min-he.rashi) { color: color-mix(in srgb, var(--comm-hue) 72%, var(--ink)); }
+[data-c-comm]:not([data-c-comm='ink']) :is(.sefer .comm .gist span, .sefer .tg-label) { color: var(--comm-hue); opacity: .8; }
+[data-c-intro]:not([data-c-intro='ink']) .amud-intro { color: color-mix(in srgb, var(--intro-hue) 78%, var(--ink)); }
+[data-c-intro]:not([data-c-intro='ink']) .amud-intro span { color: var(--intro-hue); opacity: .75; }
+.color-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; flex-wrap: wrap; }
+.color-row .color-name { font-size: 13px; flex-basis: 100%; margin-bottom: -2px; }
+.color-row .color-name small { color: var(--soft); margin-left: 4px; }
+.color-dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; outline: 1px solid var(--rule); padding: 0; cursor: pointer; }
+.color-dot.on { border-color: var(--bg, #fff); outline: 2px solid var(--accent); }

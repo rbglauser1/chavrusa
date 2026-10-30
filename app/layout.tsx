@@ -21,12 +21,14 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@40
 // (instead of flashing the default colors until Settings load).
 const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink'];
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [look, he, en, rashi, comm, fEn, fHe] = ((await cookies()).get('ui')?.value ?? '').split('|');
+  const [look, he, en, rashi, comm, fEn, fHe, cols] = ((await cookies()).get('ui')?.value ?? '').split('|');
+  // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).
+  const [cHe, cEn, cComm, cIntro] = (cols ?? '').split('.').map((c) => (/^[a-z]{2,8}$/.test(c) ? c : ''));
   const enFont = fontStack(FONTS_EN, fEn), heFont = fontStack(FONTS_HE, fHe);
   const num = (v: string | undefined) => (v && /^\d{1,2}$/.test(v) ? `${v}px` : undefined);
   const style = { ...(num(he) ? { '--he-size': num(he) } : {}), ...(num(en) ? { '--en-size': num(en) } : {}), ...(num(comm) ? { '--comm-size': num(comm) } : {}), ...(enFont ? { '--f-body': enFont, '--f-ui': enFont } : {}), ...(heFont ? { '--f-he': heFont } : {}) } as React.CSSProperties;
   return (
-    <html lang="en" data-look={LOOKS.includes(look) ? look : 'daf'} data-rashi={rashi === 'off' ? 'off' : 'on'} style={style} suppressHydrationWarning>
+    <html lang="en" data-look={LOOKS.includes(look) ? look : 'daf'} data-rashi={rashi === 'off' ? 'off' : 'on'} data-c-he={cHe || 'ink'} data-c-en={cEn || 'ink'} data-c-comm={cComm || 'sepia'} data-c-intro={cIntro || 'slate'} style={style} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

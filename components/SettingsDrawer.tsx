@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
+import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -165,6 +165,24 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>In the English: the translation and the added explanation</label>
               <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics.</div>
+            </div>
+            <div className="field">
+              <label>Colors</label>
+              {COLOR_PARTS.map((part) => {
+                const cur = colorOf(s, part.id);
+                return (
+                  <div key={part.id} className="color-row" role="radiogroup" aria-label={`${part.name} color`}>
+                    <span className="color-name">{part.name}<small>{COLOR_IDS.find((c) => c.id === cur)?.name}</small></span>
+                    {COLOR_IDS.map((c) => (
+                      <button key={c.id} role="radio" aria-checked={cur === c.id} aria-label={c.name} title={c.name}
+                        className={`color-dot ${c.id === 'ink' ? 'swatch-ink' : ''} ${cur === c.id ? 'on' : ''}`}
+                        style={c.id === 'ink' ? undefined : { background: `var(--hue-${c.id})` }}
+                        onClick={() => onChange({ colors: { ...COLOR_DEFAULTS, ...(s.colors ?? {}), [part.id]: c.id } })} />
+                    ))}
+                  </div>
+                );
+              })}
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Meforshim includes their translation and summaries, and Onkelos. The first circle is the text&apos;s own color.</div>
             </div>
             <div className="field">
               <label>Rashi, Tosafos and other commentaries</label>
