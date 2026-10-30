@@ -56,7 +56,7 @@ export default function GeminiSample() {
       </div>
       {state === 'ready' && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The sample is ready. Tap ▶ Play.</div>}
       {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
-      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Google&apos;s Gemini 3.8 Live Extended Thinking, saying a short line with a few yeshivish words. Each voice&apos;s sample costs about a cent the first time, then it&apos;s kept. This is only a sample: your calls still use your current voice.</div>
+      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Google&apos;s Gemini 3.8 Live Extended Thinking, in its natural voice (no accent or style added), reading a short line with a few yeshivish words. Each voice&apos;s sample costs about a cent the first time, then it&apos;s kept. This is only a sample: your calls still use your current voice.</div>
     </div>
   );
 }

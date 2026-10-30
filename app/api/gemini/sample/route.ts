@@ -8,7 +8,7 @@ export const maxDuration = 60;
 // A short sample of Gemini Live's voice (Settings → Voice → Gemini Live, test). Opens one Live session on the server,
 // asks it to say a test line, collects the audio and returns it as a WAV file. Kept, so each voice is paid for once.
 const LINE = "Shalom! I'm your chavrusa. Let's open the Gemara together: Rabbi Yehudah says, a person must learn Torah every day. Now tell me, what's bothering Rashi here? Shabbos, Tosafos, Moishe Rabbeinu.";
-const SYSTEM = `You are a warm, sharp, male yeshivish chavrusa, an American who learns in a Lakewood-style yeshiva. Speak natural American English with a light yeshivish flavor. Pronounce Hebrew and Aramaic in Ashkenazi yeshivish style: kamatz as "aw", cholam as "oi" (Toirah, Moishe), tav without a dagesh as "s" (Shabbos, Tosafos), stress on the second-to-last syllable. When you are given a line to say, say exactly that line aloud, once, naturally, and then stop.`;
+const SYSTEM = 'Read the line you are given aloud, exactly as written, once, in your natural voice. Then stop.';
 
 function wav(pcm: Buffer, rate = 24000): Buffer {
   const h = Buffer.alloc(44);
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
   const voice = String(req.nextUrl.searchParams.get('voice') ?? '');
   if (!GEMINI_VOICES.some((v) => v.id === voice)) return NextResponse.json({ error: 'Unknown voice.' }, { status: 400 });
   try {
-    const b64 = await unstable_cache(() => speak(voice), ['gemini-sample-v1', GEMINI_LIVE.model, voice], { revalidate: 60 * 60 * 24 * 30 })();
+    const b64 = await unstable_cache(() => speak(voice), ['gemini-sample-v2-plain', GEMINI_LIVE.model, voice], { revalidate: 60 * 60 * 24 * 30 })();
     return new NextResponse(new Uint8Array(Buffer.from(b64, 'base64')), { headers: { 'Content-Type': 'audio/wav', 'Cache-Control': 'private, max-age=86400' } });
   } catch (e) {
     const msg = (e as Error).message;

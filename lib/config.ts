@@ -438,6 +438,7 @@ export const DEFAULT_VOICE_DESIGN = {
 // Gemini Live (a test, side by side with GPT-Live): Google's top live voice, and its male voices.
 export const GEMINI_LIVE = { model: 'gemini-3.8-live-extended-thinking' };
 export const GEMINI_VOICES: { id: string; name: string }[] = [
+  { id: 'Achird', name: 'Achird (friendly)' },
   { id: 'Charon', name: 'Charon (informative)' },
   { id: 'Orus', name: 'Orus (firm)' },
   { id: 'Iapetus', name: 'Iapetus (clear)' },
@@ -447,11 +448,12 @@ export const GEMINI_VOICES: { id: string; name: string }[] = [
   { id: 'Schedar', name: 'Schedar (even)' },
   { id: 'Algieba', name: 'Algieba (smooth)' },
   { id: 'Rasalgethi', name: 'Rasalgethi (informative)' },
-  { id: 'Achird', name: 'Achird (friendly)' },
   { id: 'Umbriel', name: 'Umbriel (easy-going)' },
   { id: 'Puck', name: 'Puck (upbeat)' },
   { id: 'Fenrir', name: 'Fenrir (excitable)' },
   { id: 'Enceladus', name: 'Enceladus (breathy)' },
+  { id: 'Sadachbia', name: 'Sadachbia (lively)' },
+  { id: 'Zubenelgenubi', name: 'Zubenelgenubi (casual)' },
 ];
 export const VOICE_SAMPLE = "Shalom! I'm your chavrusa. Let's open the Gemara together. What do you think is bothering Rashi here?";
 
