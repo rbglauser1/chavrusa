@@ -153,6 +153,7 @@ export default function Home() {
   const [drawer, setDrawer] = useState<'sessions' | 'settings' | null>(null);
   // The new main screen (Settings → Main screen): it opens first every time; 'learn' is the text and the chavrusa.
   const [view, setView] = useState<'home' | 'learn' | 'recent' | 'themes' | 'settings'>('home');
+  const [settingsFrom, setSettingsFrom] = useState<'home' | 'learn'>('home'); // where Settings' back arrow returns to
   const [contInfo, setContInfo] = useState<(ContinueInfo & { id?: string }) | null>(null);
   const [help, setHelp] = useState(false);
   const [input, setInput] = useState('');
@@ -603,7 +604,7 @@ export default function Home() {
             onLibrary={() => { goLearn(); openLibrary(); }}
             onRecent={() => { refreshSessions(); setView('recent'); }}
             onThemes={() => setView('themes')}
-            onSettings={() => setView('settings')}
+            onSettings={() => { setSettingsFrom('home'); setView('settings'); }}
             onTalk={homeTalk}
             talkSupported={voice.supported}
             talkOn={talking}
@@ -625,8 +626,8 @@ export default function Home() {
           </HomePage>
         )}
         {view === 'settings' && (
-          <HomePage title="Settings" onBack={() => setView('home')}>
-            <SettingsDrawer part="all" asPage settings={settings} onChange={updateSettings} onClose={() => setView('home')} onHelp={() => setHelp(true)} liveActive={live.active} />
+          <HomePage title="Settings" onBack={() => setView(settingsFrom)}>
+            <SettingsDrawer part="all" asPage settings={settings} onChange={updateSettings} onClose={() => setView(settingsFrom)} onHelp={() => setHelp(true)} liveActive={live.active} />
           </HomePage>
         )}
         {help && <Help onClose={() => setHelp(false)} />}
@@ -663,7 +664,7 @@ export default function Home() {
             pointAt={pointAt}
             inlineComm={inlineComm}
             onMenu={() => (newUI ? setView('home') : setDrawer('sessions'))}
-            onSettings={() => (newUI ? setView('settings') : setDrawer('settings'))}
+            onSettings={() => { if (newUI) { setSettingsFrom('learn'); setView('settings'); } else setDrawer('settings'); }}
             onLibrary={openLibrary}
             onSefer={() => { if (quietSefer) setTextTick((n) => n + 1); else { setSeferOpen(true); setLibReq(0); } }}
             onNewSession={newSession}
@@ -956,7 +957,7 @@ export default function Home() {
           onOpenRef={(q) => openRef(q, true)}
           onOpenExact={openExact}
           inlineComm={inlineComm}
-          home={seferHome ? { onMenu: () => setView('home'), onSettings: () => setView('settings') } : null}
+          home={seferHome ? { onMenu: () => setView('home'), onSettings: () => { setSettingsFrom('learn'); setView('settings'); } } : null}
         />
       )}
 
