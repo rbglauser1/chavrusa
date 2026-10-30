@@ -357,12 +357,8 @@ export default function Minimal(p: Props) {
             {p.items.length === 0 ? welcome : <CasualThread items={p.items} busy={p.busy} status={p.status} endRef={endRef} />}
           </main>
         )}
-        {showText && !isFull && caption && (
-          <div className="min-caption">
-            <span className="min-caption-text">{caption.length > 180 ? `${caption.slice(0, 180).replace(/\s+\S*$/, '')}…` : caption}</span>
-          </div>
-        )}
-        {label && !isFull && <div className="min-status slim">{label}</div>}
+        {/* No words above the bottom row over the text — no caption, no status line. */}
+        {!showText && label && <div className="min-status slim">{label}</div>}
         {bottom}
       </div>
     );
