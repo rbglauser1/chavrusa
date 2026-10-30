@@ -44,7 +44,7 @@ async function speak(voice: string): Promise<string> {
       ws.send(JSON.stringify({
         setup: {
           model: `models/${GEMINI_LIVE.model}`,
-          generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
+          generationConfig: { responseModalities: ['AUDIO'], thinkingConfig: { thinkingLevel: 'low' }, speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
           systemInstruction: { parts: [{ text: SYSTEM }] },
         },
       }));
