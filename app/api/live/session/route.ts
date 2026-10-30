@@ -6,8 +6,8 @@ import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { listMemories, listMessages, listSources } from '@/lib/db';
 import { currentPlace } from '@/lib/place';
 import { styleById } from '@/lib/config';
-import { gptLine, myWayNoteFor } from '@/lib/geminiPron';
-import { forGemini } from '@/lib/geminiSpeech';
+import { gptLine, sayNote } from '@/lib/geminiPron';
+import { forVoice } from '@/lib/geminiSpeech';
 
 export const runtime = 'nodejs';
 
@@ -93,7 +93,9 @@ export async function POST(req: NextRequest) {
     : `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
   const spell = s.gptSpell ?? 'stressed';
   const myWay = s.gptMyWay ?? [];
-  const myWayNote = myWayNoteFor(myWay);
+  const house = s.houseSay !== false, steady = s.liveSteady !== false;
+  const myWayNote = sayNote(myWay, house);
+  const fv = (t: string) => forVoice(t, spell, myWay, house);
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
     method: 'POST',
@@ -104,9 +106,9 @@ export async function POST(req: NextRequest) {
         instructions: (preview && !testLine
           ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
           : preview
-            ? `${forGemini(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false), spell, myWay)}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
-            : forGemini(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false) + context, spell, myWay) + myWayNote) + voiceNote,
-        input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : forGemini(resume ? resumeNote : hello, spell, myWay) }] }],
+            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
+            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady) + context) + myWayNote) + voiceNote,
+        input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },
       },
@@ -119,5 +121,5 @@ export async function POST(req: NextRequest) {
   }
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay }, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house }, ...(testLine ? { line: testLine } : {}) });
 }

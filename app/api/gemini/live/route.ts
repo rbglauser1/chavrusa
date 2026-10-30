@@ -4,8 +4,8 @@ import { getSettings, listMemories, listMessages, listSources } from '@/lib/db';
 import { liveContext, liveInstructions } from '@/lib/live';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { currentPlace } from '@/lib/place';
-import { geminiPronunciation } from '@/lib/geminiPron';
-import { forGemini } from '@/lib/geminiSpeech';
+import { geminiPronunciation, sayNote } from '@/lib/geminiPron';
+import { forVoice } from '@/lib/geminiSpeech';
 
 export const runtime = 'nodejs';
 
@@ -86,7 +86,9 @@ export async function POST(req: NextRequest) {
   const { pron, myWayNote } = geminiPronunciation(s);
   const spell = s.geminiSpell ?? 'stressed';
   const myWay = s.geminiMyWay ?? [];
-  const instructions = forGemini(liveInstructions(s.nusach, s.livePace, false, pron) + context + HANDOFF, spell, myWay) + myWayNote;
+  const house = s.houseSay !== false, steady = s.liveSteady !== false;
+  void myWayNote;
+  const instructions = forVoice(liveInstructions(s.nusach, s.livePace, false, pron, steady) + context + HANDOFF, spell, myWay, house) + sayNote(myWay, house);
 
   // The short-lived pass: one use, a minute to start the call, half an hour of call.
   const now = Date.now();
@@ -122,6 +124,6 @@ export async function POST(req: NextRequest) {
       contextWindowCompression: { slidingWindow: {} },
     },
     opening: resume ? resumeNote : hello, // the phone applies Gemini's spelling and list to it
-    speech: { spell, myWay },
+    speech: { spell, myWay, house },
   });
 }

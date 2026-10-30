@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
-import { forGemini, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
+import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 
 const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
 
@@ -71,8 +71,8 @@ export function useLive(opts: {
   const startWakeRef = useRef<(() => void) | null>(null);
   const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
   // The learner's spelling choice and "say it my way" list (Settings → Voice), applied to everything the voice is given.
-  const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[] }>({ spell: 'stressed', myWay: [] });
-  const g = (t: string) => forGemini(t, speech.current.spell, speech.current.myWay);
+  const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
+  const g = (t: string) => forVoice(t, speech.current.spell, speech.current.myWay, speech.current.house);
 
   const send = useCallback((obj: Record<string, unknown>) => {
     const ch = dc.current;
@@ -353,7 +353,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [] };
+      if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false };
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
     } catch (err) {
       const msg = (err as Error).name === 'NotAllowedError'

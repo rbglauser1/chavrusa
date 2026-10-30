@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
 import type { LiveState, useLive } from './useLive';
-import { forGemini, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
+import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 
 type Opts = Parameters<typeof useLive>[0];
 const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
@@ -67,8 +67,8 @@ export function useGeminiLive(opts: Opts) {
   }, []);
   // A message from the app (not the learner): what to do now.
   // Gemini's own spelling of lashon kodesh and the learner's "say it my way" list (Settings), applied to all it is given.
-  const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[] }>({ spell: 'stressed', myWay: [] });
-  const g = (t: string) => forGemini(t, speech.current.spell, speech.current.myWay);
+  const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
+  const g = (t: string) => forVoice(t, speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -256,7 +256,7 @@ export function useGeminiLive(opts: Opts) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) throw new Error(data.error ?? `status ${res.status}`);
       openingRef.current = String(data.opening ?? '');
-      if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [] };
+      if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false };
 
       // Microphone → 16 kHz, 16-bit blocks → Gemini.
       const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));

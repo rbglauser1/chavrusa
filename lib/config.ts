@@ -325,6 +325,8 @@ export interface Settings {
   seferEnglish: boolean;
   gptSpell?: 'stressed' | 'joined' | 'plain';       // GPT-Live: how lashon kodesh is spelled out for it
   gptMyWay?: { word: string; say: string }[];       // GPT-Live: "say it my way" list
+  liveSteady?: boolean;          // steady mode: every learning turn goes through the brain (on by default)
+  houseSay?: boolean;            // standard yeshivish pronunciations applied to all the voice says (on by default)
   liveEngine?: 'gpt' | 'gemini'; // which live voice Talk uses (Gemini is a test, side by side)
   geminiVoice?: string;          // Gemini's voice (one of GEMINI_VOICES)
   geminiPron?: 'gemini' | 'same' | 'plain';           // Gemini's pronunciation guide: its own, GPT-Live's, or none
@@ -381,6 +383,8 @@ export const DEFAULT_SETTINGS: Settings = {
   onkelos: false,
   lineRules: false,
   liveEngine: 'gpt',
+  liveSteady: true,
+  houseSay: true,
   gptSpell: 'stressed',
   gptMyWay: [],
   geminiVoice: 'Achird',

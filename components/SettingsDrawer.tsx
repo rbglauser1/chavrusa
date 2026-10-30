@@ -247,6 +247,18 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
+            <div className="field">
+              <label>Steady mode (the voice sticks to your style and instructions)</label>
+              <Seg value={s.liveSteady !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveSteady: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveSteady !== false
+                ? 'On: every learning turn (reading, explaining, kashyos, your answers, your instructions) goes through the brain, which follows your style closely; the voice says its words as given. About 1–3 seconds more before an answer, and about 1–3¢ a turn for the brain.'
+                : 'Off: the voice answers quick learning turns itself. A little faster and cheaper, but it follows your style and instructions loosely.'}</div>
+            </div>
+            <div className="field">
+              <label>Standard pronunciations</label>
+              <Seg value={s.houseSay !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ houseSay: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On: one fixed way to say the common words, from the app&apos;s yeshivish rules: Tosafos = TOSS-fos, Gemara = g&apos;MOH-rah, Mishnah = MISH-nah, Rashi = RAH-shee, kashya = KOSH-ya, machlokes = mach-LOI-kes, halacha = ha-LOH-cha, Torah = TOI-rah, Moshe = MOI-sheh, Shabbos = SHAH-bos, and more. Your own “say it my way” words win over these.</div>
+            </div>
             <GptPronunciation s={s} onChange={onChange} disabled={liveActive} />
             <div className="field">
               <label>Live voice for calls</label>
