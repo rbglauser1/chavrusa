@@ -1409,19 +1409,19 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 /* Colors of the different things (Settings → Look → Colors): the Hebrew text, its English, the meforshim (Rashi etc.,
    their translation and summaries, Onkelos) and the amud / perek intro. Each is "ink" (same as the text) or one of
    these quiet colors; Midnight, the one dark page, gets lighter versions. The defaults: meforshim sepia, intro slate. */
-:root { --hue-sepia: #7a4719; --hue-slate: #2f5970; --hue-maroon: #7a2a30; --hue-green: #1f5a48; --hue-bronze: #8a6a2f; --hue-navy: #24325e; --hue-gray: #5d5d58; }
-[data-look='midnight'] { --hue-sepia: #e3b47e; --hue-slate: #9fc6da; --hue-maroon: #e39aa0; --hue-green: #8fd0b6; --hue-bronze: #d4b45c; --hue-navy: #a9b8e6; --hue-gray: #b0b0aa; }
+:root { --hue-sepia: #8f4a12; --hue-slate: #1d5f8c; --hue-maroon: #9e1f30; --hue-green: #17704d; --hue-bronze: #9a6a0e; --hue-navy: #2440a0; --hue-gray: #6e6e66; }
+[data-look='midnight'] { --hue-sepia: #f0ad62; --hue-slate: #86c4ec; --hue-maroon: #f2909b; --hue-green: #7fdcb3; --hue-bronze: #e8c35a; --hue-navy: #a9b9ff; --hue-gray: #b9b9b2; }
 .swatch-ink { background: var(--ink); }
 [data-c-he='sepia'] { --he-hue: var(--hue-sepia); } [data-c-he='slate'] { --he-hue: var(--hue-slate); } [data-c-he='maroon'] { --he-hue: var(--hue-maroon); } [data-c-he='green'] { --he-hue: var(--hue-green); } [data-c-he='bronze'] { --he-hue: var(--hue-bronze); } [data-c-he='navy'] { --he-hue: var(--hue-navy); } [data-c-he='gray'] { --he-hue: var(--hue-gray); }
 [data-c-en='sepia'] { --en-hue: var(--hue-sepia); } [data-c-en='slate'] { --en-hue: var(--hue-slate); } [data-c-en='maroon'] { --en-hue: var(--hue-maroon); } [data-c-en='green'] { --en-hue: var(--hue-green); } [data-c-en='bronze'] { --en-hue: var(--hue-bronze); } [data-c-en='navy'] { --en-hue: var(--hue-navy); } [data-c-en='gray'] { --en-hue: var(--hue-gray); }
 [data-c-comm='sepia'] { --comm-hue: var(--hue-sepia); } [data-c-comm='slate'] { --comm-hue: var(--hue-slate); } [data-c-comm='maroon'] { --comm-hue: var(--hue-maroon); } [data-c-comm='green'] { --comm-hue: var(--hue-green); } [data-c-comm='bronze'] { --comm-hue: var(--hue-bronze); } [data-c-comm='navy'] { --comm-hue: var(--hue-navy); } [data-c-comm='gray'] { --comm-hue: var(--hue-gray); }
 [data-c-intro='sepia'] { --intro-hue: var(--hue-sepia); } [data-c-intro='slate'] { --intro-hue: var(--hue-slate); } [data-c-intro='maroon'] { --intro-hue: var(--hue-maroon); } [data-c-intro='green'] { --intro-hue: var(--hue-green); } [data-c-intro='bronze'] { --intro-hue: var(--hue-bronze); } [data-c-intro='navy'] { --intro-hue: var(--hue-navy); } [data-c-intro='gray'] { --intro-hue: var(--hue-gray); }
-[data-c-he]:not([data-c-he='ink']) .sefer .line > .he { color: color-mix(in srgb, var(--he-hue) 72%, var(--ink)); }
-[data-c-en]:not([data-c-en='ink']) .sefer .line > .en { color: color-mix(in srgb, var(--en-hue) 72%, var(--ink)); }
-[data-c-comm]:not([data-c-comm='ink']) :is(.sefer .comm, .sefer .comm .he, .sefer .comm .en, .sefer .comm .en.tr, .sefer .comm .gist, .sefer .tg, .sefer .tg-he, .sefer .tg-en, .min-comm, .min-comm p, .min-he.rashi) { color: color-mix(in srgb, var(--comm-hue) 72%, var(--ink)); }
-[data-c-comm]:not([data-c-comm='ink']) :is(.sefer .comm .gist span, .sefer .tg-label) { color: var(--comm-hue); opacity: .8; }
-[data-c-intro]:not([data-c-intro='ink']) .amud-intro { color: color-mix(in srgb, var(--intro-hue) 78%, var(--ink)); }
-[data-c-intro]:not([data-c-intro='ink']) .amud-intro span { color: var(--intro-hue); opacity: .75; }
+[data-c-he]:not([data-c-he='ink']) .sefer .line > .he { color: color-mix(in srgb, var(--he-hue) 94%, var(--ink)); }
+[data-c-en]:not([data-c-en='ink']) .sefer .line > .en { color: color-mix(in srgb, var(--en-hue) 94%, var(--ink)); }
+[data-c-comm]:not([data-c-comm='ink']) :is(.sefer .comm, .sefer .comm .he, .sefer .comm .en, .sefer .comm .en.tr, .sefer .comm .gist, .sefer .tg, .sefer .tg-he, .sefer .tg-en, .min-comm, .min-comm p, .min-he.rashi) { color: color-mix(in srgb, var(--comm-hue) 94%, var(--ink)); }
+[data-c-comm]:not([data-c-comm='ink']) :is(.sefer .comm .gist span, .sefer .tg-label) { color: var(--comm-hue); opacity: .9; }
+[data-c-intro]:not([data-c-intro='ink']) .amud-intro { color: color-mix(in srgb, var(--intro-hue) 94%, var(--ink)); }
+[data-c-intro]:not([data-c-intro='ink']) .amud-intro span { color: var(--intro-hue); opacity: .9; }
 .color-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; flex-wrap: wrap; }
 .color-row .color-name { font-size: 13px; flex-basis: 100%; margin-bottom: -2px; }
 .color-row .color-name small { color: var(--soft); margin-left: 4px; }
