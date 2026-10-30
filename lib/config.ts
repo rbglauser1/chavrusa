@@ -361,7 +361,8 @@ export interface Settings {
   seferEnglish: boolean;
   gptSpell?: 'stressed' | 'joined' | 'plain';       // GPT-Live: how lashon kodesh is spelled out for it
   gptMyWay?: { word: string; say: string }[];       // GPT-Live: "say it my way" list
-  liveSteady?: boolean;          // steady mode: every learning turn goes through the brain (on by default)
+  liveSteady?: boolean;          // steady mode: every learning turn goes through the brain (off by default since Oct 30: stiff and slow)
+  steadyOffDone?: boolean;       // one-time switch of an earlier saved "on" to the new default, off
   houseSay?: boolean;            // standard yeshivish pronunciations applied to all the voice says (on by default)
   liveCoach?: boolean;           // coach notes (steady off): after each exchange a quick brain check sends the voice a short private note (on by default)
   liveEngine?: 'gpt' | 'gemini'; // which live voice Talk uses (Gemini is a test, side by side)
@@ -422,7 +423,7 @@ export const DEFAULT_SETTINGS: Settings = {
   onkelos: false,
   lineRules: false,
   liveEngine: 'gpt',
-  liveSteady: true,
+  liveSteady: false,
   houseSay: true,
   liveCoach: true,
   gptSpell: 'stressed',

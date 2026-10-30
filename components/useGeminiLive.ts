@@ -175,7 +175,7 @@ export function useGeminiLive(opts: Opts) {
     const text = (request || userBuf.current).trim();
     userBuf.current = ''; setHeard('');
     turns.current++;
-    if (remindDirty.current || turns.current % 3 === 1) {
+    if (remindDirty.current || turns.current % 2 === 1) {
       const r = optsRef.current.reminder?.();
       if (r) { remindDirty.current = false; send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] REMINDER (say nothing about it; just follow it): ${r}` }] }], turnComplete: false } }); }
     }

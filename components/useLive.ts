@@ -150,7 +150,7 @@ export function useLive(opts: {
         return;
       }
       turns.current++;
-      if (remindDirty.current || turns.current % 3 === 1) remindNow(delegationId);
+      if (remindDirty.current || turns.current % 2 === 1) remindNow(delegationId);
       optsRef.current.onRequest(text, delegationId);
     };
     tick();
@@ -193,7 +193,7 @@ export function useLive(opts: {
             setHeard('');
             optsRef.current.onAside?.(learner, said);
             turns.current++;
-            if (remindDirty.current || turns.current % 3 === 0) remindNow(null);
+            if (remindDirty.current || turns.current % 2 === 0) remindNow(null);
           }
           if (!pending.current.size) answering.current = false;
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;

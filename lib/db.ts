@@ -32,6 +32,9 @@ export async function getSettings(userId = OWNER_ID): Promise<Settings> {
   if (!Array.isArray(s.customVoices)) s.customVoices = [];
   if (!Array.isArray(s.customStyles)) s.customStyles = [];
   if (!s.fonts || typeof s.fonts !== 'object') s.fonts = {};
+  // Oct 30, 2026: Steady mode felt stiff and slow, so it is now off by default; turn an earlier saved "on" off once
+  // (kept with the next save, so turning it back on later sticks).
+  if (!s.steadyOffDone) { s.liveSteady = false; s.steadyOffDone = true; }
   if (!LIVE_VOICES.some((v) => v.id === s.liveVoice) && !s.customVoices.some((v) => v.id === s.liveVoice)) s.liveVoice = DEFAULT_SETTINGS.liveVoice;
   return s;
 }

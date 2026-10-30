@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     : `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
   const spell = s.gptSpell ?? 'stressed';
   const myWay = s.gptMyWay ?? [];
-  const house = s.houseSay !== false, steady = s.liveSteady !== false;
+  const house = s.houseSay !== false, steady = s.liveSteady === true;
   const myWayNote = sayNote(myWay, house);
   const fv = (t: string) => forVoice(t, spell, myWay, house);
 

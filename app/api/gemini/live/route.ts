@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
   const { pron, myWayNote } = geminiPronunciation(s);
   const spell = s.geminiSpell ?? 'stressed';
   const myWay = s.geminiMyWay ?? [];
-  const house = s.houseSay !== false, steady = s.liveSteady !== false;
+  const house = s.houseSay !== false, steady = s.liveSteady === true;
   void myWayNote;
   const instructions = forVoice(liveInstructions(s.nusach, s.livePace, false, pron, steady) + context + HANDOFF, spell, myWay, house) + sayNote(myWay, house);
 

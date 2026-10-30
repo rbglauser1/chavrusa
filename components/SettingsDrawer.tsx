@@ -267,12 +267,12 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             )}
             <div className="field">
               <label>Steady mode (the voice sticks to your style and instructions)</label>
-              <Seg value={s.liveSteady !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveSteady: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveSteady !== false
+              <Seg value={s.liveSteady === true ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveSteady: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveSteady === true
                 ? 'On: every learning turn (reading, explaining, kashyos, your answers, your instructions) goes through the brain, which plans it in your style; the voice reads the text inside and says the rest in its own words. About 1–3 seconds more before an answer, and about 1–3¢ a turn for the brain.'
                 : 'Off: the voice answers quick learning turns itself, faster and more natural. The coach below keeps it on your style and instructions.'}</div>
             </div>
-            {s.liveSteady === false && (
+            {s.liveSteady !== true && (
               <div className="field">
                 <label>Coach notes</label>
                 <Seg value={s.liveCoach !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCoach: v === 'on' })} />

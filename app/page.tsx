@@ -125,7 +125,7 @@ export default function Home() {
     onTurn: (learner, said) => {
       const st = settingsRef.current;
       coachLog.current = [...coachLog.current, { learner, said }].slice(-4);
-      if (st.liveSteady !== false || st.liveCoach === false || coachBusy.current) return;
+      if (st.liveSteady === true || st.liveCoach === false || coachBusy.current) return;
       coachBusy.current = true;
       const reqs = requestsRef.current.map((r) => r.content).filter(Boolean);
       fetch('/api/live/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ log: coachLog.current, requests: reqs, sessionId: sessionIdRef.current }) })
