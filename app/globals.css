@@ -1405,3 +1405,14 @@ body[data-full] .sefer.embedded .line, body[data-full] .sefer.embedded .move { s
 /* While holding the scroll button or choosing a speed: nothing on the page can be selected. */
 body.no-select, body.no-select * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
 .ascroll, .ascroll * , .ascroll-scrim { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+
+/* Meforshim in their own quiet color (warm sepia), and the amud / perek intro in another (slate blue), so both stand
+   apart from the text itself. Midnight (the one dark page) gets lighter versions. Change the two hues here. */
+:root { --comm-hue: #7a4719; --intro-hue: #2f5970; }
+[data-look='midnight'] { --comm-hue: #e3b47e; --intro-hue: #9fc6da; }
+.sefer .comm, .sefer .comm .he, .sefer .comm .en, .sefer .comm .en.tr, .sefer .comm .gist,
+.sefer .tg, .sefer .tg-he, .sefer .tg-en, .min-comm, .min-comm p, .min-he.rashi { color: color-mix(in srgb, var(--comm-hue) 72%, var(--ink)); }
+.sefer .comm .en.tr { opacity: .9; }
+.sefer .comm .gist span, .sefer .tg-label { color: var(--comm-hue); opacity: .8; }
+.amud-intro { color: color-mix(in srgb, var(--intro-hue) 78%, var(--ink)); }
+.amud-intro span { color: var(--intro-hue); opacity: .75; }
