@@ -4,6 +4,8 @@ import { getSettings, listMemories, listMessages, listSources } from '@/lib/db';
 import { liveContext, liveInstructions } from '@/lib/live';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { currentPlace } from '@/lib/place';
+import { geminiPronunciation } from '@/lib/geminiPron';
+import { forGemini } from '@/lib/geminiSpeech';
 
 export const runtime = 'nodejs';
 
@@ -81,7 +83,10 @@ export async function POST(req: NextRequest) {
       : `Speak first, briefly and naturally. Use a short, casual opener only if it fits (we last learned ${mins !== null && mins < 24 * 60 ? 'earlier today' : 'on an earlier day'}); no formal greeting. In one sentence say where we were${placeName ? ` (${placeName})` : ''}. Your last message was: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again briefly; otherwise ask if he's ready to go on. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then stop and listen.${recapBlock}`;
   const resumeNote = pointed ? `The call is resuming after a short pause. Do not greet. ${pointed}${recapBlock}` : `The call is resuming after a short pause, in the middle of learning. Do not greet and do not recap. Continue exactly where you left off. Your last message was: "${lastSaid}". If the learner hasn't answered it yet, wait for him; when he speaks, carry on from there.${recapBlock}`;
 
-  const instructions = liveInstructions(s.nusach, s.livePace, false) + context + HANDOFF;
+  const { pron, myWayNote } = geminiPronunciation(s);
+  const spell = s.geminiSpell ?? 'stressed';
+  const myWay = s.geminiMyWay ?? [];
+  const instructions = forGemini(liveInstructions(s.nusach, s.livePace, false, pron) + context + HANDOFF, spell, myWay) + myWayNote;
 
   // The short-lived pass: one use, a minute to start the call, half an hour of call.
   const now = Date.now();
@@ -116,6 +121,7 @@ export async function POST(req: NextRequest) {
       outputAudioTranscription: {},
       contextWindowCompression: { slidingWindow: {} },
     },
-    opening: resume ? resumeNote : hello,
+    opening: resume ? resumeNote : hello, // the phone applies Gemini's spelling and list to it
+    speech: { spell, myWay },
   });
 }

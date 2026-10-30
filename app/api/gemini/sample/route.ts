@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { GEMINI_LIVE, GEMINI_VOICES } from '@/lib/config';
+import { getSettings } from '@/lib/db';
+import { geminiLine, geminiPronunciation } from '@/lib/geminiPron';
+import { liveInstructions } from '@/lib/live';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -19,7 +22,7 @@ function wav(pcm: Buffer, rate = 24000): Buffer {
   return Buffer.concat([h, pcm]);
 }
 
-async function speak(voice: string): Promise<string> {
+async function speak(voice: string, line = LINE, system = SYSTEM): Promise<string> {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!key) throw new Error('NO_KEY');
   const WS = (globalThis as { WebSocket?: typeof WebSocket }).WebSocket;
@@ -45,7 +48,7 @@ async function speak(voice: string): Promise<string> {
         setup: {
           model: `models/${GEMINI_LIVE.model}`,
           generationConfig: { responseModalities: ['AUDIO'], thinkingConfig: { thinkingLevel: 'low' }, speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
-          systemInstruction: { parts: [{ text: SYSTEM }] },
+          systemInstruction: { parts: [{ text: system }] },
         },
       }));
     };
@@ -59,7 +62,7 @@ async function speak(voice: string): Promise<string> {
         const m = JSON.parse(raw);
         if (m.error) { finish(new Error(m.error.message ?? 'Gemini error')); return; }
         if (m.setupComplete) {
-          ws.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: `Say this line aloud now, exactly as written, then stop:\n"${LINE}"` }] }], turnComplete: true } }));
+          ws.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: `Say this line aloud now, exactly as written, then stop:\n"${line}"` }] }], turnComplete: true } }));
           return;
         }
         const parts = m.serverContent?.modelTurn?.parts ?? [];
@@ -81,6 +84,31 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     const msg = (e as Error).message;
     if (msg === 'NO_KEY') return NextResponse.json({ error: 'No Gemini key on the server yet. In Vercel, add GEMINI_API_KEY under Settings → Environment Variables, then redeploy.' }, { status: 503 });
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
+}
+
+// A test of how Gemini says any word or line in a call (Settings → Voice → Gemini pronunciation): the same guide,
+// spelling and "say it my way" list as a real Gemini call. Kept per line and settings, so a repeat is free.
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  const s = await getSettings();
+  const voice = GEMINI_VOICES.some((v) => v.id === body.voice) ? String(body.voice) : (s.geminiVoice || GEMINI_VOICES[0].id);
+  const raw = String(body.text ?? '').trim().slice(0, 400);
+  if (!raw) return NextResponse.json({ error: 'Type a word or a line to hear.' }, { status: 400 });
+  const line = geminiLine(raw, s);
+  const { pron, myWayNote } = geminiPronunciation(s);
+  // The pronunciation part of a call's instructions, without the rest of the chavrusa's rules.
+  const full = liveInstructions(s.nusach, s.livePace, false, pron);
+  const pronPart = full.split('\n').find((l) => l.startsWith('Pronunciation:')) ?? '';
+  const system = `${pronPart}${myWayNote}\nWhen you are given a line to say, say exactly that line aloud, once, naturally, and then stop.`;
+  try {
+    const key = ['gemini-say-v1', GEMINI_LIVE.model, voice, line, system];
+    const b64 = await unstable_cache(() => speak(voice, line, system), key, { revalidate: 60 * 60 * 24 * 30 })();
+    return new NextResponse(new Uint8Array(Buffer.from(b64, 'base64')), { headers: { 'Content-Type': 'audio/wav', 'X-Spoken-As': encodeURIComponent(line.slice(0, 300)) } });
+  } catch (e) {
+    const msg = (e as Error).message;
+    if (msg === 'NO_KEY') return NextResponse.json({ error: 'No Gemini key on the server yet.' }, { status: 503 });
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 }

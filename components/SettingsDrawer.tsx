@@ -5,6 +5,7 @@ import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
 import GeminiSample from './GeminiSample';
+import GeminiPronunciation from './GeminiPronunciation';
 
 interface Props {
   settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
@@ -253,6 +254,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 : 'GPT-Live (OpenAI): about 5¢ a minute for the voice, plus the AI model for learning turns. Gemini Live is cheaper; try it side by side.'}</div>
             </div>
             <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
+            <GeminiPronunciation s={s} onChange={onChange} />
             {(
               <div className="field">
                 <label>Speaking speed</label>
