@@ -1373,3 +1373,5 @@ body[data-full] .min-quiet.full .min-row > .ascroll { display: block; }
 /* Lines between lines (Themes or ⋯): each line of the text, its Hebrew and English together, set off by a thin rule. */
 .sefer.embedded.rules .line { border-bottom: 1px solid color-mix(in srgb, var(--rule) 75%, transparent); border-radius: 0; padding-bottom: 16px; margin-bottom: 14px; }
 .sefer.embedded.rules .line .en { border-top: 0; padding-top: 2px; }
+/* Lines between lines: clearer. */
+.sefer.embedded.rules .line { border-bottom: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); }
