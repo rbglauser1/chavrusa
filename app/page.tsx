@@ -626,7 +626,7 @@ export default function Home() {
         )}
         {view === 'settings' && (
           <HomePage title="Settings" onBack={() => setView('home')}>
-            <SettingsDrawer part="settings" asPage settings={settings} onChange={updateSettings} onClose={() => setView('home')} onHelp={() => setHelp(true)} liveActive={live.active} />
+            <SettingsDrawer part="all" asPage settings={settings} onChange={updateSettings} onClose={() => setView('home')} onHelp={() => setHelp(true)} liveActive={live.active} />
           </HomePage>
         )}
         {help && <Help onClose={() => setHelp(false)} />}

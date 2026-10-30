@@ -51,8 +51,7 @@ export function Home(p: {
   const rows: [keyof typeof ICONS, string, string, () => void][] = [
     ['library', 'Library', 'Gemara, Chumash and every sefer', p.onLibrary],
     ['recent', 'Recent', 'Your sessions, newest first', p.onRecent],
-    ['themes', 'Themes', 'Look, fonts and text size', p.onThemes],
-    ['settings', 'Settings', 'Learning style, voice, display', p.onSettings],
+    ['settings', 'Settings', 'Look, learning style, voice, display', p.onSettings],
   ];
   return (
     <div className="home">

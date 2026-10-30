@@ -1375,3 +1375,6 @@ body[data-full] .min-quiet.full .min-row > .ascroll { display: block; }
 .sefer.embedded.rules .line .en { border-top: 0; padding-top: 2px; }
 /* Lines between lines: clearer. */
 .sefer.embedded.rules .line { border-bottom: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); }
+
+/* Tap anywhere off the ⋯ menu to close it. */
+.min-menu-scrim { position: fixed; inset: 0; z-index: 29; background: transparent; }

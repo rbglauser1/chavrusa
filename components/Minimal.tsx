@@ -196,6 +196,7 @@ export default function Minimal(p: Props) {
         ? <button className="min-pill" onClick={p.onSefer} aria-label="Open the full Sefer"><span className="he">{src.heRef}</span></button>
         : <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
+      {menu && <div className="min-menu-scrim" onClick={() => setMenu(false)} onTouchStart={() => setMenu(false)} aria-hidden="true" />}
       {menu && (
         <div className="min-menu" role="menu">
           {p.layout === 'quiet' ? (
@@ -377,6 +378,7 @@ export default function Minimal(p: Props) {
             <small>{src ? `${src.ref}${src.focus ? ` · line ${src.focus}` : ''}` : 'Your learning partner'}</small>
           </button>
           <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>
+          {menu && <div className="min-menu-scrim" onClick={() => setMenu(false)} onTouchStart={() => setMenu(false)} aria-hidden="true" />}
           {menu && (
             <div className="min-menu" role="menu">
               <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
