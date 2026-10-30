@@ -11,6 +11,7 @@ import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
 import { useLive } from '@/components/useLive';
+import { useGeminiLive } from '@/components/useGeminiLive';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -95,13 +96,13 @@ export default function Home() {
   const [libReq, setLibReq] = useState(0);
   const [textTick, setTextTick] = useState(0); // Quiet chat: go to its Text tab
   const openLibrary = () => { setSeferOpen(true); setLibReq((n) => n + 1); };
-  const live = useLive({
+  const liveOpts: Parameters<typeof useLive>[0] = {
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => setItems((it) => [...it, { kind: 'error', text: m }]),
     onEnded: (seconds) => {
       liveQueue.current = [];
       liveDelegation.current = null;
-      fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds, sessionId: sessionIdRef.current }) }).catch(() => {});
+      fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds, sessionId: sessionIdRef.current, engine: settingsRef.current.liveEngine === 'gemini' ? 'gemini' : 'gpt' }) }).catch(() => {});
     },
     isBusy: () => busyRef.current || !!liveDelegation.current || liveQueue.current.length > 0 || !!readingRef.current,
     sessionId: () => sessionIdRef.current,
@@ -114,7 +115,12 @@ export default function Home() {
     // Saver pauses sooner: never later than 30 quiet seconds.
     idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,
-  });
+  };
+  // Two live voices side by side: GPT-Live, and Gemini Live as a test (Settings → Voice → Live voice).
+  // Both are always ready; Talk uses the one chosen (a call already going keeps its voice until it ends).
+  const liveGpt = useLive(liveOpts);
+  const liveGem = useGeminiLive(liveOpts);
+  const live = liveGem.active ? liveGem : liveGpt.active ? liveGpt : settings.liveEngine === 'gemini' ? liveGem : liveGpt;
 
   function pumpLive() {
     if (busyRef.current || liveDelegation.current || !liveQueue.current.length) return;

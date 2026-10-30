@@ -8,8 +8,10 @@ import { GEMINI_VOICES } from '@/lib/config';
 
 const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YQAAAAA=';
 
-export default function GeminiSample() {
-  const [voice, setVoice] = useState(GEMINI_VOICES[0].id);
+export default function GeminiSample({ value, onPick }: { value?: string; onPick?: (id: string) => void }) {
+  const [voiceLocal, setVoiceLocal] = useState(GEMINI_VOICES[0].id);
+  const voice = value && GEMINI_VOICES.some((v) => v.id === value) ? value : voiceLocal;
+  const setVoice = (id: string) => { setVoiceLocal(id); onPick?.(id); };
   const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'playing'>('idle');
   const [msg, setMsg] = useState('');
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -45,7 +47,7 @@ export default function GeminiSample() {
 
   return (
     <div className="field">
-      <label>Gemini Live (test: hear it next to your current voice)</label>
+      <label>Gemini voice (tap ▶ to hear it)</label>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <select value={voice} onChange={(e) => { setVoice(e.target.value); setMsg(''); setState('idle'); audio.current?.pause(); }} style={{ flex: 1 }}>
           {GEMINI_VOICES.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -56,7 +58,7 @@ export default function GeminiSample() {
       </div>
       {state === 'ready' && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The sample is ready. Tap ▶ Play.</div>}
       {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
-      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Google&apos;s Gemini 3.8 Live Extended Thinking, in its natural voice (no accent or style added), reading a short line with a few yeshivish words. Each voice&apos;s sample costs about a cent the first time, then it&apos;s kept. This is only a sample: your calls still use your current voice.</div>
+      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Google&apos;s Gemini 3.8 Live Extended Thinking, in its natural voice (no accent or style added), reading a short line with a few yeshivish words. Each voice&apos;s sample costs about a cent the first time, then it&apos;s kept. The voice chosen here is the one Gemini calls use.</div>
     </div>
   );
 }

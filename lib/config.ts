@@ -323,6 +323,8 @@ export interface Settings {
   pinBar: boolean;
   blankCall: boolean;
   seferEnglish: boolean;
+  liveEngine?: 'gpt' | 'gemini'; // which live voice Talk uses (Gemini is a test, side by side)
+  geminiVoice?: string;          // Gemini's voice (one of GEMINI_VOICES)
   lineRules?: boolean;      // a thin line between each line of the text (its Hebrew and English kept together)
   autoComms?: boolean;      // show each line's commentary buttons without tapping the line first
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk
@@ -373,6 +375,8 @@ export const DEFAULT_SETTINGS: Settings = {
   ui: 'classic',
   onkelos: false,
   lineRules: false,
+  liveEngine: 'gpt',
+  geminiVoice: 'Achird',
   autoComms: false,
   amudIntro: true,
   introVoice: true,
@@ -436,7 +440,7 @@ export const DEFAULT_VOICE_DESIGN = {
 };
 
 // Gemini Live (a test, side by side with GPT-Live): Google's top live voice, and its male voices.
-export const GEMINI_LIVE = { model: 'gemini-3.8-live-extended-thinking' };
+export const GEMINI_LIVE = { model: 'gemini-3.8-live-extended-thinking', usdPerMinute: 0.015 }; // ~$0.005/min heard + $0.018/min spoken
 export const GEMINI_VOICES: { id: string; name: string }[] = [
   { id: 'Achird', name: 'Achird (friendly)' },
   { id: 'Charon', name: 'Charon (informative)' },

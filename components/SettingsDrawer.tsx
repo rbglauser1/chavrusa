@@ -245,7 +245,14 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
-            <GeminiSample />
+            <div className="field">
+              <label>Live voice for calls</label>
+              <Seg value={s.liveEngine === 'gemini' ? 'gemini' : 'gpt'} options={[['gpt', 'GPT-Live (current)'], ['gemini', 'Gemini Live (test)']]} onPick={(v) => onChange({ liveEngine: v as 'gpt' | 'gemini' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveEngine === 'gemini'
+                ? 'Gemini Live (Google), a test: about 1–2¢ a minute for the voice, plus the AI model for learning turns. Applies the next time you tap Talk; switch back any time.'
+                : 'GPT-Live (OpenAI): about 5¢ a minute for the voice, plus the AI model for learning turns. Gemini Live is cheaper; try it side by side.'}</div>
+            </div>
+            <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
             {(
               <div className="field">
                 <label>Speaking speed</label>
