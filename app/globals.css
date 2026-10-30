@@ -1397,3 +1397,8 @@ body[data-full] .sefer.embedded .line, body[data-full] .sefer.embedded .move { s
 /* A commentary opened as its own text: the way back to the text you were learning. */
 .back-to-main { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 14px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); font-family: var(--f-ui); font-size: 13.5px; cursor: pointer; }
 .back-to-main .he { font-size: 15px; line-height: 1.2; }
+/* Scroll speed picker: tap a dot to choose (it stays open after the hold); tap outside to close. */
+.ascroll-scrim { position: fixed; inset: 0; z-index: 49; background: transparent; }
+.ascroll-pick { gap: 2px; padding: 8px 6px; }
+.ascroll-tap { width: 36px; height: 34px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; padding: 0; cursor: pointer; }
+.ascroll-dot { width: 12px; height: 12px; }

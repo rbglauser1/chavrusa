@@ -10,7 +10,7 @@ export default function AutoScroll() {
   const [on, setOn] = useState(false);
   const [speed, setSpeed] = useState(2);
   const [picking, setPicking] = useState(false);
-  const hold = useRef<{ timer: number; y: number; start: number; picked: boolean } | null>(null);
+  const hold = useRef<{ timer: number; y: number; start: number; picked: boolean; moved: boolean } | null>(null);
   useEffect(() => { setSpeed(savedSpeed()); }, []);
   // The text was touched (or the page changed): it stopped by itself.
   useEffect(() => {
@@ -21,17 +21,23 @@ export default function AutoScroll() {
   const send = (v: number) => window.dispatchEvent(new CustomEvent('chavrusa-autoscroll', { detail: { speed: v } }));
   const start = (v: number) => { setOn(true); send(v); };
   const stop = () => { setOn(false); send(0); };
+  const choose = (v: number) => {
+    setSpeed(v); setPicking(false);
+    try { localStorage.setItem('autoscroll-speed', String(v)); } catch { /* optional */ }
+    start(v);
+  };
 
   function down(e: React.PointerEvent) {
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     const s0 = speed;
-    hold.current = { y: e.clientY, start: s0, picked: false, timer: window.setTimeout(() => { if (hold.current) { hold.current.picked = true; setPicking(true); } }, 320) };
+    if (picking) return; // the picker is open: choose a dot (or tap outside to close)
+    hold.current = { y: e.clientY, start: s0, picked: false, moved: false, timer: window.setTimeout(() => { if (hold.current) { hold.current.picked = true; setPicking(true); } }, 320) };
   }
   function move(e: React.PointerEvent) {
     const h = hold.current;
     if (!h?.picked) return;
     const v = Math.min(SPEEDS, Math.max(1, h.start + Math.round((h.y - e.clientY) / 26)));
-    if (v !== speed) { setSpeed(v); try { navigator.vibrate?.(6); } catch { /* optional */ } }
+    if (v !== speed) { h.moved = true; setSpeed(v); try { navigator.vibrate?.(6); } catch { /* optional */ } }
   }
   function up() {
     const h = hold.current;
@@ -39,9 +45,8 @@ export default function AutoScroll() {
     if (!h) return;
     window.clearTimeout(h.timer);
     if (h.picked) {
-      setPicking(false);
-      try { localStorage.setItem('autoscroll-speed', String(speed)); } catch { /* optional */ }
-      start(speed);
+      // Slid to a speed: start at it. Just held: the picker stays open, to tap a speed.
+      if (h.moved) choose(speed);
       return;
     }
     if (on) stop(); else start(speed);
@@ -49,10 +54,15 @@ export default function AutoScroll() {
 
   return (
     <div className={`ascroll ${on ? 'on' : ''} ${picking ? 'picking' : ''}`}>
+      {picking && <div className="ascroll-scrim" onClick={() => setPicking(false)} aria-hidden="true" />}
       {picking && (
-        <div className="ascroll-pick" aria-hidden="true">
+        <div className="ascroll-pick" role="radiogroup" aria-label="Scrolling speed">
           <span className="ascroll-word">Faster</span>
-          {Array.from({ length: SPEEDS }, (_, k) => SPEEDS - k).map((v) => <span key={v} className={`ascroll-dot ${v <= speed ? 'lit' : ''} ${v === speed ? 'cur' : ''}`} />)}
+          {Array.from({ length: SPEEDS }, (_, k) => SPEEDS - k).map((v) => (
+            <button key={v} role="radio" aria-checked={v === speed} aria-label={`Speed ${v}`} className="ascroll-tap" onClick={() => choose(v)}>
+              <span className={`ascroll-dot ${v <= speed ? 'lit' : ''} ${v === speed ? 'cur' : ''}`} />
+            </button>
+          ))}
           <span className="ascroll-word">Slower</span>
         </div>
       )}
