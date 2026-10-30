@@ -650,7 +650,7 @@ export default function Home() {
       {seferHome ? null : minimal ? (
         <div className="main">
           <Minimal
-            layout={layoutEff as 'page' | 'quiet' | 'shtender'}
+            layout="quiet"
             settings={settings}
             current={current ?? null}
             items={items}
