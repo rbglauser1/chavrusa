@@ -60,6 +60,10 @@ export function useGeminiLive(opts: Opts) {
   const wake = useRef<{ stream: MediaStream; ctx: AudioContext; timer: number } | null>(null);
   const startWakeRef = useRef<(() => void) | null>(null);
   const bump = () => { lastActivity.current = Date.now(); };
+  // Reminders (as in useLive): the style card and the learner's instructions, added to the conversation every few
+  // turns and at once when they change, without asking Gemini to answer them.
+  const turns = useRef(0);
+  const remindDirty = useRef(false);
 
   const send = useCallback((obj: Record<string, unknown>) => {
     const w = ws.current;
@@ -163,6 +167,11 @@ export function useGeminiLive(opts: Opts) {
     bump();
     const text = (request || userBuf.current).trim();
     userBuf.current = ''; setHeard('');
+    turns.current++;
+    if (remindDirty.current || turns.current % 3 === 1) {
+      const r = optsRef.current.reminder?.();
+      if (r) { remindDirty.current = false; send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] REMINDER (say nothing about it; just follow it): ${r}` }] }], turnComplete: false } }); }
+    }
     if (!text) { respond(id, 'Sorry, I didn’t catch that. Could you say it again?'); return; }
     optsRef.current.onRequest(text, id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -410,5 +419,6 @@ export function useGeminiLive(opts: Opts) {
 
   const supported = typeof window !== 'undefined' && typeof WebSocket !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof AudioWorkletNode !== 'undefined';
 
-  return { state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  const remind = useCallback(() => { remindDirty.current = true; }, []);
+  return { remind, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

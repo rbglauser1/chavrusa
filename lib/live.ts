@@ -41,9 +41,9 @@ Do not delegate to the backend when: Greeting, explaining a concept, discussing 
 }
 
 // What the voice needs to know about this learner and session, added to its instructions when the call starts.
-export function liveContext(o: { styleName: string; styleRules: string; leads: string; place: string | null; requests: string[]; saved: string[]; noticed?: string[] }): string {
+export function liveContext(o: { styleName: string; styleRules: string; leads: string; place: string | null; requests: string[]; saved: string[]; noticed?: string[]; card?: string }): string {
   return [
-    `\n# Learning style: ${o.styleName}\n${o.styleRules}\nWho leads: ${o.leads}`,
+    `\n# Learning style: ${o.styleName}${o.card ? `\nIn short (hold onto this every move): ${o.card}` : ''}\n${o.styleRules}\nWho leads: ${o.leads}`,
     o.place ? `\n# Where we are\nThe learner is on ${o.place}. Delegate to get its words.` : '',
     o.requests.length ? `\n# The learner's requests for this session (follow these above everything else)\n${o.requests.map((r) => `- ${r}`).join('\n')}` : '',
     o.saved.length ? `\n# Saved instructions from the learner (always follow)\n${o.saved.map((r) => `- ${r}`).join('\n')}` : '',

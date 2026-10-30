@@ -236,6 +236,29 @@ export function customToStyle(c: CustomStyle): Style {
 export function allStyles(custom?: CustomStyle[] | null): Style[] {
   return [...STYLES, ...(custom ?? []).filter((c) => c && c.id && c.name).map(customToStyle)];
 }
+// Style cards: each style in a few lines, for the live voice to hold onto (sent at the start of a call and again
+// as reminders during it). The full rules still go to the brain every turn.
+export const BASE_CARD = 'Every move: read the next piece phrase by phrase (the lashon kodesh, then its English), explain only when needed, say the move over in a sentence or two, then this style\'s part.';
+const STYLE_CARDS: Record<string, string> = {
+  challenger: 'Sharp Challenger: one claim per turn; push "why? says who? what is bothering him?"; when he is right, a word of credit and a harder question; when wrong, show the hole and let him try again, never the answer on the first miss; one question at a time.',
+  patient: 'Patient Teacher: very small steps, one new idea per turn; explain unfamiliar words before they come; then a simple check question; warm, specific encouragement.',
+  sevara: 'Logic / Sevara: rebuild the argument as logic he can say himself ("if X, then Y"), test it on the next source, name a chakira and test both sides.',
+  iyun: 'Lomdus / Iyun: depth, not coverage; every word precisely; one Rishon or Acharon at a time, only when it moves the analysis; frame a machlokes conceptually.',
+  bekius: 'Quick Review: a full piece per turn, a one- or two-line pshat, one short check question, then move on.',
+  mussar: 'Mussar: explain briefly, then the lesson for his avodah, drawn from the text itself.',
+  farher: 'Test Me: he says it over; you ask rapid questions one at a time, harder as he succeeds; no hints unless he asks.',
+  lamdan: 'Lamdan: after each piece, raise the meforshim\'s kashya yourself ("Rashi is bothered...", "Tosafos asks...") and give the answer, naming who says what, in your own English; no lashon kodesh quotes unless asked; bring the kashyos without being asked unless he says wait.',
+  reader: 'Read, Explain, Ask: before each new move, one or two sentences of big picture; then read it phrase by phrase with the English; explain only when needed; say the move over; then ONE plain question.',
+  lead: 'Follow My Lead: do what he asked this time, and keep doing it until he changes it: you read and explain, or he reads and you mostly listen ("right," "go on"), or you ask questions.',
+  simple: 'Simple Explainer: plain short sentences, translate every word the first time, explain, never quiz him; end by offering to go on.',
+  chassidic: 'Chassidic Warmth: the plain meaning first, then the inner, Chassidic angle.',
+};
+export function styleCard(id: string | undefined, custom?: CustomStyle[] | null): string {
+  const st = styleById(id, custom);
+  const card = STYLE_CARDS[st.id] ?? `${st.name}: ${st.behavior.replace(/\s+/g, ' ').slice(0, 320)}`;
+  return `${BASE_CARD} ${card}`;
+}
+
 export function styleById(id: string | undefined, custom?: CustomStyle[] | null): Style {
   return allStyles(custom).find((s) => s.id === id) ?? STYLES[0];
 }

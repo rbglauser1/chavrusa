@@ -41,6 +41,7 @@ export function useLive(opts: {
   idleSeconds: () => number;                    // pause after this much quiet (0 = never)
   wakeOnSpeech: () => boolean;
   sessionId?: () => string | null;
+  reminder?: () => string; // the style card + the learner's instructions, re-sent during the call so they don't fade
   onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
@@ -70,6 +71,17 @@ export function useLive(opts: {
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
   const startWakeRef = useRef<(() => void) | null>(null);
   const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
+  // Reminders: the style card and the learner's instructions, re-sent every few turns (and at once when they change),
+  // attached to a turn being handed to the brain, so the voice holds onto them all call long.
+  const turns = useRef(0);
+  const remindDirty = useRef(false);
+  const remindNow = (delegationId: string | null) => {
+    const text = optsRef.current.reminder?.();
+    if (!text) return;
+    remindDirty.current = false;
+    sendRef.current({ type: 'session.instructions.append', delegation_id: delegationId, content: `REMINDER from the app (say nothing about it; just follow it): ${text}` });
+  };
+  const sendRef = useRef<(o: Record<string, unknown>) => void>(() => {});
   // The learner's spelling choice and "say it my way" list (Settings → Voice), applied to everything the voice is given.
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
   const g = (t: string) => forVoice(t, speech.current.spell, speech.current.myWay, speech.current.house);
@@ -78,6 +90,7 @@ export function useLive(opts: {
     const ch = dc.current;
     if (ch && ch.readyState === 'open') ch.send(JSON.stringify({ event_id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, ...obj }));
   }, []);
+  sendRef.current = send;
 
   const teardown = useCallback(() => {
     try { dc.current?.close(); } catch { /* ignore */ }
@@ -133,6 +146,8 @@ export function useLive(opts: {
         pending.current.delete(delegationId);
         return;
       }
+      turns.current++;
+      if (remindDirty.current || turns.current % 3 === 1) remindNow(delegationId);
       optsRef.current.onRequest(text, delegationId);
     };
     tick();
@@ -166,6 +181,8 @@ export function useLive(opts: {
             voiceBuf.current = '';
             setHeard('');
             optsRef.current.onAside?.(learner, said);
+            turns.current++;
+            if (remindDirty.current || turns.current % 3 === 0) remindNow(null);
           }
           if (!pending.current.size) answering.current = false;
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
@@ -434,5 +451,6 @@ export function useLive(opts: {
 
   const supported = typeof window !== 'undefined' && typeof RTCPeerConnection !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
-  return { state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  const remind = useCallback(() => { remindDirty.current = true; }, []);
+  return { remind, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

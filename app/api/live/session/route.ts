@@ -5,7 +5,7 @@ import { liveContext, liveInstructions } from '@/lib/live';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { listMemories, listMessages, listSources } from '@/lib/db';
 import { currentPlace } from '@/lib/place';
-import { styleById } from '@/lib/config';
+import { styleById, styleCard } from '@/lib/config';
 import { gptLine, sayNote } from '@/lib/geminiPron';
 import { forVoice } from '@/lib/geminiSpeech';
 
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
         requests: memories.filter((m) => m.scope === `session:${sid}`).map((m) => m.content),
         saved: memories.filter((m) => m.kind === 'instruction' && !m.scope?.startsWith('session:')).map((m) => m.content),
         noticed: memories.filter((m) => m.kind === 'observation').map((m) => m.content),
+        card: styleCard(s.style, s.customStyles) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles).replace(/^.*?this style's part\. /, '')}` : ''),
       });
       // The conversation so far, so a new or resumed call picks up exactly where we were.
       const plain = (t: string) => t.replace(/\[\[line:\d+\]\]/g, '').replace(/^\s*>\s?/gm, '').replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim();

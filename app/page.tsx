@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { allStyles, DEFAULT_SETTINGS, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { styleCard, allStyles, DEFAULT_SETTINGS, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import Minimal from '@/components/Minimal';
@@ -63,6 +63,8 @@ export default function Home() {
   const [seenDisclaimer, setSeenDisclaimer] = useState(false);
   const [quick, setQuick] = useState<'style' | 'model' | null>(null);
   const [requests, setRequests] = useState<{ id: string; content: string }[]>([]); // learner's requests for this session
+  const requestsRef = useRef<{ id: string; content: string }[]>([]);
+  requestsRef.current = requests;
   const [convo, setConvo] = useState(false);
   const convoRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
@@ -115,12 +117,21 @@ export default function Home() {
     // Saver pauses sooner: never later than 15 quiet seconds.
     idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,
+    // What the voice is reminded of during a call: the style in a few lines, and the learner's instructions for this session.
+    reminder: () => {
+      const st = settingsRef.current;
+      const card = styleCard(st.style, st.customStyles) + (st.blend ? ` Also: ${styleCard(st.blend, st.customStyles).replace(/^.*?this style's part\. /, '')}` : '');
+      const reqs = requestsRef.current.map((r) => r.content).filter(Boolean);
+      return `Stay in this style every move. ${card}${reqs.length ? ` The learner's instructions for this session (they come before everything else): ${reqs.map((r) => `"${r}"`).join('; ')}.` : ''}`;
+    },
   };
   // Two live voices side by side: GPT-Live, and Gemini Live as a test (Settings → Voice → Live voice).
   // Both are always ready; Talk uses the one chosen (a call already going keeps its voice until it ends).
   const liveGpt = useLive(liveOpts);
   const liveGem = useGeminiLive(liveOpts);
   const live = liveGem.active ? liveGem : liveGpt.active ? liveGpt : settings.liveEngine === 'gemini' ? liveGem : liveGpt;
+  // The learner gave a new instruction, or changed the style, during a call: the voice is told at its next turn.
+  useEffect(() => { if (live.active) live.remind(); }, [requests, settings.style, settings.blend]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function pumpLive() {
     if (busyRef.current || liveDelegation.current || !liveQueue.current.length) return;
