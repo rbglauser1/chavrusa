@@ -150,13 +150,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Layout</label>
               <div className="layout-pick">
-                {([['sefer', 'Sefer only', 'Just the Sefer; the chavrusa below it'], ['classic', 'Classic', 'Conversation screen, Sefer on the side'], ['page', 'The page', 'The sefer is home; one Talk button'], ['quiet', 'Quiet chat', 'The conversation, like a book']] as const).map(([id, name, blurb]) => (
-                  <button key={id} className={`style-opt ${(s.layout ?? 'classic') === id ? 'on' : ''}`} onClick={() => onChange({ layout: id })}>
+                {([['classic', 'Classic', 'The Sefer: Library, Talk and the text'], ['quiet', 'Quiet chat', 'The text, quiet and simple, with Talk below']] as const).map(([id, name, blurb]) => (
+                  <button key={id} className={`style-opt ${(s.layout === 'quiet' ? 'quiet' : 'classic') === id ? 'on' : ''}`} onClick={() => onChange({ layout: id })}>
                     <b>{name}</b><span>{blurb}</span>
                   </button>
                 ))}
               </div>
-              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>New, minimal layouts to try. Everything still works the same underneath; the classic screen stays.</div>
+              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Both have the Library, Talk and the full text with its commentaries.</div>
             </div>
             )}
             <div className="field">

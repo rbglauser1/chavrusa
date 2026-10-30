@@ -200,8 +200,6 @@ export default function Minimal(p: Props) {
         <div className="min-menu" role="menu">
           {p.layout === 'quiet' ? (
             <>
-              <button role="menuitemradio" aria-checked={tab === 'text'} onClick={() => { setMenu(false); setTab('text'); }}>The text <span className="min-check">{tab === 'text' ? '✓' : ''}</span></button>
-              <button role="menuitemradio" aria-checked={tab === 'talk'} onClick={() => { setMenu(false); setTab('talk'); }}>The conversation <span className="min-check">{tab === 'talk' ? '✓' : ''}</span></button>
               <button role="menuitem" onClick={() => { setMenu(false); setTab('text'); setFull(true); }}>Full screen <span className="min-check">double-tap</span></button>
               <span className="min-menu-rule" />
               <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
@@ -357,9 +355,9 @@ export default function Minimal(p: Props) {
           </main>
         )}
         {showText && !isFull && caption && (
-          <button className="min-caption" onClick={() => setTab('talk')} aria-label="Show the conversation">
+          <div className="min-caption">
             <span className="min-caption-text">{caption.length > 180 ? `${caption.slice(0, 180).replace(/\s+\S*$/, '')}…` : caption}</span>
-          </button>
+          </div>
         )}
         {label && !isFull && <div className="min-status slim">{label}</div>}
         {bottom}

@@ -565,10 +565,12 @@ export default function Home() {
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
   const newUI = settings.ui === 'home';
-  const layoutEff = newUI ? 'quiet' : settings.layout; // the new main screen always learns in Quiet chat
+  // The new main screen always learns in Quiet chat. Otherwise: Quiet chat, or the classic screen, which is now
+  // just the Sefer (Library, Talk, the text) with no separate conversation screen.
+  const layoutEff = newUI || settings.layout === 'quiet' ? 'quiet' : 'sefer';
   const seferHome = layoutEff === 'sefer' && settings.display !== 'off';
   const quietSefer = layoutEff === 'quiet' && settings.display !== 'off'; // Quiet chat carries the Sefer in its Text tab
-  const minimal = !!layoutEff && layoutEff !== 'classic' && !seferHome;
+  const minimal = !seferHome; // Quiet chat (or, with the text off, the voice-only screen)
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
   if (!ready) return <div className="app boot" aria-busy="true" />;
@@ -955,28 +957,6 @@ export default function Home() {
           onOpenExact={openExact}
           inlineComm={inlineComm}
           home={seferHome ? { onMenu: () => setDrawer('sessions'), onSettings: () => setDrawer('settings') } : null}
-        />
-      )}
-      {seferHome && (
-        <Minimal
-          layout="dock"
-          settings={settings}
-          current={current ?? null}
-          items={items}
-          busy={busy}
-          status={status}
-          input={input}
-          setInput={setInput}
-          send={(t) => { spokeLast.current = false; if (!live.active) voice.unlock(); send(t); }}
-          talk={{ supported: voice.supported, on: talking, state: live.active ? live.state : convo ? voice.state : 'off', heard: live.heard, toggle: toggleTalk, resume: () => live.start() }}
-          pointAt={pointAt}
-          inlineComm={inlineComm}
-          onMenu={() => setDrawer('sessions')}
-          onSettings={() => setDrawer('settings')}
-          onLibrary={openLibrary}
-          onSefer={() => setSeferOpen(true)}
-          onNewSession={newSession}
-          starters={STARTERS}
         />
       )}
 
