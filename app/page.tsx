@@ -112,7 +112,7 @@ export default function Home() {
       fetch('/api/live/aside', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sessionIdRef.current, user: learner, voice: said }) })
         .then((r) => r.json()).then((d) => { if (d?.session?.id) { sessionIdRef.current = d.session.id; setSessionId(d.session.id); } }).catch(() => {});
     },
-    // Saver pauses sooner: never later than 30 quiet seconds.
+    // Saver pauses sooner: never later than 15 quiet seconds.
     idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,
   };

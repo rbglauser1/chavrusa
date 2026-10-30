@@ -483,4 +483,4 @@ export function isQuickReply(message: string): boolean {
 export function wantsDepth(message: string): boolean {
   return /\b(deeper|in[ -]depth|more depth|think (hard|harder|carefully)|lomdus|iyun|b'?iyun|chakira|tzvei dinim|brisker|full explanation|explain (it |this |that )?(fully|properly|in detail|more))\b/i.test(message);
 }
-export const SAVER_IDLE_SEC = 30;
+export const SAVER_IDLE_SEC = 15; // the shortest that still saves: each reconnect bills at least 15 seconds

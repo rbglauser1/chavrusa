@@ -121,7 +121,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.saver !== false ? 'saver' : 'full'} options={[['saver', 'Saver'], ['full', 'Full depth every turn']]} onPick={(v) => onChange({ saver: v === 'saver' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
                 {s.saver !== false
-                  ? `Saver: everyday turns, typed or spoken, use ${MODELS[s.provider][s.tier === 'basic' ? 'basic' : 'middle'].label}. Say or type “go deeper” or “explain it fully” and ${MODELS[s.provider][s.tier].label} takes over for the next few turns. Calls pause after 30 quiet seconds.`
+                  ? `Saver: everyday turns, typed or spoken, use ${MODELS[s.provider][s.tier === 'basic' ? 'basic' : 'middle'].label}. Say or type “go deeper” or “explain it fully” and ${MODELS[s.provider][s.tier].label} takes over for the next few turns. Calls pause after 15 quiet seconds.`
 
                   : `Every turn uses ${MODELS[s.provider][s.tier].label}.`}
               </div>
@@ -264,13 +264,14 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>
                 <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
                 <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
+                  <option value="15">15 seconds</option>
                   <option value="30">30 seconds</option>
                   <option value="60">1 minute</option>
                   <option value="120">2 minutes</option>
                   <option value="300">5 minutes</option>
                   <option value="0">Never pause</option>
                 </select>
-                {s.saver !== false && s.liveIdleSec > 30 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 30 seconds.</div>}
+                {s.saver !== false && s.liveIdleSec > 15 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 15 quiet seconds.</div>}
               </div>
             )}
             {s.liveIdleSec > 0 && (
