@@ -160,6 +160,7 @@ export default function Home() {
   // The new main screen (Settings → Main screen): it opens first every time; 'learn' is the text and the chavrusa.
   const [view, setView] = useState<'home' | 'learn' | 'recent' | 'themes' | 'settings'>('home');
   const [settingsFrom, setSettingsFrom] = useState<'home' | 'learn'>('home'); // where Settings' back arrow returns to
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [contInfo, setContInfoState] = useState<(ContinueInfo & { id?: string }) | null>(null);
   // Kept on the phone too, so the main screen shows the right place at once, not something else first.
   const setContInfo = (c: (ContinueInfo & { id?: string }) | null) => { setContInfoState(c); try { if (c) localStorage.setItem('chavrusa_cont', JSON.stringify(c)); } catch { /* optional */ } };
@@ -222,7 +223,8 @@ export default function Home() {
   useEffect(() => {
     if (view !== 'home') return;
     const id = sessionId ?? sessions[0]?.id;
-    if (!id) { setContInfo(null); return; }
+    // The session list hasn't arrived yet: keep showing the place remembered on the phone (never "Begin learning" first).
+    if (!id) { if (sessionsLoaded) { setContInfoState(null); try { localStorage.removeItem('chavrusa_cont'); } catch { /* optional */ } } return; }
     const row = sessions.find((x) => x.id === id);
     let gone = false;
     fetch(`/api/sessions/${id}`).then((r) => r.json()).then((d) => {
@@ -233,10 +235,10 @@ export default function Home() {
       setContInfo(main ? { id, title: row?.title, heRef: main.heRef, ref: main.ref, line: main.focus } : { id, title: row?.title ?? d.session?.title, when: row?.updated_at });
     }).catch(() => {});
     return () => { gone = true; };
-  }, [view, sessionId, sessions]);
+  }, [view, sessionId, sessions, sessionsLoaded]);
 
   function refreshSessions() {
-    fetch('/api/sessions').then((r) => r.json()).then((d) => Array.isArray(d) && setSessions(d));
+    fetch('/api/sessions').then((r) => r.json()).then((d) => { if (Array.isArray(d)) { setSessions(d); setSessionsLoaded(true); } });
   }
 
   // Keep this phone's copy of the settings current, for the next time the app opens.
