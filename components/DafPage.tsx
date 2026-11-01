@@ -142,9 +142,14 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
         {state === 'loading' && <div className="daf-page-msg">Opening the page…</div>}
         {state === 'error' && <div className="daf-page-msg"><span>{err}<br /><a href={dafPdfUrl(a)} target="_blank" rel="noopener noreferrer">Open the page in a new tab ↗</a></span></div>}
       </div>
-      {talk && (
-        // Talk right here on the page: the call goes on while you look at the daf, at any zoom.
-        <div className="daf-page-talk">{status && <span className="daf-page-status">{status}</span>}{talk}</div>
+      {(talk || full) && (
+        // Talk right here on the page: the call goes on while you look at the daf, at any zoom. In full screen, the way
+        // back sits right next to it, where the thumb already is.
+        <div className="daf-page-talk">
+          {full && <button className="daf-page-exit" onClick={() => setFull(false)}>Exit full screen</button>}
+          {!full && status && <span className="daf-page-status">{status}</span>}
+          {talk}
+        </div>
       )}
       <div className="daf-page-credit">{DAF_CREDIT}</div>
     </div>
