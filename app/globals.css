@@ -1470,3 +1470,8 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .daf-page-talk { position: absolute; right: 16px; bottom: calc(44px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; }
 .daf-page-status { font-family: var(--f-ui); font-size: 12.5px; background: var(--surface, #fff); color: var(--ink); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 10px; max-width: 60vw; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 .daf-page-talk .min-round { box-shadow: 0 3px 12px rgba(0,0,0,.25); }
+/* Tzuras hadaf full screen: just the page and the Talk button; a tap on the page brings the bar back. */
+.daf-page.full .daf-page-bar, .daf-page.full .daf-page-credit { display: none; }
+.daf-page.full .daf-page-box { padding-top: env(safe-area-inset-top); }
+.daf-page.full .daf-page-talk { bottom: calc(16px + env(safe-area-inset-bottom)); }
+.daf-page.full .daf-page-status { display: none; }

@@ -29,6 +29,8 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   const [state, setState] = useState<'loading' | 'ok' | 'error'>('loading');
   const [err, setErr] = useState('');
   const [zoom, setZoom] = useState(1);
+  const [full, setFull] = useState(false); // full screen: just the page (and Talk); a tap brings the bar back
+  const fullRef = useRef(full); fullRef.current = full;
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const box = useRef<HTMLDivElement | null>(null);
   useEffect(() => { setA(start); }, [start.tractate, start.daf, start.amud]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -74,23 +76,32 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   useEffect(() => {
     const el = box.current;
     if (!el) return;
-    let startDist = 0, startZoom = 1, lastTap = 0;
+    let startDist = 0, startZoom = 1, lastTap = 0, tapTimer: number | undefined, moved = false, tapX = 0, tapY = 0;
     const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
     const onStart = (e: TouchEvent) => {
       if (e.touches.length === 2) { startDist = dist(e.touches); startZoom = zoomRef.current; e.preventDefault(); }
       else if (e.touches.length === 1) {
         const now = Date.now();
-        if (now - lastTap < 300) { e.preventDefault(); const t = e.touches[0]; zoomTo(zoomRef.current > 1.4 ? 1 : 2.5, t.clientX, t.clientY); lastTap = 0; }
+        moved = false; tapX = e.touches[0].clientX; tapY = e.touches[0].clientY;
+        if (now - lastTap < 300) { e.preventDefault(); window.clearTimeout(tapTimer); const t = e.touches[0]; zoomTo(zoomRef.current > 1.4 ? 1 : 2.5, t.clientX, t.clientY); lastTap = 0; }
         else lastTap = now;
       }
     };
     const onMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && Math.hypot(e.touches[0].clientX - tapX, e.touches[0].clientY - tapY) > 10) moved = true;
       if (e.touches.length !== 2 || !startDist) return;
       e.preventDefault();
       const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2, cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       zoomTo(startZoom * (dist(e.touches) / startDist), cx, cy);
     };
-    const onEnd = (e: TouchEvent) => { if (e.touches.length < 2) startDist = 0; };
+    // A single tap (not a drag, not the first of a double-tap): full screen on and off.
+    const onEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) startDist = 0;
+      if (e.touches.length === 0 && !moved && lastTap) {
+        window.clearTimeout(tapTimer);
+        tapTimer = window.setTimeout(() => { if (lastTap) { setFull(!fullRef.current); lastTap = 0; } }, 320);
+      }
+    };
     const noGesture = (e: Event) => e.preventDefault(); // iPhone Safari's own pinch
     el.addEventListener('touchstart', onStart, { passive: false });
     el.addEventListener('touchmove', onMove, { passive: false });
@@ -104,7 +115,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   }, []);
 
   return (
-    <div className="daf-page" role="dialog" aria-label={`${ref(a)}, the printed page`}>
+    <div className={`daf-page ${full ? 'full' : ''}`} role="dialog" aria-label={`${ref(a)}, the printed page`}>
       <div className="daf-page-bar">
         <button className="daf-page-nav" disabled={!next} onClick={() => next && setA(next)} aria-label="Next amud">‹</button>
         <span className="daf-page-title">{ref(a)}</span>
@@ -113,6 +124,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
           <button className="daf-page-nav" onClick={() => zoomTo(zoom / 1.5)} disabled={zoom <= MIN} aria-label="Zoom out">−</button>
           <button className="daf-page-nav" onClick={() => zoomTo(zoom * 1.5)} disabled={zoom >= MAX} aria-label="Zoom in">+</button>
         </span>
+        <button className="daf-page-nav" onClick={() => setFull(true)} aria-label="Full screen" title="Full screen (tap the page to come back)">⤢</button>
         <button className="daf-page-x" onClick={onClose} aria-label="Close">✕</button>
       </div>
       <div className="daf-page-box" ref={box}>
