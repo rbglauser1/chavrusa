@@ -197,6 +197,7 @@ export const HE_READS: { id: HeRead; name: string }[] = [
   { id: 'join-kh', name: 'Joined with kh (b\'khesef), current' },
   { id: 'join-ch', name: 'Joined with ch (b\'chesef)' },
 ];
+export const hasNikud = (he: string) => /[\u05B0-\u05BC\u05C1\u05C2\u05C7]/.test(he);
 export const isHebrewLetters = (m?: HeRead) => m === 'he' || m === 'he-plain' || m === 'he-key';
 export function voiceHe(he: string, mode: HeRead = 'join-kh'): string {
   // Hebrew with a key: the Hebrew letters (so it reads fluently) and, in brackets, how to say them (so it says them
@@ -206,8 +207,9 @@ export function voiceHe(he: string, mode: HeRead = 'join-kh'): string {
   const prev = OPT;
   OPT = { vowels: mode === 'dash-simple' ? 'simple' : 'yeshivish', throat: mode === 'join-kh' ? 'kh' : 'ch' };
   try {
-    if (mode === 'dash-simple') return yeshivishTranslit(namesForSpeech(he), true).toLowerCase();
-    return yeshivishTranslit(namesForSpeech(he), false);
+    const out = mode === 'dash-simple' ? yeshivishTranslit(namesForSpeech(he), true).toLowerCase() : yeshivishTranslit(namesForSpeech(he), false);
+    // Without nikud there's nothing to spell out from: give the voice the Hebrew letters rather than nothing.
+    return hasNikud(he) || !/[\u05D0-\u05EA]/.test(he) ? out : namesForSpeech(he);
   } finally { OPT = prev; }
 }
 /** The note in the voice's instructions that goes with each way of giving it the lashon kodesh. */

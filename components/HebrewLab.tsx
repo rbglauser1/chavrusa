@@ -4,7 +4,7 @@
 // would read it. Pick the one that sounds best by ear, and the app uses it everywhere in calls.
 import { useEffect, useRef, useState } from 'react';
 import type { Settings } from '@/lib/config';
-import { HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
+import { hasNikud, HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
 import { silentWav } from './useVoice';
 
 const TEXT_KEY = 'chavrusa-hebrew-test-line';
@@ -89,13 +89,14 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The same line, given to your voice in different ways. Tap ▶ on each and listen, then tap “Use this” on the one that sounds cleanest. Calls use it from the next Talk. About a cent per listen.</div>
       <div className="presets">{LINES.map((l) => <button key={l.name} className={`chip ${l.he === text ? 'on' : ''}`} onClick={() => setText(l.he)}>{l.name}</button>)}</div>
       <textarea rows={2} dir="rtl" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a line with nikud" />
+      {text.trim() && !hasNikud(text) && <div className="goto-msg" style={{ padding: '6px 0 0' }}>This line has no nikud (vowels). Only the Hebrew-letters versions can read it; the spelled-out ones need the vowels to know how each word sounds. Paste the line with nikud (on Sefaria, turn vowels on) to try them all.</div>}
       <div className="he-lab-list">
         {HE_READS.map((m) => (
           <div key={m.id} className={`he-lab-row ${inUse === m.id ? 'on' : ''}`}>
             <div className="he-lab-name">{m.name}</div>
             <div className="he-lab-shows" dir={m.id === 'he-key' ? 'auto' : isHebrewLetters(m.id) ? 'rtl' : 'ltr'}>{voiceHe(text, m.id)}</div>
             <div className="he-lab-btns">
-              <button className="btn" disabled={disabled || !text.trim()} onClick={() => void hear(m.id)}>{playing === m.id ? '■ Stop' : '▶ Hear'}</button>
+              <button className="btn" disabled={disabled || !text.trim() || (!hasNikud(text) && m.id !== 'he' && m.id !== 'he-plain')} onClick={() => void hear(m.id)}>{playing === m.id ? '■ Stop' : '▶ Hear'}</button>
               {inUse === m.id ? <span className="he-lab-inuse">✓ In use</span> : <button className="btn" onClick={() => onChange({ heRead: m.id })}>Use this</button>}
             </div>
           </div>
