@@ -224,3 +224,23 @@ export function heReadNote(mode: HeRead = 'join-kh'): string {
   if (mode === 'dash-simple') return 'The lashon kodesh between ⟪ ⟫ is spelled out in English letters with dashes between syllables (ve-ko-nah es atz-mah): read each word smoothly as one word, never syllable by syllable.';
   return 'The lashon kodesh between ⟪ ⟫ is spelled out in English letters the yeshivish way (hawishaw nikneis): say each word smoothly as one word, never syllable by syllable.';
 }
+
+// ---------- Who reads the text in a call (Settings → Voice, and the ⋯ menu) ----------
+// all: the chavrusa reads the lashon kodesh and its English; english: you read the lashon kodesh yourself and he reads
+// only the English; gist: you read it yourself and he only gives the gist, then goes on with the learning.
+export type VoiceReads = 'all' | 'english' | 'gist';
+/** A spoken reply, with its text blocks cut to what the chavrusa reads aloud in this mode. */
+export function forReader(text: string, mode: VoiceReads = 'all'): string {
+  if (mode === 'all') return text;
+  return text.replace(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi, (_m, body: string) => {
+    if (mode === 'gist') return ' ';
+    const en = body.split('|').map((p) => { const m = p.match(/\s[—–]\s([\s\S]*)$/); return m ? m[1].trim() : ''; }).filter(Boolean).join(' | ');
+    return en ? `[[say]]${en}[[/say]]` : ' ';
+  }).replace(/\s{2,}/g, ' ').trim();
+}
+/** The note in the voice's instructions for each mode. */
+export function voiceReadsNote(mode: VoiceReads = 'all'): string {
+  if (mode === 'english') return 'WHO READS: the learner reads the lashon kodesh himself. You read only the English of the text (what comes between ⟪ ⟫ is the English only); never read or say the lashon kodesh of the text yourself.';
+  if (mode === 'gist') return 'WHO READS: the learner reads the text himself. You never read the text aloud, not in lashon kodesh and not in English: give the gist of each piece in your own words, then go on with the learning in your style.';
+  return '';
+}

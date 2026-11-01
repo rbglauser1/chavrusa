@@ -5,6 +5,7 @@ import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 
+let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
 const toSpeech = (he: string) => voiceHe(he, HE_MODE);
 
@@ -311,10 +312,11 @@ export function useLive(opts: {
     userBuf.current = ''; voiceBuf.current = ''; setHeard('');
     setS('speaking');
     const first = he ? splitPieces(he, en)[0] : null; // a long line: its first piece ("next" goes on)
-    const exact = first ? `${toSpeech(first.he)}${first.en ? ` — ${first.en.slice(0, 900)}` : ''}` : '';
+    const exact = !first ? '' : READS === 'english' ? first.en.slice(0, 900) : READS === 'gist' ? '' : `${toSpeech(first.he)}${first.en ? ` — ${first.en.slice(0, 900)}` : ''}`;
+    const gist = READS === 'gist' && first?.en ? first.en.slice(0, 900) : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${exact ? `Read it now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
+    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
     if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) });
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
@@ -425,7 +427,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; }
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
     } catch (err) {
       const msg = (err as Error).name === 'NotAllowedError'

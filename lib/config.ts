@@ -1,4 +1,4 @@
-import type { HeRead } from './hebrew';
+import type { HeRead, VoiceReads } from './hebrew';
 // Central configuration. Change models, prices, and styles here; nothing else needs editing.
 
 export type Provider = 'anthropic' | 'openai';
@@ -375,6 +375,7 @@ export interface Settings {
   geminiSpell?: 'stressed' | 'joined' | 'plain';      // how lashon kodesh is spelled out for Gemini
   geminiMyWay?: { word: string; say: string }[];      // "say it my way": word → how Gemini should say it
   lineRules?: boolean;      // a thin line between each line of the text (its Hebrew and English kept together)
+  voiceReads?: VoiceReads;  // in a call: the chavrusa reads Hebrew and English (all), only the English, or only the gist
   autoRashi?: boolean;      // Rashi (Bartenura on Mishnayos) open under every line, automatically
   autoComms?: boolean;      // show each line's commentary buttons without tapping the line first
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk
@@ -442,6 +443,7 @@ export const DEFAULT_SETTINGS: Settings = {
   geminiMyWay: [],
   autoComms: false,
   autoRashi: false,
+  voiceReads: 'all',
   amudIntro: true,
   introVoice: true,
   rashiScript: true,

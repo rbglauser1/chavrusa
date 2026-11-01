@@ -13,7 +13,7 @@ import { openingPlace, prefetchSource, prepareCommentaries, prepareLamdan, warmT
 import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, section, splitRef, textInHand } from '@/lib/place';
 import { fixSay, nextPiece, type Expect, type Section } from '@/lib/sayFix';
-import { stripNikud } from '@/lib/hebrew';
+import { forReader, stripNikud } from '@/lib/hebrew';
 import { nextSection } from '@/lib/refs';
 import { after } from 'next/server';
 import { addSource, SourceData } from '@/lib/db';
@@ -126,6 +126,8 @@ export async function POST(req: NextRequest) {
           const introBase = wantsIntro ? introBaseAt(routed.line?.ref ?? routed.source?.ref, routed.line?.part) : null;
           const introText = introBase && !introSaid(introBase) ? await introSoon(introBase) : '';
           if (introText) routed.reply = `${introText}\n\n${routed.reply}`;
+          // Who reads the text in a call: only the English, or only the gist (the learner reads it himself).
+          if (spoken) routed.reply = forReader(routed.reply, settings.voiceReads ?? 'all') || 'Okay.';
           if (routed.source) {
             const src = routed.source;
             try { after(async () => { const p = await prepareCommentaries(src.ref, approved).catch(() => null); if (p) await warmTexts(p.refs, approved); }); } catch { /* optional */ }
@@ -236,6 +238,9 @@ export async function POST(req: NextRequest) {
         const yes = /^\s*(yes|yeah|yep|yup|sure|ok|okay|please|go|mm-?hm+|uh-?huh|right|great|good|ready|absolutely|definitely|of course)\b[\s\w',.!]{0,20}$/i.test(message);
         const goOn = spoken && message.length < 80 && (/\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message) || (yes && askedOn));
         let readNext = '';
+        let nextAt: Expect | null = null; // the piece "go on" brings (its place is kept even when nothing is read aloud)
+        // Only the gist: the learner reads the text himself, so the chavrusa doesn't read it at all.
+        const gistNote = spoken && settings.voiceReads === 'gist' ? '\n\n[THE LEARNER READS THE TEXT HIMSELF: do not use a [[say]] block and do not read or quote the text, in Hebrew or English. Give the gist of the piece in a sentence or two, in your own words (its steps), then go on with your style\'s part.]' : '';
         if (goOn && place && settings.nusach !== 'sephardi' && !/ on /i.test(place.base)) {
           try {
             const sec = await section(place.base, sources, approved);
@@ -246,7 +251,12 @@ export async function POST(req: NextRequest) {
               const sec2 = b2 ? await section(b2, sources, approved) : null;
               if (b2 && sec2?.he.length) { nb = b2; nx = nextPiece({ base: b2, he: sec2.he, en: sec2.en }, { n: 0 }) ?? null; }
             }
-            if (nx) readNext = `\n\n[READ NEXT: the learner said to go on. The next piece, right after where he is, is ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nRead exactly this piece now, all of it, in one [[say]] block, then your style's part. Do not skip ahead and do not go back.]`;
+            if (nx) {
+              readNext = settings.voiceReads === 'gist'
+                ? `\n\n[NEXT PIECE: the learner said to go on. The next piece, right after where he is, is ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nHe reads it himself. Do not read it: give the gist of exactly this piece, then your style's part. Do not skip ahead and do not go back.]`
+                : `\n\n[READ NEXT: the learner said to go on. The next piece, right after where he is, is ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nRead exactly this piece now, all of it, in one [[say]] block, then your style's part. Do not skip ahead and do not go back.]`;
+              nextAt = { base: nb, n: nx.n, ...(nx.part ? { part: nx.part } : {}) };
+            }
           } catch { /* the brain still has the text in hand */ }
         }
         send({ type: 'status', text: 'Thinking…' });
@@ -266,6 +276,7 @@ export async function POST(req: NextRequest) {
                 : message)
               + commNote
               + readNext
+              + gistNote
               + (lamdan && /^\s*(ok(ay)?|yes|yeah|next|go on|keep going|move on|moving on|continue|next one|onward)[.!]?\s*$/i.test(message) ? '\n\n[The learner is moving on. If an important kashya on this line is still waiting, bring it now with its answer; otherwise read the next piece and bring the kashya on it. Do not ask whether he wants it.]' : '')
               + (CONTINUE.test(message) || (spoken && /\bcontinue\b/i.test(message) && !/continue reading|continue from|where we left/i.test(message)) ? '\n\n[The learner said "continue": that means move on to the next piece of the text, right after the line he is on, and follow the full basic formula: read it phrase by phrase with its English, explain only if needed, and if a move was made, say it over in your own words, then your style\'s part. ("Next" is the free way that only reads.)]' : '')
               + (prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : '') },
@@ -305,6 +316,10 @@ export async function POST(req: NextRequest) {
               if (fx.notes.length) send({ type: 'check', text: `${goOn ? `go on from ${place?.base} line ${place?.n}${place?.part ? `.${place.part}` : ''} · ` : ''}${fx.notes.join(' || ')}` }); // where he really is now: the last piece read aloud, not where the brain says it stopped
             }
           } catch { /* the reply still goes out as the brain wrote it */ }
+        }
+        if (spoken) {
+          if (settings.voiceReads === 'gist' && nextAt && !readPlace) readPlace = nextAt;
+          reply = forReader(reply, settings.voiceReads ?? 'all') || reply;
         }
         // The learner tapped a line while this answer was being written: his tap wins, so don't move the place.
         const tappedSince = (await listSources(sid).catch(() => [])).some((x) => (x.data?.tappedAt ?? 0) > Date.parse(startedAt));

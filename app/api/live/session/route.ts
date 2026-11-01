@@ -71,7 +71,13 @@ export async function POST(req: NextRequest) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
         const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';
-        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${voiceHe(he, s.heRead)}${en ? ` — in English: "${clip(namesForSpeechEn(en), 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
+        const reads = s.voiceReads ?? 'all';
+        const enLine = en ? clip(namesForSpeechEn(en), 600) : '';
+        pointed = reads === 'gist'
+          ? `The learner has chosen where to learn: ${tapped.ref}, line ${n}. He reads it himself. In English it says: "${enLine}". In a sentence or two, give the gist of this line in your own words (do not read it), then stop and wait. Do not go past this line by yourself.`
+          : reads === 'english'
+            ? `The learner has chosen where to learn: ${tapped.ref}, line ${n}. He reads the lashon kodesh himself. Read its English now, as the text: "${enLine}". Then stop and wait. Do not go past this line by yourself.`
+            : `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${voiceHe(he, s.heRead)}${en ? ` — in English: "${enLine}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop and wait. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
   }
@@ -114,8 +120,8 @@ export async function POST(req: NextRequest) {
           : preview && askMode === 'he-plain'
             ? 'This is a short reading test. Speak first, as soon as the session starts: read the text you are given aloud, once, clearly, then stop.'
           : preview
-            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
-            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead) + context) + myWayNote) + voiceNote,
+            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all'))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
+            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all') + context) + myWayNote) + voiceNote,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },
@@ -129,5 +135,5 @@ export async function POST(req: NextRequest) {
   }
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead }, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all' }, ...(testLine ? { line: testLine } : {}) });
 }

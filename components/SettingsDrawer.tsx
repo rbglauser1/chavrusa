@@ -274,6 +274,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
+            <div className="field">
+              <label>In a call, who reads the text</label>
+              <Seg value={s.voiceReads ?? 'all'} options={[['all', 'He reads it all'], ['english', 'English only'], ['gist', 'Just the gist']]} onPick={(v) => onChange({ voiceReads: v as 'all' | 'english' | 'gist' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.voiceReads ?? 'all') === 'all' ? 'The chavrusa reads the lashon kodesh and its English, phrase by phrase.' : (s.voiceReads === 'english' ? 'You read the lashon kodesh yourself; the chavrusa reads only the English, then goes on in your style.' : 'You read the text yourself; the chavrusa doesn\'t read it at all, just gives the gist of each piece and goes on in your style (explaining, asking…).')} Works with every style. Also in the ⋯ menu.</div>
+            </div>
             <CallLogs />
             <div className="field">
               <label>Steady mode (the voice sticks to your style and instructions)</label>

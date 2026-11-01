@@ -247,14 +247,14 @@ export function openingReply(s: SourceData, spoken: boolean, mode?: HeRead): str
   if (!/\d+[ab](:|$)/.test(s.ref) && /:\d+$/.test(s.ref)) {
     const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
     const en = s.en.join(' ').trim();
-    if (spoken) return `${name}. ${sayLine(s.he.join(' '), en, mode)} ${en ? `Any question on it, or next ${unit}?` : `There's no approved translation for this one. Want me to explain it?`}`;
+    if (spoken) return `${name}. ${sayLine(s.he.join(' '), en, mode)}${en ? '' : ` There's no approved translation for this one.`}`;
     return `**${name}**\n\n> ${s.he.join(' ').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
   }
   // A perek of Mishnah (or of Tanach): start right in, with the first mishnah / pasuk and its translation.
   if (!/\d+[ab](:|$)/.test(s.ref) && s.he.length > 1) {
     const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
     const en = (s.en[0] ?? '').trim();
-    if (spoken) return `${name}. ${sayLine(s.he[0] ?? '', en, mode)} ${en ? `Any question on it, or next ${unit}?` : `There's no approved translation for this one. Want me to explain it?`}`;
+    if (spoken) return `${name}. ${sayLine(s.he[0] ?? '', en, mode)}${en ? '' : ` There's no approved translation for this one.`}`;
     return `**${name}:1**\n\n> ${(s.he[0] ?? '').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
   }
   if (spoken) return `Okay, I've opened ${name}. Do you want to start from the top, or is there a specific place you want to look at?`;

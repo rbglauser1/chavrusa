@@ -352,7 +352,8 @@ function lineReply(l: LineText, spoken: boolean, mode?: HeRead): string {
   if (spoken) {
     // Lashon kodesh first, then the English.
     const tr = voiceHe(l.he, mode);
-    return l.en ? `[[say]]${tr} — ${namesForSpeechEn(l.en)}[[/say]] Any question on this, or next ${u}?` : `[[say]]${tr}[[/say]] There's no approved translation for this one. Want me to explain it?`;
+    // Spoken: just the line; no "any question, or next line?" (the learner says when to go on).
+    return l.en ? `[[say]]${tr} — ${namesForSpeechEn(l.en)}[[/say]]` : `[[say]]${tr}[[/say]] There's no approved translation for this one.`;
   }
   const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
   const ask = l.en ? `Any question on this ${u}, or next ${u}?` : `There's no approved translation for this ${u}. Want me to explain it?`;
@@ -490,7 +491,9 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
   const lamdanStyle = !!styleById(ctx.settings.style, ctx.settings.customStyles).preload;
   // Line by line: "next line", or "yes" when the Chavrusa just asked whether to continue to the next line.
   const lastBotText = [...ctx.history].reverse().find((m) => m.role === 'assistant')?.content ?? '';
-  if (!lamdanStyle && (NEXT_LINE.test(s) || (YES.test(s) && ASKED_NEXT.test(lastBotText.trim())))) {
+  // Only the gist (the learner reads the text himself): moving on needs the chavrusa to give the gist, so it goes to the AI.
+  const gistOnly = spoken && ctx.settings.voiceReads === 'gist';
+  if (!lamdanStyle && !gistOnly && (NEXT_LINE.test(s) || (YES.test(s) && ASKED_NEXT.test(lastBotText.trim())))) {
     const r = await moveLine(ctx, 1);
     if (r) return r;
   }
