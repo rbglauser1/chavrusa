@@ -47,11 +47,13 @@ function consonant(letter: string, marks: string, final: boolean): string {
     case 'ה': return final && !dg ? '' : 'h';
     case 'ו': return 'v';
     case 'ז': return 'z';
-    case 'ח': return 'ch';
+    // The throat sound is spelled "kh" for the voice: it read "ch" before e/i like "sh" (b'chesef heard as
+    // "besheff"). At worst "kh" comes out as a k, which is still right enough (b'kesef).
+    case 'ח': return 'kh';
     case 'ט': return 't';
     case 'י': return 'y';
-    case 'כ': return dg ? 'k' : 'ch';
-    case 'ך': return 'ch';
+    case 'כ': return dg ? 'k' : 'kh';
+    case 'ך': return 'kh';
     case 'ל': return 'l';
     case 'מ': case 'ם': return 'm';
     case 'נ': case 'ן': return 'n';
