@@ -5,7 +5,7 @@
 // long line) is covered, in order, and (3) writes each phrase out in the app's own yeshivish transliteration from the
 // real text with its vowels. If the brain skipped or changed anything, the whole
 // piece is read from the sefer instead (the Hebrew, then its approved English). Free, no AI.
-import { isHebrewLetters, namesForSpeech, namesForSpeechEn, voiceHe, type HeRead } from './hebrew';
+import { isHebrewLetters, namesForSpeechEn, voiceHe, type HeRead } from './hebrew';
 import { splitPieces } from './pieces';
 
 export interface Section { base: string; he: string[]; en: string[] }
@@ -54,7 +54,7 @@ function find(toks: Tok[], words: string[], from: number): { at: number[] } | nu
 // word lists are applied on the way to the voice.
 const labelOf = (w: string) => LABELS.find(([re]) => re.test(key(w)))?.[1] ?? null;
 let MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (set by fixSay)
-const say = (he: string) => (isHebrewLetters(MODE) ? namesForSpeech(he) : he.split(/\s+/).filter(Boolean).map((w) => labelOf(w) ?? voiceHe(w, MODE)).filter(Boolean).join(' '));
+const say = (he: string) => (isHebrewLetters(MODE) ? voiceHe(he, MODE) : he.split(/\s+/).filter(Boolean).map((w) => labelOf(w) ?? voiceHe(w, MODE)).filter(Boolean).join(' '));
 const line = (he: string, en: string) => `${say(he)}${en ? ` — ${namesForSpeechEn(en)}` : ''}`;
 
 /** Rebuild one [[say]] body from the real text, or null if its phrases can't be found in these sections. */

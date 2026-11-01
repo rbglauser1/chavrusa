@@ -4,7 +4,7 @@
 // would read it. Pick the one that sounds best by ear, and the app uses it everywhere in calls.
 import { useEffect, useRef, useState } from 'react';
 import type { Settings } from '@/lib/config';
-import { HE_READS, voiceHe, type HeRead } from '@/lib/hebrew';
+import { HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
 import { silentWav } from './useVoice';
 
 const LINES = [
@@ -90,7 +90,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         {HE_READS.map((m) => (
           <div key={m.id} className={`he-lab-row ${inUse === m.id ? 'on' : ''}`}>
             <div className="he-lab-name">{m.name}</div>
-            <div className="he-lab-shows" dir={m.id === 'he' || m.id === 'he-plain' ? 'rtl' : 'ltr'}>{voiceHe(text, m.id)}</div>
+            <div className="he-lab-shows" dir={m.id === 'he-key' ? 'auto' : isHebrewLetters(m.id) ? 'rtl' : 'ltr'}>{voiceHe(text, m.id)}</div>
             <div className="he-lab-btns">
               <button className="btn" disabled={disabled || !text.trim()} onClick={() => void hear(m.id)}>{playing === m.id ? '■ Stop' : '▶ Hear'}</button>
               {inUse === m.id ? <span className="he-lab-inuse">✓ In use</span> : <button className="btn" onClick={() => onChange({ heRead: m.id })}>Use this</button>}
