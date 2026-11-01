@@ -7,6 +7,7 @@ import type { Settings } from '@/lib/config';
 import { HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
 import { silentWav } from './useVoice';
 
+const TEXT_KEY = 'chavrusa-hebrew-test-line';
 const LINES = [
   { name: 'Mishnah', he: 'הָאִשָּׁה נִקְנֵית בְּשָׁלֹשׁ דְּרָכִים, וְקוֹנָה אֶת עַצְמָהּ בִּשְׁתֵּי דְרָכִים. נִקְנֵית בְּכֶסֶף, בִּשְׁטָר, וּבְבִיאָה.' },
   { name: 'Beis Shammai', he: 'בְּכֶסֶף, בֵּית שַׁמַּאי אוֹמְרִים: בְּדִינָר וּבְשָׁוֶה דִינָר. וּבֵית הִלֵּל אוֹמְרִים: בִּפְרוּטָה וּבְשָׁוֶה פְרוּטָה.' },
@@ -15,7 +16,9 @@ const LINES = [
 ];
 
 export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onChange: (p: Partial<Settings>) => void; disabled?: boolean }) {
-  const [text, setText] = useState(LINES[0].he);
+  // The line being tested is remembered on this device, so it stays when Settings re-open or the page refreshes.
+  const [text, setTextRaw] = useState<string>(() => { try { return localStorage.getItem(TEXT_KEY) || LINES[0].he; } catch { return LINES[0].he; } });
+  const setText = (t: string) => { setTextRaw(t); try { localStorage.setItem(TEXT_KEY, t); } catch { /* not kept */ } };
   const [playing, setPlaying] = useState<HeRead | null>(null);
   const [msg, setMsg] = useState('');
   const el = useRef<HTMLAudioElement | null>(null);
