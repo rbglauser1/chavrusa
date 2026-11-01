@@ -35,6 +35,8 @@ export async function getSettings(userId = OWNER_ID): Promise<Settings> {
   // Oct 30, 2026: Steady mode felt stiff and slow, so it is now off by default; turn an earlier saved "on" off once
   // (kept with the next save, so turning it back on later sticks).
   if (!s.steadyOffDone) { s.liveSteady = false; s.steadyOffDone = true; }
+  // Oct 31, 2026: the voice is rebuilt from a clean base, so coach notes are off (once; can be turned back on).
+  if (!s.coachOffDone) { s.liveCoach = false; s.coachOffDone = true; }
   if (!LIVE_VOICES.some((v) => v.id === s.liveVoice) && !s.customVoices.some((v) => v.id === s.liveVoice)) s.liveVoice = DEFAULT_SETTINGS.liveVoice;
   return s;
 }

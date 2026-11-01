@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
+import { logBegin, logEnd, logLine } from '@/lib/callLog';
 
 const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
 
@@ -11,6 +12,10 @@ const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
 // Chavrusa brain (/api/chat) and hand the answer back for the voice to say.
 
 export type LiveState = 'off' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'paused';
+
+// Mid-call reminders of the style and the learner's instructions: off while we rebuild the voice from a clean base
+// (Oct 31, 2026). The style card is still in the instructions at the start of every call.
+const REMINDERS = false;
 
 const MAX_CHARS = 1800; // the voice accepts about 500 tokens per hand-back
 
@@ -41,6 +46,7 @@ export function useLive(opts: {
   idleSeconds: () => number;                    // pause after this much quiet (0 = never)
   wakeOnSpeech: () => boolean;
   sessionId?: () => string | null;
+  logMeta?: () => string; // a one-line summary of the settings for the call recorder
   reminder?: () => string; // the style card + the learner's instructions, re-sent during the call so they don't fade
   onTurn?: (learner: string, said: string) => void; // the voice finished a turn (anything it said): for coach notes
   onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
@@ -71,9 +77,12 @@ export function useLive(opts: {
   const lastHeardPaint = useRef(0);
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
   const startWakeRef = useRef<(() => void) | null>(null);
-  const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
+  const setS = (s: LiveState) => { if (stateRef.current !== s) logLine('STATE', s); stateRef.current = s; setState(s); };
   // Reminders: the style card and the learner's instructions, re-sent every few turns (and at once when they change),
   // attached to a turn being handed to the brain, so the voice holds onto them all call long.
+  const recIn = useRef<{ text: string; timer?: number }>({ text: '' }); // the call recorder: the learner's words so far
+  const recOut = useRef(''); // and the voice's
+  const recOutAt = useRef(0);
   const heardAll = useRef(''); // everything the learner said since the voice last spoke (for coach notes)
   const saidAll = useRef('');  // everything the voice said this turn
   const turns = useRef(0);
@@ -91,6 +100,8 @@ export function useLive(opts: {
 
   const send = useCallback((obj: Record<string, unknown>) => {
     const ch = dc.current;
+    const o = obj as { type?: string; delegation_id?: string | null; content?: string };
+    logLine('APP→VOICE', `${o.type ?? '?'}${o.delegation_id ? ` [${String(o.delegation_id).slice(-5)}]` : ''}${o.content ? `: ${String(o.content).slice(0, 900)}` : ''}${ch && ch.readyState === 'open' ? '' : ' (NOT SENT: channel closed)'}`);
     if (ch && ch.readyState === 'open') ch.send(JSON.stringify({ event_id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, ...obj }));
   }, []);
   sendRef.current = send;
@@ -111,6 +122,7 @@ export function useLive(opts: {
   const finish = useCallback((next: 'off' | 'paused' = 'off') => {
     if (!pc.current && (stateRef.current === 'off' || stateRef.current === 'paused')) { setS(next === 'off' ? 'off' : stateRef.current); return; }
     const secs = Math.max(seconds.current, startedAt.current ? (Date.now() - startedAt.current) / 1000 : 0);
+    if (next === 'off') logEnd(`ended, ${Math.round(secs)} s billed`); else logLine('──', `paused (connection closed, ${Math.round(secs)} s billed)`);
     teardown();
     setS(next);
     setPauseIn(null);
@@ -150,18 +162,26 @@ export function useLive(opts: {
         return;
       }
       turns.current++;
-      if (remindDirty.current || turns.current % 2 === 1) remindNow(delegationId);
+      if (REMINDERS && (remindDirty.current || turns.current % 2 === 1)) remindNow(delegationId);
+      logLine('BRAIN', `asked [${delegationId.slice(-5)}]: "${text}"`);
       optsRef.current.onRequest(text, delegationId);
     };
     tick();
   }, [send]);
 
   const onEvent = useCallback((e: any) => {
+    if (e?.type !== 'session.input_transcript.delta' && e?.type !== 'session.output_transcript.delta') {
+      try { const { type, event_id: _id, ...rest } = e ?? {}; logLine('EVENT', `${type}${Object.keys(rest).length ? ` ${JSON.stringify(rest).slice(0, 400)}` : ''}`); } catch { /* ignore */ }
+    }
     switch (e?.type) {
       case 'session.input_transcript.delta':
         if (typeof e.delta === 'string') {
           userBuf.current += e.delta;
           heardAll.current += e.delta;
+          if (!recIn.current.text) logLine('LEARNER', `▶ starts speaking${stateRef.current === 'speaking' ? ' (WHILE THE VOICE IS SPEAKING)' : ''}`);
+          recIn.current.text += e.delta;
+          if (recIn.current.timer) clearTimeout(recIn.current.timer);
+          recIn.current.timer = window.setTimeout(() => { logLine('LEARNER', `■ "${recIn.current.text.trim()}"`); recIn.current.text = ''; }, 1200);
           lastInputAt.current = Date.now();
           bump();
           if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
@@ -175,8 +195,10 @@ export function useLive(opts: {
         setS('speaking');
         if (typeof e.delta === 'string' && !answering.current && !pending.current.size) voiceBuf.current += e.delta;
         if (typeof e.delta === 'string') saidAll.current += e.delta;
+        if (typeof e.delta === 'string') { if (!recOut.current) { recOutAt.current = Date.now(); logLine('VOICE', '▶ starts speaking'); } recOut.current += e.delta; }
         if (speakTimer.current) clearTimeout(speakTimer.current);
         speakTimer.current = window.setTimeout(() => {
+          if (recOut.current) { logLine('VOICE', `■ stopped after ${((Date.now() - 900 - recOutAt.current) / 1000).toFixed(1)} s: "${recOut.current.trim()}"`); recOut.current = ''; }
           if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
           // The voice finished a turn: hand the exchange to the coach (if on), then start fresh.
           if (!pending.current.size && saidAll.current.trim()) {
@@ -193,7 +215,7 @@ export function useLive(opts: {
             setHeard('');
             optsRef.current.onAside?.(learner, said);
             turns.current++;
-            if (remindDirty.current || turns.current % 2 === 0) remindNow(null);
+            if (REMINDERS && (remindDirty.current || turns.current % 2 === 0)) remindNow(null);
           }
           if (!pending.current.size) answering.current = false;
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
@@ -222,6 +244,7 @@ export function useLive(opts: {
         }
         break;
       case 'error':
+        logLine('ERROR', JSON.stringify(e.error ?? e).slice(0, 400));
         optsRef.current.onError(`Live voice: ${e.error?.message ?? 'something went wrong'}`);
         break;
     }
@@ -345,6 +368,7 @@ export function useLive(opts: {
     const resuming = stateRef.current === 'paused'; // coming back from a pause: no new greeting
     stopWakeWatch();
     closingTo.current = null;
+    logBegin(optsRef.current.logMeta?.() ?? '', resuming);
     setS('connecting');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
@@ -387,6 +411,7 @@ export function useLive(opts: {
       const msg = (err as Error).name === 'NotAllowedError'
         ? 'Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.'
         : `Could not start the live voice: ${(err as Error).message}`;
+      logLine('ERROR', msg);
       optsRef.current.onError(msg);
       teardown();
       setS('off');

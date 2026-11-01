@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { logLine } from '@/lib/callLog';
 import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
@@ -125,12 +126,17 @@ export default function Home() {
     onTurn: (learner, said) => {
       const st = settingsRef.current;
       coachLog.current = [...coachLog.current, { learner, said }].slice(-4);
-      if (st.liveSteady === true || st.liveCoach === false || coachBusy.current) return;
+      if (st.liveSteady === true || st.liveCoach !== true || coachBusy.current) return;
       coachBusy.current = true;
       const reqs = requestsRef.current.map((r) => r.content).filter(Boolean);
       fetch('/api/live/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ log: coachLog.current, requests: reqs, sessionId: sessionIdRef.current }) })
         .then((r) => r.json()).then((d) => { if (d?.note) liveRef.current?.note(d.note); }).catch(() => {})
         .finally(() => { coachBusy.current = false; });
+    },
+    // The call recorder's summary line: the settings that shape the voice.
+    logMeta: () => {
+      const st = settingsRef.current;
+      return `style ${st.style}${st.blend ? `+${st.blend}` : ''} · voice ${st.liveVoice} · pace ${st.livePace ?? 'natural'} · ${st.nusach} · accent ${st.liveAccent ? 'on' : 'off'} · spelling ${st.gptSpell ?? 'stressed'} · standard words ${st.houseSay !== false ? 'on' : 'off'} · steady ${st.liveSteady === true ? 'on' : 'off'} · coach ${st.liveCoach === true ? 'on' : 'off'} · saver ${st.saver !== false ? 'on' : 'off'} · pause after ${st.liveIdleSec ?? 60}s · amud intro voice ${st.introVoice !== false ? 'on' : 'off'} · brain ${st.provider}/${st.tier}`;
     },
     // What the voice is reminded of during a call: the style in a few lines, and the learner's instructions for this session.
     reminder: () => {
@@ -483,7 +489,7 @@ export default function Home() {
   function handleEvent(e: any) {
     switch (e.type) {
       case 'session': setSessionId(e.session.id); break;
-      case 'status': setStatus(e.text); break;
+      case 'status': setStatus(e.text); if (liveDelegation.current) logLine('BRAIN', `status: ${e.text}`); break;
       case 'source':
         if (!turnRefs.current.some((r) => r.ref === e.source.ref)) turnRefs.current.push({ ref: e.source.ref, heRef: e.source.heRef, url: e.source.url });
         if (!openUnderLine(e.source)) showSource(e.source);
@@ -497,6 +503,7 @@ export default function Home() {
         window.setTimeout(() => { void readLoop(); }, 50);
         break;
       case 'delta': {
+        if (liveDelegation.current && !liveText.current) logLine('BRAIN', 'first words arriving');
         liveText.current += e.text;
         // Live call: pass finished sentences to the voice as they arrive. The first sentence goes at once;
         // after that, a couple of sentences at a time so it flows naturally.
@@ -548,6 +555,7 @@ export default function Home() {
       }
       case 'reply': {
         const finalText: string = e.text;
+        if (liveDelegation.current) logLine('BRAIN', `answer finished (${finalText.length} chars, model ${e.model ?? '?'}): ${finalText.slice(0, 1500)}`);
         const refs = turnRefs.current.slice();
         const streamed = liveText.current.length > 0;
         setItems((it) => {

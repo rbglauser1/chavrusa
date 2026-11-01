@@ -1431,3 +1431,5 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 /* Rashi script inside Quiet chat: its own Hebrew-font rule (.min .he) came later and won, so Rashi showed in square
    letters. This puts the Rashi script back for every commentary line when the setting is on. */
 [data-rashi='on'] .min .rashi, [data-rashi='on'] .min-he.rashi, [data-rashi='on'] .sefer .rashi { font-family: 'Mekorot Rashi', var(--f-he); }
+.calllog-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+.calllog-row span { flex: 1; }

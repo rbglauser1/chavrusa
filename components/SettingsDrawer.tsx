@@ -6,6 +6,7 @@ import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
 import GeminiSample from './GeminiSample';
 import GeminiPronunciation from './GeminiPronunciation';
+import CallLogs from './CallLogs';
 import GptPronunciation from './GptPronunciation';
 
 interface Props {
@@ -265,6 +266,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
+            <CallLogs />
             <div className="field">
               <label>Steady mode (the voice sticks to your style and instructions)</label>
               <Seg value={s.liveSteady === true ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveSteady: v === 'on' })} />
@@ -275,7 +277,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             {s.liveSteady !== true && (
               <div className="field">
                 <label>Coach notes</label>
-                <Seg value={s.liveCoach !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCoach: v === 'on' })} />
+                <Seg value={s.liveCoach === true ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCoach: v === 'on' })} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>After each exchange, a quick brain check looks at what the voice said against your style and instructions. If it drifted, the voice quietly gets a short note for its next reply. It never waits for it. About a tenth of a cent an exchange.</div>
               </div>
             )}
