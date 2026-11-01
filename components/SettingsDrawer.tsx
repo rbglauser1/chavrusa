@@ -315,6 +315,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <label>Speaking speed</label>
                 <Seg value={s.livePace ?? 'natural'} options={[['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
                 <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>
+                <label>Pauses</label>
+                <Seg value={s.livePauses ?? 'normal'} options={[['few', 'Few'], ['normal', 'Normal'], ['more', 'More']]} onPick={(v) => onChange({ livePauses: v as 'few' | 'normal' | 'more' })} />
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>More: a short pause between phrases when it reads, a beat after each point, and time to think around a question. Applies the next time you tap Talk; in a call you can also say “slow down and pause more.”</div>
                 <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
                 <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
                   <option value="15">15 seconds</option>

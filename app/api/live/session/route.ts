@@ -120,8 +120,8 @@ export async function POST(req: NextRequest) {
           : preview && askMode === 'he-plain'
             ? 'This is a short reading test. Speak first, as soon as the session starts: read the text you are given aloud, once, clearly, then stop.'
           : preview
-            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all'))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
-            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all') + context) + myWayNote) + voiceNote,
+            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal'))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
+            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal') + context) + myWayNote) + voiceNote,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },

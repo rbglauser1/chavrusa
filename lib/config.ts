@@ -353,6 +353,7 @@ export interface Settings {
   talkMode: 'live' | 'basic'; // live = natural speech-to-speech (GPT-Live); basic = cheaper step-by-step voice
   liveVoice: string;        // voice for Live mode
   livePace: 'relaxed' | 'natural' | 'brisk'; // how fast the Live voice speaks
+  livePauses?: 'few' | 'normal' | 'more';     // how much the Live voice pauses between phrases and points
   liveAccent: boolean;      // Live: yeshivish accent and Gemara niggun in English (off: natural English, yeshivish Hebrew words)
   liveIdleSec: number;      // Live: pause after this many quiet seconds (0 = never)
   liveWake: boolean;        // Live: when paused, reconnect as soon as the learner starts talking
