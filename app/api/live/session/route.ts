@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
         const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';
-        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${yeshivishTranslit(namesForSpeech(he), false)}${en ? ` — in English: "${clip(en, 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
+        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${yeshivishTranslit(namesForSpeech(he), true)}${en ? ` — in English: "${clip(en, 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
   }

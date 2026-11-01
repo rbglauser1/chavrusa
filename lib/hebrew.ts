@@ -92,6 +92,7 @@ function wordToSyllables(word: string): Syl[] {
   for (let i = 0; i < units.length; i++) {
     const { l, m } = units[i];
     const last = i === units.length - 1;
+    if (i === 0 && l === 'ו' && m.includes(V.dagesh) && !hasVowel(m)) { syl.push({ on: '', v: 'u', coda: '' }); continue; }     // וּ at the start: "u" (u-ve-VI-aw, not vve-VI-aw)
     if (i > 0 && l === 'ו' && m.includes(V.cholam)) { vowelSyllable('oi'); continue; }                            // cholam male
     if (i > 0 && l === 'ו' && m.includes(V.dagesh) && !hasVowel(m) && !hasVowel(units[i - 1].m)) { vowelSyllable('u'); continue; } // shuruk
     if (l === 'י' && !hasVowel(m) && !m.includes(V.shva) && i > 0 && /[\u05B4\u05B5\u05B6]/.test(units[i - 1].m)) continue;    // yud of chirik/tzeirei

@@ -5,7 +5,7 @@ import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 
-const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
+const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), true);
 
 // Live voice: a GPT-Live session over WebRTC. The voice model listens and speaks naturally; whenever the
 // learner says something about the learning, it "delegates" to us. We send the learner's words to the
@@ -349,6 +349,22 @@ export function useLive(opts: {
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`TEXT: ${ex} END.${more ? ` Then: ${more}` : ''}`) });
   }, [send]);
 
+  // The whole answer at once (Oct 31 rebuild): what comes before the text, the text to read exactly, and the rest, handed
+  // to the voice in one piece when the brain has finished, so it says it as one smooth turn (no waiting for more words
+  // mid-sentence, and no instructions arriving mid-answer: how to read TEXT … END is in the call's instructions).
+  const answerWhole = useCallback((delegationId: string, before: string, exact: string, after: string) => {
+    if (!pending.current.has(delegationId)) return;
+    pending.current.delete(delegationId);
+    partial.current.delete(delegationId);
+    answering.current = true;
+    voiceBuf.current = '';
+    bump();
+    const b = forSpeech(before), ex = forSpeech(exact.replace(/\s*\|\s*/g, ' … ')), a = forSpeech(after);
+    const whole = [b, ex ? `TEXT: ${ex} END.` : '', a].filter(Boolean).join(' ') || 'Let’s keep going.';
+    handed.current = { text: whole, at: Date.now() };
+    for (const c of chunks(whole)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
+  }, [send]);
+
   const exactTold = useRef<Set<string>>(new Set());
   const answerExactPart = useCallback((delegationId: string, exact: string) => {
     if (!pending.current.has(delegationId)) return;
@@ -496,5 +512,5 @@ export function useLive(opts: {
     if (!text.trim()) return;
     send({ type: 'session.instructions.append', delegation_id: null, content: `COACH NOTE from the app (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` });
   }, [send]);
-  return { remind, note, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

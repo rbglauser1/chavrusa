@@ -219,6 +219,18 @@ export function useGeminiLive(opts: Opts) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The whole answer at once (same as GPT-Live): before the text, the text to read exactly, and the rest.
+  const answerWhole = useCallback((id: string, before: string, exact: string, after: string) => {
+    const segs = pending.current.get(id);
+    if (!segs) return;
+    if (forSpeech(before)) segs.push({ kind: 'say', text: forSpeech(before) });
+    const ex = forSpeech(exact.replace(/\s*\|\s*/g, ' … '));
+    if (ex) segs.push({ kind: 'exact', text: ex });
+    if (forSpeech(after)) segs.push({ kind: 'say', text: forSpeech(after) });
+    respond(id, resultOf(segs) || 'Let’s keep going.');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onMessage = useCallback((m: any) => {
     if (m.setupComplete) {
       ready.current = true;
@@ -434,5 +446,5 @@ export function useGeminiLive(opts: Opts) {
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] COACH NOTE (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` }] }], turnComplete: false } });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { remind, note, state, heard, supported, start, stop, answer, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

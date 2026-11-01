@@ -25,7 +25,7 @@ export function myWayNoteFor(list: { word: string; say: string }[] = []): string
   return l.length ? `\n# Say these words exactly this way (the learner's own list; it wins over everything above)\n${l.map((x) => `- ${x.word.trim()} = ${x.say.trim()}`).join('\n')}` : '';
 }
 export function gptLine(text: string, s: Settings): string {
-  const spelled = text.replace(/[\u0590-\u05FF"׳״־]+(?:\s+[\u0590-\u05FF"׳״־]+)*/g, (he) => yeshivishTranslit(namesForSpeech(he), false));
+  const spelled = text.replace(/[\u0590-\u05FF"׳״־]+(?:\s+[\u0590-\u05FF"׳״־]+)*/g, (he) => yeshivishTranslit(namesForSpeech(he), true));
   return forVoice(spelled, s.gptSpell ?? 'stressed', s.gptMyWay ?? [], s.houseSay !== false);
 }
 

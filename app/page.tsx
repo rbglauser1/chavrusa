@@ -505,36 +505,9 @@ export default function Home() {
       case 'delta': {
         if (liveDelegation.current && !liveText.current) logLine('BRAIN', 'first words arriving');
         liveText.current += e.text;
-        // Live call: pass finished sentences to the voice as they arrive. The first sentence goes at once;
-        // after that, a couple of sentences at a time so it flows naturally.
-        // Text to be said word for word ([[say]] … [[/say]]): hand it over phrase by phrase as it is written.
-        if (liveDelegation.current && /\[\[say\]\]/i.test(liveText.current)) {
-          const full = liveText.current;
-          const start = full.search(/\[\[say\]\]/i) + 7;
-          const endAt = full.search(/\[\[\/say\]\]/i);
-          const body = full.slice(start, endAt >= 0 ? endAt : undefined);
-          const pieces = body.split('|');
-          const done = endAt >= 0 ? pieces : pieces.slice(0, -1);            // the last piece may still be growing
-          const ready = done.slice(exactSent.current).map((x) => x.trim()).filter(Boolean);
-          // The first phrase goes at once; after that, two at a time so it flows.
-          if (ready.length && (exactSent.current === 0 || ready.length >= 2 || endAt >= 0)) {
-            live.answerExactPart(liveDelegation.current, ready.join(' | '));
-            exactSent.current += ready.length;
-            liveSpeech.current.sent = true;
-          }
-          if (endAt >= 0) { liveSpeech.current.buf = full.slice(endAt + 8); liveSpeech.current.out = ''; afterSay.current = true; }
-        } else if (liveDelegation.current && !afterSay.current) {
-          liveSpeech.current.buf += e.text;
-          const { sentences, rest } = splitSentences(liveSpeech.current.buf);
-          liveSpeech.current.buf = rest;
-          liveSpeech.current.out += sentences.join(' ') + (sentences.length ? ' ' : '');
-          const out = liveSpeech.current.out.trim();
-          if (out && (!liveSpeech.current.sent || out.length >= 180)) {
-            live.answerPart(liveDelegation.current, out);
-            preStreamed.current = true;
-            liveSpeech.current = { buf: liveSpeech.current.buf, out: '', sent: true };
-          }
-        }
+        // Live call: nothing goes to the voice while the brain is writing. The whole answer is handed over at once when
+        // it's finished (see 'reply'), after the app has checked the text against the sefer (Oct 31 rebuild: handing it
+        // over in pieces made the voice stop and start).
         const full = liveText.current;
         setItems((it) => {
           // The reply being written is marked "live", so it is updated in place (never added twice).
@@ -568,20 +541,12 @@ export default function Home() {
         });
         liveIdx.current = null;
         if (liveDelegation.current) {
-          // Whatever wasn't handed over yet: all of it if nothing streamed (e.g. a free reply), else the remainder.
-          const rest = liveSpeech.current.sent ? `${liveSpeech.current.out} ${liveSpeech.current.buf}`.trim() : finalText;
-          // Text the voice must say word for word (the lashon kodesh with its English) comes in [[say]] … [[/say]].
+          // The whole answer, at once: what comes before the text, the text itself (read exactly), and the rest.
           const sayBody = finalText.match(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/i)?.[1] ?? '';
-          // What's outside the block: the part before it may already have been spoken while streaming.
-          const before = finalText.split(/\[\[say\]\]/i)[0];
-          const after = finalText.split(/\[\[\/say\]\]/i).slice(1).join(' ');
-          const outside = `${preStreamed.current ? '' : before} ${after}`.replace(/\[\[\/?say\]\]/gi, '').replace(/\s+/g, ' ').trim();
-          if (sayBody) {
-            // Any phrases not yet handed over are read exactly; then the explanation, in the voice's own words.
-            const left = sayBody.split('|').slice(exactSent.current).map((x) => x.trim()).filter(Boolean).join(' | ');
-            if (left) live.answerExactPart(liveDelegation.current, left);
-            live.answer(liveDelegation.current, outside);
-          } else live.answer(liveDelegation.current, rest.replace(/\[\[\/?say\]\]/gi, ''));
+          const before = sayBody ? finalText.split(/\[\[say\]\]/i)[0] : finalText;
+          const after = sayBody ? finalText.split(/\[\[\/say\]\]/i).slice(1).join(' ') : '';
+          const clean = (t: string) => t.replace(/\[\[\/?say\]\]/gi, '').replace(/\s+/g, ' ').trim();
+          live.answerWhole(liveDelegation.current, clean(before), sayBody, clean(after));
           liveDelegation.current = null;
         }
         liveSpeech.current = { buf: '', out: '', sent: false };

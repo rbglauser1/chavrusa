@@ -50,7 +50,7 @@ export function currentPlace(history: MessageRow[], sources: SourceRow[]): Place
 }
 
 // The whole section (amud / perek) the place is in: from this session's sources if we have it, otherwise Sefaria (cached).
-async function section(base: string, sources: SourceRow[], approved: ApprovedEntry[]): Promise<SourceData | null> {
+export async function section(base: string, sources: SourceRow[], approved: ApprovedEntry[]): Promise<SourceData | null> {
   const have = sources.find((x) => x.ref === base)?.data;
   if (have) return have;
   try {

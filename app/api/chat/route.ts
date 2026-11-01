@@ -11,7 +11,9 @@ import { makeExecutor, mentionsCommentary, textForModel, ToolEvent, TOOLS } from
 import { introSoon } from '@/lib/intro';
 import { openingPlace, prefetchSource, prepareCommentaries, prepareLamdan, warmTexts } from '@/lib/prefetch';
 import { findCommentary, routeWithoutAI } from '@/lib/router';
-import { currentPlace, forPanel, markFilter, readMark, splitRef, textInHand } from '@/lib/place';
+import { currentPlace, forPanel, markFilter, readMark, section, splitRef, textInHand } from '@/lib/place';
+import { fixSay, type Section } from '@/lib/sayFix';
+import { nextSection } from '@/lib/refs';
 import { after } from 'next/server';
 import { addSource, SourceData } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -260,7 +262,21 @@ export async function POST(req: NextRequest) {
 
         // The AI marks the line it finished on ([[line:N]]); remember it as the learner's place, and hide the mark.
         const marked = readMark(result.text || '');
-        const reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
+        let reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
+        // Spoken: the text the voice reads comes from the sefer itself. The brain's [[say]] phrases are matched to the
+        // real words, checked that nothing was skipped, and written out in the app's yeshivish pronunciation.
+        if (spoken && /\[\[say\]\]/i.test(reply) && settings.nusach !== 'sephardi') {
+          try {
+            const base = place?.base || marked.base || mainRef.replace(/:\d+(-\d+)?$/, '');
+            const secs: Section[] = [];
+            for (const b of [...new Set([base, marked.base, base ? nextSection(base) : null])]) {
+              if (!b) continue;
+              const sec = await section(b, sources, approved);
+              if (sec?.he.length) secs.push({ base: b, he: sec.he, en: sec.en });
+            }
+            if (secs.length) reply = fixSay(reply, secs).text;
+          } catch { /* the reply still goes out as the brain wrote it */ }
+        }
         // The learner tapped a line while this answer was being written: his tap wins, so don't move the place.
         const tappedSince = (await listSources(sid).catch(() => [])).some((x) => (x.data?.tappedAt ?? 0) > Date.parse(startedAt));
         const newPlace0 = marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n, ...(marked.part ? { part: marked.part } : {}) } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;

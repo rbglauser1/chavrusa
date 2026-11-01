@@ -9,7 +9,7 @@ import { splitPieces } from './pieces';
 // A long line: just its first bite-size piece ("next" goes on to the rest).
 const sayLine = (he: string, en: string) => {
   const p = splitPieces(he, en)[0];
-  return `[[say]]${yeshivishTranslit(namesForSpeech(p.he.trim()), false)}${p.en ? ` — ${namesForSpeechEn(p.en.trim())}` : ''}[[/say]]`;
+  return `[[say]]${yeshivishTranslit(namesForSpeech(p.he.trim()), true)}${p.en ? ` — ${namesForSpeechEn(p.en.trim())}` : ''}[[/say]]`;
 };
 
 // Where the learner is after an opening was read aloud: on piece 1 of a long first line (so "next" goes to piece 2).
