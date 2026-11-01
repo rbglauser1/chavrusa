@@ -209,6 +209,7 @@ export default function Minimal(p: Props) {
           {p.layout === 'quiet' ? (
             <>
               <button role="menuitem" onClick={() => { setMenu(false); setTab('text'); setFull(true); }}>Full screen <span className="min-check">double-tap</span></button>
+              <button role="menuitem" onClick={() => { setMenu(false); p.onSettings(); }}>Settings</button>
               {src && amudOf(src.ref) && <button role="menuitem" onClick={() => { setMenu(false); setDafOpen(true); }}>Tzuras hadaf <span className="min-check">the printed page</span></button>}
               {src && <button role="menuitem" onClick={() => { setMenu(false); p.send('Give me the big picture.'); }}>Big picture <span className="min-check">{p.talk.on ? 'or just say it' : 'where we are'}</span></button>}
               <span className="min-menu-rule" />
@@ -236,7 +237,7 @@ export default function Minimal(p: Props) {
             </>
           )}
           <button role="menuitem" onClick={() => { setMenu(false); p.onNewSession(); }}>New session</button>
-          <button role="menuitem" onClick={() => { setMenu(false); p.onSettings(); }}>Settings</button>
+          {p.layout !== 'quiet' && <button role="menuitem" onClick={() => { setMenu(false); p.onSettings(); }}>Settings</button>}
           <a role="menuitem" href="/guide">How we learn</a>
         </div>
       )}

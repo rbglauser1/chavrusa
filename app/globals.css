@@ -1475,3 +1475,8 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .daf-page.full .daf-page-box { padding-top: env(safe-area-inset-top); }
 .daf-page.full .daf-page-talk { bottom: calc(16px + env(safe-area-inset-bottom)); }
 .daf-page.full .daf-page-status { display: none; }
+/* The ⋯ menu scrolls when it's taller than the screen (Settings was out of reach). */
+.min-menu { max-height: calc(100dvh - 120px - env(safe-area-inset-bottom)); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+/* Tzuras hadaf full screen: a small button to come back (a tap on the page works too). */
+.daf-page-unfull { display: none; }
+.daf-page.full .daf-page-unfull { display: flex; position: absolute; z-index: 2; top: calc(10px + env(safe-area-inset-top)); left: 10px; width: 38px; height: 38px; align-items: center; justify-content: center; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.45); color: #fff; font-size: 18px; cursor: pointer; }
