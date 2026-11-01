@@ -136,7 +136,6 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
         <button className="daf-page-nav" onClick={() => setFull(true)} aria-label="Full screen" title="Full screen (tap the page to come back)">⤢</button>
         <button className="daf-page-x" onClick={onClose} aria-label="Close">✕</button>
       </div>
-      {full && <button className="daf-page-unfull" onClick={() => setFull(false)} aria-label="Leave full screen">⤡</button>}
       <div className="daf-page-box" ref={box}>
         <canvas ref={canvas} className="daf-page-canvas" style={{ width: `${zoom * 100}%`, visibility: state === 'ok' ? 'visible' : 'hidden' }} />
         {state === 'loading' && <div className="daf-page-msg">Opening the page…</div>}
@@ -146,7 +145,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
         // Talk right here on the page: the call goes on while you look at the daf, at any zoom. In full screen, the way
         // back sits right next to it, where the thumb already is.
         <div className="daf-page-talk">
-          {full && <button className="daf-page-exit" onClick={() => setFull(false)}>Exit full screen</button>}
+          {full && <button className="daf-page-exit" onClick={() => setFull(false)} aria-label="Exit full screen">⤡</button>}
           {!full && status && <span className="daf-page-status">{status}</span>}
           {talk}
         </div>
