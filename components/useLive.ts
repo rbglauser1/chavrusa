@@ -122,6 +122,9 @@ export function useLive(opts: {
   const finish = useCallback((next: 'off' | 'paused' = 'off') => {
     if (!pc.current && (stateRef.current === 'off' || stateRef.current === 'paused')) { setS(next === 'off' ? 'off' : stateRef.current); return; }
     const secs = Math.max(seconds.current, startedAt.current ? (Date.now() - startedAt.current) / 1000 : 0);
+    // The recorder: whatever the voice or the learner was in the middle of saying when the connection ended.
+    if (recOut.current) { logLine('VOICE', `■ (cut off: the call ended) after ${((Date.now() - recOutAt.current) / 1000).toFixed(1)} s: "${recOut.current.trim()}"`); recOut.current = ''; }
+    if (recIn.current.text) { logLine('LEARNER', `■ "${recIn.current.text.trim()}"`); recIn.current.text = ''; }
     if (next === 'off') logEnd(`ended, ${Math.round(secs)} s billed`); else logLine('──', `paused (connection closed, ${Math.round(secs)} s billed)`);
     teardown();
     setS(next);
