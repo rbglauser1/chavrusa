@@ -274,6 +274,26 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
               </div>
             )}
+            {(
+              <div className="field">
+                <label>Speaking speed</label>
+                <Seg value={s.livePace ?? 'natural'} options={[['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>
+                <label>Pauses</label>
+                <Seg value={s.livePauses ?? 'normal'} options={[['few', 'Few'], ['normal', 'Normal'], ['more', 'More']]} onPick={(v) => onChange({ livePauses: v as 'few' | 'normal' | 'more' })} />
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>More: a short pause between phrases when it reads, a beat after each point, and time to think around a question. Applies the next time you tap Talk; in a call you can also say “slow down and pause more.”</div>
+                <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
+                <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
+                  <option value="15">15 seconds</option>
+                  <option value="30">30 seconds</option>
+                  <option value="60">1 minute</option>
+                  <option value="120">2 minutes</option>
+                  <option value="300">5 minutes</option>
+                  <option value="0">Never pause</option>
+                </select>
+                {s.saver !== false && s.liveIdleSec > 15 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 15 quiet seconds.</div>}
+              </div>
+            )}
             <div className="field">
               <label>In a call, who reads the text</label>
               <Seg value={s.voiceReads ?? 'all'} options={[['all', 'He reads it all'], ['english', 'English only'], ['gist', 'Just the gist']]} onPick={(v) => onChange({ voiceReads: v as 'all' | 'english' | 'gist' })} />
@@ -310,26 +330,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
             <GeminiPronunciation s={s} onChange={onChange} />
-            {(
-              <div className="field">
-                <label>Speaking speed</label>
-                <Seg value={s.livePace ?? 'natural'} options={[['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
-                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>
-                <label>Pauses</label>
-                <Seg value={s.livePauses ?? 'normal'} options={[['few', 'Few'], ['normal', 'Normal'], ['more', 'More']]} onPick={(v) => onChange({ livePauses: v as 'few' | 'normal' | 'more' })} />
-                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>More: a short pause between phrases when it reads, a beat after each point, and time to think around a question. Applies the next time you tap Talk; in a call you can also say “slow down and pause more.”</div>
-                <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
-                <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
-                  <option value="15">15 seconds</option>
-                  <option value="30">30 seconds</option>
-                  <option value="60">1 minute</option>
-                  <option value="120">2 minutes</option>
-                  <option value="300">5 minutes</option>
-                  <option value="0">Never pause</option>
-                </select>
-                {s.saver !== false && s.liveIdleSec > 15 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 15 quiet seconds.</div>}
-              </div>
-            )}
             {s.liveIdleSec > 0 && (
               <div className="field">
                 <label>When paused</label>
