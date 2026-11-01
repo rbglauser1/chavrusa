@@ -199,7 +199,10 @@ export default function Minimal(p: Props) {
         ? <button className="min-pill" onClick={p.onSefer} aria-label="Open the full Sefer"><span className="he">{src.heRef}</span></button>
         : <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
-      {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} />}
+      {dafOpen && src && amudOf(src.ref) && (
+        <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}
+          talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
+      )}
       {menu && <div className="min-menu-scrim" onClick={() => setMenu(false)} onTouchStart={() => setMenu(false)} aria-hidden="true" />}
       {menu && (
         <div className="min-menu" role="menu">

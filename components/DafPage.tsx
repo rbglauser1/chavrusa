@@ -1,9 +1,9 @@
 'use client';
 // Tzuras hadaf: the printed Vilna page of the amud you're on, full screen, with the amud before and after one tap away.
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { DAF_CREDIT, dafPdfUrl, stepAmud, type Amud } from '@/lib/daf';
 
-export default function DafPage({ start, onClose }: { start: Amud; onClose: () => void }) {
+export default function DafPage({ start, onClose, talk, status }: { start: Amud; onClose: () => void; talk?: ReactNode; status?: string }) {
   const [a, setA] = useState<Amud>(start);
   useEffect(() => { setA(start); }, [start.tractate, start.daf, start.amud]); // eslint-disable-line react-hooks/exhaustive-deps
   const prev = stepAmud(a, -1), next = stepAmud(a, 1);
@@ -18,6 +18,10 @@ export default function DafPage({ start, onClose }: { start: Amud; onClose: () =
         <button className="daf-page-x" onClick={onClose} aria-label="Close">✕</button>
       </div>
       <iframe key={url} className="daf-page-frame" src={url} title={`${a.tractate} ${a.daf}${a.amud}`} />
+      {talk && (
+        // Talk right here on the page: the call goes on while you look at the daf.
+        <div className="daf-page-talk">{status && <span className="daf-page-status">{status}</span>}{talk}</div>
+      )}
       <div className="daf-page-credit">{DAF_CREDIT}</div>
     </div>
   );
