@@ -231,7 +231,10 @@ export async function POST(req: NextRequest) {
           : 'Learning turn: explaining, asking, or answering';
 
         // Spoken "go on": the app, not the brain, decides what comes next: the piece right after where he is.
-        const goOn = spoken && message.length < 80 && /\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message);
+        // "Yes" / "sure" / "ok" after the chavrusa asked whether to go on ("Ready for more?") is a go on too.
+        const askedOn = /(ready|more|go on|continue|next|keep going|move on|shall i|should i|want me to|want to)[^?]*\?\s*(\[\[line:[^\]]*\]\])?\s*$/i.test((lastBot?.content ?? '').trim());
+        const yes = /^\s*(yes|yeah|yep|yup|sure|ok|okay|please|go|mm-?hm+|uh-?huh|right|great|good|ready|absolutely|definitely|of course)\b[\s\w',.!]{0,20}$/i.test(message);
+        const goOn = spoken && message.length < 80 && (/\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message) || (yes && askedOn));
         let readNext = '';
         if (goOn && place && settings.nusach !== 'sephardi' && !/ on /i.test(place.base)) {
           try {

@@ -77,11 +77,11 @@ export async function forPanel(src: SourceData, approved: ApprovedEntry[]): Prom
 }
 
 // The lines around the learner's place, numbered, for the AI: one line before, the line itself, and three after.
-export async function textInHand(place: Place, sources: SourceRow[], approved: ApprovedEntry[], from?: number, count = 5): Promise<string | null> {
+export async function textInHand(place: Place, sources: SourceRow[], approved: ApprovedEntry[], from?: number, count = 8): Promise<string | null> {
   const sec = await section(place.base, sources, approved);
   if (!sec || !sec.he.length) return null;
   const total = Math.max(sec.he.length, sec.en.length);
-  const start = Math.max(1, from ?? place.n - 1);
+  const start = Math.max(1, from ?? place.n - 3); // a few lines back too, so questions about what came before are answered from the text
   const end = Math.min(total, start + count - 1);
   const lines: string[] = [];
   let hasParts = false;
