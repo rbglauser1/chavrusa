@@ -237,10 +237,10 @@ export default function Home() {
     if (settings === DEFAULT_SETTINGS) return; // not loaded yet: keep the look the page opened with
     const root = document.documentElement;
     root.dataset.look = settings.theme;
-    try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
+    try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.dataset.enmark = settings.enMark ?? 'plain';
-    for (const p of ['he', 'en', 'comm', 'intro'] as const) root.setAttribute(`data-c-${p}`, colorOf(settings, p));
+    for (const p of ['he', 'en', 'comm', 'intro'] as const) { root.setAttribute(`data-c-${p}`, colorOf(settings, p)); root.setAttribute(`data-b-${p}`, settings.bold?.[p] ? 'on' : 'off'); }
     root.style.setProperty('--he-size', `${settings.heSize}px`);
     root.style.setProperty('--en-size', `${settings.enSize}px`);
     root.style.setProperty('--comm-size', `${settings.commSize ?? 20}px`);
@@ -249,7 +249,7 @@ export default function Home() {
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
     if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
     if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
-  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors]);
+  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 

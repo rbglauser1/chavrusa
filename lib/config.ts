@@ -377,7 +377,9 @@ export interface Settings {
   ui?: 'classic' | 'home';  // 'home': the new main screen opens first (Library, Recent, Themes, Settings, Talk)
   amudIntro?: boolean;      // a paragraph at the top of each amud: what's coming (AI, once per amud, then kept)
   introVoice?: boolean;     // Read, Explain, Ask: the voice says that intro when a new amud begins
-  colors?: Partial<Record<ColorPart, ColorId>>; // Settings → Look → Colors: the color of each kind of thing on the page
+  colors?: Partial<Record<ColorPart, ColorId>>;
+  bold?: Partial<Record<ColorPart, boolean>>;    // Settings → Look → Colors: bold for any of the four
+  // Settings → Look → Colors: the color of each kind of thing on the page
   enMark?: 'plain' | 'soft' | 'light' | 'italic'; // English under the Gemara: how Sefaria's translation words stand apart from the added explanation
   rashiScript: boolean;
   approveAll: boolean;      // allow every sefer on Sefaria (off: only classic and approved works)     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation

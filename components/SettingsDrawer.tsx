@@ -168,12 +168,14 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics.</div>
             </div>
             <div className="field">
-              <label>Colors</label>
+              <label>Colors and bold</label>
               {COLOR_PARTS.map((part) => {
                 const cur = colorOf(s, part.id);
                 return (
                   <div key={part.id} className="color-row" role="radiogroup" aria-label={`${part.name} color`}>
                     <span className="color-name">{part.name}<small>{COLOR_IDS.find((c) => c.id === cur)?.name}</small></span>
+                    <button className={`bold-btn ${s.bold?.[part.id] ? 'on' : ''}`} aria-pressed={!!s.bold?.[part.id]} aria-label={`${part.name} bold`} title="Bold"
+                      onClick={() => onChange({ bold: { ...(s.bold ?? {}), [part.id]: !s.bold?.[part.id] } })}>B</button>
                     {COLOR_IDS.map((c) => (
                       <button key={c.id} role="radio" aria-checked={cur === c.id} aria-label={c.name} title={c.name}
                         className={`color-dot ${c.id === 'ink' ? 'swatch-ink' : ''} ${cur === c.id ? 'on' : ''}`}
@@ -183,7 +185,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   </div>
                 );
               })}
-              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Meforshim includes their translation and summaries, and Onkelos. The first circle is the text&apos;s own color.</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Meforshim includes their translation and summaries, and Onkelos. The first circle is the text&apos;s own color. <b>B</b> makes that part bold.</div>
             </div>
             <div className="field">
               <label>Rashi, Tosafos and other commentaries</label>

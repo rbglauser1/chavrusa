@@ -1433,3 +1433,11 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 [data-rashi='on'] .min .rashi, [data-rashi='on'] .min-he.rashi, [data-rashi='on'] .sefer .rashi { font-family: 'Mekorot Rashi', var(--f-he); }
 .calllog-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
 .calllog-row span { flex: 1; }
+
+/* Bold for any of the four (Settings → Look → Colors and bold). */
+[data-b-he='on'] .sefer .line > .he { font-weight: 700; }
+[data-b-en='on'] .sefer .line > .en { font-weight: 600; }
+[data-b-comm='on'] :is(.sefer .comm .he, .sefer .comm .en, .sefer .comm .gist, .sefer .tg-he, .sefer .tg-en, .min-comm p, .min-he.rashi) { font-weight: 700; }
+[data-b-intro='on'] .amud-intro { font-weight: 600; }
+.bold-btn { order: 99; margin-inline-start: 6px; width: 30px; height: 26px; border-radius: 6px; border: 1px solid var(--rule); background: none; color: var(--ink); font-weight: 700; font-family: Georgia, serif; font-size: 14px; padding: 0; cursor: pointer; }
+.bold-btn.on { background: var(--ink); color: var(--bg, #fff); border-color: var(--ink); }
