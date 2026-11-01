@@ -122,7 +122,9 @@ export function yeshivishTranslit(hebrew: string, marks = true): string {
       const syl = wordToSyllables(word);
       if (!syl.length) return punct;
       const parts = syl.map((x) => x.on + x.v + x.coda);
-      if (!marks) return parts.join('') + punct;
+      // Joined (the natural way the voice reads best): a shva at the start is just a quick breath, the yeshivish way:
+      // p'rutaw, b'chesef, d'rawchim, v'koinaw (not pe-ru-taw, be-che-sef).
+      if (!marks) return syl.map((x, i) => (i === 0 && x.shva && x.on && syl.length > 1 ? `${x.on}'${x.coda}` : x.on + x.v + x.coda)).join('') + punct;
       // Stress the second-to-last syllable; but never a said shva (p'NEI, not PE-nei): then the last one.
       if (parts.length > 1) {
         const k = syl[parts.length - 2].shva ? parts.length - 1 : parts.length - 2;
@@ -153,7 +155,7 @@ const YESHIVISH_WORDS: [string, string][] = [
   ['Israelites', 'Bnei Yisrael'], ['the land of Israel', 'Eretz Yisrael'], ['the Land of Israel', 'Eretz Yisrael'], ['Israel', 'Yisrael'],
   ['Sabbath', 'Shabbos'], ['Tabernacle', 'Mishkan'], ['Passover', 'Pesach'], ['Tabernacles', 'Sukkos'],
   // Gemara and Mishnah
-  ['Shabbat', 'Shabbos'], ['Shabbatot', 'Shabbosos'], ['Beit', 'Beis'], ['Rosh Ḥodesh', 'Rosh Chodesh'], ['Sukkot', 'Sukkos'], ['Shavuot', 'Shavuos'],
+  ['Shabbat', 'Shabbos'], ['Shabbatot', 'Shabbosos'], ['Beit', 'Beis'], ['peruta', 'pruta'], ['perutah', 'pruta'], ['perutot', 'prutos'], ['Peruta', 'Pruta'], ['Rosh Ḥodesh', 'Rosh Chodesh'], ['Sukkot', 'Sukkos'], ['Shavuot', 'Shavuos'],
   ['Berakhot', 'Brachos'], ['berakhot', 'brachos'], ['berakha', 'bracha'], ['Berakha', 'Bracha'], ['Ketubot', 'Kesubos'],
   ['Yevamot', 'Yevamos'], ['Makkot', 'Makkos'], ['Shevuot', 'Shevuos'], ['Horayot', 'Horiyos'], ['Menaḥot', 'Menachos'],
   ['Bekhorot', 'Bechoros'], ['Arakhin', 'Erchin'], ['Keritot', 'Kerisos'], ['Taanit', 'Taanis'], ['Terumot', 'Terumos'],

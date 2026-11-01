@@ -16,8 +16,10 @@ function cutHebrew(he: string): string[] {
   for (const tok of w) {
     cur.push(tok);
     const n = cur.length;
-    const strong = /[:.?!;׃]["'״׳)]*$/.test(tok);   // the two dots, a period, a question
-    const soft = /[,—–-]["'״׳)]*$/.test(tok) || tok === '—' || tok === '–';
+    // A period, a question, the sof pasuk. Not a colon: in Sefaria's punctuation it often opens a quote ("ובית הלל
+    // אומרים: בפרוטה…"), and a piece must not end in the middle of what someone says.
+    const strong = /[.?!;׃]["'״׳)]*$/.test(tok);
+    const soft = /[:,—–-]["'״׳)]*$/.test(tok) || tok === '—' || tok === '–';
     if ((strong && n >= 10) || (soft && n >= 18) || n >= 30) { out.push(cur); cur = []; }
   }
   if (cur.length) out.push(cur);
