@@ -1441,3 +1441,4 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 [data-b-intro='on'] .amud-intro { font-weight: 600; }
 .bold-btn { order: 99; margin-inline-start: 6px; width: 30px; height: 26px; border-radius: 6px; border: 1px solid var(--rule); background: none; color: var(--ink); font-weight: 700; font-family: Georgia, serif; font-size: 14px; padding: 0; cursor: pointer; }
 .bold-btn.on { background: var(--ink); color: var(--bg, #fff); border-color: var(--ink); }
+.calllog-x { background: none; border: 0; color: var(--soft); font-size: 18px; line-height: 1; padding: 2px 4px; cursor: pointer; }

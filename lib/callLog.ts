@@ -62,3 +62,11 @@ export function callLogText(c: CallLog): string {
   const len = c.ended ? `${Math.round((c.ended - c.started) / 1000)} s` : 'still going';
   return `Chavrusa call log · ${when} · ${len}\n${c.meta}\n\n${c.lines.join('\n')}\n`;
 }
+
+/** Remove one call's log, or all of them (Settings → Voice → Call recorder). */
+export function deleteCallLog(id: string) {
+  try { localStorage.setItem(KEY, JSON.stringify(load().filter((c) => c.id !== id))); } catch { /* ignore */ }
+}
+export function clearCallLogs() {
+  try { localStorage.removeItem(KEY); } catch { /* ignore */ }
+}

@@ -57,7 +57,7 @@ const say = (he: string) => he.split(/\s+/).filter(Boolean).map((w) => labelOf(w
 const line = (he: string, en: string) => `${say(he)}${en ? ` — ${namesForSpeechEn(en)}` : ''}`;
 
 /** Rebuild one [[say]] body from the real text, or null if its phrases can't be found in these sections. */
-export function fixSayBody(body: string, sections: Section[], expect?: Expect | null): string | null {
+export function fixSayBody(body: string, sections: Section[], expect?: Expect | null): { out: string; last: Expect } | null {
   const all = body.split('|').map((p) => {
     const m = p.match(/^([\s\S]*?)\s+[—–]\s+([\s\S]*)$/) ?? p.match(/^([\s\S]*?)\s+-\s+([\s\S]*)$/);
     return { he: (m ? m[1] : p).trim(), en: (m ? m[2] : '').trim() };
@@ -114,23 +114,34 @@ export function fixSayBody(body: string, sections: Section[], expect?: Expect | 
       ? ranges.map((r) => line(toks.slice(r.lo, r.hi + 1).map((t) => t.raw).join(' '), r.en)).join(' | ')
       // Something was skipped or changed: read those whole pieces from the sefer (the Hebrew, then its English).
       : pieces.slice(fromP, toP + 1).map((pc) => line(pc.he, pc.en)).join(' | ');
-    return lead && !out.startsWith(lead) ? `${lead} | ${out}` : out;
+    const lp = pieces[toP];
+    return { out: lead && !out.startsWith(lead) ? `${lead} | ${out}` : out, last: { base: sec.base, n: lp.line + 1, ...(lp.parts > 1 ? { part: lp.part } : {}) } };
   }
   return null;
 }
 
 /** Every [[say]] block in a spoken reply, made exact from the real text. A block that can't be found in the text keeps
  *  only its English (the voice never gets Hebrew letters to guess at). */
-export function fixSay(reply: string, sections: Section[], expect?: Expect | null): { text: string; fixed: number; unmatched: number } {
+export function fixSay(reply: string, sections: Section[], expect?: Expect | null): { text: string; fixed: number; unmatched: number; last: Expect | null } {
   let fixed = 0, unmatched = 0, first = true;
+  let last: Expect | null = null;
   const text = reply.replace(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi, (all, body: string) => {
     const out = fixSayBody(body, sections, first ? expect : null);
     first = false;
-    if (out) { fixed++; return `[[say]]${out}[[/say]]`; }
+    if (out) { fixed++; last = out.last; return `[[say]]${out.out}[[/say]]`; }
     if (!/[\u05D0-\u05EA]/.test(body)) return all; // already spelled out (an older reply): leave it
     unmatched++;
     const en = body.split('|').map((p) => p.replace(/^[^—–]*[—–]\s*/, '').replace(/[\u0590-\u05FF"׳״]+/g, '').trim()).filter(Boolean).join(' ');
     return en;
   });
-  return { text, fixed, unmatched };
+  return { text, fixed, unmatched, last };
+}
+
+/** The piece that comes right after where the learner is (the next line, or the next part of a long line), or null at the
+ *  end of the section. The app, not the brain, decides what "go on" reads. */
+export function nextPiece(sec: Section, at: { n: number; part?: number }): { n: number; part?: number; he: string; en: string } | null {
+  const { pieces } = tokens(sec);
+  const i = pieces.findIndex((pc) => pc.line === at.n - 1 && (at.part ? pc.part === at.part : pc.part === pc.parts));
+  const nx = at.n === 0 ? pieces[0] : i >= 0 ? pieces[i + 1] : null; // n 0: the start of the section
+  return nx ? { n: nx.line + 1, ...(nx.parts > 1 ? { part: nx.part } : {}), he: nx.he, en: nx.en } : null;
 }

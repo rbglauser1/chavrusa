@@ -12,7 +12,8 @@ import { introSoon } from '@/lib/intro';
 import { openingPlace, prefetchSource, prepareCommentaries, prepareLamdan, warmTexts } from '@/lib/prefetch';
 import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, section, splitRef, textInHand } from '@/lib/place';
-import { fixSay, type Section } from '@/lib/sayFix';
+import { fixSay, nextPiece, type Expect, type Section } from '@/lib/sayFix';
+import { stripNikud } from '@/lib/hebrew';
 import { nextSection } from '@/lib/refs';
 import { after } from 'next/server';
 import { addSource, SourceData } from '@/lib/db';
@@ -229,6 +230,22 @@ export async function POST(req: NextRequest) {
           : everyday ? `Everyday learning turn (Saver: ${MODELS[settings.provider][saverTier].label}; say "go deeper" for ${MODELS[settings.provider][settings.tier].label})`
           : 'Learning turn: explaining, asking, or answering';
 
+        // Spoken "go on": the app, not the brain, decides what comes next: the piece right after where he is.
+        const goOn = spoken && message.length < 80 && /\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message);
+        let readNext = '';
+        if (goOn && place && settings.nusach !== 'sephardi' && !/ on /i.test(place.base)) {
+          try {
+            const sec = await section(place.base, sources, approved);
+            let nx = sec ? nextPiece({ base: place.base, he: sec.he, en: sec.en }, place) : null;
+            let nb = place.base;
+            if (sec && !nx) {
+              const b2 = nextSection(place.base);
+              const sec2 = b2 ? await section(b2, sources, approved) : null;
+              if (b2 && sec2?.he.length) { nb = b2; nx = nextPiece({ base: b2, he: sec2.he, en: sec2.en }, { n: 0 }) ?? null; }
+            }
+            if (nx) readNext = `\n\n[READ NEXT: the learner said to go on. The next piece, right after where he is, is ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nRead exactly this piece now, all of it, in one [[say]] block, then your style's part. Do not skip ahead and do not go back.]`;
+          } catch { /* the brain still has the text in hand */ }
+        }
         send({ type: 'status', text: 'Thinking…' });
         const marks = markFilter((t) => send({ type: 'delta', text: t }));
         const startedAt = new Date().toISOString();
@@ -245,6 +262,7 @@ export async function POST(req: NextRequest) {
                 ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}`
                 : message)
               + commNote
+              + readNext
               + (lamdan && /^\s*(ok(ay)?|yes|yeah|next|go on|keep going|move on|moving on|continue|next one|onward)[.!]?\s*$/i.test(message) ? '\n\n[The learner is moving on. If an important kashya on this line is still waiting, bring it now with its answer; otherwise read the next piece and bring the kashya on it. Do not ask whether he wants it.]' : '')
               + (CONTINUE.test(message) || (spoken && /\bcontinue\b/i.test(message) && !/continue reading|continue from|where we left/i.test(message)) ? '\n\n[The learner said "continue": that means move on to the next piece of the text, right after the line he is on, and follow the full basic formula: read it phrase by phrase with its English, explain only if needed, and if a move was made, say it over in your own words, then your style\'s part. ("Next" is the free way that only reads.)]' : '')
               + (prepared ? `\n\n[Main commentaries on this text (approved). Use get_text on a specific ref when you bring one; you do not need get_connections for these.]\n${prepared.list}` : '') },
@@ -262,6 +280,7 @@ export async function POST(req: NextRequest) {
 
         // The AI marks the line it finished on ([[line:N]]); remember it as the learner's place, and hide the mark.
         const marked = readMark(result.text || '');
+        let readPlace: Expect | null = null;
         let reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
         // Spoken: the text the voice reads comes from the sefer itself. The brain's [[say]] phrases are matched to the
         // real words, checked that nothing was skipped, and written out in the app's yeshivish pronunciation.
@@ -275,13 +294,16 @@ export async function POST(req: NextRequest) {
               if (sec?.he.length) secs.push({ base: b, he: sec.he, en: sec.en });
             }
             // He asked to go on: the reading must start right after where he is (the brain sometimes jumps ahead).
-            const goOn = message.length < 80 && /\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message);
-            if (secs.length) reply = fixSay(reply, secs, goOn && place ? { base: place.base, n: place.n, part: place.part } : null).text;
+            if (secs.length) {
+              const fx = fixSay(reply, secs, goOn && place ? { base: place.base, n: place.n, part: place.part } : null);
+              reply = fx.text;
+              readPlace = fx.last; // where he really is now: the last piece read aloud, not where the brain says it stopped
+            }
           } catch { /* the reply still goes out as the brain wrote it */ }
         }
         // The learner tapped a line while this answer was being written: his tap wins, so don't move the place.
         const tappedSince = (await listSources(sid).catch(() => [])).some((x) => (x.data?.tappedAt ?? 0) > Date.parse(startedAt));
-        const newPlace0 = marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n, ...(marked.part ? { part: marked.part } : {}) } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
+        const newPlace0 = readPlace ? readPlace : marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n, ...(marked.part ? { part: marked.part } : {}) } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
         const newPlace = tappedSince ? null : newPlace0;
         // It went on into the next amud / perek: open it in the Sefer, at that line.
         if (newPlace && place && newPlace.base !== place.base) {

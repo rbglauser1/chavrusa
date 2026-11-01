@@ -1,7 +1,7 @@
 'use client';
 // Settings → Voice → Call recorder: the last few calls' logs (kept on this device), to copy or share with Claude.
 import { useEffect, useState } from 'react';
-import { callLogText, listCallLogs, type CallLog } from '@/lib/callLog';
+import { callLogText, clearCallLogs, deleteCallLog, listCallLogs, type CallLog } from '@/lib/callLog';
 
 export default function CallLogs() {
   const [logs, setLogs] = useState<CallLog[]>([]);
@@ -35,8 +35,10 @@ export default function CallLogs() {
           <span>{new Date(c.started).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })} · {c.ended ? `${Math.max(1, Math.round((c.ended - c.started) / 60000))} min` : 'not finished'} · {c.lines.length} lines</span>
           <button className="btn" onClick={() => void copy(c)}>Copy</button>
           <button className="btn" onClick={() => void share(c)}>Share</button>
+          <button className="calllog-x" aria-label="Delete this call's log" onClick={() => { deleteCallLog(c.id); setLogs(listCallLogs()); }}>×</button>
         </div>
       ))}
+      {logs.length > 1 && <button className="linklike" style={{ marginTop: 4, fontSize: 13 }} onClick={() => { clearCallLogs(); setLogs([]); setMsg('All call logs cleared.'); }}>Clear all</button>}
       {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
     </div>
   );
