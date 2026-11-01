@@ -298,7 +298,7 @@ export function useLive(opts: {
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
     return new Promise<boolean>((resolve) => {
       reading.current = resolve;
-      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. ${heReadNote(HE_MODE)} Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${g(text)}` });
+      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, all of it, with only the pauses your instructions ask for between verses. Do not add, explain, comment, or ask anything. ${heReadNote(HE_MODE)} Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${g(text)}` });
       window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
     });
   }, [send]);
@@ -316,7 +316,7 @@ export function useLive(opts: {
     const gist = READS === 'gist' && first?.en ? first.en.slice(0, 900) : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
+    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
     if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) });
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
@@ -348,7 +348,7 @@ export function useLive(opts: {
     const ex = forSpeech(exact);
     const more = forSpeech(rest);
     handed.current = { text: `${ex} ${more}`, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the part between ⟪ and ⟫ is the text itself. Read it first, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Then say the rest in your own words.' });
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the part between ⟪ and ⟫ is the text itself. Read it first, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Then say the rest in your own words.' });
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫${more ? ` ${more}` : ''}`) });
   }, [send]);
 
@@ -375,7 +375,7 @@ export function useLive(opts: {
     if (!ex) return;
     if (!exactTold.current.has(delegationId)) {
       exactTold.current.add(delegationId);
-      send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: whatever comes between ⟪ and ⟫ is the text itself. Read it as it arrives, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Say the other parts in your own words.' });
+      send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: whatever comes between ⟪ and ⟫ is the text itself. Read it as it arrives, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Say the other parts in your own words.' });
     }
     partial.current.add(delegationId);
     answering.current = true;
