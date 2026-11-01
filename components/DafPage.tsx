@@ -39,7 +39,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   // Draw the page, sharp enough to zoom in on Rashi and Tosafos.
   useEffect(() => {
     let gone = false;
-    setState('loading'); setErr(''); setZoom(1);
+    setState('loading'); setErr(''); setZoom(1); zoomRef.current = 1; if (canvas.current) canvas.current.style.width = '100%';
     (async () => {
       try {
         const lib = await loadPdfJs();
@@ -59,27 +59,33 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
     return () => { gone = true; };
   }, [a.tractate, a.daf, a.amud]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Zoom keeping the middle of what you're looking at in place.
+  // Zoom around a point (where you pinch or double-tap): the canvas is resized and the scroll moved right away, so the
+  // spot under your fingers stays under your fingers.
+  const zoomRef = useRef(1);
   function zoomTo(z: number, cx?: number, cy?: number) {
-    const el = box.current;
+    const el = box.current, c = canvas.current;
     const nz = Math.min(MAX, Math.max(MIN, z));
-    if (!el) { setZoom(nz); return; }
+    const old = zoomRef.current;
+    if (!el || !c || nz === old) { zoomRef.current = nz; setZoom(nz); return; }
     const r = el.getBoundingClientRect();
     const px = (cx ?? r.left + r.width / 2) - r.left, py = (cy ?? r.top + r.height / 2) - r.top;
-    const fx = (el.scrollLeft + px) / (el.scrollWidth || 1), fy = (el.scrollTop + py) / (el.scrollHeight || 1);
+    const x = el.scrollLeft + px, y = el.scrollTop + py; // the spot, in the page as it is now
+    const k = nz / old;
+    c.style.width = `${nz * 100}%`;
+    zoomRef.current = nz;
+    el.scrollLeft = x * k - px;
+    el.scrollTop = y * k - py;
     setZoom(nz);
-    requestAnimationFrame(() => { el.scrollLeft = fx * el.scrollWidth - px; el.scrollTop = fy * el.scrollHeight - py; });
   }
-  const zoomRef = useRef(zoom); zoomRef.current = zoom;
 
   // Pinch to zoom (the phone's own pinch is turned off here, so the Talk button never slides off the screen).
   useEffect(() => {
     const el = box.current;
     if (!el) return;
-    let startDist = 0, startZoom = 1, lastTap = 0, tapTimer: number | undefined, moved = false, tapX = 0, tapY = 0;
+    let startDist = 0, startZoom = 1, lastTap = 0, tapTimer: number | undefined, moved = false, tapX = 0, tapY = 0, midX = 0, midY = 0;
     const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
     const onStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) { startDist = dist(e.touches); startZoom = zoomRef.current; e.preventDefault(); }
+      if (e.touches.length === 2) { startDist = dist(e.touches); startZoom = zoomRef.current; midX = (e.touches[0].clientX + e.touches[1].clientX) / 2; midY = (e.touches[0].clientY + e.touches[1].clientY) / 2; lastTap = 0; e.preventDefault(); }
       else if (e.touches.length === 1) {
         const now = Date.now();
         moved = false; tapX = e.touches[0].clientX; tapY = e.touches[0].clientY;
@@ -93,6 +99,9 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
       e.preventDefault();
       const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2, cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       zoomTo(startZoom * (dist(e.touches) / startDist), cx, cy);
+      // Moving both fingers together drags the page.
+      if (box.current) { box.current.scrollLeft -= cx - midX; box.current.scrollTop -= cy - midY; }
+      midX = cx; midY = cy;
     };
     // A single tap (not a drag, not the first of a double-tap): full screen on and off.
     const onEnd = (e: TouchEvent) => {
