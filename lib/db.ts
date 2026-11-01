@@ -37,6 +37,8 @@ export async function getSettings(userId = OWNER_ID): Promise<Settings> {
   if (!s.steadyOffDone) { s.liveSteady = false; s.steadyOffDone = true; }
   // Oct 31, 2026: the voice is rebuilt from a clean base, so coach notes are off (once; can be turned back on).
   if (!s.coachOffDone) { s.liveCoach = false; s.coachOffDone = true; }
+  // Nov 1, 2026: the learner found "Hebrew letters, read the yeshivish way" best in the reading test: use it (once; can be changed there).
+  if (!s.heReadDone) { s.heRead = 'he'; s.heReadDone = true; }
   if (!LIVE_VOICES.some((v) => v.id === s.liveVoice) && !s.customVoices.some((v) => v.id === s.liveVoice)) s.liveVoice = DEFAULT_SETTINGS.liveVoice;
   return s;
 }

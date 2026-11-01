@@ -364,7 +364,8 @@ export interface Settings {
   gptMyWay?: { word: string; say: string }[];       // GPT-Live: "say it my way" list
   liveSteady?: boolean;          // steady mode: every learning turn goes through the brain (off by default since Oct 30: stiff and slow)
   steadyOffDone?: boolean;
-  coachOffDone?: boolean;        // one-time: coach notes off for the clean-base rebuild (Oct 31)       // one-time switch of an earlier saved "on" to the new default, off
+  coachOffDone?: boolean;
+  heReadDone?: boolean;          // one-time: Hebrew letters (the learner's pick in the reading test, Nov 1)        // one-time: coach notes off for the clean-base rebuild (Oct 31)       // one-time switch of an earlier saved "on" to the new default, off
   houseSay?: boolean;            // standard yeshivish pronunciations applied to all the voice says (on by default)
   heRead?: HeRead;              // how the voice gets the lashon kodesh (Settings → Voice → Hebrew reading test)
   liveCoach?: boolean;           // coach notes (steady off): after each exchange a quick brain check sends the voice a short private note (on by default)
@@ -430,7 +431,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveEngine: 'gpt',
   liveSteady: false,
   houseSay: true,
-  heRead: 'join-kh',
+  heRead: 'he',
   liveCoach: false,
   gptSpell: 'stressed',
   gptMyWay: [],
