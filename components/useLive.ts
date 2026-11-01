@@ -315,7 +315,7 @@ export function useLive(opts: {
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
     send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${exact ? `Read it now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
-    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`TEXT: ${exact} END.`) });
+    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) });
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
@@ -346,8 +346,8 @@ export function useLive(opts: {
     const ex = forSpeech(exact);
     const more = forSpeech(rest);
     handed.current = { text: `${ex} ${more}`, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the part between TEXT and END is the text itself. Read it first, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Then say the rest in your own words.' });
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`TEXT: ${ex} END.${more ? ` Then: ${more}` : ''}`) });
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the part between ⟪ and ⟫ is the text itself. Read it first, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Then say the rest in your own words.' });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫${more ? ` ${more}` : ''}`) });
   }, [send]);
 
   // The whole answer at once (Oct 31 rebuild): what comes before the text, the text to read exactly, and the rest, handed
@@ -361,7 +361,7 @@ export function useLive(opts: {
     voiceBuf.current = '';
     bump();
     const b = forSpeech(before), ex = forSpeech(exact.replace(/\s*\|\s*/g, ' … ')), a = forSpeech(after);
-    const whole = [b, ex ? `TEXT: ${ex} END.` : '', a].filter(Boolean).join(' ') || 'Let’s keep going.';
+    const whole = [b, ex ? `⟪${ex}⟫` : '', a].filter(Boolean).join(' ') || 'Let’s keep going.';
     handed.current = { text: whole, at: Date.now() };
     for (const c of chunks(whole)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
@@ -373,14 +373,14 @@ export function useLive(opts: {
     if (!ex) return;
     if (!exactTold.current.has(delegationId)) {
       exactTold.current.add(delegationId);
-      send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: whatever comes between TEXT and END is the text itself. Read it as it arrives, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Say the other parts in your own words.' });
+      send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: whatever comes between ⟪ and ⟫ is the text itself. Read it as it arrives, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, phrase by phrase, the lashon kodesh and then its English, leaving nothing out and keeping its words. Say the other parts in your own words.' });
     }
     partial.current.add(delegationId);
     answering.current = true;
     voiceBuf.current = '';
     handed.current = { text: handed.current.at > Date.now() - 60_000 ? `${handed.current.text} ${ex}` : ex, at: Date.now() };
     bump();
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`TEXT: ${ex} END.`) });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫`) });
   }, [send]);
 
   const start = useCallback(async () => {

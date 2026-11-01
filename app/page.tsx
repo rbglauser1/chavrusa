@@ -544,7 +544,7 @@ export default function Home() {
         if (liveDelegation.current) {
           // The whole answer, at once: the text blocks (read exactly) as TEXT … END in their places, and the rest around them.
           const whole = finalText
-            .replace(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi, (_m: string, body: string) => ` TEXT: ${body.split('|').map((x) => x.trim()).filter(Boolean).join(' … ')} END. `)
+            .replace(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi, (_m: string, body: string) => ` ⟪${body.split('|').map((x) => x.trim()).filter(Boolean).join(' … ')}⟫ `)
             .replace(/\[\[\/?say\]\]/gi, '').replace(/\s+/g, ' ').trim();
           live.answerWhole(liveDelegation.current, whole, '', '');
           liveDelegation.current = null;

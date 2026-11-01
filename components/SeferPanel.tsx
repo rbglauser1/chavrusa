@@ -184,6 +184,31 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const openUsual = (i: number, who: string, label: string) =>
     openComm(i, label, `/api/commentary?ref=${encodeURIComponent(partRef(i))}&who=${who}`);
   const rashi = !!src && /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(src.ref);
+
+  // Rashi open on every line (Settings → Look, or the ⋯ menu): once Sefaria's list of commentaries for this amud /
+  // perek arrives, Rashi (on Mishnayos, the Bartenura) opens by itself under each line that has one, a few at a time.
+  const autoWho = kind === 'gemara' || kind === 'tanakh' ? 'Rashi' : kind === 'mishnah' ? 'Bartenura' : null;
+  useEffect(() => {
+    if (!src || !autoWho || !conns) return;
+    const label = nice(autoWho);
+    if (!settings.autoRashi) {
+      // Switched off: close the boxes it opened.
+      setComm((c) => { const n = { ...c }; for (const k of Object.keys(n)) if (k.endsWith(`:${label}`)) delete n[k]; return n; });
+      return;
+    }
+    let gone = false;
+    const queue = src.he.map((_, i) => i).filter((i) => !comm[`${i}:${label}`]);
+    const work = async () => {
+      while (queue.length && !gone) {
+        const i = queue.shift()!;
+        const x = lineComms(i).find((c) => c.title === autoWho);
+        if (x) await openLinked(i, x);
+      }
+    };
+    void Promise.all([work(), work(), work(), work()]);
+    return () => { gone = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.autoRashi, conns, src?.ref]);
   const outline = useOutline(src?.ref, !!settings.outline);
 
   // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).

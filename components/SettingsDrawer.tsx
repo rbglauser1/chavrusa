@@ -153,6 +153,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi, Tosafos and the other commentaries&apos; buttons under every line, without tapping it first. Also in the ⋯ menu.</div>
             </div>
             <div className="field">
+              <label>Rashi open on every line</label>
+              <Seg value={s.autoRashi ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ autoRashi: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi&apos;s words open by themselves under each line that has a Rashi, on Gemara and Chumash (on Mishnayos, the Bartenura). Also in the ⋯ menu.</div>
+            </div>
+            <div className="field">
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>

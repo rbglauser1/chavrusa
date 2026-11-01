@@ -375,6 +375,7 @@ export interface Settings {
   geminiSpell?: 'stressed' | 'joined' | 'plain';      // how lashon kodesh is spelled out for Gemini
   geminiMyWay?: { word: string; say: string }[];      // "say it my way": word → how Gemini should say it
   lineRules?: boolean;      // a thin line between each line of the text (its Hebrew and English kept together)
+  autoRashi?: boolean;      // Rashi (Bartenura on Mishnayos) open under every line, automatically
   autoComms?: boolean;      // show each line's commentary buttons without tapping the line first
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk
   ui?: 'classic' | 'home';  // 'home': the new main screen opens first (Library, Recent, Themes, Settings, Talk)
@@ -440,6 +441,7 @@ export const DEFAULT_SETTINGS: Settings = {
   geminiSpell: 'stressed',
   geminiMyWay: [],
   autoComms: false,
+  autoRashi: false,
   amudIntro: true,
   introVoice: true,
   rashiScript: true,

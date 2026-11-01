@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   const heRead: HeRead = askMode && HE_READS.some((m) => m.id === askMode) ? askMode : s.heRead ?? 'join-kh';
   const testLine = testText ? gptLine(testText, s, heRead) : '';
   const greeting = testLine
-    ? (askMode ? `Read this lashon kodesh aloud now, once, the way you read inside in a call: every word, from the first to the very last, in lashon kodesh. It has no English here: do not translate it, do not explain it, and never switch to English partway. Then stop. TEXT: ${testLine} END.` : `Say exactly this now, once, the way you would in a call, then stop: "${testLine}"`)
+    ? (askMode ? `Read this lashon kodesh aloud now, once, the way you read inside in a call: every word, from the first to the very last, in lashon kodesh. It has no English here: do not translate it, do not explain it, and never switch to English partway. Then stop. ⟪${testLine}⟫` : `Say exactly this now, once, the way you would in a call, then stop: "${testLine}"`)
     : `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
   const spell = s.gptSpell ?? 'stressed';
   const myWay = s.gptMyWay ?? [];
