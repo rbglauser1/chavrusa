@@ -20,7 +20,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const [text, setTextRaw] = useState<string>(() => { try { return localStorage.getItem(TEXT_KEY) || LINES[0].he; } catch { return LINES[0].he; } });
   const setText = (t: string) => { setTextRaw(t); try { localStorage.setItem(TEXT_KEY, t); } catch { /* not kept */ } };
   const [playing, setPlaying] = useState<HeRead | null>(null);
-  const [msg, setMsg] = useState('');
+  // What's happening with the version being heard, shown right in its row: connecting, what it said, or the error.
+  const [msg, setMsg] = useState<{ mode: HeRead; text: string } | null>(null);
   const el = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const endRef = useRef<(() => void) | null>(null);
@@ -30,7 +31,9 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   // Have GPT-Live read the line given this way, the way a call would (a short Live connection, about a cent).
   async function hear(mode: HeRead) {
     if (playing) { endRef.current?.(); if (playing === mode) return; }
-    setMsg('');
+    setMsg(null);
+    const note = (t: string) => setMsg({ mode, text: t });
+    note('Connecting…');
     // Inside the tap: unlock the player and the small sound engine (phones only allow sound a tap began).
     let a = el.current;
     if (!a) { a = document.createElement('audio'); a.setAttribute('playsinline', ''); a.style.display = 'none'; document.body.appendChild(a); el.current = a; }
@@ -46,7 +49,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const dc = pc.createDataChannel('oai-events');
     const player = a;
     player.autoplay = true;
-    pc.ontrack = (ev) => { player.removeAttribute('src'); player.srcObject = ev.streams[0]; player.play().catch(() => setMsg('Your phone blocked the sound. Check silent mode, then tap ▶ again.')); };
+    pc.ontrack = (ev) => { player.removeAttribute('src'); player.srcObject = ev.streams[0]; player.play().catch(() => note('Your phone blocked the sound. Check silent mode, then tap ▶ again.')); };
     const started = Date.now();
     let ended = false, said = '', lastWord = 0;
     const end = () => {
@@ -55,7 +58,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       try { if (dc.readyState === 'open') dc.send(JSON.stringify({ type: 'session.close', event_id: `evt_${Date.now()}` })); } catch { /* ignore */ }
       setTimeout(() => { try { pc.close(); } catch { /* ignore */ } player.pause(); player.srcObject = null; try { osc.stop(); } catch { /* ignore */ } }, 300);
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: Math.max(15, (Date.now() - started) / 1000) }) }).catch(() => {});
-      if (!said) setMsg('The voice connected but didn’t speak. Try again.');
+      if (!said) note('The voice connected but didn’t speak. Try again.');
+      else if (said !== 'x') note(`It said: ${said}`);
       setPlaying((p) => (p === mode ? null : p));
       if (endRef.current === end) endRef.current = null;
     };
@@ -63,8 +67,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     dc.onmessage = (ev) => {
       try {
         const e = JSON.parse(ev.data);
-        if (e.type === 'session.output_transcript.delta' && e.delta) { said += e.delta; lastWord = Date.now(); }
-        if (e.type === 'error' || e.type === 'session.error') setMsg(`Live voice: ${e.error?.message ?? e.message ?? 'error'}`);
+        if (e.type === 'session.output_transcript.delta' && e.delta) { said += e.delta; lastWord = Date.now(); note(`♪ ${said}`); }
+        if (e.type === 'error' || e.type === 'session.error') note(`Live voice: ${e.error?.message ?? e.message ?? 'error'}`);
       } catch { /* ignore */ }
     };
     // Finish a moment after it stops speaking (or after 40 seconds at most).
@@ -78,9 +82,9 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       const q = new URLSearchParams({ preview: '1', voice: s.liveVoice || 'meridian', say: text, mode });
       const res = await fetch(`/api/live/session?${q}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok || !d.sdp) { said = 'x'; end(); setMsg(d.error ?? 'Could not start the test.'); return; }
+      if (!res.ok || !d.sdp) { said = 'x'; end(); note(d.error ?? 'Could not start the test.'); return; }
       await pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
-    } catch (e) { said = 'x'; end(); setMsg((e as Error).message); }
+    } catch (e) { said = 'x'; end(); note((e as Error).message); }
   }
 
   return (
@@ -99,11 +103,11 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
               <button className="btn" disabled={disabled || !text.trim() || (!hasNikud(text) && m.id !== 'he' && m.id !== 'he-plain')} onClick={() => void hear(m.id)}>{playing === m.id ? '■ Stop' : '▶ Hear'}</button>
               {inUse === m.id ? <span className="he-lab-inuse">✓ In use</span> : <button className="btn" onClick={() => onChange({ heRead: m.id })}>Use this</button>}
             </div>
+            {msg?.mode === m.id && msg.text && <div className="he-lab-said">{msg.text}</div>}
           </div>
         ))}
       </div>
       {disabled && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>End the current call to test.</div>}
-      {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
     </div>
   );
 }

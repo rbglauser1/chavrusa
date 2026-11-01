@@ -1452,3 +1452,4 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .he-lab-btns { display: flex; gap: 8px; align-items: center; }
 .he-lab-inuse { font-size: 13px; color: var(--accent); }
 .he-lab textarea { width: 100%; margin-top: 6px; font-family: var(--f-he); font-size: 17px; }
+.he-lab-said { font-size: 12.5px; margin-top: 6px; color: var(--ink); opacity: .8; line-height: 1.45; }
