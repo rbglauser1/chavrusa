@@ -1460,9 +1460,12 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .daf-page-title { font-size: 15px; font-weight: 600; min-width: 0; }
 .daf-page-nav { background: none; border: 1px solid var(--rule); border-radius: 999px; width: 32px; height: 32px; font-size: 18px; line-height: 1; color: var(--ink); cursor: pointer; }
 .daf-page-nav:disabled { opacity: .35; }
-.daf-page-open { margin-inline-start: auto; font-size: 13px; color: var(--accent); }
 .daf-page-x { background: none; border: 0; font-size: 18px; color: var(--ink); padding: 4px 6px; cursor: pointer; }
-.daf-page-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+.daf-page { touch-action: pan-x pan-y; }
+.daf-page-box { position: relative; flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; background: #fff; }
+.daf-page-canvas { display: block; height: auto; max-width: none; }
+.daf-page-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; font-family: var(--f-ui); font-size: 14px; color: var(--soft); }
+.daf-page-zoom { margin-inline-start: auto; display: inline-flex; gap: 6px; }
 .daf-page-credit { font-size: 10px; color: var(--soft); padding: 4px 12px max(6px, env(safe-area-inset-bottom)); line-height: 1.35; }
 .daf-page-talk { position: absolute; right: 16px; bottom: calc(44px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; }
 .daf-page-status { font-family: var(--f-ui); font-size: 12.5px; background: var(--surface, #fff); color: var(--ink); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 10px; max-width: 60vw; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
