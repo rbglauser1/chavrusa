@@ -489,6 +489,7 @@ export default function Home() {
   function handleEvent(e: any) {
     switch (e.type) {
       case 'session': setSessionId(e.session.id); break;
+      case 'check': logLine('CHECK', e.text); break;
       case 'status': setStatus(e.text); if (liveDelegation.current) logLine('BRAIN', `status: ${e.text}`); break;
       case 'source':
         if (!turnRefs.current.some((r) => r.ref === e.source.ref)) turnRefs.current.push({ ref: e.source.ref, heRef: e.source.heRef, url: e.source.url });

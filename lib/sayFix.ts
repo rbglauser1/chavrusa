@@ -57,7 +57,7 @@ const say = (he: string) => he.split(/\s+/).filter(Boolean).map((w) => labelOf(w
 const line = (he: string, en: string) => `${say(he)}${en ? ` — ${namesForSpeechEn(en)}` : ''}`;
 
 /** Rebuild one [[say]] body from the real text, or null if its phrases can't be found in these sections. */
-export function fixSayBody(body: string, sections: Section[], expect?: Expect | null): { out: string; last: Expect } | null {
+export function fixSayBody(body: string, sections: Section[], expect?: Expect | null): { out: string; how: string; last: Expect } | null {
   const all = body.split('|').map((p) => {
     const m = p.match(/^([\s\S]*?)\s+[—–]\s+([\s\S]*)$/) ?? p.match(/^([\s\S]*?)\s+-\s+([\s\S]*)$/);
     return { he: (m ? m[1] : p).trim(), en: (m ? m[2] : '').trim() };
@@ -107,34 +107,57 @@ export function fixSayBody(body: string, sections: Section[], expect?: Expect | 
     const covered = new Set<number>();
     ranges.forEach((r) => { for (let i = r.lo; i <= r.hi; i++) covered.add(i); });
     toks.forEach((t, i) => { if (labelOf(t.raw)) covered.add(i); }); // a heading like גמ׳ in the text isn't a skipped word
-    let missing = 0;
-    for (let i = spanLo; i <= spanHi; i++) if (!covered.has(i)) missing++;
-    const out = !missing
+    // Runs of words the brain left out.
+    const runs: [number, number][] = [];
+    for (let i = spanLo; i <= spanHi; i++) {
+      if (covered.has(i)) continue;
+      const r = runs[runs.length - 1];
+      if (r && r[1] === i - 1) r[1] = i; else runs.push([i, i]);
+    }
+    const words = (a: number, b: number) => toks.slice(a, b + 1).map((t) => t.raw).join(' ');
+    let out: string, how: string;
+    if (!runs.length) {
       // Every word read: the brain's phrasing and English, with the real words and the yeshivish pronunciation.
-      ? ranges.map((r) => line(toks.slice(r.lo, r.hi + 1).map((t) => t.raw).join(' '), r.en)).join(' | ')
-      // Something was skipped or changed: read those whole pieces from the sefer (the Hebrew, then its English).
-      : pieces.slice(fromP, toP + 1).map((pc) => line(pc.he, pc.en)).join(' | ');
+      out = ranges.map((r) => line(words(r.lo, r.hi), r.en)).join(' | ');
+      how = `exact, ${ranges.length} phrase${ranges.length > 1 ? 's' : ''}`;
+    } else if (runs.every(([a, b]) => b - a + 1 <= 3)) {
+      // A word or three missing here and there: put them back into the phrase next to them (keeps phrase by phrase).
+      const rs = ranges.map((r) => ({ ...r }));
+      for (const [a, b] of runs) {
+        const k = rs.findIndex((r) => r.lo > b);
+        if (k === 0) rs[0].lo = Math.min(rs[0].lo, a);
+        else { const j = k === -1 ? rs.length - 1 : k - 1; rs[j].hi = Math.max(rs[j].hi, b); }
+      }
+      out = rs.map((r) => line(words(r.lo, r.hi), r.en)).join(' | ');
+      how = `patched, ${ranges.length} phrases; put back: ${runs.map(([a, b]) => words(a, b)).join(' / ')}`;
+    } else {
+      // Something real was skipped or changed: read those whole pieces from the sefer (the Hebrew, then its English).
+      out = pieces.slice(fromP, toP + 1).map((pc) => line(pc.he, pc.en)).join(' | ');
+      how = `whole piece from the sefer; the brain left out: ${runs.map(([a, b]) => words(a, b)).join(' / ').slice(0, 300)}`;
+    }
     const lp = pieces[toP];
-    return { out: lead && !out.startsWith(lead) ? `${lead} | ${out}` : out, last: { base: sec.base, n: lp.line + 1, ...(lp.parts > 1 ? { part: lp.part } : {}) } };
+    return { out: lead && !out.startsWith(lead) ? `${lead} | ${out}` : out, how: `${sec.base} line ${pieces[fromP].line + 1}${pieces[fromP].parts > 1 ? `.${pieces[fromP].part}` : ''}–${lp.line + 1}${lp.parts > 1 ? `.${lp.part}` : ''}: ${how}`, last: { base: sec.base, n: lp.line + 1, ...(lp.parts > 1 ? { part: lp.part } : {}) } };
   }
   return null;
 }
 
 /** Every [[say]] block in a spoken reply, made exact from the real text. A block that can't be found in the text keeps
  *  only its English (the voice never gets Hebrew letters to guess at). */
-export function fixSay(reply: string, sections: Section[], expect?: Expect | null): { text: string; fixed: number; unmatched: number; last: Expect | null } {
+export function fixSay(reply: string, sections: Section[], expect?: Expect | null): { text: string; fixed: number; unmatched: number; last: Expect | null; notes: string[] } {
   let fixed = 0, unmatched = 0, first = true;
+  const notes: string[] = [];
   let last: Expect | null = null;
   const text = reply.replace(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi, (all, body: string) => {
     const out = fixSayBody(body, sections, first ? expect : null);
     first = false;
-    if (out) { fixed++; last = out.last; return `[[say]]${out.out}[[/say]]`; }
+    if (out) { fixed++; last = out.last; notes.push(out.how); return `[[say]]${out.out}[[/say]]`; }
     if (!/[\u05D0-\u05EA]/.test(body)) return all; // already spelled out (an older reply): leave it
     unmatched++;
+    notes.push(`not found in the text (English only): ${body.slice(0, 120)}`);
     const en = body.split('|').map((p) => p.replace(/^[^—–]*[—–]\s*/, '').replace(/[\u0590-\u05FF"׳״]+/g, '').trim()).filter(Boolean).join(' ');
     return en;
   });
-  return { text, fixed, unmatched, last };
+  return { text, fixed, unmatched, last, notes };
 }
 
 /** The piece that comes right after where the learner is (the next line, or the next part of a long line), or null at the

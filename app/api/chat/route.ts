@@ -300,7 +300,9 @@ export async function POST(req: NextRequest) {
             if (secs.length) {
               const fx = fixSay(reply, secs, goOn && place ? { base: place.base, n: place.n, part: place.part } : null);
               reply = fx.text;
-              readPlace = fx.last; // where he really is now: the last piece read aloud, not where the brain says it stopped
+              readPlace = fx.last;
+              // For the call recorder: how the text was checked against the sefer.
+              if (fx.notes.length) send({ type: 'check', text: `${goOn ? `go on from ${place?.base} line ${place?.n}${place?.part ? `.${place.part}` : ''} · ` : ''}${fx.notes.join(' || ')}` }); // where he really is now: the last piece read aloud, not where the brain says it stopped
             }
           } catch { /* the reply still goes out as the brain wrote it */ }
         }
