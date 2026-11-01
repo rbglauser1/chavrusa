@@ -541,12 +541,11 @@ export default function Home() {
         });
         liveIdx.current = null;
         if (liveDelegation.current) {
-          // The whole answer, at once: what comes before the text, the text itself (read exactly), and the rest.
-          const sayBody = finalText.match(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/i)?.[1] ?? '';
-          const before = sayBody ? finalText.split(/\[\[say\]\]/i)[0] : finalText;
-          const after = sayBody ? finalText.split(/\[\[\/say\]\]/i).slice(1).join(' ') : '';
-          const clean = (t: string) => t.replace(/\[\[\/?say\]\]/gi, '').replace(/\s+/g, ' ').trim();
-          live.answerWhole(liveDelegation.current, clean(before), sayBody, clean(after));
+          // The whole answer, at once: the text blocks (read exactly) as TEXT … END in their places, and the rest around them.
+          const whole = finalText
+            .replace(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi, (_m: string, body: string) => ` TEXT: ${body.split('|').map((x) => x.trim()).filter(Boolean).join(' … ')} END. `)
+            .replace(/\[\[\/?say\]\]/gi, '').replace(/\s+/g, ' ').trim();
+          live.answerWhole(liveDelegation.current, whole, '', '');
           liveDelegation.current = null;
         }
         liveSpeech.current = { buf: '', out: '', sent: false };

@@ -274,7 +274,9 @@ export async function POST(req: NextRequest) {
               const sec = await section(b, sources, approved);
               if (sec?.he.length) secs.push({ base: b, he: sec.he, en: sec.en });
             }
-            if (secs.length) reply = fixSay(reply, secs).text;
+            // He asked to go on: the reading must start right after where he is (the brain sometimes jumps ahead).
+            const goOn = message.length < 80 && /\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message);
+            if (secs.length) reply = fixSay(reply, secs, goOn && place ? { base: place.base, n: place.n, part: place.part } : null).text;
           } catch { /* the reply still goes out as the brain wrote it */ }
         }
         // The learner tapped a line while this answer was being written: his tap wins, so don't move the place.
