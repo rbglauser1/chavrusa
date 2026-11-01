@@ -12,6 +12,8 @@ import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
 import AutoScroll from './AutoScroll';
+import DafPage from './DafPage';
+import { amudOf } from '@/lib/daf';
 
 export type Layout = 'page' | 'quiet' | 'shtender' | 'dock';
 type Msg = { kind: string; text: string };
@@ -150,6 +152,7 @@ function CasualThread({ items, busy, status, endRef }: { items: Msg[]; busy: boo
 
 export default function Minimal(p: Props) {
   const [menu, setMenu] = useState(false);
+  const [dafOpen, setDafOpen] = useState(false); // tzuras hadaf: the printed page of this amud
   const [sheet, setSheet] = useState(false);     // page: the conversation pulled up
   const [typing, setTyping] = useState(false);   // shtender: show the box for typing
   const [full, setFullState] = useState(false); // quiet chat: just the text, with exit and Talk at the bottom right
@@ -196,12 +199,14 @@ export default function Minimal(p: Props) {
         ? <button className="min-pill" onClick={p.onSefer} aria-label="Open the full Sefer"><span className="he">{src.heRef}</span></button>
         : <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
+      {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} />}
       {menu && <div className="min-menu-scrim" onClick={() => setMenu(false)} onTouchStart={() => setMenu(false)} aria-hidden="true" />}
       {menu && (
         <div className="min-menu" role="menu">
           {p.layout === 'quiet' ? (
             <>
               <button role="menuitem" onClick={() => { setMenu(false); setTab('text'); setFull(true); }}>Full screen <span className="min-check">double-tap</span></button>
+              {src && amudOf(src.ref) && <button role="menuitem" onClick={() => { setMenu(false); setDafOpen(true); }}>Tzuras hadaf <span className="min-check">the printed page</span></button>}
               <span className="min-menu-rule" />
               <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>
             </>

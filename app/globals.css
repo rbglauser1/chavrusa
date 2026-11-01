@@ -1453,3 +1453,14 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .he-lab-inuse { font-size: 13px; color: var(--accent); }
 .he-lab textarea { width: 100%; margin-top: 6px; font-family: var(--f-he); font-size: 17px; }
 .he-lab-said { font-size: 12.5px; margin-top: 6px; color: var(--ink); opacity: .8; line-height: 1.45; }
+
+/* Tzuras hadaf: the printed page, full screen over the learning. */
+.daf-page { position: fixed; inset: 0; z-index: 80; display: flex; flex-direction: column; background: var(--bg, #fff); }
+.daf-page-bar { display: flex; align-items: center; gap: 8px; padding: max(8px, env(safe-area-inset-top)) 12px 8px; border-bottom: 1px solid var(--rule); font-family: var(--f-ui); }
+.daf-page-title { font-size: 15px; font-weight: 600; min-width: 0; }
+.daf-page-nav { background: none; border: 1px solid var(--rule); border-radius: 999px; width: 32px; height: 32px; font-size: 18px; line-height: 1; color: var(--ink); cursor: pointer; }
+.daf-page-nav:disabled { opacity: .35; }
+.daf-page-open { margin-inline-start: auto; font-size: 13px; color: var(--accent); }
+.daf-page-x { background: none; border: 0; font-size: 18px; color: var(--ink); padding: 4px 6px; cursor: pointer; }
+.daf-page-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+.daf-page-credit { font-size: 10px; color: var(--soft); padding: 4px 12px max(6px, env(safe-area-inset-bottom)); line-height: 1.35; }
