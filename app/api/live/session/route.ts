@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
 import { liveContext, liveInstructions } from '@/lib/live';
-import { HE_READS, voiceHe, type HeRead } from '@/lib/hebrew';
+import { HE_READS, namesForSpeechEn, voiceHe, type HeRead } from '@/lib/hebrew';
 import { listMemories, listMessages, listSources } from '@/lib/db';
 import { currentPlace } from '@/lib/place';
 import { styleById, styleCard } from '@/lib/config';
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
         const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';
-        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${voiceHe(he, s.heRead)}${en ? ` — in English: "${clip(en, 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
+        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${voiceHe(he, s.heRead)}${en ? ` — in English: "${clip(namesForSpeechEn(en), 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
   }

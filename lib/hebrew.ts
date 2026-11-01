@@ -20,8 +20,11 @@ export function namesForSpeech(s: string): string {
     .replace(new RegExp(`(א${MARKS}ל${MARKS})ק(\\S*\\s+א${MARKS}ח${MARKS}ר${MARKS}י)`, 'g'), '$1ה$2');
 }
 // English: "the LORD" / "LORD" -> Hashem.
+// Sefaria's English starts a section with "GEMARA:" / "MISHNA:", which the Hebrew already says (גמ׳ / מתני׳): drop it
+// for the voice, so it isn't said twice.
+export const dropSectionLabel = (s: string) => s.replace(/^\s*(GEMARA|GEMORA|MISHNA|MISHNAH)\s*:\s*/i, '');
 export function namesForSpeechEn(s: string): string {
-  return yeshivishEnglish(s).replace(/\bthe LORD\b/g, 'Hashem').replace(/\bLORD\b/g, 'Hashem').replace(/\bthe Lord\b/g, 'Hashem');
+  return yeshivishEnglish(dropSectionLabel(s)).replace(/\bthe LORD\b/g, 'Hashem').replace(/\bLORD\b/g, 'Hashem').replace(/\bthe Lord\b/g, 'Hashem');
 }
 
 // ---------- Yeshivish transliteration (for the voice) ----------

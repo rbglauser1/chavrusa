@@ -9,7 +9,7 @@ import { isJustOpening, openingReply } from './prefetch';
 import { getLinks, getText, todaysLearning } from './sefaria';
 import { currentPlace, splitRef } from './place';
 import { splitPieces } from './pieces';
-import { voiceHe, type HeRead } from './hebrew';
+import { namesForSpeechEn, voiceHe, type HeRead } from './hebrew';
 
 export interface RouteCtx {
   message: string;
@@ -352,7 +352,7 @@ function lineReply(l: LineText, spoken: boolean, mode?: HeRead): string {
   if (spoken) {
     // Lashon kodesh first, then the English.
     const tr = voiceHe(l.he, mode);
-    return l.en ? `[[say]]${tr} — ${l.en}[[/say]] Any question on this, or next ${u}?` : `[[say]]${tr}[[/say]] There's no approved translation for this one. Want me to explain it?`;
+    return l.en ? `[[say]]${tr} — ${namesForSpeechEn(l.en)}[[/say]] Any question on this, or next ${u}?` : `[[say]]${tr}[[/say]] There's no approved translation for this one. Want me to explain it?`;
   }
   const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
   const ask = l.en ? `Any question on this ${u}, or next ${u}?` : `There's no approved translation for this ${u}. Want me to explain it?`;
