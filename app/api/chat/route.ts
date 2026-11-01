@@ -172,6 +172,12 @@ export async function POST(req: NextRequest) {
             commNote += `\n\n[AMUD INTRO: this is the start of ${place.base}. Before you read its first line, give the learner this overview of what's coming on the amud, in your own spoken words and about the same length. Then go on with the text as your style does (no second preview of the first move).]\n${intro}`;
           }
         }
+        // The big picture, any time ("big picture", "where are we?", "zoom out"): the sugya, the steps so far, where we
+        // are, and where it's heading, built on the amud's intro when there is one.
+        if (!pre && /\b(big picture|where are we( holding| up to)?|zoom out|overview|what'?s (going on|the sugya about|this sugya about)|the gist of (the|this) (sugya|amud|perek)|recap)\b/i.test(message)) {
+          const intro = place && !/ on /i.test(place.base) ? await introSoon(place.base, 5000).catch(() => '') : '';
+          commNote += `\n\n[BIG PICTURE: the learner wants the big picture right now. Do not read any text and use no [[say]] block. ${spoken ? 'In about 60 to 100 spoken words' : 'In one short paragraph'}: what the sugya here is about; the steps so far, in order; exactly where we are now; and where it is heading next. Then stop, with no question about going on. Do not move the place.]${intro ? `\nThe amud's overview, for reference:\n${intro}` : ''}`;
+        }
         if (comm && 'src' in comm) {
           if (!sources.some((x) => x.ref === comm.src.ref)) {
             await addSource(sid, comm.src);
