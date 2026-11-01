@@ -51,7 +51,9 @@ export async function POST(req: NextRequest) {
         card: styleCard(s.style, s.customStyles) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles).replace(/^.*?this style's part\. /, '')}` : ''),
       });
       // The conversation so far, so a new or resumed call picks up exactly where we were.
-      const plain = (t: string) => t.replace(/\[\[line:\d+\]\]/g, '').replace(/^\s*>\s?/gm, '').replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim();
+      // The text read in earlier turns is left out of what the voice sees (only "[read the text inside]"): otherwise it
+      // reads it again by itself, from memory, without the app knowing (the place goes wrong), and copies old spellings.
+      const plain = (t: string) => t.replace(/\[\[say\]\][\s\S]*?\[\[\/say\]\]/gi, ' [read the text inside] ').replace(/\[\[line:[^\]]*\]\]/g, '').replace(/^\s*>\s?/gm, '').replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim();
       // Shorten at the end of a sentence (never in the middle of one), so the voice doesn't pick up half a thought.
       const clip = (t: string, n: number) => {
         if (t.length <= n) return t;
