@@ -7,6 +7,7 @@ import { VoicePicker } from './VoicePicker';
 import GeminiSample from './GeminiSample';
 import GeminiPronunciation from './GeminiPronunciation';
 import CallLogs from './CallLogs';
+import HebrewLab from './HebrewLab';
 import GptPronunciation from './GptPronunciation';
 
 interface Props {
@@ -288,6 +289,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.houseSay !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ houseSay: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On: one fixed way to say the common words, from the app&apos;s yeshivish rules: Tosafos = TOSS-fos, Gemara = g&apos;MOH-rah, Mishnah = MISH-nah, Rashi = RAH-shee, kashya = KOSH-ya, machlokes = mach-LOI-kes, halacha = ha-LOH-cha, Torah = TOI-rah, Moshe = MOI-sheh, Shabbos = SHAH-bos, and more. Your own “say it my way” words win over these.</div>
             </div>
+            <HebrewLab s={s} onChange={onChange} disabled={liveActive} />
             <GptPronunciation s={s} onChange={onChange} disabled={liveActive} />
             <div className="field">
               <label>Live voice for calls</label>

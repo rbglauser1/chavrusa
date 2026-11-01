@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
 import { liveContext, liveInstructions } from '@/lib/live';
-import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+import { HE_READS, voiceHe, type HeRead } from '@/lib/hebrew';
 import { listMemories, listMessages, listSources } from '@/lib/db';
 import { currentPlace } from '@/lib/place';
 import { styleById, styleCard } from '@/lib/config';
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
         const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';
-        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${yeshivishTranslit(namesForSpeech(he), false)}${en ? ` — in English: "${clip(en, 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
+        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${voiceHe(he, s.heRead)}${en ? ` — in English: "${clip(en, 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
   }
@@ -90,9 +90,12 @@ export async function POST(req: NextRequest) {
   const resumeNote = pointed ? `The call is resuming after a short pause. Do not greet. ${pointed}${recapBlock}` : `The call is resuming after a short pause, in the middle of learning. Do not greet and do not recap. Continue exactly where you left off. Your last message was: "${lastSaid}". If the learner hasn't answered it yet, wait for him; when he speaks, carry on from there.${recapBlock}`;
   // A pronunciation test (Settings → Voice → Test it): say one line, spelled the way a call would get it.
   const testText = preview ? String(req.nextUrl.searchParams.get('say') ?? '').slice(0, 400) : '';
-  const testLine = testText ? gptLine(testText, s) : '';
+  // The Hebrew reading test can ask for one of the ways of giving the voice the lashon kodesh (else the one in use).
+  const askMode = req.nextUrl.searchParams.get('mode') as HeRead | null;
+  const heRead: HeRead = askMode && HE_READS.some((m) => m.id === askMode) ? askMode : s.heRead ?? 'join-kh';
+  const testLine = testText ? gptLine(testText, s, heRead) : '';
   const greeting = testLine
-    ? `Say exactly this now, once, the way you would in a call, then stop: "${testLine}"`
+    ? (askMode ? `Read this now, once, the way you read a backend result in a call, then stop: TEXT: ${testLine} END.` : `Say exactly this now, once, the way you would in a call, then stop: "${testLine}"`)
     : `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
   const spell = s.gptSpell ?? 'stressed';
   const myWay = s.gptMyWay ?? [];
@@ -108,9 +111,11 @@ export async function POST(req: NextRequest) {
         model: LIVE.model,
         instructions: (preview && !testLine
           ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
+          : preview && askMode === 'he-plain'
+            ? 'This is a short reading test. Speak first, as soon as the session starts: read the text you are given aloud, once, clearly, then stop.'
           : preview
-            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
-            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady) + context) + myWayNote) + voiceNote,
+            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
+            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead) + context) + myWayNote) + voiceNote,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },
@@ -124,5 +129,5 @@ export async function POST(req: NextRequest) {
   }
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house }, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead }, ...(testLine ? { line: testLine } : {}) });
 }

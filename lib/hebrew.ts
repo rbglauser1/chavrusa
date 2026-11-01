@@ -37,6 +37,11 @@ const VOWEL_SOUND: Record<string, string> = {
   [V.chatafSegol]: 'e', [V.chatafPatach]: 'a', [V.chatafKamatz]: 'o', [V.chirik]: 'i', [V.tzeirei]: 'ei', [V.segol]: 'e',
   [V.patach]: 'a', [V.kamatz]: 'aw', [V.cholam]: 'oi', [V.cholamHaser]: 'oi', [V.kubutz]: 'u', [V.kamatzKatan]: 'o',
 };
+// Spelling options for the voice (Settings → Voice → Hebrew reading test): the original "simple" vowels (a / o, as the
+// brain used to write them) or the yeshivish ones (aw / oi), and the throat sound as "kh" or "ch".
+let OPT: { vowels: 'yeshivish' | 'simple'; throat: 'kh' | 'ch' } = { vowels: 'yeshivish', throat: 'kh' };
+const SIMPLE: Record<string, string> = { aw: 'a', oi: 'o' };
+const vowelOf = (v: string) => (OPT.vowels === 'simple' ? SIMPLE[v] ?? v : v);
 function consonant(letter: string, marks: string, final: boolean): string {
   const dg = marks.includes(V.dagesh);
   switch (letter) {
@@ -49,11 +54,11 @@ function consonant(letter: string, marks: string, final: boolean): string {
     case 'ז': return 'z';
     // The throat sound is spelled "kh" for the voice: it read "ch" before e/i like "sh" (b'chesef heard as
     // "besheff"). At worst "kh" comes out as a k, which is still right enough (b'kesef).
-    case 'ח': return 'kh';
+    case 'ח': return OPT.throat;
     case 'ט': return 't';
     case 'י': return 'y';
-    case 'כ': return dg ? 'k' : 'kh';
-    case 'ך': return 'kh';
+    case 'כ': return dg ? 'k' : OPT.throat;
+    case 'ך': return OPT.throat;
     case 'ל': return 'l';
     case 'מ': case 'ם': return 'm';
     case 'נ': case 'ן': return 'n';
@@ -95,12 +100,12 @@ function wordToSyllables(word: string): Syl[] {
     const { l, m } = units[i];
     const last = i === units.length - 1;
     if (i === 0 && l === 'ו' && m.includes(V.dagesh) && !hasVowel(m)) { syl.push({ on: '', v: 'u', coda: '' }); continue; }     // וּ at the start: "u" (u-ve-VI-aw, not vve-VI-aw)
-    if (i > 0 && l === 'ו' && m.includes(V.cholam)) { vowelSyllable('oi'); continue; }                            // cholam male
+    if (i > 0 && l === 'ו' && m.includes(V.cholam)) { vowelSyllable(vowelOf('oi')); continue; }                            // cholam male
     if (i > 0 && l === 'ו' && m.includes(V.dagesh) && !hasVowel(m) && !hasVowel(units[i - 1].m)) { vowelSyllable('u'); continue; } // shuruk
     if (l === 'י' && !hasVowel(m) && !m.includes(V.shva) && i > 0 && /[\u05B4\u05B5\u05B6]/.test(units[i - 1].m)) continue;    // yud of chirik/tzeirei
     const c = consonant(l, m, last);
     let vowel = '';
-    for (const k of Object.keys(VOWEL_SOUND)) if (m.includes(k)) { vowel = VOWEL_SOUND[k]; break; }
+    for (const k of Object.keys(VOWEL_SOUND)) if (m.includes(k)) { vowel = vowelOf(VOWEL_SOUND[k]); break; }
     if (last && vowel === 'a' && (l === 'ח' || l === 'ע')) { if (syl.length) syl[syl.length - 1].coda += `a${c}`; continue; } // furtive patach: ru-ach
     let shva = false;
     if (!vowel && m.includes(V.shva) && i === 0) { vowel = 'e'; shva = true; }                                    // shva at the start is said
@@ -175,4 +180,36 @@ export function yeshivishEnglish(s: string): string {
     .replace(/ḥ/g, 'ch').replace(/Ḥ/g, 'Ch')                       // Yoḥanan -> Yochanan, Ḥisda -> Chisda
     .replace(/\b([A-Z][a-z]*?)kh([a-z]*)\b/g, '$1ch$2')              // Arakhin, Mekhilta -> ch
     .replace(/\b([a-z]+)kh([a-z]*)\b/g, (m, a, b) => (/^(sheikh|khaki)$/.test(m) ? m : `${a}ch${b}`));
+}
+
+// ---------- How the voice gets the lashon kodesh (Settings → Voice → Hebrew reading test) ----------
+// he: the Hebrew letters with nikud (the voice reads Hebrew itself, told to read it the yeshivish way);
+// he-plain: the same, without that note (how the voice reads Hebrew on its own);
+// dash-simple: syllables with dashes, simple vowels, "ch" (like the brain used to write it: ve-ko-nah);
+// join-kh: joined, yeshivish vowels, "kh" (b'khesef: the app's spelling since Nov 1);
+// join-ch: joined, yeshivish vowels, "ch" (b'chesef).
+export type HeRead = 'he' | 'he-plain' | 'dash-simple' | 'join-kh' | 'join-ch';
+export const HE_READS: { id: HeRead; name: string }[] = [
+  { id: 'he', name: 'Hebrew letters, read the yeshivish way' },
+  { id: 'he-plain', name: 'Hebrew letters, the voice on its own' },
+  { id: 'dash-simple', name: 'Like the original (ve-ko-nah)' },
+  { id: 'join-kh', name: 'Joined with kh (b\'khesef), current' },
+  { id: 'join-ch', name: 'Joined with ch (b\'chesef)' },
+];
+export const isHebrewLetters = (m?: HeRead) => m === 'he' || m === 'he-plain';
+export function voiceHe(he: string, mode: HeRead = 'join-kh'): string {
+  if (isHebrewLetters(mode)) return namesForSpeech(he).replace(/[\u0591-\u05AF\u05BD\u05C0]/g, ''); // vowels kept, trop dropped
+  const prev = OPT;
+  OPT = { vowels: mode === 'dash-simple' ? 'simple' : 'yeshivish', throat: mode === 'join-kh' ? 'kh' : 'ch' };
+  try {
+    if (mode === 'dash-simple') return yeshivishTranslit(namesForSpeech(he), true).toLowerCase();
+    return yeshivishTranslit(namesForSpeech(he), false);
+  } finally { OPT = prev; }
+}
+/** The note in the voice's instructions that goes with each way of giving it the lashon kodesh. */
+export function heReadNote(mode: HeRead = 'join-kh'): string {
+  if (mode === 'he') return 'The lashon kodesh in TEXT comes in Hebrew letters with vowels. Read it the yeshivish Ashkenazi way, never modern Israeli: kamatz as "aw" (BAW-ruch), cholam as "oi" (TOI-rah), tav without a dagesh as "s" (Shabbos), and the stress usually on the second-to-last syllable. Say "Hashem" for the Name and "Elokim" where it is written with a kuf.';
+  if (mode === 'he-plain') return 'The lashon kodesh in TEXT comes in Hebrew letters with vowels: read it as written.';
+  if (mode === 'dash-simple') return 'The lashon kodesh in TEXT is spelled out in English letters with dashes between syllables (ve-ko-nah es atz-mah): read each word smoothly as one word, never syllable by syllable.';
+  return 'The lashon kodesh in TEXT is spelled out in English letters the yeshivish way (hawishaw nikneis): say each word smoothly as one word, never syllable by syllable.';
 }

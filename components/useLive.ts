@@ -1,11 +1,12 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+import { heReadNote, voiceHe, type HeRead } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 
-const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
+let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
+const toSpeech = (he: string) => voiceHe(he, HE_MODE);
 
 // Live voice: a GPT-Live session over WebRTC. The voice model listens and speaks naturally; whenever the
 // learner says something about the learning, it "delegates" to us. We send the learner's words to the
@@ -296,7 +297,7 @@ export function useLive(opts: {
     readMinEnd.current = Date.now() + (words / 2.8) * 1000 * 0.85; // rough length of the audio
     return new Promise<boolean>((resolve) => {
       reading.current = resolve;
-      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. The lashon kodesh is written in English letters, syllables split by hyphens, with the stressed syllable in capitals (be-REI-shis BAW-raw e-LOI-kim): lean on the capitalized syllable naturally; that is the yeshivish stress. Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${g(text)}` });
+      send({ type: 'session.instructions.append', delegation_id: null, content: `Read the following aloud now, the way a chavrusa reads inside: in your normal lively voice and speed, with feeling, all of it, with no pauses between verses. Do not add, explain, comment, or ask anything. ${heReadNote(HE_MODE)} Wherever the text has הַשֵּׁם say \"Hashem\", and say \"Elokim\" (and Elokeinu, Elokecha…) where written with a kuf. Read the English naturally.\n\n${g(text)}` });
       window.setTimeout(() => { if (reading.current === resolve) { reading.current = null; resolve(true); } }, 90_000);
     });
   }, [send]);
@@ -424,7 +425,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false };
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
     } catch (err) {
       const msg = (err as Error).name === 'NotAllowedError'

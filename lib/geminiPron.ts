@@ -1,7 +1,7 @@
 import type { Settings } from './config';
 import { GEMINI_PRON } from './live';
 import { forGemini, forVoice, HOUSE_SAY } from './geminiSpeech';
-import { namesForSpeech, yeshivishTranslit } from './hebrew';
+import { namesForSpeech, voiceHe, yeshivishTranslit, type HeRead } from './hebrew';
 
 // Gemini only: the pronunciation part of its instructions (its own guide, GPT-Live's, or none), plus "say it my way".
 export function geminiPronunciation(s: Settings): { pron: string | undefined; myWayNote: string } {
@@ -24,8 +24,8 @@ export function myWayNoteFor(list: { word: string; say: string }[] = []): string
   const l = list.filter((x) => x.word?.trim() && x.say?.trim());
   return l.length ? `\n# Say these words exactly this way (the learner's own list; it wins over everything above)\n${l.map((x) => `- ${x.word.trim()} = ${x.say.trim()}`).join('\n')}` : '';
 }
-export function gptLine(text: string, s: Settings): string {
-  const spelled = text.replace(/[\u0590-\u05FF"׳״־]+(?:\s+[\u0590-\u05FF"׳״־]+)*/g, (he) => yeshivishTranslit(namesForSpeech(he), false));
+export function gptLine(text: string, s: Settings, mode?: HeRead): string {
+  const spelled = text.replace(/[\u0590-\u05FF"׳״־]+(?:\s+[\u0590-\u05FF"׳״־]+)*/g, (he) => voiceHe(he, mode ?? s.heRead ?? 'join-kh'));
   return forVoice(spelled, s.gptSpell ?? 'stressed', s.gptMyWay ?? [], s.houseSay !== false);
 }
 

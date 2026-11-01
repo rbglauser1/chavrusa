@@ -298,7 +298,7 @@ export async function POST(req: NextRequest) {
             }
             // He asked to go on: the reading must start right after where he is (the brain sometimes jumps ahead).
             if (secs.length) {
-              const fx = fixSay(reply, secs, goOn && place ? { base: place.base, n: place.n, part: place.part } : null);
+              const fx = fixSay(reply, secs, goOn && place ? { base: place.base, n: place.n, part: place.part } : null, settings.heRead ?? 'join-kh');
               reply = fx.text;
               readPlace = fx.last;
               // For the call recorder: how the text was checked against the sefer.

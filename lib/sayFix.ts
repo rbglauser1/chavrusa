@@ -5,7 +5,7 @@
 // long line) is covered, in order, and (3) writes each phrase out in the app's own yeshivish transliteration from the
 // real text with its vowels. If the brain skipped or changed anything, the whole
 // piece is read from the sefer instead (the Hebrew, then its approved English). Free, no AI.
-import { namesForSpeech, namesForSpeechEn, yeshivishTranslit } from './hebrew';
+import { isHebrewLetters, namesForSpeech, namesForSpeechEn, voiceHe, type HeRead } from './hebrew';
 import { splitPieces } from './pieces';
 
 export interface Section { base: string; he: string[]; en: string[] }
@@ -53,7 +53,8 @@ function find(toks: Tok[], words: string[], from: number): { at: number[] } | nu
 // Plain, joined spelling (hawishaw nikneis), the way the voice sounded most natural; the learner's spelling choice and
 // word lists are applied on the way to the voice.
 const labelOf = (w: string) => LABELS.find(([re]) => re.test(key(w)))?.[1] ?? null;
-const say = (he: string) => he.split(/\s+/).filter(Boolean).map((w) => labelOf(w) ?? yeshivishTranslit(namesForSpeech(w), false)).filter(Boolean).join(' ');
+let MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (set by fixSay)
+const say = (he: string) => (isHebrewLetters(MODE) ? namesForSpeech(he) : he.split(/\s+/).filter(Boolean).map((w) => labelOf(w) ?? voiceHe(w, MODE)).filter(Boolean).join(' '));
 const line = (he: string, en: string) => `${say(he)}${en ? ` — ${namesForSpeechEn(en)}` : ''}`;
 
 /** Rebuild one [[say]] body from the real text, or null if its phrases can't be found in these sections. */
@@ -143,7 +144,8 @@ export function fixSayBody(body: string, sections: Section[], expect?: Expect | 
 
 /** Every [[say]] block in a spoken reply, made exact from the real text. A block that can't be found in the text keeps
  *  only its English (the voice never gets Hebrew letters to guess at). */
-export function fixSay(reply: string, sections: Section[], expect?: Expect | null): { text: string; fixed: number; unmatched: number; last: Expect | null; notes: string[] } {
+export function fixSay(reply: string, sections: Section[], expect?: Expect | null, mode: HeRead = 'join-kh'): { text: string; fixed: number; unmatched: number; last: Expect | null; notes: string[] } {
+  MODE = mode;
   let fixed = 0, unmatched = 0, first = true;
   const notes: string[] = [];
   let last: Expect | null = null;

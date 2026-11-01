@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nextSection } from '@/lib/refs';
-import { addMessage, approvedList, getSession, touchSession } from '@/lib/db';
+import { addMessage, approvedList, getSession, getSettings, touchSession } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
-import { namesForSpeech, namesForSpeechEn, yeshivishTranslit } from '@/lib/hebrew';
+import { namesForSpeech, namesForSpeechEn, voiceHe } from '@/lib/hebrew';
 
 // Keep the vowels (nikud) but drop the trop marks, which only confuse the voice.
 const noTrop = (s: string) => s.replace(/[\u0591-\u05AF\u05BD\u05C0]/g, '').replace(/\s+/g, ' ').trim();
@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
   const mode = (['he-en', 'shnayim', 'he'].includes(String(p.get('mode'))) ? p.get('mode') : 'he-en') as ReadMode;
   const count = Math.min(6, Math.max(1, Number(p.get('count') ?? (mode === 'shnayim' ? 1 : 2)) || 2));
   const sid = p.get('session');
+  const heRead = (await getSettings().catch(() => null))?.heRead ?? 'join-kh'; // how the voice gets the lashon kodesh
   if (!base) return NextResponse.json({ error: 'Nothing to read yet. Open a place first.' }, { status: 400 });
 
   try {
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
     for (let n = from; n <= end; n++) {
       const he = noTrop(sec.he[n - 1] ?? ''), en = sec.en[n - 1] ?? '', t = noTrop(tg?.he[n - 1] ?? '');
       // The text shown stays as written; what the voice says uses Hashem and Elokim in place of the Names.
-      lines.push({ n, he, en, tg: t, say: { he: namesForSpeech(he), en: namesForSpeechEn(en), tg: namesForSpeech(t), heTr: yeshivishTranslit(namesForSpeech(he)), tgTr: t ? yeshivishTranslit(namesForSpeech(t)) : '' } });
+      lines.push({ n, he, en, tg: t, say: { he: namesForSpeech(he), en: namesForSpeechEn(en), tg: namesForSpeech(t), heTr: voiceHe(noTrop(he), heRead), tgTr: t ? voiceHe(noTrop(t), heRead) : '' } });
     }
 
     const ref = `${base}:${from}${end > from ? `-${end}` : ''}`;

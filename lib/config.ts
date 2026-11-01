@@ -1,3 +1,4 @@
+import type { HeRead } from './hebrew';
 // Central configuration. Change models, prices, and styles here; nothing else needs editing.
 
 export type Provider = 'anthropic' | 'openai';
@@ -365,6 +366,7 @@ export interface Settings {
   steadyOffDone?: boolean;
   coachOffDone?: boolean;        // one-time: coach notes off for the clean-base rebuild (Oct 31)       // one-time switch of an earlier saved "on" to the new default, off
   houseSay?: boolean;            // standard yeshivish pronunciations applied to all the voice says (on by default)
+  heRead?: HeRead;              // how the voice gets the lashon kodesh (Settings → Voice → Hebrew reading test)
   liveCoach?: boolean;           // coach notes (steady off): after each exchange a quick brain check sends the voice a short private note (on by default)
   liveEngine?: 'gpt' | 'gemini'; // which live voice Talk uses (Gemini is a test, side by side)
   geminiVoice?: string;          // Gemini's voice (one of GEMINI_VOICES)
@@ -428,6 +430,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveEngine: 'gpt',
   liveSteady: false,
   houseSay: true,
+  heRead: 'join-kh',
   liveCoach: false,
   gptSpell: 'stressed',
   gptMyWay: [],

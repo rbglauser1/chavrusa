@@ -9,7 +9,7 @@ import { isJustOpening, openingReply } from './prefetch';
 import { getLinks, getText, todaysLearning } from './sefaria';
 import { currentPlace, splitRef } from './place';
 import { splitPieces } from './pieces';
-import { namesForSpeech, yeshivishTranslit } from './hebrew';
+import { voiceHe, type HeRead } from './hebrew';
 
 export interface RouteCtx {
   message: string;
@@ -347,11 +347,11 @@ function unitWord(ref: string): string {
   return 'line';
 }
 
-function lineReply(l: LineText, spoken: boolean): string {
+function lineReply(l: LineText, spoken: boolean, mode?: HeRead): string {
   const u = unitWord(l.ref);
   if (spoken) {
     // Lashon kodesh first, then the English.
-    const tr = yeshivishTranslit(namesForSpeech(l.he), false);
+    const tr = voiceHe(l.he, mode);
     return l.en ? `[[say]]${tr} — ${l.en}[[/say]] Any question on this, or next ${u}?` : `[[say]]${tr}[[/say]] There's no approved translation for this one. Want me to explain it?`;
   }
   const en = l.en ? `\n> "${l.en}"${l.translation ? `\n\n*Translation: ${l.translation.replace(/,.*$/, '')}*` : ''}` : '';
@@ -377,7 +377,7 @@ async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
     const whole = await tryText(p.base, ctx.approved);
     // Went on into the next amud / perek: say so in a word, and carry straight on.
     const crossed = p.base !== base;
-    const text = lineReply(line, ctx.spoken);
+    const text = lineReply(line, ctx.spoken, ctx.settings.heRead);
     return { reply: crossed && ctx.spoken ? `${p.base}. ${text}` : crossed ? text.replace(/^\*\*[^*]+\*\*/, `**${src.ref}** (${p.base} begins)`) : text, line, ...(whole ? { source: { ...whole, focus: p.n } } : {}) };
   };
   // The next (or previous) piece of this same long line.
@@ -446,7 +446,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
 
   // Open a named place ("Berachos 36b", "today's daf", "what's this week's parsha?").
   if (pre && (isJustOpening(message) || (/\b(today'?s daf|daf yomi|this week'?s parsha|parsha this week)\b/.test(s) && s.split(' ').length <= 8))) {
-    return { reply: openingReply(pre, spoken), source: pre };
+    return { reply: openingReply(pre, spoken, ctx.settings.heRead), source: pre };
   }
   if (pre) return null; // a question about a named place: that's for the AI
 
@@ -517,7 +517,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     }
     for (const ref of stepRef(main.ref, dir, unitOf(word))) {
       const src = await tryText(ref, ctx.approved);
-      if (src) return { reply: openingReply(src, spoken), source: src };
+      if (src) return { reply: openingReply(src, spoken, ctx.settings.heRead), source: src };
     }
     return { reply: dir === 1 ? `That's the end of ${main.ref.replace(/\s\d.*$/, '')}.` : "We're already at the beginning." };
   }
