@@ -13,6 +13,7 @@ import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
 import AutoScroll from './AutoScroll';
 import DafPage from './DafPage';
+import MikraosPage from './MikraosPage';
 import { amudOf } from '@/lib/daf';
 
 export type Layout = 'page' | 'quiet' | 'shtender' | 'dock';
@@ -152,7 +153,8 @@ function CasualThread({ items, busy, status, endRef }: { items: Msg[]; busy: boo
 
 export default function Minimal(p: Props) {
   const [menu, setMenu] = useState(false);
-  const [dafOpen, setDafOpen] = useState(false); // tzuras hadaf: the printed page of this amud
+  const [dafOpen, setDafOpen] = useState(false);
+  const [mgOpen, setMgOpen] = useState(false); // Mikraos Gedolos: the printed-Chumash page of this perek
   const [sheet, setSheet] = useState(false);     // page: the conversation pulled up
   const [typing, setTyping] = useState(false);   // shtender: show the box for typing
   const [full, setFullState] = useState(false); // quiet chat: just the text, with exit and Talk at the bottom right
@@ -199,6 +201,10 @@ export default function Minimal(p: Props) {
         ? <button className="min-pill" onClick={p.onSefer} aria-label="Open the full Sefer"><span className="he">{src.heRef}</span></button>
         : <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
+      {mgOpen && src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref) && (
+        <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? (Number(src.ref.match(/:(\d+)/)?.[1] ?? 1))} onClose={() => setMgOpen(false)} status={label}
+          talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
+      )}
       {dafOpen && src && amudOf(src.ref) && (
         <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}
           talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
@@ -211,6 +217,7 @@ export default function Minimal(p: Props) {
               <button role="menuitem" onClick={() => { setMenu(false); setTab('text'); setFull(true); }}>Full screen <span className="min-check">double-tap</span></button>
               <button role="menuitem" onClick={() => { setMenu(false); p.onSettings(); }}>Settings</button>
               {src && amudOf(src.ref) && <button role="menuitem" onClick={() => { setMenu(false); setDafOpen(true); }}>Tzuras hadaf <span className="min-check">the printed page</span></button>}
+              {src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref) && <button role="menuitem" onClick={() => { setMenu(false); setMgOpen(true); }}>Mikraos Gedolos <span className="min-check">the printed page</span></button>}
               {src && <button role="menuitem" onClick={() => { setMenu(false); p.send('Give me the big picture.'); }}>Big picture <span className="min-check">{p.talk.on ? 'or just say it' : 'where we are'}</span></button>}
               <span className="min-menu-rule" />
               <button role="menuitem" onClick={() => { setMenu(false); p.onLibrary(); }}>Library</button>

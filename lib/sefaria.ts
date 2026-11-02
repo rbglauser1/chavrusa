@@ -278,3 +278,15 @@ export async function rawIndex(title: string): Promise<any> {
 export async function indexWithCounts(title: string): Promise<any> {
   return getJson(`${BASE}/api/v2/index/${enc(title)}?with_content_counts=1`);
 }
+
+// ---------- Mikraos Gedolos (a printed Chumash page) ----------
+/** A commentary on a whole perek, kept in its comments per pasuk: [pasuk][comment] (Hebrew, bold kept as B_ON/B_OFF). */
+export async function getPerPasuk(ref: string, list: ApprovedEntry[]): Promise<string[][] | null> {
+  const verdict = await judgeRef(ref, list).catch(() => null);
+  if (!verdict?.allowed) return null;
+  const d = await getJson(`${BASE}/api/v3/texts/${enc(ref)}?version=source`);
+  const v: V3Version | undefined = (Array.isArray(d?.versions) ? d.versions : [])[0];
+  const text = v?.text;
+  if (!Array.isArray(text)) return null;
+  return text.map((p: unknown) => flatten(p).map(stripKeepBold).filter((x) => x.trim()));
+}
