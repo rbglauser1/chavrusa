@@ -1520,3 +1520,19 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .mg-comms .mg-label { break-after: avoid; font-size: 1em; margin: 0 0 .2em; }
 .mg-comms .mg-cols { column-count: 1; column-rule: none; }
 .mg-foot { margin-top: .4em; font-size: .75em; }
+
+/* Mikraos Gedolos follows Settings → Look: the Hebrew font (already), Rashi script, and the colors and bold chosen for
+   the text, its English and the meforshim. */
+[data-c-he]:not([data-c-he='ink']) :is(.mg-text, .mg-onk) { color: color-mix(in srgb, var(--he-hue) 94%, #1a1a1a); }
+[data-c-en]:not([data-c-en='ink']) .mg-en { color: color-mix(in srgb, var(--en-hue) 94%, #1a1a1a); }
+[data-c-comm]:not([data-c-comm='ink']) .mg-comms { color: color-mix(in srgb, var(--comm-hue) 94%, #1a1a1a); }
+[data-c-comm]:not([data-c-comm='ink']) .mg-comms .mg-en { color: color-mix(in srgb, var(--comm-hue) 75%, #1a1a1a); }
+[data-c-comm]:not([data-c-comm='ink']) .mg-comms .mg-label { color: var(--comm-hue); }
+[data-b-he='on'] :is(.mg-text, .mg-onk) { font-weight: 700; }
+[data-b-en='on'] .mg-en { font-weight: 600; }
+[data-b-comm='on'] .mg-comms { font-weight: 700; }
+
+/* Midnight: the Mikraos Gedolos page stays a cream paper page, so it keeps the colors made for light pages. */
+[data-look='midnight'][data-c-he='sepia'] .mg-paper { --he-hue: #8f4a12; } [data-look='midnight'][data-c-he='slate'] .mg-paper { --he-hue: #1d5f8c; } [data-look='midnight'][data-c-he='maroon'] .mg-paper { --he-hue: #9e1f30; } [data-look='midnight'][data-c-he='green'] .mg-paper { --he-hue: #17704d; } [data-look='midnight'][data-c-he='bronze'] .mg-paper { --he-hue: #9a6a0e; } [data-look='midnight'][data-c-he='navy'] .mg-paper { --he-hue: #2440a0; } [data-look='midnight'][data-c-he='gray'] .mg-paper { --he-hue: #6e6e66; }
+[data-look='midnight'][data-c-en='sepia'] .mg-paper { --en-hue: #8f4a12; } [data-look='midnight'][data-c-en='slate'] .mg-paper { --en-hue: #1d5f8c; } [data-look='midnight'][data-c-en='maroon'] .mg-paper { --en-hue: #9e1f30; } [data-look='midnight'][data-c-en='green'] .mg-paper { --en-hue: #17704d; } [data-look='midnight'][data-c-en='bronze'] .mg-paper { --en-hue: #9a6a0e; } [data-look='midnight'][data-c-en='navy'] .mg-paper { --en-hue: #2440a0; } [data-look='midnight'][data-c-en='gray'] .mg-paper { --en-hue: #6e6e66; }
+[data-look='midnight'][data-c-comm='sepia'] .mg-paper { --comm-hue: #8f4a12; } [data-look='midnight'][data-c-comm='slate'] .mg-paper { --comm-hue: #1d5f8c; } [data-look='midnight'][data-c-comm='maroon'] .mg-paper { --comm-hue: #9e1f30; } [data-look='midnight'][data-c-comm='green'] .mg-paper { --comm-hue: #17704d; } [data-look='midnight'][data-c-comm='bronze'] .mg-paper { --comm-hue: #9a6a0e; } [data-look='midnight'][data-c-comm='navy'] .mg-paper { --comm-hue: #2440a0; } [data-look='midnight'][data-c-comm='gray'] .mg-paper { --comm-hue: #6e6e66; }

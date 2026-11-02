@@ -447,6 +447,12 @@ export const DEFAULT_SETTINGS: Settings = {
   geminiMyWay: [],
   autoComms: false,
   autoRashi: false,
+  // Every setting needs a default here, or the settings API won't save it (it only takes known keys).
+  livePauses: 'normal',
+  mgMeforshim: ['Rashi', 'Ramban', 'Ibn Ezra', 'Sforno', 'Or HaChaim'],
+  mgOnkelos: true,
+  mgEnglish: false,
+  bold: {},
   voiceReads: 'all',
   amudIntro: true,
   introVoice: true,
