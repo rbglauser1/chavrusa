@@ -134,7 +134,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       if (!res.ok || !d.sdp) {
         said = 'x'; end();
         // OpenAI turned this voice down: it isn't on GPT-Live (remembered, so it's set aside).
-        if (voice && /\(4\d\d\): .*voice/i.test(String(d.error ?? ''))) { setVotes((v) => ({ ...v, [voice]: { good: 0, bad: 0, gone: true } })); note('Not available on GPT-Live.'); return; }
+        if (voice && /\(4\d\d\): .*voice/i.test(String(d.error ?? ''))) { setVotes((v) => ({ ...v, [voice]: { good: 0, bad: 0, gone: true } })); note(`Not available on GPT-Live. OpenAI says: ${String(d.error).replace(/^Live voice could not start \(\d+\): /, '').slice(0, 200)}`); return; }
         note(d.error ?? 'Could not start the test.'); return;
       }
       await pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
@@ -162,6 +162,20 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const setTune = (t: Tune | null) => { setTuneRaw(t); try { if (t) localStorage.setItem(TUNE_KEY, JSON.stringify(t)); else localStorage.removeItem(TUNE_KEY); } catch { /* not kept */ } };
   const startCfg: Cfg = { mode: inUse, voice: s.liveVoice || 'meridian', rules: inCalls, instr: s.liveShort !== false ? 'short' : 'full', pace: (s.livePace ?? 'natural') as Pace };
   const voicesOk = LIVE_VOICES.map((v) => v.id).filter((id) => !votes[id]?.gone);
+  // A voice OpenAI turned down never stays in the test: if it's the challenger, the best so far wins that pair by
+  // itself; if it got into the best setup (picked before it was found out), the best setup switches to a working voice.
+  useEffect(() => {
+    if (!tune || tune.done) return;
+    const gone = (v: string) => !!votes[v]?.gone;
+    const working = [tune.start.voice, 'meridian', ...voicesOk].find((v) => !gone(v)) ?? 'meridian';
+    if (gone(tune.champ.voice)) {
+      const fix = (c: Cfg): Cfg => (gone(c.voice) ? { ...c, voice: working } : c);
+      const champ = fix(tune.champ);
+      setTune(advance({ ...tune, champ, start: fix(tune.start), step: tune.step }));
+    } else if (tune.chal && gone(tune.chal.voice)) {
+      setTune(advance({ ...tune, step: tune.step + 1 }));
+    }
+  }, [votes]); // eslint-disable-line react-hooks/exhaustive-deps
   // The changes each step tries, as "the best so far, with one thing different".
   function challengers(st: StageId, t: Pick<Tune, 'good' | 'goodWays' | 'start'>): ((c: Cfg) => Cfg | null)[] {
     // Every way of giving it the Hebrew (the spelled-out ones need nikud in the line); the second time, only the ways
