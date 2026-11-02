@@ -74,8 +74,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const inUse: HeRead = s.heRead ?? 'join-kh';
 
   // Have GPT-Live read the line given this way, the way a call would (a short Live connection, about a cent).
-  async function hear(mode: HeRead, voice?: string, rules?: string) {
-    const key = rules !== undefined ? `r:${rules}` : voice ? `v:${voice}` : mode;
+  async function hear(mode: HeRead, voice?: string, rules?: string, instr?: 'short' | 'full', keyAs?: string, pace?: string) {
+    const key = keyAs ?? (rules !== undefined ? `r:${rules}` : voice ? `v:${voice}` : mode);
     if (playing) { endRef.current?.(); if (playing === key) return; }
     setMsg(null);
     const note = (t: string) => setMsg({ mode: key, text: t });
@@ -127,6 +127,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       await pc.setLocalDescription(offer);
       const q = new URLSearchParams({ preview: '1', voice: voice || s.liveVoice || 'meridian', say: text, mode });
       if (rules !== undefined) q.set('rules', rules);
+      if (instr) q.set('instr', instr);
+      if (pace) q.set('pace', pace);
       const res = await fetch(`/api/live/session?${q}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const d = await res.json().catch(() => ({}));
       if (!res.ok || !d.sdp) {
@@ -140,26 +142,81 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   }
 
   // ---------- The easy way: "which sounds better, A or B?" ----------
-  // Every setup of the rules (no rules, the standard, each rule alone, each of his own) takes a turn against the best
-  // one so far. He only hears two readings and taps the better one; which is which stays hidden until the end, so he
-  // judges by ear alone. The winner can then go into calls with one tap.
-  type Tune = { cands: string[]; champ: string; next: number; champOnA: boolean; done: boolean; beat: string[] };
+  // A whole setup is tuned, one choice at a time, by ear alone: how the Hebrew is given, (optionally) which voice, the
+  // rules one by one, then adding the good rules together, then short or full instructions, and last a check of the
+  // winner against what calls use now. Each step pits the best so far against one change; he hears A and B (which is
+  // which stays hidden) and taps the better. "About the same" keeps the best so far, so a change has to earn its place.
+  type Pace = 'slow' | 'relaxed' | 'natural' | 'brisk';
+  type Cfg = { mode: HeRead; voice: string; rules: string; instr: 'short' | 'full'; pace: Pace };
+  type StageId = 'way' | 'voice' | 'rules' | 'mix' | 'way2' | 'instr' | 'pace' | 'final';
+  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean };
+  const cfgKey = (c: Cfg) => `c:${c.mode}|${c.voice}|${c.rules}|${c.instr}|${c.pace}`;
+  const sameCfg = (a: Cfg, b: Cfg) => cfgKey(a) === cfgKey(b);
+  const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding good rules together', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now' };
+  const [withVoices, setWithVoices] = useState(true);
+  const [withPace, setWithPace] = useState(true);
   const [tune, setTune] = useState<Tune | null>(null);
+  const startCfg: Cfg = { mode: inUse, voice: s.liveVoice || 'meridian', rules: inCalls, instr: s.liveShort !== false ? 'short' : 'full', pace: (s.livePace ?? 'natural') as Pace };
+  const voicesOk = LIVE_VOICES.map((v) => v.id).filter((id) => !votes[id]?.gone);
+  // The changes each step tries, as "the best so far, with one thing different".
+  function challengers(st: StageId, t: Pick<Tune, 'good' | 'goodWays' | 'start'>): ((c: Cfg) => Cfg | null)[] {
+    // Every way of giving it the Hebrew (the spelled-out ones need nikud in the line); the second time, only the ways
+    // that won or held their own the first time.
+    if (st === 'way') return HE_READS.map((m) => m.id).filter((m) => hasNikud(text) || isHebrewLetters(m)).map((m) => (c) => ({ ...c, mode: m }));
+    if (st === 'way2') return t.goodWays.map((m) => (c) => ({ ...c, mode: m }));
+    if (st === 'voice') return voicesOk.map((v) => (c) => ({ ...c, voice: v }));
+    if (st === 'rules') return ['none', comboId(STANDARD_RULES), ...allRules.map((r) => r.id)].map((r) => (c) => ({ ...c, rules: r, instr: 'short' }));
+    if (st === 'mix') return t.good.map((r) => (c) => {
+      const have = c.rules === 'none' ? [] : c.rules.split(',');
+      if (have.includes(r)) return null;
+      return { ...c, rules: comboId([...have, r]), instr: 'short' };
+    });
+    if (st === 'instr') return [(c) => ({ ...c, instr: c.instr === 'short' ? 'full' : 'short' })];
+    if (st === 'pace') return (['slow', 'relaxed', 'natural', 'brisk'] as Pace[]).map((p) => (c) => ({ ...c, pace: p }));
+    return [() => t.start];
+  }
+  // Move to the next pair: the next change in this step that is really different, or the next step, or the end.
+  function advance(t: Tune): Tune {
+    let { si, step } = t;
+    while (si < t.stages.length) {
+      const list = challengers(t.stages[si], t);
+      while (step < list.length) {
+        const c = list[step](t.champ);
+        if (c && !sameCfg(c, t.champ)) return { ...t, si, step, chal: c, champOnA: Math.random() < 0.5 };
+        step++;
+      }
+      si++; step = 0;
+    }
+    return { ...t, si, step, chal: null, done: true, won: !sameCfg(t.champ, t.start) };
+  }
   const startTune = () => {
-    const cands = ['none', comboId(STANDARD_RULES), ...allRules.map((r) => r.id)];
-    setTune({ cands, champ: cands[0], next: 1, champOnA: Math.random() < 0.5, done: false, beat: [] });
+    const stages: StageId[] = ['way', ...(withVoices ? (['voice'] as StageId[]) : []), 'rules', 'mix', 'way2', 'instr', ...(withPace ? (['pace'] as StageId[]) : []), 'final'];
+    setTune(advance({ stages, si: 0, step: 0, champ: startCfg, chal: null, champOnA: true, good: [], goodWays: [], start: startCfg, done: false, won: false }));
   };
-  const tuneA = tune && !tune.done ? (tune.champOnA ? tune.champ : tune.cands[tune.next]) : '';
-  const tuneB = tune && !tune.done ? (tune.champOnA ? tune.cands[tune.next] : tune.champ) : '';
+  const tuneA = tune?.chal ? (tune.champOnA ? tune.champ : tune.chal) : null;
+  const tuneB = tune?.chal ? (tune.champOnA ? tune.chal : tune.champ) : null;
   const pick = (side: 'A' | 'B' | 'same') => {
-    if (!tune || tune.done) return;
+    if (!tune?.chal) return;
     endRef.current?.();
-    const challenger = tune.cands[tune.next];
-    const winner = side === 'same' ? tune.champ : side === 'A' ? tuneA : tuneB;
-    const loser = winner === tune.champ ? challenger : tune.champ;
-    const next = tune.next + 1;
-    setTune({ ...tune, champ: winner, next, champOnA: Math.random() < 0.5, done: next >= tune.cands.length, beat: [...tune.beat, loser] });
+    const st = tune.stages[tune.si];
+    const chalWon = side !== 'same' && (side === 'A') !== tune.champOnA;
+    // A rule that won or held its own on its own is worth trying together with the others.
+    const single = st === 'rules' && !tune.chal.rules.includes(',') && tune.chal.rules !== 'none' ? tune.chal.rules : '';
+    const good = single && side !== (tune.champOnA ? 'A' : 'B') && !tune.good.includes(single) ? [...tune.good, single] : tune.good;
+    const champ = chalWon ? tune.chal : tune.champ;
+    // A way of giving the Hebrew that won or held its own gets a second look once the rules are chosen; so does the
+    // one it was up against.
+    const goodWays = st === 'way' && side !== (tune.champOnA ? 'A' : 'B') ? [...new Set([...tune.goodWays, tune.chal.mode, tune.champ.mode])] : tune.goodWays;
+    setTune(advance({ ...tune, champ, good, goodWays, step: tune.step + 1 }));
   };
+  const describe = (c: Cfg) => [
+    `Hebrew given as: ${HE_READS.find((m) => m.id === c.mode)?.name ?? c.mode}`,
+    `Voice: ${LIVE_VOICES.find((v) => v.id === c.voice)?.name ?? c.voice}`,
+    c.instr === 'full' ? 'Instructions: Full (the rules aren’t used with these)' : `Instructions: Short · Rules: ${comboName(c.rules)}`,
+    `Speed: ${({ slow: 'Slow', relaxed: 'Relaxed', natural: 'Normal', brisk: 'Brisk' } as Record<Pace, string>)[c.pace]}`,
+  ];
+  const useSetup = (c: Cfg) => onChange({ heRead: c.mode, liveVoice: c.voice, liveRules: c.rules === 'none' ? ['none'] : c.rules.split(','), liveShort: c.instr === 'short', livePace: c.pace });
+  const setupInCalls = sameCfg(startCfg, tune?.champ ?? startCfg);
 
   return (
     <div className="field he-lab">
@@ -169,44 +226,47 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       <textarea rows={2} dir="rtl" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a line with nikud" />
       {text.trim() && !hasNikud(text) && <div className="goto-msg" style={{ padding: '6px 0 0' }}>This line has no nikud (vowels). Only the Hebrew-letters versions can read it; the spelled-out ones need the vowels to know how each word sounds. Paste the line with nikud (on Sefaria, turn vowels on) to try them all.</div>}
       <div className="tuner">
-        <div className="tuner-title">Find the best rules, the easy way</div>
+        <div className="tuner-title">Find the best setup, the easy way</div>
         {!tune && (
           <>
-            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the line above read two ways, A and B. Tap the one that sounds better, and the next pair comes. The app keeps track and tells you the winner at the end. About {allRules.length + 1} pairs, about 2¢ a pair.</div>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the line above read two ways, A and B, and tap the one that sounds better. Step by step it tries everything that changes how the Hebrew sounds: how the Hebrew is given to the voice, the voices, every rule on its own (yours too), the good rules together, how the Hebrew is given again with those rules, short or full instructions, and the speed. Each step keeps the best so far, and at the end the winner has to beat what calls use now. About 25–35 pairs, about 2¢ a pair (50–70¢ in all). You can stop and start again any time.</div>
+            <label className="tuner-check"><input type="checkbox" checked={withVoices} onChange={(e) => setWithVoices(e.target.checked)} /> Compare the voices too ({voicesOk.length - 1} pairs)</label>
+            <label className="tuner-check"><input type="checkbox" checked={withPace} onChange={(e) => setWithPace(e.target.checked)} /> Compare the speaking speeds too (3 pairs; the speed also applies to the rest of the call)</label>
             <button className="btn primary" disabled={disabled || !text.trim()} onClick={startTune}>Start</button>
           </>
         )}
-        {tune && !tune.done && (
+        {tune && !tune.done && tuneA && tuneB && (
           <>
-            <div className="tuner-step">Pair {tune.next} of {tune.cands.length - 1}</div>
+            <div className="tuner-step">Step {tune.si + 1} of {tune.stages.length}: {STAGE_NAME[tune.stages[tune.si]]}</div>
             <div className="tuner-ab">
               {(['A', 'B'] as const).map((side) => {
-                const id = side === 'A' ? tuneA : tuneB;
+                const c = side === 'A' ? tuneA : tuneB;
+                const key = `${side}:${cfgKey(c)}`;
                 return (
                   <div key={side} className="tuner-side">
-                    <button className="btn tuner-play" disabled={disabled} onClick={() => void hear(inUse, undefined, id)}>{playing === `r:${id}` ? '■ Stop' : `▶ Hear ${side}`}</button>
+                    <button className="btn tuner-play" disabled={disabled} onClick={() => void hear(c.mode, c.voice, c.rules, c.instr, key, c.pace)}>{playing === key ? '■ Stop' : `▶ Hear ${side}`}</button>
                     <button className="btn primary" onClick={() => pick(side)}>{side} is better</button>
                   </div>
                 );
               })}
             </div>
             <button className="btn" style={{ width: '100%', marginTop: 8 }} onClick={() => pick('same')}>About the same</button>
-            {msg && (msg.mode === `r:${tuneA}` || msg.mode === `r:${tuneB}`) && /^(Live voice|Could not|Your phone|The voice connected)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
-            <div className="tuner-foot"><button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop the test</button></div>
+            {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
+            <div className="tuner-foot">Not sure? Hear them again. <button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop the test</button></div>
           </>
         )}
         {tune?.done && (
           <>
-            <div className="tuner-win">The winner: <b>{comboName(tune.champ)}</b></div>
-            <div className="muted" style={{ fontSize: 12.5, margin: '2px 0 10px' }}>{tune.champ === 'none' ? 'The voice on its own, with no pronunciation rules.' : allRules.find((r) => r.id === tune.champ)?.about ?? 'Yeshivish guide + Vowel key: what calls used until now.'}</div>
+            {tune.won ? <div className="tuner-win">The winner is a new setup, and it beat what calls use now:</div> : <div className="tuner-win">What calls use now held up: nothing beat it.</div>}
+            <ul className="tuner-setup">{describe(tune.champ).map((x) => <li key={x}>{x}</li>)}</ul>
             <div className="he-lab-btns">
-              {inCalls === tune.champ ? <span className="he-lab-inuse">✓ Calls use it</span> : <button className="btn primary" onClick={() => useInCalls(tune.champ)}>Use it in calls</button>}
+              {setupInCalls ? <span className="he-lab-inuse">✓ Calls use this</span> : <button className="btn primary" onClick={() => useSetup(tune.champ)}>Use this setup in calls</button>}
               <button className="btn" onClick={startTune}>Test again</button>
             </div>
-            <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>The voice varies from one listen to the next, so if you&apos;re not sure, test again. If the same one wins twice, it&apos;s the one.</div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>The voice varies from one listen to the next. If the same setup wins twice, it&apos;s the one.</div>
           </>
         )}
-        <div className="tuner-now">Calls use now: {comboName(inCalls)}</div>
+        <div className="tuner-now">Calls use now: {describe(startCfg).join(' · ')}</div>
       </div>
       <div className="muted" style={{ fontSize: 12, margin: '14px 0 2px' }}>More (to test things one at a time yourself):</div>
       <Group id="lab-ways" level={3} title="Ways of giving it the Hebrew" hint={HE_READS.find((m) => m.id === inUse)?.name}>

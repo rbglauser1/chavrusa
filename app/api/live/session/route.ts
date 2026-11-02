@@ -37,7 +37,12 @@ export async function POST(req: NextRequest) {
   // the combination the learner chose (Settings), or the standard.
   const askRules = req.nextUrl.searchParams.get('rules');
   const rules = askRules !== null ? askRules.split(',').filter(Boolean) : (s.liveRules ?? []);
-  const short = askRules !== null || s.liveShort !== false;
+  // A test can also ask for the short or the full instructions (the easy test compares them).
+  const askInstr = req.nextUrl.searchParams.get('instr');
+  // …and a speed (the easy test tries the speeds too).
+  const askPace = req.nextUrl.searchParams.get('pace');
+  const pace = (['slow', 'relaxed', 'natural', 'brisk'] as const).find((x) => x === askPace) ?? s.livePace;
+  const short = askInstr === 'short' ? true : askInstr === 'full' ? false : askRules !== null || s.liveShort !== false;
   if (!preview) {
     try {
       const sid = req.nextUrl.searchParams.get('session');
@@ -120,7 +125,7 @@ export async function POST(req: NextRequest) {
 
   // The instructions for a call (or a test), with a given set of rules (so a failed start can try the standard ones).
   const build = (rl: string[]) => {
-    const base = short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rl, s.customRules ?? []) : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal');
+    const base = short ? liveInstructionsShort(s.nusach, pace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rl, s.customRules ?? []) : liveInstructions(s.nusach, pace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal');
     return (preview && !testLine
       ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
       : preview && askMode === 'he-plain' && askRules === null
