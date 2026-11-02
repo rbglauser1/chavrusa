@@ -118,31 +118,52 @@ export async function POST(req: NextRequest) {
   const myWayNote = sayNote(myWay, house && !short);
   const fv = (t: string) => forVoice(t, spell, myWay, house);
 
-  const res = await fetch('https://api.openai.com/v1/live/sessions', {
+  // The instructions for a call (or a test), with a given set of rules (so a failed start can try the standard ones).
+  const build = (rl: string[]) => {
+    const base = short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rl, s.customRules ?? []) : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal');
+    return (preview && !testLine
+      ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
+      : preview && askMode === 'he-plain' && askRules === null
+        ? 'This is a short reading test. Speak first, as soon as the session starts: read the text you are given aloud, once, clearly, then stop.'
+      : preview
+        ? `${fv(base)}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
+        : fv(base + context) + myWayNote) + voiceNote;
+  };
+  const openSession = (instructions: string, vf: typeof voiceField) => fetch('https://api.openai.com/v1/live/sessions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       session: {
         model: LIVE.model,
-        instructions: (preview && !testLine
-          ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
-          : preview && askMode === 'he-plain' && askRules === null
-            ? 'This is a short reading test. Speak first, as soon as the session starts: read the text you are given aloud, once, clearly, then stop.'
-          : preview
-            ? `${fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rules, s.customRules ?? []) : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
-            : fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rules, s.customRules ?? []) : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')) + context) + myWayNote) + voiceNote,
+        instructions,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
-        audio: { output: { voice: voiceField } },
+        audio: { output: { voice: vf } },
         delegation: { type: 'client' },
       },
       transport: { type: 'webrtc', sdp },
     }),
   });
-  const data: any = await res.json().catch(() => ({}));
+  let res = await openSession(build(rules), voiceField);
+  let data: any = await res.json().catch(() => ({}));
+  // A call that OpenAI turns down because of a choice in Settings still starts, the safe way, and says why:
+  // a voice it doesn't offer → Meridian; anything else while the learner's own rules are in use → the standard rules.
+  let notice = '';
+  if (!res.ok && !preview && res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 429) {
+    const why = String(data?.error?.message ?? '');
+    if (/voice/i.test(why) && voice !== 'meridian') {
+      res = await openSession(build(rules), 'meridian');
+      data = await res.json().catch(() => ({}));
+      notice = `The voice "${voice}" isn't available on GPT-Live, so this call uses Meridian. Choose another voice in Settings → Voice.`;
+    } else if (short && rules.length) {
+      res = await openSession(build([]), voiceField);
+      data = await res.json().catch(() => ({}));
+      notice = `The rules you chose for calls wouldn't start a call (${why.slice(0, 120) || res.status}), so this call uses the standard rules.`;
+    }
+  }
   if (!res.ok) {
     return NextResponse.json({ error: `Live voice could not start (${res.status}): ${data?.error?.message ?? 'unknown error'}` }, { status: 502 });
   }
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all' }, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all' }, ...(notice ? { notice } : {}), ...(testLine ? { line: testLine } : {}) });
 }
