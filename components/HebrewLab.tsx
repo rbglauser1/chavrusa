@@ -149,7 +149,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   type Pace = 'slow' | 'relaxed' | 'natural' | 'brisk';
   type Cfg = { mode: HeRead; voice: string; rules: string; instr: 'short' | 'full'; pace: Pace };
   type StageId = 'way' | 'voice' | 'rules' | 'mix' | 'trim' | 'way2' | 'instr' | 'pace' | 'final';
-  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean };
+  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean; back?: Omit<Tune, 'back'>[] };
   const cfgKey = (c: Cfg) => `c:${c.mode}|${c.voice}|${c.rules}|${c.instr}|${c.pace}`;
   const sameCfg = (a: Cfg, b: Cfg) => cfgKey(a) === cfgKey(b);
   const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding rules together, one at a time', trim: 'Taking each rule out again, to see if it’s better without it', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now' };
@@ -234,7 +234,16 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     // A way of giving the Hebrew that won or held its own gets a second look once the rules are chosen; so does the
     // one it was up against.
     const goodWays = st === 'way' && side !== (tune.champOnA ? 'A' : 'B') ? [...new Set([...tune.goodWays, tune.chal.mode, tune.champ.mode])] : tune.goodWays;
-    setTune(advance({ ...tune, champ, good, goodWays, step: tune.step + 1 }));
+    // Kept for Undo: the test as it was before this pick (the last 80 picks).
+    const { back = [], ...before } = tune;
+    setTune({ ...advance({ ...before, champ, good, goodWays, step: tune.step + 1 }), back: [...back, before].slice(-80) });
+  };
+  // Undo: back to the pair before the last pick, as it was (A and B the same way round), as many times as wanted.
+  const undo = () => {
+    if (!tune?.back?.length) return;
+    endRef.current?.();
+    const back = tune.back.slice(0, -1);
+    setTune({ ...tune.back[tune.back.length - 1], back });
   };
   const describe = (c: Cfg) => [
     `Hebrew given as: ${HE_READS.find((m) => m.id === c.mode)?.name ?? c.mode}`,
@@ -279,7 +288,11 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             </div>
             <button className="btn" style={{ width: '100%', marginTop: 8 }} onClick={() => pick('same')}>About the same</button>
             {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
-            <div className="tuner-foot">Not sure? Hear them again. <button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop and start over</button></div>
+            <div className="tuner-foot">
+              {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
+              <span>Not sure? Hear them again.</span>
+              <button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop and start over</button>
+            </div>
           </>
         )}
         {tune?.done && (
@@ -289,6 +302,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             <div className="he-lab-btns">
               {setupInCalls ? <span className="he-lab-inuse">✓ Calls use this</span> : <button className="btn primary" onClick={() => useSetup(tune.champ)}>Use this setup in calls</button>}
               <button className="btn" onClick={startTune}>Test again</button>
+              {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
               <button className="linkish" onClick={() => setTune(null)}>Done</button>
             </div>
             <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>The voice varies from one listen to the next. If the same setup wins twice, it&apos;s the one.</div>

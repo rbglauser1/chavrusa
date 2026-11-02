@@ -1626,3 +1626,4 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .tuner-now { margin-top: 10px; font-size: 12px; color: var(--soft); }
 .tuner-check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 0 0 10px; }
 .tuner-setup { margin: 6px 0 10px; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.tuner-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
