@@ -33,7 +33,18 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   // ("v:cedar").
   const [playing, setPlaying] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ mode: string; text: string } | null>(null);
-  const [votes, setVotesRaw] = useState<Votes>(() => { try { return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}'); } catch { return {}; } });
+  const [votes, setVotesRaw] = useState<Votes>(() => {
+    try {
+      const v: Votes = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
+      // Once: forget the voices the old check marked unavailable (it could be wrong), so they get a fair try again.
+      if (!localStorage.getItem('chavrusa-voice-gone-reset-1')) {
+        for (const k of Object.keys(v)) if (v[k]?.gone) delete v[k];
+        localStorage.setItem(VOTES_KEY, JSON.stringify(v));
+        localStorage.setItem('chavrusa-voice-gone-reset-1', '1');
+      }
+      return v;
+    } catch { return {}; }
+  });
   const setVotes = (f: (v: Votes) => Votes) => setVotesRaw((v) => { const n = f(v); try { localStorage.setItem(VOTES_KEY, JSON.stringify(n)); } catch { /* not kept */ } return n; });
   // The rule lab: which rules are switched on for the next listen (starts from what calls use), and the score so far.
   // The built-in rules and the ones he wrote himself (kept in his settings, so calls can use them too).
@@ -133,9 +144,15 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       const d = await res.json().catch(() => ({}));
       if (!res.ok || !d.sdp) {
         said = 'x'; end();
-        // OpenAI turned this voice down: it isn't on GPT-Live (remembered, so it's set aside).
-        if (voice && /\(4\d\d\): .*voice/i.test(String(d.error ?? ''))) { setVotes((v) => ({ ...v, [voice]: { good: 0, bad: 0, gone: true } })); note(`Not available on GPT-Live. OpenAI says: ${String(d.error).replace(/^Live voice could not start \(\d+\): /, '').slice(0, 200)}`); return; }
-        note(d.error ?? 'Could not start the test.'); return;
+        const err = String(d.error ?? '');
+        const why = err.replace(/^Live voice could not start \(\d+\): /, '').slice(0, 220);
+        const status = Number(err.match(/\((\d{3})\)/)?.[1] ?? 0);
+        // Only a clear "this voice doesn't exist" sets a voice aside. (Before Nov 2 any refusal that mentioned the
+        // word "voice" did, so a busy moment, too many listens in a row, wrongly marked voices as unavailable.)
+        const noSuchVoice = voice && voice !== 'meridian' && (status === 400 || status === 404) && /(invalid|unsupported|not supported|unknown|not found|does not exist|not available)[^.]*voice|voice[^.]*(invalid|unsupported|not supported|unknown|not found|does not exist|not available)/i.test(why);
+        if (noSuchVoice) { setVotes((v) => ({ ...v, [voice]: { good: 0, bad: 0, gone: true } })); note(`Not available on GPT-Live. OpenAI says: ${why}`); return; }
+        if (status === 429 || /rate limit|too many|concurrent/i.test(why)) { note(`OpenAI is busy right now (too many listens in a row). Wait about a minute, then tap Hear again. OpenAI says: ${why}`); return; }
+        note(err ? `Couldn't play this one. OpenAI says: ${why}` : 'Could not start the test.'); return;
       }
       await pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
     } catch (e) { said = 'x'; end(); note((e as Error).message); }
@@ -287,7 +304,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
               })}
             </div>
             <button className="btn" style={{ width: '100%', marginTop: 8 }} onClick={() => pick('same')}>About the same</button>
-            {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
+            {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.mode.startsWith('A:') ? 'A' : 'B'}: {msg.text}</div>}
             <div className="tuner-foot">
               {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
               <span>Not sure? Hear them again.</span>
