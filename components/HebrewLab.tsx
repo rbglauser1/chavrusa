@@ -170,7 +170,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const cfgKey = (c: Cfg) => `c:${c.mode}|${c.voice}|${c.rules}|${c.instr}|${c.pace}`;
   const sameCfg = (a: Cfg, b: Cfg) => cfgKey(a) === cfgKey(b);
   const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding rules together, one at a time', trim: 'Taking each rule out again, to see if it’s better without it', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now' };
-  const [withVoices, setWithVoices] = useState(true);
+  const [withVoices, setWithVoices] = useState(false); // off: the test is about the rules and instructions, with your own voice
   const [withPace, setWithPace] = useState(true);
   // The test is kept on this device after every pair, so leaving Settings or closing the app doesn't lose it: it comes
   // back right where it was (with the same line), until it's finished and saved or stopped.
@@ -239,9 +239,19 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   };
   const tuneA = tune?.chal ? (tune.champOnA ? tune.champ : tune.chal) : null;
   const tuneB = tune?.chal ? (tune.champOnA ? tune.chal : tune.champ) : null;
+  // Which of this pair's two readings he has heard (a pick is only allowed after hearing both), and a short "got it"
+  // after each pick, so it's clear the pick counted and a new pair is up.
+  const pairId = tune ? `${tune.si}:${tune.step}:${tune.back?.length ?? 0}` : '';
+  const [heardAB, setHeardAB] = useState<{ id: string; a: boolean; b: boolean }>({ id: '', a: false, b: false });
+  const heardBoth = heardAB.id === pairId && heardAB.a && heardAB.b;
+  const markHeard = (side: 'A' | 'B') => setHeardAB((h) => (h.id === pairId ? { ...h, [side === 'A' ? 'a' : 'b']: true } : { id: pairId, a: side === 'A', b: side === 'B' }));
+  const [flash, setFlash] = useState('');
+  const flashT = useRef(0);
   const pick = (side: 'A' | 'B' | 'same') => {
-    if (!tune?.chal) return;
+    if (!tune?.chal || !heardBoth) return;
     endRef.current?.();
+    setFlash(side === 'same' ? '✓ Got it: about the same. Here is the next pair.' : `✓ Got it: ${side} was better. Here is the next pair.`);
+    window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2500);
     const st = tune.stages[tune.si];
     const chalWon = side !== 'same' && (side === 'A') !== tune.champOnA;
     // A rule that won or held its own on its own is worth trying together with the others.
@@ -261,7 +271,21 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     endRef.current?.();
     const back = tune.back.slice(0, -1);
     setTune({ ...tune.back[tune.back.length - 1], back });
+    setFlash('↩ Back one pair.');
+    window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2500);
   };
+  // Back to the first pair of this step (as it was then), to redo the whole step.
+  const redoStep = () => {
+    if (!tune?.back?.length) return;
+    endRef.current?.();
+    let i = tune.back.length;
+    while (i > 0 && tune.back[i - 1].si === tune.si) i--;
+    if (i === tune.back.length) return;
+    setTune({ ...tune.back[i], back: tune.back.slice(0, i) });
+    setFlash('↩ Back to the start of this step.');
+    window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2500);
+  };
+  const stepStarted = !!tune?.back?.length && tune.back[tune.back.length - 1].si === tune.si;
   const describe = (c: Cfg) => [
     `Hebrew given as: ${HE_READS.find((m) => m.id === c.mode)?.name ?? c.mode}`,
     `Voice: ${LIVE_VOICES.find((v) => v.id === c.voice)?.name ?? c.voice}`,
@@ -283,30 +307,33 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         {!tune && (
           <>
             <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the line above read two ways, A and B, and tap the one that sounds better. Step by step it tries everything that changes how the Hebrew sounds: how the Hebrew is given to the voice, the voices, every rule on its own (yours too), adding rules together one at a time (each addition has to beat the set without it), taking each one out again to check it still helps, how the Hebrew is given again with those rules, short or full instructions, and the speed. Each step keeps the best so far, and at the end the winner has to beat what calls use now. About 30–45 pairs, about 2¢ a pair (60–90¢ in all). You can stop and start again any time.</div>
-            <label className="tuner-check"><input type="checkbox" checked={withVoices} onChange={(e) => setWithVoices(e.target.checked)} /> Compare the voices too ({voicesOk.length - 1} pairs)</label>
+            <label className="tuner-check"><input type="checkbox" checked={withVoices} onChange={(e) => setWithVoices(e.target.checked)} /> Compare the voices too ({voicesOk.length - 1} pairs). Each voice sounds different; leave this off to keep your own voice and test only the rules and instructions.</label>
             <label className="tuner-check"><input type="checkbox" checked={withPace} onChange={(e) => setWithPace(e.target.checked)} /> Compare the speaking speeds too (3 pairs; the speed also applies to the rest of the call)</label>
             <button className="btn primary" disabled={disabled || !text.trim()} onClick={startTune}>Start</button>
           </>
         )}
         {tune && !tune.done && tuneA && tuneB && (
           <>
-            <div className="tuner-step">Step {tune.si + 1} of {tune.stages.length}: {STAGE_NAME[tune.stages[tune.si]]} · saved as you go</div>
+            <div className="tuner-step"><b>Step {tune.si + 1} of {tune.stages.length}:</b> {STAGE_NAME[tune.stages[tune.si]]} · <b>pair {tune.step + 1} of {challengers(tune.stages[tune.si], tune).length}</b> · saved as you go</div>
+            {flash && <div className="tuner-flash">{flash}</div>}
             <div className="tuner-ab">
               {(['A', 'B'] as const).map((side) => {
                 const c = side === 'A' ? tuneA : tuneB;
                 const key = `${side}:${cfgKey(c)}`;
                 return (
                   <div key={side} className="tuner-side">
-                    <button className="btn tuner-play" disabled={disabled} onClick={() => void hear(c.mode, c.voice, c.rules, c.instr, key, c.pace)}>{playing === key ? '■ Stop' : `▶ Hear ${side}`}</button>
-                    <button className="btn primary" onClick={() => pick(side)}>{side} is better</button>
+                    <button className="btn tuner-play" disabled={disabled} onClick={() => { markHeard(side); void hear(c.mode, c.voice, c.rules, c.instr, key, c.pace); }}>{playing === key ? '■ Stop' : `▶ Hear ${side}`}{heardAB.id === pairId && heardAB[side === 'A' ? 'a' : 'b'] && playing !== key ? ' ✓' : ''}</button>
+                    <button className="btn primary" disabled={!heardBoth} onClick={() => pick(side)}>{side} is better</button>
                   </div>
                 );
               })}
             </div>
-            <button className="btn" style={{ width: '100%', marginTop: 8 }} onClick={() => pick('same')}>About the same</button>
+            <button className="btn" style={{ width: '100%', marginTop: 8 }} disabled={!heardBoth} onClick={() => pick('same')}>About the same</button>
+            {!heardBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hear both A and B first; then the buttons to choose come on.</div>}
             {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.mode.startsWith('A:') ? 'A' : 'B'}: {msg.text}</div>}
             <div className="tuner-foot">
               {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
+              {stepStarted && <button className="btn" onClick={redoStep}>↺ Redo this step</button>}
               <span>Not sure? Hear them again.</span>
               <button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop and start over</button>
             </div>
@@ -318,6 +345,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             <ul className="tuner-setup">{describe(tune.champ).map((x) => <li key={x}>{x}</li>)}</ul>
             <div className="he-lab-btns">
               {setupInCalls ? <span className="he-lab-inuse">✓ Calls use this</span> : <button className="btn primary" onClick={() => useSetup(tune.champ)}>Use this setup in calls</button>}
+              {tune.champ.voice !== tune.start.voice && <button className="btn" onClick={() => useSetup({ ...tune.champ, voice: tune.start.voice })}>Use it, but keep {LIVE_VOICES.find((v) => v.id === tune.start.voice)?.name.replace(/ \(.*\)$/, '') ?? tune.start.voice}</button>}
               <button className="btn" onClick={startTune}>Test again</button>
               {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
               <button className="linkish" onClick={() => setTune(null)}>Done</button>

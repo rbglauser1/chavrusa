@@ -1627,3 +1627,5 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .tuner-check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 0 0 10px; }
 .tuner-setup { margin: 6px 0 10px; padding-left: 18px; font-size: 13px; line-height: 1.5; }
 .tuner-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.tuner-flash { margin: 0 0 8px; padding: 7px 10px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 14%, transparent); font-size: 13px; font-weight: 500; }
+.tuner-side .btn:disabled { opacity: .45; }
