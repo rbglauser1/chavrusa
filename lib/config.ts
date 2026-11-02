@@ -363,6 +363,7 @@ export interface Settings {
   seferEnglish: boolean;
   gptSpell?: 'stressed' | 'joined' | 'plain';       // GPT-Live: how lashon kodesh is spelled out for it
   gptMyWay?: { word: string; say: string }[];       // GPT-Live: "say it my way" list
+  liveRules?: string[];          // the rule lab's combination for calls ([] = the standard: guide + key; ['none'] = no rules)
   liveShort?: boolean;           // the voice gets the short instructions (default) or the full ones
   liveFresh?: boolean;           // quietly start the voice fresh at each new section (default on)
   liveCheck?: boolean;           // check what the voice said against the text; have it read anything it skipped (default on)
@@ -440,6 +441,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveEngine: 'gpt',
   liveSteady: false,
   liveShort: true,
+  liveRules: [],
   liveFresh: true,
   liveCheck: true,
   houseSay: true,

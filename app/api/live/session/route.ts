@@ -33,7 +33,11 @@ export async function POST(req: NextRequest) {
   let lastAt: string | null = null;
   let pointed = ''; // the line the learner tapped in the Sefer since we last spoke: start there
   // Short instructions (Settings → Voice → Instructions), the default: about a third of the words.
-  const short = s.liveShort !== false;
+  // The rule lab: a test can ask for a combination of pronunciation rules (always with the short instructions); calls use
+  // the combination the learner chose (Settings), or the standard.
+  const askRules = req.nextUrl.searchParams.get('rules');
+  const rules = askRules !== null ? askRules.split(',').filter(Boolean) : (s.liveRules ?? []);
+  const short = askRules !== null || s.liveShort !== false;
   if (!preview) {
     try {
       const sid = req.nextUrl.searchParams.get('session');
@@ -122,11 +126,11 @@ export async function POST(req: NextRequest) {
         model: LIVE.model,
         instructions: (preview && !testLine
           ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
-          : preview && askMode === 'he-plain'
+          : preview && askMode === 'he-plain' && askRules === null
             ? 'This is a short reading test. Speak first, as soon as the session starts: read the text you are given aloud, once, clearly, then stop.'
           : preview
-            ? `${fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal') : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
-            : fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal') : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')) + context) + myWayNote) + voiceNote,
+            ? `${fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rules) : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
+            : fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rules) : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')) + context) + myWayNote) + voiceNote,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },

@@ -4,12 +4,16 @@
 // would read it. Pick the one that sounds best by ear, and the app uses it everywhere in calls.
 import { useEffect, useRef, useState } from 'react';
 import { LIVE_VOICES, type Settings } from '@/lib/config';
+import { RULES, STANDARD_RULES } from '@/lib/live';
 import { hasNikud, HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
 import { silentWav } from './useVoice';
 
 const TEXT_KEY = 'chavrusa-hebrew-test-line';
 const VOTES_KEY = 'chavrusa-voice-votes'; // per voice: how many listens were good / not (this device)
 type Votes = Record<string, { good: number; bad: number; gone?: boolean }>;
+const COMBO_KEY = 'chavrusa-rule-combos'; // the rule lab: per combination of rules, good / not listens (this device)
+const comboId = (ids: string[]) => (ids.length ? RULES.filter((r) => ids.includes(r.id)).map((r) => r.id).join(',') : 'none');
+const comboName = (id: string) => (id === 'none' ? 'No rules at all' : id.split(',').map((x) => RULES.find((r) => r.id === x)?.name ?? x).join(' + '));
 const LINES = [
   { name: 'Mishnah', he: 'הָאִשָּׁה נִקְנֵית בְּשָׁלֹשׁ דְּרָכִים, וְקוֹנָה אֶת עַצְמָהּ בִּשְׁתֵּי דְרָכִים. נִקְנֵית בְּכֶסֶף, בִּשְׁטָר, וּבְבִיאָה.' },
   { name: 'Beis Shammai', he: 'בְּכֶסֶף, בֵּית שַׁמַּאי אוֹמְרִים: בְּדִינָר וּבְשָׁוֶה דִינָר. וּבֵית הִלֵּל אוֹמְרִים: בִּפְרוּטָה וּבְשָׁוֶה פְרוּטָה.' },
@@ -27,6 +31,14 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const [msg, setMsg] = useState<{ mode: string; text: string } | null>(null);
   const [votes, setVotesRaw] = useState<Votes>(() => { try { return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}'); } catch { return {}; } });
   const setVotes = (f: (v: Votes) => Votes) => setVotesRaw((v) => { const n = f(v); try { localStorage.setItem(VOTES_KEY, JSON.stringify(n)); } catch { /* not kept */ } return n; });
+  // The rule lab: which rules are switched on for the next listen (starts from what calls use), and the score so far.
+  const callRules = s.liveRules?.length ? s.liveRules : STANDARD_RULES;
+  const [combo, setCombo] = useState<string[]>(() => (callRules[0] === 'none' ? [] : callRules));
+  const [combos, setCombosRaw] = useState<Record<string, { good: number; bad: number }>>(() => { try { return JSON.parse(localStorage.getItem(COMBO_KEY) || '{}'); } catch { return {}; } });
+  const setCombos = (f: (v: Record<string, { good: number; bad: number }>) => Record<string, { good: number; bad: number }>) => setCombosRaw((v) => { const n = f(v); try { localStorage.setItem(COMBO_KEY, JSON.stringify(n)); } catch { /* not kept */ } return n; });
+  const cid = comboId(combo);
+  const voteCombo = (good: boolean) => setCombos((v) => ({ ...v, [cid]: { good: (v[cid]?.good ?? 0) + (good ? 1 : 0), bad: (v[cid]?.bad ?? 0) + (good ? 0 : 1) } }));
+  const inCalls = comboId(callRules[0] === 'none' ? [] : callRules);
   const vote = (id: string, good: boolean) => setVotes((v) => ({ ...v, [id]: { good: (v[id]?.good ?? 0) + (good ? 1 : 0), bad: (v[id]?.bad ?? 0) + (good ? 0 : 1) } }));
   const el = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -35,8 +47,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const inUse: HeRead = s.heRead ?? 'join-kh';
 
   // Have GPT-Live read the line given this way, the way a call would (a short Live connection, about a cent).
-  async function hear(mode: HeRead, voice?: string) {
-    const key = voice ? `v:${voice}` : mode;
+  async function hear(mode: HeRead, voice?: string, rules?: string) {
+    const key = rules !== undefined ? 'rules' : voice ? `v:${voice}` : mode;
     if (playing) { endRef.current?.(); if (playing === key) return; }
     setMsg(null);
     const note = (t: string) => setMsg({ mode: key, text: t });
@@ -87,6 +99,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const q = new URLSearchParams({ preview: '1', voice: voice || s.liveVoice || 'meridian', say: text, mode });
+      if (rules !== undefined) q.set('rules', rules);
       const res = await fetch(`/api/live/session?${q}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const d = await res.json().catch(() => ({}));
       if (!res.ok || !d.sdp) {
@@ -119,6 +132,35 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
           </div>
         ))}
       </div>
+      <label style={{ marginTop: 16 }}>Try combinations of rules</label>
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The voice&apos;s pronunciation rules, as separate pieces. Switch some on or off, hear the line, and mark how it sounded. Try each combination a few times (the voice varies), and keep the one with the most good listens for calls. Uses your voice and the way of reading in use above.</div>
+      <div className="presets">
+        {RULES.map((r) => <button key={r.id} className={`chip ${combo.includes(r.id) ? 'on' : ''}`} title={r.about} onClick={() => setCombo((c) => (c.includes(r.id) ? c.filter((x) => x !== r.id) : [...c, r.id]))}>{r.name}</button>)}
+      </div>
+      <ul className="rule-lab-about">{RULES.filter((r) => combo.includes(r.id)).map((r) => <li key={r.id}><b>{r.name}:</b> {r.about}</li>)}{!combo.length && <li>No pronunciation rules at all (only the voice&apos;s basic instructions), to hear what it does on its own.</li>}</ul>
+      <div className="he-lab-row on">
+        <div className="he-lab-name">{comboName(cid)}{combos[cid] ? <span className="he-lab-tally"> · {combos[cid].good} good of {combos[cid].good + combos[cid].bad}</span> : null}</div>
+        <div className="he-lab-btns">
+          <button className="btn primary" disabled={disabled || !text.trim()} onClick={() => void hear(inUse, undefined, cid)}>{playing === 'rules' ? '■ Stop' : '▶ Hear'}</button>
+          <button className="btn" aria-label="Good" onClick={() => voteCombo(true)}>👍</button>
+          <button className="btn" aria-label="Not good" onClick={() => voteCombo(false)}>👎</button>
+          {inCalls === cid ? <span className="he-lab-inuse">✓ In calls</span> : <button className="btn" onClick={() => onChange({ liveRules: cid === 'none' ? ['none'] : cid.split(','), liveShort: true })}>Use in calls</button>}
+        </div>
+        {msg?.mode === 'rules' && msg.text && <div className="he-lab-said">{msg.text}</div>}
+      </div>
+      {Object.keys(combos).length > 0 && (
+        <div className="rule-lab-scores">
+          <div className="muted" style={{ fontSize: 12, margin: '8px 0 4px' }}>Scores so far (best first). Tap one to load it.</div>
+          {Object.entries(combos).sort((a, b) => (b[1].good / Math.max(1, b[1].good + b[1].bad)) - (a[1].good / Math.max(1, a[1].good + a[1].bad)) || b[1].good - a[1].good).map(([id, t]) => (
+            <button key={id} className={`rule-lab-score ${id === cid ? 'on' : ''}`} onClick={() => setCombo(id === 'none' ? [] : id.split(','))}>
+              <span>{comboName(id)}{id === inCalls ? ' (in calls)' : ''}</span><span>{t.good} of {t.good + t.bad}</span>
+            </button>
+          ))}
+          <button className="linkish" style={{ marginTop: 6, fontSize: 12 }} onClick={() => setCombos(() => ({}))}>Clear the scores</button>
+        </div>
+      )}
+      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Calls use: {comboName(inCalls)}{s.liveRules?.length ? <> · <button className="linkish" onClick={() => onChange({ liveRules: [] })}>Back to the standard</button></> : ' (the standard)'}. The rules apply with the Short instructions.</div>
+
       <label style={{ marginTop: 16 }}>Which voice is steadiest</label>
       <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The same line in each voice, read the way in use above. A voice can sound great once and not the next time, so hear each a few times and mark every listen 👍 or 👎. The one with the most good listens is the steadiest. About a cent per listen.</div>
       <div className="he-lab-list">

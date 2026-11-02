@@ -1560,3 +1560,8 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .he-lab-tally { font-weight: 400; color: var(--soft); font-size: 12px; }
 .he-lab-row.gone { opacity: .55; }
 .linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; }
+/* The rule lab. */
+.rule-lab-about { margin: 6px 0 8px; padding-left: 18px; font-size: 12px; color: var(--soft); line-height: 1.4; }
+.rule-lab-scores { display: flex; flex-direction: column; gap: 4px; }
+.rule-lab-score { display: flex; justify-content: space-between; gap: 10px; text-align: left; background: none; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
+.rule-lab-score.on { border-color: var(--accent); }

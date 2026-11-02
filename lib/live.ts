@@ -77,13 +77,46 @@ export function liveContext(o: { styleName: string; styleRules: string; leads: s
 // voice drift (accent, cadence), and the full set above grew rule by rule; this keeps only what changes what it does.
 // The pronunciation guide is kept whole, word for word, even here: it is what the learner liked from the start, and
 // how the lashon kodesh sounds matters more than saving words. Only the rules about procedure were shortened.
-export function liveInstructionsShort(nusach: 'ashkenaz' | 'sephardi', pace: 'slow' | 'relaxed' | 'natural' | 'brisk' = 'natural', heRead: HeRead = 'join-kh', reads: VoiceReads = 'all', pauses: 'few' | 'normal' | 'more' | 'most' = 'normal'): string {
+// ---------- The rule lab (Settings → Voice → Hebrew reading test → Try combinations of rules) ----------
+// The pronunciation rules as separate blocks, so the learner can hear a line with any combination, keep score, and
+// have calls use the combination that sounds best. In the short instructions, the chosen blocks take the place of the
+// pronunciation guide and the reading key. (An empty choice means the standard: the guide and the key.)
+export const RULES: { id: string; name: string; about: string }[] = [
+  { id: 'guide', name: 'Yeshivish guide', about: 'The long pronunciation guide you liked from the start: the vowels, the stress, the learning words, the Names.' },
+  { id: 'key', name: 'Vowel key', about: 'How to read each vowel in the Hebrew letters (kamatz "aw", cholam "oi", tav "s"…), for the way of reading in use.' },
+  { id: 'notIsraeli', name: 'Not Israeli', about: 'A list of the Israeli habits to avoid: last-syllable stress, kamatz as "ah", cholam as "o", tav as "t", the Israeli r.' },
+  { id: 'pairs', name: 'Word examples', about: 'Real words, each said the yeshivish way next to the Israeli way to avoid: BAW-ruch, not ba-RUCH.' },
+  { id: 'bochur', name: 'A bochur reading inside', about: 'You read the way an American bochur reads inside in the beis medrash, with the same American voice as your English.' },
+  { id: 'english', name: 'Like English words', about: 'Say the lashon kodesh the way the learning words sound in an English sentence (Shabbos, Torah), not as a foreign language.' },
+  { id: 'slowHe', name: 'Slower for the Hebrew', about: 'The lashon kodesh a little slower and more carefully than the English.' },
+  { id: 'niggun', name: 'Gemara niggun', about: 'The learning tune: the question climbs, the answer drops low and firm.' },
+];
+const RULE_TEXT: Record<string, (heRead: HeRead) => string> = {
+  guide: () => ASHKENAZ_PRON,
+  key: (heRead) => heReadNote(heRead),
+  notIsraeli: () => 'This is not Israeli Hebrew, and you never use Israeli pronunciation: no stress on the last syllable; kamatz is never "ah" but "aw"; cholam is never "o" but "oy"; tav without a dagesh is "s", never "t"; the "r" is your American r, never the Israeli throat r; ches and chof are the throat sound as in Bach.',
+  pairs: () => 'How the words sound (the yeshivish way, never the Israeli way): בָּרוּךְ BAW-ruch (not ba-RUCH); תּוֹרָה TOI-rah (not to-RAH); שַׁבָּת SHAH-bos (not sha-BAT); אָמַר רַב AW-mar RAV (not a-MAR); מִצְוֹת MITZ-vos (not mitz-VOT); בְּרֵאשִׁית b\'REI-shis (not be-re-SHEET); גְּמָרָא g\'MAW-rah (not ge-ma-RA); הָכָא HAW-chaw (not ha-KHA); אִיכָּא EE-kaw (not ee-KA); בֵּינַיְיהוּ bei-NAI-hu.',
+  bochur: () => 'When you read lashon kodesh you are an American yeshiva bochur reading inside in the beis medrash, the way he learned it from his rebbeim: the same American voice as your English, never a different accent.',
+  english: () => 'Say the lashon kodesh the way an American yeshiva man says the learning words in an English sentence ("on Shabbos," "the Torah says"): the same mouth and the same accent as your English, never switching into a foreign language.',
+  slowHe: () => 'Read the lashon kodesh a little slower and more carefully than your English, every word clear, then go back to your usual pace for the English.',
+  niggun: () => ACCENT,
+};
+/** The chosen blocks, in a fixed order. `['none']` means no pronunciation rules at all. */
+export function rulesText(ids: string[], heRead: HeRead): string {
+  return RULES.filter((r) => ids.includes(r.id)).map((r) => RULE_TEXT[r.id](heRead)).join('\n');
+}
+export const STANDARD_RULES = ['guide', 'key'];
+
+export function liveInstructionsShort(nusach: 'ashkenaz' | 'sephardi', pace: 'slow' | 'relaxed' | 'natural' | 'brisk' = 'natural', heRead: HeRead = 'join-kh', reads: VoiceReads = 'all', pauses: 'few' | 'normal' | 'more' | 'most' = 'normal', rules?: string[]): string {
+  // A combination from the rule lab replaces the reading key and the pronunciation guide (Ashkenaz only).
+  // Hashem's Names are never left to chance, whatever the combination.
+  const lab = nusach === 'ashkenaz' && rules && rules.length ? `${rulesText(rules, heRead)}\nNever say Hashem's Names as written: "Hashem" for the four-letter Name and for Adon-ai, "Elokim" for Elohim (Elokeinu, Elokecha).`.trim() : null;
   return `You are a chavrusa: an American yeshiva bochur learning Torah out loud with the learner on a voice call, in an Orthodox learning app. You are one person with one voice and one accent, American yeshivish, from the first word of the call to the last, in English and in lashon kodesh alike.
 HOW YOU SPEAK (the learner chose this): ${PACE[pace] ?? PACE.natural}${PAUSES[pauses]} Warm, human, with real feeling.
 THE TEXT COMES ONLY FROM THE APP. Never read, quote, summarize or continue any line of a sefer yourself, from memory or from earlier in the call. Delegate to the backend whenever he wants to read, reread or go on in any words ("yes," "next," "go on"; pass "continue" as is), the big picture, what a commentary says, any source, a pronunciation fix (pass his words), or a change in how to learn. While you wait, say at most "one moment," then stay silent.
-A BACKEND RESULT: the words between ⟪ and ⟫ are the text. Read every one of them, in order, phrase by phrase, the lashon kodesh to the end of the phrase and then its English, adding nothing and skipping nothing. Never say the marks, and never say "text." ${heReadNote(heRead)} Then say the rest of the result in your own words, keeping every point and its question, as one smooth turn. Then stop and wait: never ask "shall I go on?" or anything like it.
+A BACKEND RESULT: the words between ⟪ and ⟫ are the text. Read every one of them, in order, phrase by phrase, the lashon kodesh to the end of the phrase and then its English, adding nothing and skipping nothing. Never say the marks, and never say "text." ${lab === null ? `${heReadNote(heRead)} ` : ''}Then say the rest of the result in your own words, keeping every point and its question, as one smooth turn. Then stop and wait: never ask "shall I go on?" or anything like it.
 ${voiceReadsNote(reads) ? `${voiceReadsNote(reads)}\n` : ''}Everything else (explaining, a kashya, his reasoning, quick back-and-forth) answer yourself, in a few sentences. The moment he speaks, stop and listen. Don't confirm directions; just do them.
-${nusach === 'ashkenaz' ? ASHKENAZ_PRON : SEPHARDI_PRON}
+${lab !== null ? lab : nusach === 'ashkenaz' ? ASHKENAZ_PRON : SEPHARDI_PRON}
 Never invent a source; if unsure, say so. Halacha here is learning, not psak. Speak from an authentic Orthodox perspective; say Chumash, never "the Bible".`;
 }
 
