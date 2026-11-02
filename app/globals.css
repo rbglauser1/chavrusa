@@ -1605,3 +1605,11 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 /* Rule lab: what calls use now, and each rule's own row. */
 .rule-lab-now { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; margin: 2px 0 10px; padding: 9px 11px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, transparent); font-size: 13px; }
 .rule-lab-what { font-size: 12px; color: var(--soft); line-height: 1.35; margin: 2px 0 6px; }
+/* Call recorder: each call shows what it really used, and its whole log on View. */
+.calllog-item { border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); padding: 8px 0; }
+.calllog-item .calllog-row { flex-wrap: wrap; margin: 0 0 6px; }
+.calllog-item .calllog-row span { flex-basis: 100%; font-weight: 500; }
+.calllog-used { font-size: 12.5px; line-height: 1.45; color: var(--ink); padding: 6px 9px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.calllog-used.muted { color: var(--soft); background: none; padding: 0; }
+.calllog-notice { color: var(--danger, #b3261e); margin-top: 3px; }
+.calllog-text { margin: 8px 0 0; max-height: 50dvh; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: 11px; line-height: 1.4; padding: 8px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); color: var(--ink); }
