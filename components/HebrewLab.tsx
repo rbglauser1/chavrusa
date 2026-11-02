@@ -155,7 +155,11 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding rules together, one at a time', trim: 'Taking each rule out again, to see if it’s better without it', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now' };
   const [withVoices, setWithVoices] = useState(true);
   const [withPace, setWithPace] = useState(true);
-  const [tune, setTune] = useState<Tune | null>(null);
+  // The test is kept on this device after every pair, so leaving Settings or closing the app doesn't lose it: it comes
+  // back right where it was (with the same line), until it's finished and saved or stopped.
+  const TUNE_KEY = 'chavrusa-voice-tune';
+  const [tune, setTuneRaw] = useState<Tune | null>(() => { try { const t = JSON.parse(localStorage.getItem(TUNE_KEY) || 'null'); return t && Array.isArray(t.stages) ? t : null; } catch { return null; } });
+  const setTune = (t: Tune | null) => { setTuneRaw(t); try { if (t) localStorage.setItem(TUNE_KEY, JSON.stringify(t)); else localStorage.removeItem(TUNE_KEY); } catch { /* not kept */ } };
   const startCfg: Cfg = { mode: inUse, voice: s.liveVoice || 'meridian', rules: inCalls, instr: s.liveShort !== false ? 'short' : 'full', pace: (s.livePace ?? 'natural') as Pace };
   const voicesOk = LIVE_VOICES.map((v) => v.id).filter((id) => !votes[id]?.gone);
   // The changes each step tries, as "the best so far, with one thing different".
@@ -246,7 +250,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         )}
         {tune && !tune.done && tuneA && tuneB && (
           <>
-            <div className="tuner-step">Step {tune.si + 1} of {tune.stages.length}: {STAGE_NAME[tune.stages[tune.si]]}</div>
+            <div className="tuner-step">Step {tune.si + 1} of {tune.stages.length}: {STAGE_NAME[tune.stages[tune.si]]} · saved as you go</div>
             <div className="tuner-ab">
               {(['A', 'B'] as const).map((side) => {
                 const c = side === 'A' ? tuneA : tuneB;
@@ -261,7 +265,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             </div>
             <button className="btn" style={{ width: '100%', marginTop: 8 }} onClick={() => pick('same')}>About the same</button>
             {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
-            <div className="tuner-foot">Not sure? Hear them again. <button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop the test</button></div>
+            <div className="tuner-foot">Not sure? Hear them again. <button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop and start over</button></div>
           </>
         )}
         {tune?.done && (
@@ -271,6 +275,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             <div className="he-lab-btns">
               {setupInCalls ? <span className="he-lab-inuse">✓ Calls use this</span> : <button className="btn primary" onClick={() => useSetup(tune.champ)}>Use this setup in calls</button>}
               <button className="btn" onClick={startTune}>Test again</button>
+              <button className="linkish" onClick={() => setTune(null)}>Done</button>
             </div>
             <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>The voice varies from one listen to the next. If the same setup wins twice, it&apos;s the one.</div>
           </>
