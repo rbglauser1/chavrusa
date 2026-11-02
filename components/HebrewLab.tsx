@@ -139,13 +139,76 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     } catch (e) { said = 'x'; end(); note((e as Error).message); }
   }
 
+  // ---------- The easy way: "which sounds better, A or B?" ----------
+  // Every setup of the rules (no rules, the standard, each rule alone, each of his own) takes a turn against the best
+  // one so far. He only hears two readings and taps the better one; which is which stays hidden until the end, so he
+  // judges by ear alone. The winner can then go into calls with one tap.
+  type Tune = { cands: string[]; champ: string; next: number; champOnA: boolean; done: boolean; beat: string[] };
+  const [tune, setTune] = useState<Tune | null>(null);
+  const startTune = () => {
+    const cands = ['none', comboId(STANDARD_RULES), ...allRules.map((r) => r.id)];
+    setTune({ cands, champ: cands[0], next: 1, champOnA: Math.random() < 0.5, done: false, beat: [] });
+  };
+  const tuneA = tune && !tune.done ? (tune.champOnA ? tune.champ : tune.cands[tune.next]) : '';
+  const tuneB = tune && !tune.done ? (tune.champOnA ? tune.cands[tune.next] : tune.champ) : '';
+  const pick = (side: 'A' | 'B' | 'same') => {
+    if (!tune || tune.done) return;
+    endRef.current?.();
+    const challenger = tune.cands[tune.next];
+    const winner = side === 'same' ? tune.champ : side === 'A' ? tuneA : tuneB;
+    const loser = winner === tune.champ ? challenger : tune.champ;
+    const next = tune.next + 1;
+    setTune({ ...tune, champ: winner, next, champOnA: Math.random() < 0.5, done: next >= tune.cands.length, beat: [...tune.beat, loser] });
+  };
+
   return (
     <div className="field he-lab">
       <label>Hebrew reading test</label>
-      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The same line, given to your voice in different ways. Tap ▶ on each and listen, then tap “Use this” on the one that sounds cleanest. Calls use it from the next Talk. About a cent per listen.</div>
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>Choose a line (or paste one), then use the easy test below. Whatever you choose applies from the next Talk.</div>
       <div className="presets">{LINES.map((l) => <button key={l.name} className={`chip ${l.he === text ? 'on' : ''}`} onClick={() => setText(l.he)}>{l.name}</button>)}</div>
       <textarea rows={2} dir="rtl" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a line with nikud" />
       {text.trim() && !hasNikud(text) && <div className="goto-msg" style={{ padding: '6px 0 0' }}>This line has no nikud (vowels). Only the Hebrew-letters versions can read it; the spelled-out ones need the vowels to know how each word sounds. Paste the line with nikud (on Sefaria, turn vowels on) to try them all.</div>}
+      <div className="tuner">
+        <div className="tuner-title">Find the best rules, the easy way</div>
+        {!tune && (
+          <>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the line above read two ways, A and B. Tap the one that sounds better, and the next pair comes. The app keeps track and tells you the winner at the end. About {allRules.length + 1} pairs, about 2¢ a pair.</div>
+            <button className="btn primary" disabled={disabled || !text.trim()} onClick={startTune}>Start</button>
+          </>
+        )}
+        {tune && !tune.done && (
+          <>
+            <div className="tuner-step">Pair {tune.next} of {tune.cands.length - 1}</div>
+            <div className="tuner-ab">
+              {(['A', 'B'] as const).map((side) => {
+                const id = side === 'A' ? tuneA : tuneB;
+                return (
+                  <div key={side} className="tuner-side">
+                    <button className="btn tuner-play" disabled={disabled} onClick={() => void hear(inUse, undefined, id)}>{playing === `r:${id}` ? '■ Stop' : `▶ Hear ${side}`}</button>
+                    <button className="btn primary" onClick={() => pick(side)}>{side} is better</button>
+                  </div>
+                );
+              })}
+            </div>
+            <button className="btn" style={{ width: '100%', marginTop: 8 }} onClick={() => pick('same')}>About the same</button>
+            {msg && (msg.mode === `r:${tuneA}` || msg.mode === `r:${tuneB}`) && /^(Live voice|Could not|Your phone|The voice connected)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
+            <div className="tuner-foot"><button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop the test</button></div>
+          </>
+        )}
+        {tune?.done && (
+          <>
+            <div className="tuner-win">The winner: <b>{comboName(tune.champ)}</b></div>
+            <div className="muted" style={{ fontSize: 12.5, margin: '2px 0 10px' }}>{tune.champ === 'none' ? 'The voice on its own, with no pronunciation rules.' : allRules.find((r) => r.id === tune.champ)?.about ?? 'Yeshivish guide + Vowel key: what calls used until now.'}</div>
+            <div className="he-lab-btns">
+              {inCalls === tune.champ ? <span className="he-lab-inuse">✓ Calls use it</span> : <button className="btn primary" onClick={() => useInCalls(tune.champ)}>Use it in calls</button>}
+              <button className="btn" onClick={startTune}>Test again</button>
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>The voice varies from one listen to the next, so if you&apos;re not sure, test again. If the same one wins twice, it&apos;s the one.</div>
+          </>
+        )}
+        <div className="tuner-now">Calls use now: {comboName(inCalls)}</div>
+      </div>
+      <div className="muted" style={{ fontSize: 12, margin: '14px 0 2px' }}>More (to test things one at a time yourself):</div>
       <Group id="lab-ways" level={3} title="Ways of giving it the Hebrew" hint={HE_READS.find((m) => m.id === inUse)?.name}>
       <div className="he-lab-list">
         {HE_READS.map((m) => (
@@ -161,7 +224,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         ))}
       </div>
       </Group>
-      <Group id="lab-rules" level={3} title="Try the rules" hint={`in calls: ${comboName(inCalls)}`}>
+      <Group id="lab-rules" level={3} title="The rules one by one, or mixed" hint={`in calls: ${comboName(inCalls)}`}>
       <div className="rule-lab-now">
         <span>In calls now: <b>{comboName(inCalls)}</b>{!s.liveRules?.length && ' (the standard)'}</span>
         {!!s.liveRules?.length && <button className="linkish" onClick={() => onChange({ liveRules: [] })}>Back to the standard</button>}
