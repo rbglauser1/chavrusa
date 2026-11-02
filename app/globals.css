@@ -1510,3 +1510,13 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .mg-en { direction: ltr; text-align: left; font-family: var(--f-body, Georgia, serif); font-size: .72em; line-height: 1.45; color: #444; margin-top: .15em; }
 .mg-onk .mg-en, .mg-cols .mg-en { font-size: .85em; }
 .mg-cols.one { column-count: 1; }
+/* Mikraos Gedolos as a real page: a fixed page shape, the meforshim flowing down the columns, everything on one page. */
+.mg-paper { aspect-ratio: 1 / 1.414; display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 1.1em 1.1em .8em; }
+.mg-paper.fitting { visibility: hidden; }
+.mg-head, .mg-top, .mg-foot { flex: none; }
+.mg-top { margin-bottom: .7em; padding-bottom: .7em; }
+.mg-comms { flex: 1 1 auto; min-height: 0; column-count: 2; column-gap: 1.1em; column-rule: 1px solid #bbb; column-fill: auto; overflow: hidden; }
+.mg-comms .mg-comm { break-inside: auto; border-bottom: 0; margin-bottom: .6em; padding-bottom: 0; }
+.mg-comms .mg-label { break-after: avoid; font-size: 1em; margin: 0 0 .2em; }
+.mg-comms .mg-cols { column-count: 1; column-rule: none; }
+.mg-foot { margin-top: .4em; font-size: .75em; }

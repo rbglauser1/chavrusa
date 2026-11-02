@@ -1,14 +1,13 @@
 'use client';
 // Mikraos Gedolos: a perek of Chumash laid out like a printed page: the pesukim at the top with Onkelos beside them,
-// and Rashi, Ramban, Ibn Ezra, Sforno and Or HaChaim below, each comment with its pasuk. A few pesukim per page, the
+// and the learner's meforshim below in columns, each comment with its pasuk. As many pesukim per page as fit, the
 // way a printed Chumash turns its pages. Pinch, double-tap or + / − to zoom; a tap for full screen; Talk stays on screen.
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { Settings } from '@/lib/config';
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
 
 type HeEn = { he: string; en: string };
 type Data = { ref: string; heRef: string; pesukim: string[]; pesukimEn: string[]; onkelos: HeEn[]; meforshim: { id: string; he: string; name: string; perPasuk: HeEn[][]; missing?: boolean }[] };
-const PER_PAGE = 4;
 const MIN = 1, MAX = 5;
 const BOOK_HE: Record<string, string> = { Genesis: 'בראשית', Exodus: 'שמות', Leviticus: 'ויקרא', Numbers: 'במדבר', Deuteronomy: 'דברים' };
 const BOOK_LEN: Record<string, number> = { Genesis: 50, Exodus: 40, Leviticus: 27, Numbers: 36, Deuteronomy: 34 };
@@ -38,7 +37,16 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   const [ref, setRef] = useState(startRef.replace(/:.*$/, ''));
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState('');
-  const [page, setPage] = useState(Math.floor(((startPasuk ?? 1) - 1) / PER_PAGE));
+  // The page: like a printed Mikraos Gedolos, everything for the pesukim on it fits on one page. The app tries how many
+  // pesukim fit (with the chosen meforshim, Onkelos and English), and if even one pasuk's commentary is too long, sets the
+  // type a little smaller, the way a printer would. Pages turn in order; the starts of the pages before are remembered.
+  const [start, setStart] = useState(Math.max(0, (startPasuk ?? 1) - 1));
+  const [count, setCount] = useState(3);
+  const [scale, setScale] = useState(1);
+  const [phase, setPhase] = useState<'fit' | 'grow' | 'done'>('fit');
+  const [history, setHistory] = useState<number[]>([]);
+  const fromEnd = useRef(false); // went back into the previous perek: start at its end
+  const comms = useRef<HTMLDivElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [full, setFull] = useState(false);
   const fullRef = useRef(full); fullRef.current = full;
@@ -59,20 +67,50 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   }, [ref, chosen.join(','), withOnk, withEn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const book = ref.replace(/ \d+$/, ''), perek = Number(ref.match(/(\d+)$/)?.[1] ?? 1);
-  const pages = data ? Math.max(1, Math.ceil(data.pesukim.length / PER_PAGE)) : 1;
-  const first = page * PER_PAGE; // pasuk index (0-based) at the top of this page
-  const range = data ? data.pesukim.slice(first, first + PER_PAGE).map((_, k) => first + k) : [];
-  const goPage = (p: number) => {
+  const n = data?.pesukim.length ?? 0;
+  const first = Math.min(start, Math.max(0, n - 1));
+  const shown = Math.max(1, Math.min(count, n - first));
+  const range = data ? Array.from({ length: shown }, (_, k) => first + k) : [];
+  const refit = (c = 3) => { shrunk.current = false; setCount(c); setScale(1); setPhase('fit'); };
+  // New text, or new choices: fit again from here.
+  useEffect(() => {
     if (!data) return;
-    if (p >= 0 && p < pages) { setPage(p); box.current?.scrollTo({ top: 0 }); return; }
-    // Past the end or the start: the next (or previous) perek.
-    const np = perek + (p < 0 ? -1 : 1);
-    if (np < 1 || np > (BOOK_LEN[book] ?? 200)) return;
-    setRef(`${book} ${np}`);
-    setPage(p < 0 ? 999 : 0);
+    if (fromEnd.current) { fromEnd.current = false; setStart(Math.max(0, data.pesukim.length - 3)); setHistory([]); }
+    refit();
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Measure: does everything fit on the page? Start with a guess; if it overflows, one pasuk fewer (or, at one pasuk,
+  // slightly smaller type); if it fits from the start, try one pasuk more until it doesn't.
+  const shrunk = useRef(false);
+  useLayoutEffect(() => {
+    if (!data || phase === 'done') return;
+    const pp = paper.current, cm = comms.current;
+    if (!pp) return;
+    const over = pp.scrollHeight > pp.clientHeight + 2 || (!!cm && cm.scrollWidth > cm.clientWidth + 2);
+    const canGrow = first + shown < n && shown < 12;
+    if (phase === 'fit') {
+      if (over) {
+        shrunk.current = true;
+        if (shown > 1) setCount(shown - 1);
+        else if (scale > 0.5) setScale(+(scale - 0.07).toFixed(2));
+        else setPhase('done');
+      } else if (!shrunk.current && canGrow) { setPhase('grow'); setCount(shown + 1); }
+      else setPhase('done');
+    } else if (over) { setCount(shown - 1); setPhase('done'); }
+    else if (canGrow) setCount(shown + 1);
+    else setPhase('done');
+  });
+  const goPage = (dir: 1 | -1) => {
+    if (!data) return;
+    box.current?.scrollTo({ top: 0, left: 0 });
+    if (dir === 1) {
+      if (first + shown < n) { setHistory((h) => [...h, first]); setStart(first + shown); refit(shown); return; }
+      if (perek < (BOOK_LEN[book] ?? 200)) { setHistory([]); setStart(0); setRef(`${book} ${perek + 1}`); }
+      return;
+    }
+    if (history.length) { const h = history.slice(); const s0 = h.pop()!; setHistory(h); setStart(s0); refit(); return; }
+    if (first > 0) { setStart(Math.max(0, first - 3)); refit(); return; }
+    if (perek > 1) { fromEnd.current = true; setRef(`${book} ${perek - 1}`); }
   };
-  // After the previous perek loads, "999" means its last page.
-  useEffect(() => { if (data && page >= pages) setPage(pages - 1); }, [data, page, pages]);
 
   // Zoom around a point (where you pinch or double-tap).
   function zoomTo(z: number, cx?: number, cy?: number) {
@@ -137,9 +175,9 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   return (
     <div className={`daf-page mg ${full ? 'full' : ''}`} role="dialog" aria-label={`${ref}, Mikraos Gedolos`}>
       <div className="daf-page-bar">
-        <button className="daf-page-nav" onClick={() => goPage(page + 1)} aria-label="Next page">‹</button>
-        <span className="daf-page-title">{book} {perek}{data ? `:${first + 1}–${Math.min(first + PER_PAGE, data.pesukim.length)}` : ''}</span>
-        <button className="daf-page-nav" onClick={() => goPage(page - 1)} aria-label="Previous page">›</button>
+        <button className="daf-page-nav" onClick={() => goPage(1)} aria-label="Next page">‹</button>
+        <span className="daf-page-title">{book} {perek}{data ? `:${first + 1}${shown > 1 ? `–${first + shown}` : ''}` : ''}</span>
+        <button className="daf-page-nav" onClick={() => goPage(-1)} aria-label="Previous page">›</button>
         <span className="daf-page-zoom">
           <button className="daf-page-nav" onClick={() => zoomTo(zoom / 1.5)} disabled={zoom <= MIN} aria-label="Zoom out">−</button>
           <button className="daf-page-nav" onClick={() => zoomTo(zoom * 1.5)} disabled={zoom >= MAX} aria-label="Zoom in">+</button>
@@ -171,8 +209,8 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
       <div className="daf-page-box mg-box" ref={box}>
         {!data && <div className="daf-page-msg">{err || 'Opening the page…'}</div>}
         {data && (
-          <div className="mg-paper" ref={paper} dir="rtl" style={{ width: `${zoom * 100}%`, fontSize: `${zoom}em` }}>
-            <div className="mg-head"><span>{title}</span><span className="mg-head-p">{heNum(first + 1)}–{heNum(Math.min(first + PER_PAGE, data.pesukim.length))}</span></div>
+          <div className={`mg-paper ${phase !== 'done' ? 'fitting' : ''}`} ref={paper} dir="rtl" style={{ width: `${zoom * 100}%`, fontSize: `${zoom * scale}em` }}>
+            <div className="mg-head"><span>{title}</span><span className="mg-head-p">{heNum(first + 1)}{shown > 1 ? `–${heNum(first + shown)}` : ''}</span></div>
             <div className="mg-top">
               <div className="mg-text">
                 {range.map((i) => withEn
@@ -188,6 +226,7 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
                 </div>
               )}
             </div>
+            <div className="mg-comms" ref={comms}>
             {data.meforshim.map((m) => {
               const has = range.some((i) => (m.perPasuk[i] ?? []).length);
               // (A meforesh with nothing on these pesukim is left off this page.)
@@ -204,6 +243,7 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
                 </div>
               );
             })}
+            </div>
             <div className="mg-foot">Text from Sefaria · approved sources only{withEn ? ' · English: Sefaria\'s translations' : ''}</div>
           </div>
         )}
