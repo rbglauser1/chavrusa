@@ -299,6 +299,19 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.voiceReads ?? 'all'} options={[['all', 'He reads it all'], ['english', 'English only'], ['gist', 'Just the gist']]} onPick={(v) => onChange({ voiceReads: v as 'all' | 'english' | 'gist' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.voiceReads ?? 'all') === 'all' ? 'The chavrusa reads the lashon kodesh and its English, phrase by phrase.' : (s.voiceReads === 'english' ? 'You read the lashon kodesh yourself; the chavrusa reads only the English, then goes on in your style.' : 'You read the text yourself; the chavrusa doesn\'t read it at all, just gives the gist of each piece and goes on in your style (explaining, asking…).')} Works with every style. Also in the ⋯ menu.</div>
             </div>
+            <div className="field">
+              <label>Keeping the voice steady</label>
+              <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>Three ways to make the good readings the usual ones. Each applies the next time you tap Talk.</div>
+              <label>Instructions to the voice</label>
+              <Seg value={s.liveShort !== false ? 'short' : 'full'} options={[['short', 'Short'], ['full', 'Full']]} onPick={(v) => onChange({ liveShort: v === 'short' })} />
+              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>{s.liveShort !== false ? 'Short: the same rules, each said once, in about a third of the words. Long instructions make a live voice drift in accent and cadence.' : 'Full: every rule as it grew, word for word (Steady mode and the coach work only with these).'}</div>
+              <label>Fresh start at each new section</label>
+              <Seg value={s.liveFresh !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveFresh: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>When you move on to a new Mishnah, piece of Gemara or perek, the voice quietly reconnects at the next quiet moment, so it starts clean instead of drifting as a long call goes on. It remembers where you are; you may hear a second of quiet.</div>
+              <label>Catch skipped words</label>
+              <Seg value={s.liveCheck !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCheck: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app compares what the voice actually said with the text it was given. If it left out the end, it goes back and reads the part it missed. Free.</div>
+            </div>
             <CallLogs />
             <div className="field">
               <label>Steady mode (the voice sticks to your style and instructions)</label>

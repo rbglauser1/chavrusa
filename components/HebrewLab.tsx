@@ -3,11 +3,13 @@
 // (Hebrew letters, or spelled out in English letters in different ways), each heard in your own voice the way a call
 // would read it. Pick the one that sounds best by ear, and the app uses it everywhere in calls.
 import { useEffect, useRef, useState } from 'react';
-import type { Settings } from '@/lib/config';
+import { LIVE_VOICES, type Settings } from '@/lib/config';
 import { hasNikud, HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
 import { silentWav } from './useVoice';
 
 const TEXT_KEY = 'chavrusa-hebrew-test-line';
+const VOTES_KEY = 'chavrusa-voice-votes'; // per voice: how many listens were good / not (this device)
+type Votes = Record<string, { good: number; bad: number; gone?: boolean }>;
 const LINES = [
   { name: 'Mishnah', he: 'הָאִשָּׁה נִקְנֵית בְּשָׁלֹשׁ דְּרָכִים, וְקוֹנָה אֶת עַצְמָהּ בִּשְׁתֵּי דְרָכִים. נִקְנֵית בְּכֶסֶף, בִּשְׁטָר, וּבְבִיאָה.' },
   { name: 'Beis Shammai', he: 'בְּכֶסֶף, בֵּית שַׁמַּאי אוֹמְרִים: בְּדִינָר וּבְשָׁוֶה דִינָר. וּבֵית הִלֵּל אוֹמְרִים: בִּפְרוּטָה וּבְשָׁוֶה פְרוּטָה.' },
@@ -19,9 +21,13 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   // The line being tested is remembered on this device, so it stays when Settings re-open or the page refreshes.
   const [text, setTextRaw] = useState<string>(() => { try { return localStorage.getItem(TEXT_KEY) || LINES[0].he; } catch { return LINES[0].he; } });
   const setText = (t: string) => { setTextRaw(t); try { localStorage.setItem(TEXT_KEY, t); } catch { /* not kept */ } };
-  const [playing, setPlaying] = useState<HeRead | null>(null);
-  // What's happening with the version being heard, shown right in its row: connecting, what it said, or the error.
-  const [msg, setMsg] = useState<{ mode: HeRead; text: string } | null>(null);
+  // What's playing, and what's happening with it, shown in its row: a way of reading ("he", "join-kh"…) or a voice
+  // ("v:cedar").
+  const [playing, setPlaying] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ mode: string; text: string } | null>(null);
+  const [votes, setVotesRaw] = useState<Votes>(() => { try { return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}'); } catch { return {}; } });
+  const setVotes = (f: (v: Votes) => Votes) => setVotesRaw((v) => { const n = f(v); try { localStorage.setItem(VOTES_KEY, JSON.stringify(n)); } catch { /* not kept */ } return n; });
+  const vote = (id: string, good: boolean) => setVotes((v) => ({ ...v, [id]: { good: (v[id]?.good ?? 0) + (good ? 1 : 0), bad: (v[id]?.bad ?? 0) + (good ? 0 : 1) } }));
   const el = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const endRef = useRef<(() => void) | null>(null);
@@ -29,10 +35,11 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const inUse: HeRead = s.heRead ?? 'join-kh';
 
   // Have GPT-Live read the line given this way, the way a call would (a short Live connection, about a cent).
-  async function hear(mode: HeRead) {
-    if (playing) { endRef.current?.(); if (playing === mode) return; }
+  async function hear(mode: HeRead, voice?: string) {
+    const key = voice ? `v:${voice}` : mode;
+    if (playing) { endRef.current?.(); if (playing === key) return; }
     setMsg(null);
-    const note = (t: string) => setMsg({ mode, text: t });
+    const note = (t: string) => setMsg({ mode: key, text: t });
     note('Connecting…');
     // Inside the tap: unlock the player and the small sound engine (phones only allow sound a tap began).
     let a = el.current;
@@ -41,7 +48,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = (ctxRef.current ??= new AC());
     void ctx.resume();
-    setPlaying(mode);
+    setPlaying(key);
     const pc = new RTCPeerConnection();
     const osc = ctx.createOscillator(); const gn = ctx.createGain(); gn.gain.value = 0;
     const dest = ctx.createMediaStreamDestination(); osc.connect(gn).connect(dest); osc.start();
@@ -60,7 +67,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       fetch('/api/live/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: Math.max(15, (Date.now() - started) / 1000) }) }).catch(() => {});
       if (!said) note('The voice connected but didn’t speak. Try again.');
       else if (said !== 'x') note(`It said: ${said}`);
-      setPlaying((p) => (p === mode ? null : p));
+      setPlaying((p) => (p === key ? null : p));
       if (endRef.current === end) endRef.current = null;
     };
     endRef.current = end;
@@ -79,10 +86,15 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     try {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      const q = new URLSearchParams({ preview: '1', voice: s.liveVoice || 'meridian', say: text, mode });
+      const q = new URLSearchParams({ preview: '1', voice: voice || s.liveVoice || 'meridian', say: text, mode });
       const res = await fetch(`/api/live/session?${q}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok || !d.sdp) { said = 'x'; end(); note(d.error ?? 'Could not start the test.'); return; }
+      if (!res.ok || !d.sdp) {
+        said = 'x'; end();
+        // OpenAI turned this voice down: it isn't on GPT-Live (remembered, so it's set aside).
+        if (voice && /\(4\d\d\): .*voice/i.test(String(d.error ?? ''))) { setVotes((v) => ({ ...v, [voice]: { good: 0, bad: 0, gone: true } })); note('Not available on GPT-Live.'); return; }
+        note(d.error ?? 'Could not start the test.'); return;
+      }
       await pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
     } catch (e) { said = 'x'; end(); note((e as Error).message); }
   }
@@ -107,6 +119,28 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
           </div>
         ))}
       </div>
+      <label style={{ marginTop: 16 }}>Which voice is steadiest</label>
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The same line in each voice, read the way in use above. A voice can sound great once and not the next time, so hear each a few times and mark every listen 👍 or 👎. The one with the most good listens is the steadiest. About a cent per listen.</div>
+      <div className="he-lab-list">
+        {LIVE_VOICES.map((v) => {
+          const t = votes[v.id];
+          const key = `v:${v.id}`;
+          if (t?.gone) return <div key={v.id} className="he-lab-row gone"><div className="he-lab-name">{v.name}</div><div className="he-lab-said">Not available on GPT-Live. <button className="linkish" onClick={() => setVotes((x) => { const n = { ...x }; delete n[v.id]; return n; })}>Try again</button></div></div>;
+          return (
+            <div key={v.id} className={`he-lab-row ${s.liveVoice === v.id ? 'on' : ''}`}>
+              <div className="he-lab-name">{v.name}{t && (t.good || t.bad) ? <span className="he-lab-tally"> · {t.good} good of {t.good + t.bad}</span> : null}</div>
+              <div className="he-lab-btns">
+                <button className="btn" disabled={disabled || !text.trim()} onClick={() => void hear(inUse, v.id)}>{playing === key ? '■ Stop' : '▶ Hear'}</button>
+                <button className="btn" aria-label="Good" onClick={() => vote(v.id, true)}>👍</button>
+                <button className="btn" aria-label="Not good" onClick={() => vote(v.id, false)}>👎</button>
+                {s.liveVoice === v.id ? <span className="he-lab-inuse">✓ In use</span> : <button className="btn" onClick={() => onChange({ liveVoice: v.id })}>Use this</button>}
+              </div>
+              {msg?.mode === key && msg.text && <div className="he-lab-said">{msg.text}</div>}
+            </div>
+          );
+        })}
+      </div>
+      {Object.values(votes).some((x) => x.good || x.bad) && <button className="linkish" style={{ marginTop: 6, fontSize: 12 }} onClick={() => setVotes((x) => Object.fromEntries(Object.entries(x).filter(([, y]) => y.gone)))}>Clear the marks</button>}
       {disabled && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>End the current call to test.</div>}
     </div>
   );

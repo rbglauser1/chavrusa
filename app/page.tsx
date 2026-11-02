@@ -110,6 +110,7 @@ export default function Home() {
   const liveOpts: Parameters<typeof useLive>[0] = {
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); showLiveErr(m); },
+    checkOn: () => settingsRef.current.liveCheck !== false,
     onEnded: (seconds) => {
       liveQueue.current = [];
       liveDelegation.current = null;
@@ -596,6 +597,23 @@ export default function Home() {
   const aiTurns = replies.filter((x) => x.usage?.ai).length;
   const showSefer = settings.display !== 'off' && seferOpen;
   const current = sources[selected];
+  // Fresh start (Settings → Voice): in a call, when the learning moves to a new Mishnah, amud or perek, or moves on
+  // after 6 minutes on one connection, the voice reconnects at the next quiet moment so it starts clean.
+  const freshAt = useRef<{ key: string | null; t: number }>({ key: null, t: 0 });
+  const mainKey = current && !/ on /.test(current.ref) ? (/^Mishnah /.test(current.ref) ? `${current.ref}:${current.focus ?? 1}` : current.ref) : null;
+  const lineKey = current && !/ on /.test(current.ref) ? `${current.ref}:${current.focus ?? 1}` : null;
+  const lastLine = useRef<string | null>(null);
+  useEffect(() => {
+    if (live.state === 'connecting') freshAt.current.t = Date.now(); // every new connection is a fresh start
+    if (!live.active) { freshAt.current = { key: mainKey, t: 0 }; lastLine.current = lineKey; return; }
+    if (!mainKey) return;
+    const moved = lastLine.current !== null && lineKey !== lastLine.current;
+    const newSection = freshAt.current.key !== null && mainKey !== freshAt.current.key;
+    const long = moved && freshAt.current.t > 0 && Date.now() - freshAt.current.t > 6 * 60_000;
+    if ((newSection || long) && settings.liveFresh !== false && live.state !== 'connecting') { live.freshStart(); freshAt.current.t = Date.now(); }
+    freshAt.current.key = mainKey;
+    lastLine.current = lineKey;
+  }, [mainKey, lineKey, live.active, live.state]); // eslint-disable-line react-hooks/exhaustive-deps
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
   const newUI = true; // one main screen for everyone: it opens first, and learning happens in Classic or Quiet chat

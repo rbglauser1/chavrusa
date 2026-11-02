@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
-import { liveContext, liveInstructions } from '@/lib/live';
+import { liveContext, liveContextShort, liveInstructions, liveInstructionsShort } from '@/lib/live';
 import { HE_READS, namesForSpeechEn, voiceHe, type HeRead } from '@/lib/hebrew';
 import { listMemories, listMessages, listSources } from '@/lib/db';
 import { currentPlace } from '@/lib/place';
@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
   let lastSaid = '';
   let lastAt: string | null = null;
   let pointed = ''; // the line the learner tapped in the Sefer since we last spoke: start there
+  // Short instructions (Settings → Voice → Instructions), the default: about a third of the words.
+  const short = s.liveShort !== false;
   if (!preview) {
     try {
       const sid = req.nextUrl.searchParams.get('session');
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
       ]);
       const st = styleById(s.style, s.customStyles);
       const place = sid ? currentPlace(history, sources) : null;
-      context = liveContext({
+      const ctx = {
         styleName: st.name,
         styleRules: st.behavior,
         leads: st.asks === false ? 'you explain' : s.leads === 'learner' ? 'the learner explains first' : 'you explain first, then ask',
@@ -49,7 +51,8 @@ export async function POST(req: NextRequest) {
         saved: memories.filter((m) => m.kind === 'instruction' && !m.scope?.startsWith('session:')).map((m) => m.content),
         noticed: memories.filter((m) => m.kind === 'observation').map((m) => m.content),
         card: styleCard(s.style, s.customStyles) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles).replace(/^.*?this style's part\. /, '')}` : ''),
-      });
+      };
+      context = short ? liveContextShort(ctx) : liveContext(ctx);
       // The conversation so far, so a new or resumed call picks up exactly where we were.
       // The text read in earlier turns is left out of what the voice sees (only "[read the text inside]"): otherwise it
       // reads it again by itself, from memory, without the app knowing (the place goes wrong), and copies old spellings.
@@ -106,7 +109,9 @@ export async function POST(req: NextRequest) {
   const spell = s.gptSpell ?? 'stressed';
   const myWay = s.gptMyWay ?? [];
   const house = s.houseSay !== false, steady = s.liveSteady === true;
-  const myWayNote = sayNote(myWay, house);
+  // Short instructions keep only the learner's own words here (the main standard ones are in the short guide, and the
+  // text handed over is already spelled that way).
+  const myWayNote = sayNote(myWay, house && !short);
   const fv = (t: string) => forVoice(t, spell, myWay, house);
 
   const res = await fetch('https://api.openai.com/v1/live/sessions', {
@@ -120,8 +125,8 @@ export async function POST(req: NextRequest) {
           : preview && askMode === 'he-plain'
             ? 'This is a short reading test. Speak first, as soon as the session starts: read the text you are given aloud, once, clearly, then stop.'
           : preview
-            ? `${fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal'))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
-            : fv(liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal') + context) + myWayNote) + voiceNote,
+            ? `${fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal') : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')))}${myWayNote}\nThis is a short pronunciation test. Speak first, as soon as the session starts: say the line you are given, once, then stop.`
+            : fv((short ? liveInstructionsShort(s.nusach, s.livePace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal') : liveInstructions(s.nusach, s.livePace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal')) + context) + myWayNote) + voiceNote,
         input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
         audio: { output: { voice: voiceField } },
         delegation: { type: 'client' },

@@ -1556,3 +1556,7 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .min-status.err, .daf-page-status.err { text-transform: none; letter-spacing: 0; font-size: 13px; line-height: 1.35; color: var(--danger, #b3261e); }
 .daf-page-status.err { white-space: normal; max-width: 70vw; }
 .daf-page.full .daf-page-status.err { display: inline-block; }
+/* The voice test: tallies, and voices OpenAI turned down. */
+.he-lab-tally { font-weight: 400; color: var(--soft); font-size: 12px; }
+.he-lab-row.gone { opacity: .55; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; }

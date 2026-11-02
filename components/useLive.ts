@@ -5,6 +5,7 @@ import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 import { silentWav } from './useVoice';
+import { missingTail } from '@/lib/skipCheck';
 
 let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
@@ -52,6 +53,7 @@ export function useLive(opts: {
   logMeta?: () => string; // a one-line summary of the settings for the call recorder
   reminder?: () => string; // the style card + the learner's instructions, re-sent during the call so they don't fade
   onTurn?: (learner: string, said: string) => void; // the voice finished a turn (anything it said): for coach notes
+  checkOn?: () => boolean; // catch skipped words: compare what the voice said with the text it was given
   onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
@@ -82,6 +84,14 @@ export function useLive(opts: {
   const startRef = useRef<((retry?: boolean) => Promise<void>) | null>(null);
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
   const startWakeRef = useRef<(() => void) | null>(null);
+  // Keeping it steady: what the voice said (all of it), the text it was last given to read (to check nothing was
+  // skipped), about when its sound really ends (its words arrive ahead of its audio), and jobs waiting for quiet.
+  const voiceAll = useRef('');
+  const check = useRef<{ text: string; from: number; at: number; redo: number } | null>(null);
+  const estEnd = useRef(0);
+  const quietJobs = useRef<{ name: string; run: () => void; need: number }[]>([]);
+  const quietTimer = useRef<number | undefined>(undefined);
+  const refreshing = useRef(false);
   const setS = (s: LiveState) => { if (stateRef.current !== s) logLine('STATE', s); stateRef.current = s; setState(s); };
   // Reminders: the style card and the learner's instructions, re-sent every few turns (and at once when they change),
   // attached to a turn being handed to the brain, so the voice holds onto them all call long.
@@ -204,6 +214,10 @@ export function useLive(opts: {
         if (typeof e.delta === 'string' && !answering.current && !pending.current.size) voiceBuf.current += e.delta;
         if (typeof e.delta === 'string') saidAll.current += e.delta;
         if (typeof e.delta === 'string') { if (!recOut.current) { recOutAt.current = Date.now(); logLine('VOICE', '▶ starts speaking'); } recOut.current += e.delta; }
+        if (typeof e.delta === 'string') {
+          voiceAll.current += e.delta;
+          estEnd.current = Math.max(estEnd.current, recOutAt.current + (recOut.current.trim().split(/\s+/).length / 2.3) * 1000);
+        }
         if (speakTimer.current) clearTimeout(speakTimer.current);
         speakTimer.current = window.setTimeout(() => {
           if (recOut.current) { logLine('VOICE', `■ stopped after ${((Date.now() - 900 - recOutAt.current) / 1000).toFixed(1)} s: "${recOut.current.trim()}"`); recOut.current = ''; }
@@ -227,6 +241,7 @@ export function useLive(opts: {
           }
           if (!pending.current.size) answering.current = false;
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
+          if (!pending.current.size) checkSkip();
           // A read-through piece finished (allowing for the audio running a little behind the words).
           if (reading.current) {
             const r = reading.current;
@@ -248,7 +263,7 @@ export function useLive(opts: {
           const to = closingTo.current ?? (e.reason === 'expired' ? 'paused' : 'off'); // expired: just reconnect on the next tap or word
           closingTo.current = null;
           finish(to);
-          if (to === 'paused' && optsRef.current.wakeOnSpeech()) startWakeRef.current?.();
+          if (to === 'paused' && !refreshing.current && optsRef.current.wakeOnSpeech()) startWakeRef.current?.();
         }
         break;
       case 'error':
@@ -320,7 +335,7 @@ export function useLive(opts: {
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
     send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
-    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) });
+    if (exact) { toCheck(`⟪${exact}⟫`); send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) }); }
   }, [send]);
   // The learner chose something on the Mikraos Gedolos page (a pasuk, a comment, a meforesh on Rashi): read it the way
   // his "who reads" setting says, say briefly what it's bothered by or adds, and wait.
@@ -341,7 +356,7 @@ export function useLive(opts: {
         ? `Read it now, the way a chavrusa reads inside, in your lively voice at the speed and with the pauses set in your instructions, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out. Then, in two or three sentences of your own, say what it is bothered by or what it adds, and stop.`
         : 'Say in a few words that we are there now, and wait.';
     send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner chose ${label} on the Mikraos Gedolos page: that is what we are learning now. ${how} Do not go back to what you were saying before.`) });
-    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) });
+    if (exact) { toCheck(`⟪${exact}⟫`); send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) }); }
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
@@ -389,6 +404,7 @@ export function useLive(opts: {
     const b = forSpeech(before), ex = forSpeech(exact.replace(/\s*\|\s*/g, ' … ')), a = forSpeech(after);
     const whole = [b, ex ? `⟪${ex}⟫` : '', a].filter(Boolean).join(' ') || 'Let’s keep going.';
     handed.current = { text: whole, at: Date.now() };
+    toCheck(whole);
     for (const c of chunks(whole)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
 
@@ -408,6 +424,86 @@ export function useLive(opts: {
     bump();
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫`) });
   }, [send]);
+
+  // ---------- Keeping it steady ----------
+  // Run a job once the voice has really finished (its sound, not just its words) and nobody is talking. One job per
+  // quiet moment: a job that makes the voice speak (reading what it skipped) is followed by the next one later.
+  // `need`: how long it must be quiet first (long enough that a pause in the reading isn't taken for its end).
+  function whenQuiet(name: string, run: () => void, need = 4000) {
+    if (quietJobs.current.some((j) => j.name === name)) return;
+    // Checking the reading comes before a fresh start (which would end this connection).
+    if (name === 'fresh') quietJobs.current.push({ name, run, need }); else quietJobs.current.unshift({ name, run, need });
+    if (quietTimer.current) return;
+    let since = 0;
+    const t0 = Date.now();
+    quietTimer.current = window.setInterval(async () => {
+      const peer = pc.current;
+      const st = stateRef.current;
+      if (!peer || st === 'off' || st === 'paused' || !quietJobs.current.length || Date.now() - t0 > 120_000) {
+        window.clearInterval(quietTimer.current); quietTimer.current = undefined; quietJobs.current = []; return;
+      }
+      let level = -1; // how loud the voice's sound is right now (when the browser can tell)
+      try { (await peer.getStats()).forEach((r: { type?: string; kind?: string; audioLevel?: number }) => { if (r.type === 'inbound-rtp' && r.kind === 'audio' && typeof r.audioLevel === 'number') level = r.audioLevel; }); } catch { /* fall back to the estimate */ }
+      const sounding = level >= 0 ? level > 0.015 : Date.now() < estEnd.current;
+      const busy = st !== 'listening' || pending.current.size > 0 || !!recIn.current.text || Date.now() - lastInputAt.current < 1500 || sounding || !!reading.current;
+      if (busy) { since = 0; return; }
+      if (!since) { since = Date.now(); return; }
+      if (Date.now() - since < quietJobs.current[0].need) return;
+      since = 0;
+      const job = quietJobs.current.shift();
+      if (!quietJobs.current.length) { window.clearInterval(quietTimer.current); quietTimer.current = undefined; }
+      job?.run();
+    }, 250);
+  }
+  // Remember the text the voice was just given to read, to check afterwards that it all came out.
+  function toCheck(handedText: string, redo = 0) {
+    const blocks = [...handedText.matchAll(/⟪([\s\S]*?)⟫/g)].map((m) => m[1].trim()).filter(Boolean);
+    check.current = blocks.length ? { text: blocks.join(' … '), from: voiceAll.current.length, at: Date.now(), redo } : null;
+  }
+  // The voice finished a turn: if it clearly left out the end of the text, have it read the rest (once).
+  function checkSkip() {
+    if (!check.current || optsRef.current.checkOn?.() === false) return;
+    // Judged only once it has really finished: a pause between phrases is not the end.
+    whenQuiet('check', () => { if (check.current) judgeSkip(); }, 4000);
+  }
+  function judgeSkip() {
+    const c = check.current;
+    if (!c) return;
+    check.current = null;
+    if (lastInputAt.current > c.at) return; // the learner cut in: stopping was right
+    const said = voiceAll.current.slice(c.from);
+    const left = missingTail(c.text, said);
+    if (!left) return;
+    logLine('CHECK', `the voice left out the end of the text: "${left.slice(0, 300)}"${c.redo ? ' (already asked once: leaving it)' : ': asking it to read the rest'}`);
+    if (c.redo) return;
+    whenQuiet('skip', () => {
+      if (lastInputAt.current > c.at) return;
+      answering.current = true;
+      handed.current = { text: left, at: Date.now() };
+      setS('speaking');
+      const content = `⟪${left}⟫`;
+      toCheck(content, 1);
+      sendRef.current({ type: 'session.instructions.append', delegation_id: null, content: 'You stopped before the end of the text. Say "and the rest of it:" (a few words, no apology), then read the rest of the text now, the way you read inside, every phrase in order to the very end. Do not repeat what you already read. Then stop and wait.' });
+      sendRef.current({ type: 'session.commentary.append', delegation_id: null, content: g(content) });
+    }, 300);
+  }
+  // A new section: at the next quiet moment, quietly reconnect, so the voice starts clean (it keeps the place and the
+  // conversation, from the session). Long calls drift; a fresh connection doesn't carry that drift.
+  const freshStart = useCallback(() => {
+    if (!pc.current) return;
+    whenQuiet('fresh', () => {
+      if (!pc.current || closingTo.current) return;
+      logLine('──', 'fresh start (new section): reconnecting');
+      refreshing.current = true;
+      closingTo.current = 'paused';
+      sendRef.current({ type: 'session.close' });
+      window.setTimeout(() => {
+        if (pc.current) { closingTo.current = null; finish('paused'); }
+        refreshing.current = false;
+        void startRef.current?.();
+      }, 400);
+    });
+  }, [finish]);
 
   const start = useCallback(async (retry = false) => {
     if (!retry && stateRef.current !== 'off' && stateRef.current !== 'paused') return;
@@ -560,5 +656,5 @@ export function useLive(opts: {
     if (!text.trim()) return;
     send({ type: 'session.instructions.append', delegation_id: null, content: `COACH NOTE from the app (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` });
   }, [send]);
-  return { remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { freshStart, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

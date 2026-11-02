@@ -363,6 +363,9 @@ export interface Settings {
   seferEnglish: boolean;
   gptSpell?: 'stressed' | 'joined' | 'plain';       // GPT-Live: how lashon kodesh is spelled out for it
   gptMyWay?: { word: string; say: string }[];       // GPT-Live: "say it my way" list
+  liveShort?: boolean;           // the voice gets the short instructions (default) or the full ones
+  liveFresh?: boolean;           // quietly start the voice fresh at each new section (default on)
+  liveCheck?: boolean;           // check what the voice said against the text; have it read anything it skipped (default on)
   liveSteady?: boolean;          // steady mode: every learning turn goes through the brain (off by default since Oct 30: stiff and slow)
   steadyOffDone?: boolean;
   coachOffDone?: boolean;
@@ -436,6 +439,9 @@ export const DEFAULT_SETTINGS: Settings = {
   lineRules: false,
   liveEngine: 'gpt',
   liveSteady: false,
+  liveShort: true,
+  liveFresh: true,
+  liveCheck: true,
   houseSay: true,
   heRead: 'he',
   liveCoach: false,
@@ -507,6 +513,15 @@ export const LIVE_VOICES: { id: string; name: string }[] = [
   { id: 'ripple', name: 'Ripple (Australian)' },
   { id: 'cinder', name: 'Cinder (Southern U.S.)' },
   { id: 'beacon', name: 'Beacon (Filipino)' },
+  // More American male voices. OpenAI's GPT-Live table doesn't list these, but GPT-Live is reported to accept them
+  // (the older Realtime voices, and two from ChatGPT). If OpenAI turns one down, the voice test says so.
+  { id: 'cedar', name: 'Cedar (American)' },
+  { id: 'ash', name: 'Ash (American)' },
+  { id: 'echo', name: 'Echo (American)' },
+  { id: 'verse', name: 'Verse (American)' },
+  { id: 'ballad', name: 'Ballad (American, soft)' },
+  { id: 'breeze', name: 'Breeze (American)' },
+  { id: 'ember', name: 'Ember (American)' },
 ];
 
 export const DEFAULT_VOICE_DESIGN = {
