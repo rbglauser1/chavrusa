@@ -9,7 +9,7 @@ import GeminiPronunciation from './GeminiPronunciation';
 import CallLogs from './CallLogs';
 import HebrewLab from './HebrewLab';
 import GptPronunciation from './GptPronunciation';
-import { Group } from './SettingsGroup';
+import { Group, GroupList } from './SettingsGroup';
 
 interface Props {
   settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
@@ -62,7 +62,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
       {!asPage && <div className="scrim" onClick={onClose} />}
       <div className={asPage ? 'settings-page' : 'drawer right'} role={asPage ? undefined : 'dialog'} aria-label="Settings">
         {!asPage && <div className="drawer-head"><h2>Settings</h2><button className="icon-btn" onClick={onClose} aria-label="Close">✕</button></div>}
-        <div className={asPage ? '' : 'drawer-body'}>
+        <div className={asPage ? 'sg-page' : 'drawer-body'}>
+          <GroupList id="settings">
           {rest && <>
           {loadError && <div className="error">Could not reach the database: {loadError}</div>}
           <Group id="style" title="Learning style" hint={`${styleById(s.style, s.customStyles).name} · ${s.leads === 'learner' ? 'you explain first' : 'chavrusa explains first'} · ${s.nusach === 'sephardi' ? 'Sephardi' : 'Ashkenaz'}`}>
@@ -416,6 +417,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <button className="btn" onClick={() => { window.location.href = '/api/logout'; }}>Log out</button>
           </Group>
           </>}
+          </GroupList>
         </div>
       </div>
     </>
