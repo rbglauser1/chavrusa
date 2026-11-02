@@ -13,8 +13,6 @@ const TEXT_KEY = 'chavrusa-hebrew-test-line';
 const VOTES_KEY = 'chavrusa-voice-votes'; // per voice: how many listens were good / not (this device)
 type Votes = Record<string, { good: number; bad: number; gone?: boolean }>;
 const COMBO_KEY = 'chavrusa-rule-combos'; // the rule lab: per combination of rules, good / not listens (this device)
-const comboId = (ids: string[]) => (ids.length ? RULES.filter((r) => ids.includes(r.id)).map((r) => r.id).join(',') : 'none');
-const comboName = (id: string) => (id === 'none' ? 'No rules at all' : id.split(',').map((x) => RULES.find((r) => r.id === x)?.name ?? x).join(' + '));
 const LINES = [
   { name: 'Mishnah', he: 'הָאִשָּׁה נִקְנֵית בְּשָׁלֹשׁ דְּרָכִים, וְקוֹנָה אֶת עַצְמָהּ בִּשְׁתֵּי דְרָכִים. נִקְנֵית בְּכֶסֶף, בִּשְׁטָר, וּבְבִיאָה.' },
   { name: 'Beis Shammai', he: 'בְּכֶסֶף, בֵּית שַׁמַּאי אוֹמְרִים: בְּדִינָר וּבְשָׁוֶה דִינָר. וּבֵית הִלֵּל אוֹמְרִים: בִּפְרוּטָה וּבְשָׁוֶה פְרוּטָה.' },
@@ -33,6 +31,25 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const [votes, setVotesRaw] = useState<Votes>(() => { try { return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}'); } catch { return {}; } });
   const setVotes = (f: (v: Votes) => Votes) => setVotesRaw((v) => { const n = f(v); try { localStorage.setItem(VOTES_KEY, JSON.stringify(n)); } catch { /* not kept */ } return n; });
   // The rule lab: which rules are switched on for the next listen (starts from what calls use), and the score so far.
+  // The built-in rules and the ones he wrote himself (kept in his settings, so calls can use them too).
+  const mine = s.customRules ?? [];
+  const allRules: { id: string; name: string; about: string; mine?: boolean }[] = [...RULES, ...mine.map((r) => ({ id: r.id, name: r.name, about: r.text, mine: true }))];
+  const comboId = (ids: string[]) => { const k = allRules.filter((r) => ids.includes(r.id)).map((r) => r.id); return k.length ? k.join(',') : 'none'; };
+  const comboName = (id: string) => (id === 'none' ? 'No rules at all' : id.split(',').map((x) => allRules.find((r) => r.id === x)?.name ?? '(a deleted rule)').join(' + '));
+  const [draft, setDraft] = useState<{ id: string; name: string; text: string } | null>(null);
+  function saveDraft() {
+    if (!draft || !draft.text.trim()) return;
+    const id = draft.id || `my-${Date.now().toString(36)}`;
+    const rule = { id, name: draft.name.trim() || `My rule ${mine.length + 1}`, text: draft.text.trim().slice(0, 800) };
+    onChange({ customRules: draft.id ? mine.map((r) => (r.id === id ? rule : r)) : [...mine, rule] });
+    if (!draft.id) setCombo((c) => [...c, id]); // a new rule is switched on, ready to hear
+    setDraft(null);
+  }
+  function deleteRule(id: string) {
+    onChange({ customRules: mine.filter((r) => r.id !== id), ...(s.liveRules?.includes(id) ? { liveRules: s.liveRules.filter((x) => x !== id) } : {}) });
+    setCombo((c) => c.filter((x) => x !== id));
+    setDraft(null);
+  }
   const callRules = s.liveRules?.length ? s.liveRules : STANDARD_RULES;
   const [combo, setCombo] = useState<string[]>(() => (callRules[0] === 'none' ? [] : callRules));
   const [combos, setCombosRaw] = useState<Record<string, { good: number; bad: number }>>(() => { try { return JSON.parse(localStorage.getItem(COMBO_KEY) || '{}'); } catch { return {}; } });
@@ -136,11 +153,22 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       </div>
       </Group>
       <Group id="lab-rules" level={3} title="Try combinations of rules" hint={`calls use: ${comboName(inCalls)}`}>
-      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The voice&apos;s pronunciation rules, as separate pieces. Switch some on or off, hear the line, and mark how it sounded. Try each combination a few times (the voice varies), and keep the one with the most good listens for calls. Uses your voice and the way of reading in use above.</div>
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The voice&apos;s pronunciation rules, as separate pieces, and any you write yourself. Switch some on or off, hear the line, and mark how it sounded. Try each combination a few times (the voice varies), and keep the one with the most good listens for calls. Uses your voice and the way of reading in use above.</div>
       <div className="presets">
-        {RULES.map((r) => <button key={r.id} className={`chip ${combo.includes(r.id) ? 'on' : ''}`} title={r.about} onClick={() => setCombo((c) => (c.includes(r.id) ? c.filter((x) => x !== r.id) : [...c, r.id]))}>{r.name}</button>)}
+        {allRules.map((r) => <button key={r.id} className={`chip ${r.mine ? 'mine' : ''} ${combo.includes(r.id) ? 'on' : ''}`} title={r.about} onClick={() => setCombo((c) => (c.includes(r.id) ? c.filter((x) => x !== r.id) : [...c, r.id]))}>{r.name}</button>)}
       </div>
-      <ul className="rule-lab-about">{RULES.filter((r) => combo.includes(r.id)).map((r) => <li key={r.id}><b>{r.name}:</b> {r.about}</li>)}{!combo.length && <li>No pronunciation rules at all (only the voice&apos;s basic instructions), to hear what it does on its own.</li>}</ul>
+      {draft ? (
+        <div className="rule-write">
+          <input type="text" placeholder="A short name (e.g. Lakewood bochur)" value={draft.name} maxLength={40} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          <textarea rows={4} placeholder="The rule, the way you'd tell the voice. For example: Read the Gemara like a Lakewood bochur saying it over to his chavrusa: relaxed, in the niggun, every word clear." value={draft.text} maxLength={800} onChange={(e) => setDraft({ ...draft, text: e.target.value })} />
+          <div className="he-lab-btns">
+            <button className="btn primary" disabled={!draft.text.trim()} onClick={saveDraft}>Save</button>
+            <button className="btn" onClick={() => setDraft(null)}>Cancel</button>
+            {draft.id && <button className="btn" onClick={() => deleteRule(draft.id)}>Delete</button>}
+          </div>
+        </div>
+      ) : <button className="linkish" style={{ fontSize: 13, margin: '2px 0 4px' }} onClick={() => setDraft({ id: '', name: '', text: '' })}>+ Write your own rule</button>}
+      <ul className="rule-lab-about">{allRules.filter((r) => combo.includes(r.id)).map((r) => <li key={r.id}><b>{r.name}:</b> {r.about}{r.mine && <> <button className="linkish" onClick={() => { const m = mine.find((x) => x.id === r.id); if (m) setDraft({ ...m }); }}>Edit</button></>}</li>)}{!combo.length && <li>No pronunciation rules at all (only the voice&apos;s basic instructions), to hear what it does on its own.</li>}</ul>
       <div className="he-lab-row on">
         <div className="he-lab-name">{comboName(cid)}{combos[cid] ? <span className="he-lab-tally"> · {combos[cid].good} good of {combos[cid].good + combos[cid].bad}</span> : null}</div>
         <div className="he-lab-btns">

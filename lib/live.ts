@@ -101,16 +101,20 @@ const RULE_TEXT: Record<string, (heRead: HeRead) => string> = {
   slowHe: () => 'Read the lashon kodesh a little slower and more carefully than your English, every word clear, then go back to your usual pace for the English.',
   niggun: () => ACCENT,
 };
-/** The chosen blocks, in a fixed order. `['none']` means no pronunciation rules at all. */
-export function rulesText(ids: string[], heRead: HeRead): string {
-  return RULES.filter((r) => ids.includes(r.id)).map((r) => RULE_TEXT[r.id](heRead)).join('\n');
+/** The chosen blocks, in a fixed order (the learner's own rules after the built-in ones). `['none']` means no rules. */
+export type CustomRule = { id: string; name: string; text: string };
+export function rulesText(ids: string[], heRead: HeRead, custom: CustomRule[] = []): string {
+  return [
+    ...RULES.filter((r) => ids.includes(r.id)).map((r) => RULE_TEXT[r.id](heRead)),
+    ...custom.filter((r) => ids.includes(r.id) && r.text.trim()).map((r) => r.text.trim().slice(0, 800)),
+  ].join('\n');
 }
 export const STANDARD_RULES = ['guide', 'key'];
 
-export function liveInstructionsShort(nusach: 'ashkenaz' | 'sephardi', pace: 'slow' | 'relaxed' | 'natural' | 'brisk' = 'natural', heRead: HeRead = 'join-kh', reads: VoiceReads = 'all', pauses: 'few' | 'normal' | 'more' | 'most' = 'normal', rules?: string[]): string {
+export function liveInstructionsShort(nusach: 'ashkenaz' | 'sephardi', pace: 'slow' | 'relaxed' | 'natural' | 'brisk' = 'natural', heRead: HeRead = 'join-kh', reads: VoiceReads = 'all', pauses: 'few' | 'normal' | 'more' | 'most' = 'normal', rules?: string[], custom: CustomRule[] = []): string {
   // A combination from the rule lab replaces the reading key and the pronunciation guide (Ashkenaz only).
   // Hashem's Names are never left to chance, whatever the combination.
-  const lab = nusach === 'ashkenaz' && rules && rules.length ? `${rulesText(rules, heRead)}\nNever say Hashem's Names as written: "Hashem" for the four-letter Name and for Adon-ai, "Elokim" for Elohim (Elokeinu, Elokecha).`.trim() : null;
+  const lab = nusach === 'ashkenaz' && rules && rules.length ? `${rulesText(rules, heRead, custom)}\nNever say Hashem's Names as written: "Hashem" for the four-letter Name and for Adon-ai, "Elokim" for Elohim (Elokeinu, Elokecha).`.trim() : null;
   return `You are a chavrusa: an American yeshiva bochur learning Torah out loud with the learner on a voice call, in an Orthodox learning app. You are one person with one voice and one accent, American yeshivish, from the first word of the call to the last, in English and in lashon kodesh alike.
 HOW YOU SPEAK (the learner chose this): ${PACE[pace] ?? PACE.natural}${PAUSES[pauses]} Warm, human, with real feeling.
 THE TEXT COMES ONLY FROM THE APP. Never read, quote, summarize or continue any line of a sefer yourself, from memory or from earlier in the call. Delegate to the backend whenever he wants to read, reread or go on in any words ("yes," "next," "go on"; pass "continue" as is), the big picture, what a commentary says, any source, a pronunciation fix (pass his words), or a change in how to learn. While you wait, say at most "one moment," then stay silent.

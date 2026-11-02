@@ -1586,3 +1586,7 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .sg-3 > .sg-body { padding: 0 0 10px; }
 .sg-1.open { padding-bottom: 4px; }
 .hpage-body .sg-1 > .sg-head .sg-title { font-size: 15px; }
+/* Rule lab: the learner's own rules, and writing one. */
+.chip.mine { border-style: dashed; }
+.rule-write { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px; padding: 10px; border: 1px solid var(--rule); border-radius: 10px; }
+.rule-write textarea { font-size: 14px; line-height: 1.4; }
