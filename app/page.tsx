@@ -142,7 +142,7 @@ export default function Home() {
     // The call recorder's summary line: the settings that shape the voice.
     logMeta: () => {
       const st = settingsRef.current;
-      return `style ${st.style}${st.blend ? `+${st.blend}` : ''} · voice ${st.liveVoice} · pace ${st.livePace ?? 'natural'} · ${st.nusach} · accent ${st.liveAccent ? 'on' : 'off'} · spelling ${st.gptSpell ?? 'stressed'} · standard words ${st.houseSay !== false ? 'on' : 'off'} · steady ${st.liveSteady === true ? 'on' : 'off'} · coach ${st.liveCoach === true ? 'on' : 'off'} · saver ${st.saver !== false ? 'on' : 'off'} · pause after ${st.liveIdleSec ?? 60}s · amud intro voice ${st.introVoice !== false ? 'on' : 'off'} · brain ${st.provider}/${st.tier}`;
+      return `style ${st.style}${st.blend ? `+${st.blend}` : ''} · voice ${st.liveVoice} · pace ${st.livePace ?? 'natural'} · pauses ${st.livePauses ?? 'normal'} · instructions ${st.liveShort !== false ? 'short' : 'full'} · reads ${st.voiceReads ?? 'all'} · ${st.nusach} · accent ${st.liveAccent ? 'on' : 'off'} · spelling ${st.gptSpell ?? 'stressed'} · standard words ${st.houseSay !== false ? 'on' : 'off'} · steady ${st.liveSteady === true ? 'on' : 'off'} · coach ${st.liveCoach === true ? 'on' : 'off'} · saver ${st.saver !== false ? 'on' : 'off'} · pause after ${st.liveIdleSec ?? 60}s · amud intro voice ${st.introVoice !== false ? 'on' : 'off'} · brain ${st.provider}/${st.tier}`;
     },
     // What the voice is reminded of during a call: the style in a few lines, and the learner's instructions for this session.
     reminder: () => {

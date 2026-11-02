@@ -166,6 +166,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         <span>In calls now: <b>{comboName(inCalls)}</b>{!s.liveRules?.length && ' (the standard)'}</span>
         {!!s.liveRules?.length && <button className="linkish" onClick={() => onChange({ liveRules: [] })}>Back to the standard</button>}
       </div>
+      {s.liveShort === false && <div className="goto-msg" style={{ padding: '0 0 8px' }}>Calls are set to the Full instructions, so they don&apos;t use these rules. <button className="linkish" onClick={() => onChange({ liveShort: true })}>Switch calls to Short</button></div>}
+      {s.nusach === 'sephardi' && <div className="goto-msg" style={{ padding: '0 0 8px' }}>These rules are for Ashkenaz; with Sephardi chosen, calls use the Sephardi guide.</div>}
       <Seg2 value={labMode} options={[['one', 'One rule at a time'], ['mix', 'Mix rules']]} onPick={setLabMode} />
       {labMode === 'one' ? (
         <>

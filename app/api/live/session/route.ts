@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
-import { liveContext, liveContextShort, liveInstructions, liveInstructionsShort } from '@/lib/live';
+import { liveContext, liveContextShort, liveInstructions, liveInstructionsShort, RULES } from '@/lib/live';
 import { HE_READS, namesForSpeechEn, voiceHe, type HeRead } from '@/lib/hebrew';
 import { listMemories, listMessages, listSources } from '@/lib/db';
 import { currentPlace } from '@/lib/place';
@@ -143,6 +143,7 @@ export async function POST(req: NextRequest) {
       transport: { type: 'webrtc', sdp },
     }),
   });
+  let rulesFinal = rules;
   let res = await openSession(build(rules), voiceField);
   let data: any = await res.json().catch(() => ({}));
   // A call that OpenAI turns down because of a choice in Settings still starts, the safe way, and says why:
@@ -157,13 +158,21 @@ export async function POST(req: NextRequest) {
     } else if (short && rules.length) {
       res = await openSession(build([]), voiceField);
       data = await res.json().catch(() => ({}));
+      rulesFinal = [];
       notice = `The rules you chose for calls wouldn't start a call (${why.slice(0, 120) || res.status}), so this call uses the standard rules.`;
     }
   }
   if (!res.ok) {
     return NextResponse.json({ error: `Live voice could not start (${res.status}): ${data?.error?.message ?? 'unknown error'}` }, { status: 502 });
   }
+  // Which pronunciation rules this call really got, in words, for the call recorder.
+  const ruleName = (id: string) => RULES.find((r) => r.id === id)?.name ?? (s.customRules ?? []).find((r) => r.id === id)?.name ?? id;
+  const rulesUsed = !short ? 'full instructions (the rule lab applies only with Short)'
+    : s.nusach !== 'ashkenaz' ? 'Sephardi guide (the rule lab applies only with Ashkenaz)'
+    : !rulesFinal.length ? 'the standard (Yeshivish guide + Vowel key)'
+    : rulesFinal[0] === 'none' ? 'no rules at all'
+    : rulesFinal.map(ruleName).join(' + ');
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all' }, ...(notice ? { notice } : {}), ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all' }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
 }
