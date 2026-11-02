@@ -137,6 +137,17 @@ function stepRef(ref: string, dir: 1 | -1, unit: Unit): string[] {
 
 // ---------- 4. Opening a commentary on what's open ----------
 const COMMENTARIES: [RegExp, RegExp][] = [
+  // Meforshim on Rashi (and other Chumash meforshim) first, so "the Gur Aryeh on Rashi" isn't taken as Rashi.
+  [/\bgur ar(i|y)eh\b/, /Gur Aryeh/i],
+  [/\bmizra(ch|k)i\b/, /Mizrachi/i],
+  [/\bsif(s|t)ei cha(ch|kh)a?mim\b|\bsiftei chakhamim\b/, /Siftei Chakhamim/i],
+  [/\bdivrei david\b|\btaz on rashi\b/, /Divrei David/i],
+  [/\bbe'?er ba ?sadeh\b/, /Be'?er BaSadeh/i],
+  [/\bda'?a(s|t) zek(e|ei)nim\b|\bdaas zkenim\b/, /Da'?at Zekenim|Daat Zkenim/i],
+  [/\bchizkuni\b/, /Chizkuni/i],
+  [/\bha'?amek davar\b|\bnetziv\b/, /Haamek Davar/i],
+  [/\bmalbim\b/, /Malbim/i],
+  [/\btur ha ?aro(ch|kh)\b/, /Tur HaArokh/i],
   [/\btosafos yom tov\b|\btosfos yom tov\b/, /Tosafot Yom Tov/i],
   [/\btiferes yisr[oa]el\b|\btiferet yisrael\b/, /Tiferet Yisrael/i],
   [/\bmelech?es shlomo\b|\bmelechet shlomo\b/, /Melechet Shlomo/i],
@@ -220,7 +231,13 @@ export async function findCommentary(text: string, sources: SourceRow[], approve
   const main = currentMain(sources);
   if (!hit || !main) return null;
   const links = await getLinks(main.ref, approved, ['Commentary', 'Targum', 'Halakhah'], 600).catch(() => null);
-  const ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
+  let ofIt = (links?.allowed ?? []).filter((l) => hit[1].test(l.title));
+  // A meforesh on Rashi (Gur Aryeh, Mizrachi…) is linked to the Rashi comments, not to the pasuk: look there, and treat
+  // "Rashi on Genesis 18:3:1" as pasuk 3.
+  if (!ofIt.length && !/^Rashi$/i.test(hit[1].source.replace(/[\^$]/g, ''))) {
+    const viaRashi = await getLinks(`Rashi on ${main.ref.replace(/:\d+(-\d+)?$/, '')}`, approved, undefined, 600).catch(() => null);
+    ofIt = (viaRashi?.allowed ?? []).filter((l) => hit[1].test(l.title)).map((l) => ({ ...l, anchor: (l.anchor ?? '').replace(/^Rashi on (.+? \d+:\d+):\d+.*$/, '$1') }));
+  }
 
   // Jump to the commentary on the line we're on (or the line the learner named: "the Taz on se'if 3"),
   // not the whole amud / siman. If it has nothing on that line, the next line where it does.

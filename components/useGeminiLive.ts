@@ -446,5 +446,5 @@ export function useGeminiLive(opts: Opts) {
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] COACH NOTE (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` }] }], turnComplete: false } });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText: (label: string, he: string, en: string) => pointTo(label, 1, he, en), pauseIn, keepAwake: bump, active: state !== 'off' };
 }

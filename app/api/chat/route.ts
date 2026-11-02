@@ -135,6 +135,12 @@ export async function POST(req: NextRequest) {
           const usage = { ai: false, reason: routed.line ? `Showed ${routed.line.ref} with its translation` : routed.source ? `Opened ${routed.source.ref}` : routed.settings ? 'Changed a setting' : 'Handled by the app' };
           const opPlace = spoken && routed.source && !routed.line ? openingPlace(routed.source) : null; // read aloud in pieces
           await addMessage(sid, 'assistant', routed.reply, { free: true, usage, ...(introText ? { introFor: introBase } : {}), ...(routed.source ? { opened: routed.source.ref } : {}), ...(routed.line ? { line: routed.line } : {}), ...(opPlace ? { pos: opPlace } : {}) });
+          // Mikraos Gedolos on screen: go to the pasuk (and meforesh) just read or opened.
+          {
+            const lr = routed.line?.ref ?? (routed.source && / on /.test(routed.source.ref) ? routed.source.ref : '');
+            const m3 = lr.match(/((?:Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d+):(\d+)/);
+            if (m3) send({ type: 'mgfocus', perek: m3[1], pasuk: Number(m3[2]), who: / on /.test(lr) ? lr.split(' on ')[0] : null });
+          }
           send({ type: 'reply', text: routed.reply, model: 'No AI needed (free)', usage });
           await touchSession(sid);
           send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
@@ -149,6 +155,14 @@ export async function POST(req: NextRequest) {
         // so it doesn't spend a lookup (time and money) fetching them. When the learner points somewhere
         // inside a page just opened ("at the two dots", "where it says…"), it gets a bigger piece to search.
         const place = pre ? splitRef(pre.ref) : currentPlace(history, sources);
+        // Mikraos Gedolos open on the learner's screen: point it at the pasuk (and meforesh) this turn is about.
+        const CHUMASH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) (\d+)/;
+        const focusMg = (ref: string, n?: number | null) => {
+          const who = ref.match(/^(.+?)(?: on |, )(?:Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Bereishit|Shemot|Vayikra|Bamidbar|Devarim)\b/)?.[1] ?? null;
+          const perek = ref.match(CHUMASH)?.[0] ?? ref.match(/(?:on |, )((?:Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d+)/)?.[1] ?? (place && CHUMASH.test(place.base) ? place.base.match(CHUMASH)![0] : null);
+          const pasuk = n ?? Number(ref.match(/ \d+:(\d+)/)?.[1] ?? 0);
+          if (perek && pasuk) send({ type: 'mgfocus', perek, pasuk, who });
+        };
         // Lamdan (prepared): the commentaries on the line are handed over every turn.
         const lamdan = !!styleById(settings.style, settings.customStyles).preload || (!!settings.blend && !!styleById(settings.blend, settings.customStyles).preload);
         const pointing = /\btwo dots\b|\bwhere it says\b|\bline (that )?(starts|starting|begins|beginning)\b|\bthe (mishna|mishnah|gemara)\b|\bamud (bet|beis|b)\b|\bthe (end|bottom|middle)\b/i.test(message);
@@ -184,6 +198,7 @@ export async function POST(req: NextRequest) {
             sources.push({ id: 'comm', ref: comm.src.ref, he_ref: comm.src.heRef, data: comm.src, created_at: new Date().toISOString() });
           }
           send({ type: 'source', source: comm.src });
+          focusMg(comm.src.ref, comm.line ?? null);
           commNote = `\n\n[The app opened ${comm.src.ref} for the learner (${comm.count} comment${comm.count > 1 ? 's' : ''}). Its text is below, so you do not need get_text for it.]\n${textForModel(comm.src, spoken)}`;
         } else if (comm && 'missing' in comm) {
           commNote = `\n\n[The app checked Sefaria: there is no approved ${comm.missing} on ${comm.on}. Tell the learner that plainly; do not guess what it says.${comm.available.length ? ` The commentaries this text does have: ${comm.available.join(', ')}. Offer one of them (for Mishnayos, usually the Bartenura).` : ''}]`;
@@ -331,6 +346,7 @@ export async function POST(req: NextRequest) {
         const tappedSince = (await listSources(sid).catch(() => [])).some((x) => (x.data?.tappedAt ?? 0) > Date.parse(startedAt));
         const newPlace0 = readPlace ? readPlace : marked.n && (place || marked.base) ? { base: marked.base || place!.base, n: marked.n, ...(marked.part ? { part: marked.part } : {}) } : currentPlace([], (await listSources(sid)).filter((x) => x.created_at >= startedAt)) ?? place;
         const newPlace = tappedSince ? null : newPlace0;
+        if (newPlace && CHUMASH.test(newPlace.base)) focusMg(`${newPlace.base}:${newPlace.n}`);
         // It went on into the next amud / perek: open it in the Sefer, at that line.
         if (newPlace && place && newPlace.base !== place.base) {
           try {

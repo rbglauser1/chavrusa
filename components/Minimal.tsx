@@ -32,6 +32,7 @@ interface Props {
   send: (text: string) => void;
   talk: { supported: boolean; on: boolean; state: string; heard: string; toggle: () => void; resume: () => void };
   pointAt: (src: SourceData, n: number) => void;
+  learnThis?: (x: { label: string; he: string; en: string }) => void; // Mikraos Gedolos: learn a pasuk or comment chosen on the page
   inlineComm: InlineComm;
   onMenu: () => void;       // sessions
   onSettings: () => void;
@@ -202,7 +203,7 @@ export default function Minimal(p: Props) {
         : <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {mgOpen && src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref) && (
-        <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? (Number(src.ref.match(/:(\d+)/)?.[1] ?? 1))} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={(x) => p.onToggle?.(x)}
+        <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? (Number(src.ref.match(/:(\d+)/)?.[1] ?? 1))} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={(x) => p.onToggle?.(x)} onLearn={p.learnThis}
           talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
       )}
       {dafOpen && src && amudOf(src.ref) && (

@@ -1536,3 +1536,19 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 [data-look='midnight'][data-c-he='sepia'] .mg-paper { --he-hue: #8f4a12; } [data-look='midnight'][data-c-he='slate'] .mg-paper { --he-hue: #1d5f8c; } [data-look='midnight'][data-c-he='maroon'] .mg-paper { --he-hue: #9e1f30; } [data-look='midnight'][data-c-he='green'] .mg-paper { --he-hue: #17704d; } [data-look='midnight'][data-c-he='bronze'] .mg-paper { --he-hue: #9a6a0e; } [data-look='midnight'][data-c-he='navy'] .mg-paper { --he-hue: #2440a0; } [data-look='midnight'][data-c-he='gray'] .mg-paper { --he-hue: #6e6e66; }
 [data-look='midnight'][data-c-en='sepia'] .mg-paper { --en-hue: #8f4a12; } [data-look='midnight'][data-c-en='slate'] .mg-paper { --en-hue: #1d5f8c; } [data-look='midnight'][data-c-en='maroon'] .mg-paper { --en-hue: #9e1f30; } [data-look='midnight'][data-c-en='green'] .mg-paper { --en-hue: #17704d; } [data-look='midnight'][data-c-en='bronze'] .mg-paper { --en-hue: #9a6a0e; } [data-look='midnight'][data-c-en='navy'] .mg-paper { --en-hue: #2440a0; } [data-look='midnight'][data-c-en='gray'] .mg-paper { --en-hue: #6e6e66; }
 [data-look='midnight'][data-c-comm='sepia'] .mg-paper { --comm-hue: #8f4a12; } [data-look='midnight'][data-c-comm='slate'] .mg-paper { --comm-hue: #1d5f8c; } [data-look='midnight'][data-c-comm='maroon'] .mg-paper { --comm-hue: #9e1f30; } [data-look='midnight'][data-c-comm='green'] .mg-paper { --comm-hue: #17704d; } [data-look='midnight'][data-c-comm='bronze'] .mg-paper { --comm-hue: #9a6a0e; } [data-look='midnight'][data-c-comm='navy'] .mg-paper { --comm-hue: #2440a0; } [data-look='midnight'][data-c-comm='gray'] .mg-paper { --comm-hue: #6e6e66; }
+/* Mikraos Gedolos: choosing a pasuk or a comment, learning it, and the meforshim on Rashi. */
+.mg-paper [data-mg] { cursor: pointer; border-radius: 3px; }
+.mg-sel { background: rgba(255, 214, 102, .5); box-shadow: 0 0 0 2px rgba(255, 214, 102, .5); }
+.mg-tags { display: inline-flex; flex-wrap: wrap; gap: .25em; margin-inline-start: .3em; vertical-align: baseline; }
+.mg-tag { font-family: var(--f-ui); font-size: .62em; line-height: 1.2; padding: .1em .45em; border-radius: 999px; border: 1px solid #b9a37a; background: #f6efe0; color: #6b4e2e; cursor: pointer; }
+.mg-action { position: absolute; z-index: 6; left: 10px; right: 84px; bottom: calc(44px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border-radius: 14px; background: var(--surface, #fff); border: 1px solid var(--rule); box-shadow: 0 4px 16px rgba(0,0,0,.18); font-family: var(--f-ui); }
+.daf-page.full .mg-action { bottom: calc(16px + env(safe-area-inset-bottom)); }
+.mg-action-label { flex-basis: 100%; font-size: 12.5px; color: var(--soft); }
+.mg-action .btn.primary, .mg-sheet .btn.primary { background: var(--accent); color: var(--accent-ink, #fff); border-color: var(--accent); }
+.mg-action-x { margin-inline-start: auto; background: none; border: 0; font-size: 16px; color: var(--soft); cursor: pointer; }
+.mg-sheet { position: absolute; z-index: 7; left: 0; right: 0; bottom: 0; max-height: 62dvh; display: flex; flex-direction: column; background: #fffdf8; border-top: 1px solid var(--rule); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgba(0,0,0,.2); font-family: var(--f-ui); }
+.mg-sheet-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px 6px; color: #1a1a1a; }
+.mg-sheet-body { overflow-y: auto; padding: 4px 16px 10px; }
+.mg-sheet-he { font-size: 17px; line-height: 1.6; text-align: justify; color: #1a1a1a; }
+.mg-sheet-en { font-family: var(--f-body, Georgia, serif); font-size: 14px; line-height: 1.5; color: #444; margin-top: 8px; }
+.mg-sheet-foot { padding: 8px 14px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #e6dfcf; }

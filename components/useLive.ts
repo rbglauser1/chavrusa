@@ -319,6 +319,27 @@ export function useLive(opts: {
     send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
     if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) });
   }, [send]);
+  // The learner chose something on the Mikraos Gedolos page (a pasuk, a comment, a meforesh on Rashi): read it the way
+  // his "who reads" setting says, say briefly what it's bothered by or adds, and wait.
+  const pointText = useCallback((label: string, he: string, en: string) => {
+    bump();
+    const r = reading.current; reading.current = null; r?.(false);
+    pending.current.forEach((id) => send({ type: 'session.commentary.append', delegation_id: id, content: '(Skip this: the learner just moved to a different place.)' }));
+    pending.current.clear(); partial.current.clear(); exactTold.current.clear();
+    userBuf.current = ''; voiceBuf.current = ''; setHeard('');
+    setS('speaking');
+    const heS = he ? toSpeech(he.slice(0, 1500)) : '', enS = en.slice(0, 1500);
+    const exact = READS === 'english' ? enS : READS === 'gist' ? '' : `${heS}${enS ? ` — ${enS}` : ''}`;
+    answering.current = true;
+    handed.current = { text: exact || enS, at: Date.now() };
+    const how = READS === 'gist'
+      ? `He reads it himself. In English it says: "${enS || '(no English: work from the lashon kodesh you were given)'}"${enS ? '' : `: ${heS}`}. Give its gist in a sentence or two in your own words (do not read it), then briefly what it is bothered by or adds, and stop.`
+      : exact
+        ? `Read it now, the way a chavrusa reads inside, in your lively voice at the speed and with the pauses set in your instructions, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out. Then, in two or three sentences of your own, say what it is bothered by or what it adds, and stop.`
+        : 'Say in a few words that we are there now, and wait.';
+    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner chose ${label} on the Mikraos Gedolos page: that is what we are learning now. ${how} Do not go back to what you were saying before.`) });
+    if (exact) send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) });
+  }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
   // The rest of the brain's answer (or all of it, if nothing went ahead): give it to the voice to say.
@@ -515,5 +536,5 @@ export function useLive(opts: {
     if (!text.trim()) return;
     send({ type: 'session.instructions.append', delegation_id: null, content: `COACH NOTE from the app (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` });
   }, [send]);
-  return { remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

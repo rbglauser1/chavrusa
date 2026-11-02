@@ -7,7 +7,12 @@ import type { Settings } from '@/lib/config';
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
 
 type HeEn = { he: string; en: string };
-type Data = { ref: string; heRef: string; pesukim: string[]; pesukimEn: string[]; onkelos: HeEn[]; meforshim: { id: string; he: string; name: string; perPasuk: HeEn[][]; missing?: boolean }[] };
+type Data = { ref: string; heRef: string; pesukim: string[]; pesukimEn: string[]; onkelos: HeEn[]; meforshim: { id: string; he: string; name: string; title?: string; perPasuk: HeEn[][]; missing?: boolean }[]; onRashi?: Record<string, { title: string; refs: string[] }[]> };
+// What's chosen on the page: a pasuk, or one comment of one meforesh.
+type Sel = { kind: 'p'; i: number } | { kind: 'c'; m: string; i: number; k: number };
+const untag = (t: string) => t.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+const plain = (t: string) => t.replace(/[\u0002\u0003]/g, '');
+const NAMES_ON_RASHI: Record<string, string> = { 'Siftei Chakhamim': 'Sifsei Chachamim', "Be'er BaSadeh": "Be'er BaSadeh", 'Da\'at Zekenim': 'Daas Zekeinim' };
 const MIN = 1, MAX = 5;
 const BOOK_HE: Record<string, string> = { Genesis: 'בראשית', Exodus: 'שמות', Leviticus: 'ויקרא', Numbers: 'במדבר', Deuteronomy: 'דברים' };
 const BOOK_LEN: Record<string, number> = { Genesis: 50, Exodus: 40, Leviticus: 27, Numbers: 36, Deuteronomy: 34 };
@@ -28,7 +33,11 @@ function Bolded({ t }: { t: string }) {
   return <>{parts.map((p, i) => (p.startsWith('\u0002') ? <b key={i}>{p.slice(1, -1)}</b> : <span key={i}>{p}</span>))}</>;
 }
 
-export default function MikraosPage({ startRef, startPasuk, onClose, talk, status, settings, onChange }: { startRef: string; startPasuk?: number; onClose: () => void; talk?: ReactNode; status?: string; settings: Settings; onChange: (p: Partial<Settings>) => void }) {
+export default function MikraosPage({ startRef, startPasuk, onClose, talk, status, settings, onChange, onLearn }: { startRef: string; startPasuk?: number; onClose: () => void; talk?: ReactNode; status?: string; settings: Settings; onChange: (p: Partial<Settings>) => void; onLearn?: (x: { label: string; he: string; en: string }) => void }) {
+  const [sel, setSel] = useState<Sel | null>(null);
+  // A meforesh on Rashi (Gur Aryeh, Mizrachi…), opened from its tag under a Rashi: shown in a panel over the page.
+  const [sheet, setSheet] = useState<{ title: string; label: string; he: string; en: string; loading?: boolean } | null>(null);
+  const pendingFocus = useRef<{ pasuk: number; who: string | null } | null>(null);
   // The learner's page: which meforshim (in the catalog's order), Onkelos, and English under everything.
   const chosen = MEFORSHIM.filter((m) => (settings.mgMeforshim ?? MG_DEFAULT).includes(m.id)).map((m) => m.id);
   const withOnk = settings.mgOnkelos !== false, withEn = !!settings.mgEnglish;
@@ -154,7 +163,8 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
     };
     const onEnd = (e: TouchEvent) => {
       if (e.touches.length < 2) startDist = 0;
-      if (e.touches.length === 0 && !moved && lastTap) {
+      const onItem = (e.target as HTMLElement | null)?.closest?.('[data-mg], button');
+      if (e.touches.length === 0 && !moved && lastTap && !onItem) {
         window.clearTimeout(tapTimer);
         tapTimer = window.setTimeout(() => { if (lastTap) { setFull(!fullRef.current); lastTap = 0; } }, 320);
       }
@@ -170,6 +180,67 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const isSel = (x: Sel) => !!sel && JSON.stringify(sel) === JSON.stringify(x);
+  // The chosen item: what it's called, and its words (bold marks dropped).
+  function selItem(): { label: string; he: string; en: string } | null {
+    if (!sel || !data) return null;
+    if (sel.kind === 'p') return { label: `${book} ${perek}:${sel.i + 1}`, he: data.pesukim[sel.i] ?? '', en: data.pesukimEn[sel.i] ?? '' };
+    const m = data.meforshim.find((x) => x.id === sel.m);
+    const c = m?.perPasuk[sel.i]?.[sel.k];
+    if (!m || !c) return null;
+    const many = (m.perPasuk[sel.i] ?? []).length > 1;
+    return { label: `${m.name} on ${book} ${perek}:${sel.i + 1}${many ? ` (comment ${sel.k + 1})` : ''}`, he: plain(c.he), en: c.en };
+  }
+  // Next: the next comment of the same meforesh (or the next pasuk); past this page, the next page.
+  function selNext() {
+    if (!sel || !data) return;
+    if (sel.kind === 'p') { if (range.includes(sel.i + 1)) setSel({ kind: 'p', i: sel.i + 1 }); else { setSel(null); goPage(1); } return; }
+    const m = data.meforshim.find((x) => x.id === sel.m);
+    if (!m) return;
+    if ((m.perPasuk[sel.i] ?? [])[sel.k + 1]) { setSel({ ...sel, k: sel.k + 1 }); return; }
+    const nextI = range.find((i) => i > sel.i && (m.perPasuk[i] ?? []).length);
+    if (nextI !== undefined) setSel({ kind: 'c', m: sel.m, i: nextI, k: 0 });
+    else { setSel(null); goPage(1); }
+  }
+  // The meforshim on a Rashi comment (Gur Aryeh, Mizrachi…), as small tags right after it.
+  function tags(mId: string, i: number, k: number) {
+    if (mId !== 'Rashi' || !data?.onRashi) return null;
+    const list = data.onRashi[`${i + 1}:${k + 1}`];
+    if (!list?.length) return null;
+    return <span className="mg-tags">{list.map((x) => <button key={x.title} className="mg-tag" onClick={(e) => { e.stopPropagation(); void openOnRashi(x, i); }}>{NAMES_ON_RASHI[x.title] ?? x.title}</button>)}</span>;
+  }
+  async function openOnRashi(x: { title: string; refs: string[] }, i: number) {
+    const name = NAMES_ON_RASHI[x.title] ?? x.title;
+    const label = `the ${name} on Rashi, ${book} ${perek}:${i + 1}`;
+    setSheet({ title: `${name} on Rashi · ${perek}:${i + 1}`, label, he: '', en: '', loading: true });
+    try {
+      const d = await fetch(`/api/commentary?refs=${encodeURIComponent(x.refs.slice(0, 12).join('|'))}`).then((r) => r.json());
+      const parts: { he: string[]; en: string[] }[] = d.parts ?? [];
+      setSheet({ title: `${name} on Rashi · ${perek}:${i + 1}`, label, he: untag(parts.flatMap((p) => p.he).join(' ')), en: untag(parts.flatMap((p) => p.en).filter(Boolean).join(' ')) });
+    } catch { setSheet({ title: `${name} on Rashi · ${perek}:${i + 1}`, label, he: '', en: '' }); }
+  }
+  // The chavrusa is talking about a pasuk or a meforesh: go there on the page and mark it.
+  useEffect(() => {
+    const on = (ev: Event) => {
+      const d = (ev as CustomEvent<{ perek: string; pasuk: number; who: string | null }>).detail;
+      if (!d?.perek || !d.pasuk) return;
+      if (d.perek !== ref) { pendingFocus.current = { pasuk: d.pasuk, who: d.who }; setStart(d.pasuk - 1); setHistory([]); setRef(d.perek); return; }
+      applyFocus(d.pasuk, d.who);
+    };
+    window.addEventListener('mg-focus', on);
+    return () => window.removeEventListener('mg-focus', on);
+  });
+  function applyFocus(pasuk: number, who: string | null) {
+    if (!data) return;
+    const i = pasuk - 1;
+    if (!range.includes(i)) { setHistory((h) => [...h, first]); setStart(i); refit(); }
+    const w = (who ?? '').toLowerCase();
+    const m = w ? data.meforshim.find((x) => w.startsWith(x.id.toLowerCase()) || x.id.toLowerCase().startsWith(w) || (x.title ?? '').toLowerCase().startsWith(w)) : null;
+    setSel(m && (m.perPasuk[i] ?? []).length ? { kind: 'c', m: m.id, i, k: 0 } : { kind: 'p', i });
+  }
+  // After a new perek loads for a focus, apply it.
+  useEffect(() => { if (data && pendingFocus.current) { const f = pendingFocus.current; pendingFocus.current = null; applyFocus(f.pasuk, f.who); } }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const title = `${BOOK_HE[book] ?? book} ${heNum(perek)}`;
   return (
@@ -206,7 +277,13 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
           <button className="btn" onClick={() => setPanel(false)}>Done</button>
         </div>
       )}
-      <div className="daf-page-box mg-box" ref={box}>
+      <div className="daf-page-box mg-box" ref={box} onClick={(e) => {
+        const t = (e.target as HTMLElement).closest('[data-mg]') as HTMLElement | null;
+        if (!t || (e.target as HTMLElement).closest('button')) return;
+        const [kind, a, b, c] = (t.dataset.mg ?? '').split(':');
+        const next: Sel = kind === 'p' ? { kind: 'p', i: Number(a) } : { kind: 'c', m: a, i: Number(b), k: Number(c) };
+        setSel((cur) => (cur && JSON.stringify(cur) === JSON.stringify(next) ? null : next));
+      }}>
         {!data && <div className="daf-page-msg">{err || 'Opening the page…'}</div>}
         {data && (
           <div className={`mg-paper ${phase !== 'done' ? 'fitting' : ''}`} ref={paper} dir="rtl" style={{ width: `${zoom * 100}%`, fontSize: `${zoom * scale}em` }}>
@@ -214,8 +291,8 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
             <div className="mg-top">
               <div className="mg-text">
                 {range.map((i) => withEn
-                  ? <div key={i} className="mg-pair"><div><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]}</div>{data.pesukimEn[i] && <div className="mg-en" dir="ltr">{data.pesukimEn[i]}</div>}</div>
-                  : <span key={i}><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]} </span>)}
+                  ? <div key={i} data-mg={`p:${i}`} className={`mg-pair ${isSel({ kind: 'p', i }) ? 'mg-sel' : ''}`}><div><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]}</div>{data.pesukimEn[i] && <div className="mg-en" dir="ltr">{data.pesukimEn[i]}</div>}</div>
+                  : <span key={i} data-mg={`p:${i}`} className={isSel({ kind: 'p', i }) ? 'mg-sel' : ''}><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]} </span>)}
               </div>
               {data.onkelos.length > 0 && (
                 <div className="mg-onk">
@@ -236,8 +313,8 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
                   <div className="mg-label">{m.he}</div>
                   <div className={`mg-cols rashi ${withEn ? 'one' : ''}`}>
                     {range.map((i) => (m.perPasuk[i] ?? []).length ? (withEn
-                      ? <div key={i}>{(m.perPasuk[i] ?? []).map((c, k) => <div key={k} className="mg-pair">{k === 0 && <span className="mg-num">({heNum(i + 1)}) </span>}<Bolded t={c.he} />{c.en && <div className="mg-en" dir="ltr">{c.en}</div>}</div>)}</div>
-                      : <span key={i}><span className="mg-num">({heNum(i + 1)})</span> {(m.perPasuk[i] ?? []).map((c, k) => <span key={k}><Bolded t={c.he} /> </span>)}</span>
+                      ? <div key={i}>{(m.perPasuk[i] ?? []).map((c, k) => <div key={k} data-mg={`c:${m.id}:${i}:${k}`} className={`mg-pair ${isSel({ kind: 'c', m: m.id, i, k }) ? 'mg-sel' : ''}`}>{k === 0 && <span className="mg-num">({heNum(i + 1)}) </span>}<Bolded t={c.he} />{tags(m.id, i, k)}{c.en && <div className="mg-en" dir="ltr">{c.en}</div>}</div>)}</div>
+                      : <span key={i}><span className="mg-num">({heNum(i + 1)})</span> {(m.perPasuk[i] ?? []).map((c, k) => <span key={k} data-mg={`c:${m.id}:${i}:${k}`} className={isSel({ kind: 'c', m: m.id, i, k }) ? 'mg-sel' : ''}><Bolded t={c.he} />{tags(m.id, i, k)} </span>)}</span>
                     ) : null)}
                   </div>
                 </div>
@@ -248,6 +325,29 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
           </div>
         )}
       </div>
+      {sel && data && selItem() && (
+        // What's chosen on the page: learn it with the chavrusa, or go on to the next one.
+        <div className="mg-action">
+          <span className="mg-action-label">{selItem()!.label}</span>
+          <button className="btn primary" onClick={() => { const x = selItem()!; onLearn?.({ label: x.label, he: x.he, en: x.en }); }}>▶ Learn this</button>
+          <button className="btn" onClick={selNext}>Next ›</button>
+          <button className="mg-action-x" onClick={() => setSel(null)} aria-label="Clear">✕</button>
+        </div>
+      )}
+      {sheet && (
+        <div className="mg-sheet" role="dialog" aria-label={sheet.title}>
+          <div className="mg-sheet-head"><b>{sheet.title}</b><button className="mg-action-x" onClick={() => setSheet(null)} aria-label="Close">✕</button></div>
+          <div className="mg-sheet-body">
+            {sheet.loading ? <div className="muted">Opening…</div> : (
+              <>
+                <div className="mg-sheet-he rashi" dir="rtl">{sheet.he || <span className="muted">Not found on Sefaria.</span>}</div>
+                {sheet.en && <div className="mg-sheet-en" dir="ltr">{sheet.en}</div>}
+              </>
+            )}
+          </div>
+          {!sheet.loading && sheet.he && <div className="mg-sheet-foot"><button className="btn primary" onClick={() => onLearn?.({ label: sheet.label, he: sheet.he, en: sheet.en })}>▶ Learn this</button></div>}
+        </div>
+      )}
       {(talk || full) && (
         <div className="daf-page-talk">
           {full && <button className="daf-page-exit" onClick={() => setFull(false)} aria-label="Exit full screen">⤡</button>}

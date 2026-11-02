@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { approvedList } from '@/lib/db';
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
-import { getPerPasuk, getText } from '@/lib/sefaria';
+import { getLinks, getPerPasuk, getText } from '@/lib/sefaria';
+
+// The meforshim on Rashi (supercommentaries), found through Sefaria's links from each Rashi comment.
+const ON_RASHI = /Gur Aryeh|Mizrachi|Siftei Chakhamim|Divrei David|Be'?er BaSadeh|Maskil LeDavid|Levush HaOrah|Nachalat Yaakov|Yeriot Shlomo|Da'?at Zekenim|Imrei Shefer|Sefer HaZikaron/i;
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -20,18 +23,33 @@ export async function GET(req: NextRequest) {
   const chosen = ids.map((id) => MEFORSHIM.find((x) => x.id === id)).filter((x): x is (typeof MEFORSHIM)[number] => !!x).slice(0, 12);
   try {
     const list = await approvedList();
+    const rashiOn = chosen.some((x) => x.id === 'Rashi')
+      ? getLinks(`Rashi on ${ref}`, list, undefined, 500).then((r) => r.allowed).catch(() => [])
+      : Promise.resolve([]);
     const [base, onk, ...comms] = await Promise.all([
       getText(ref, list),
       wantOnk ? getPerPasuk(`Onkelos ${ref}`, list, wantEn).catch(() => null) : Promise.resolve(null),
       ...chosen.map((x) => getPerPasuk(`${x.title(book)} ${perek}`, list, wantEn).catch(() => null)),
     ]);
     if (!base.verdict.allowed) return NextResponse.json({ error: 'Not on the approved list.' }, { status: 403 });
+    // Which meforshim on Rashi speak about each Rashi comment: "pasuk:comment" (1-based) -> [{ title, refs }].
+    const onRashi: Record<string, { title: string; refs: string[] }[]> = {};
+    for (const l of await rashiOn) {
+      if (!ON_RASHI.test(l.title)) continue;
+      const m2 = (l.anchor ?? '').match(/^Rashi on .+? \d+:(\d+):(\d+)/);
+      if (!m2) continue;
+      const key = `${m2[1]}:${m2[2]}`;
+      const list2 = (onRashi[key] ??= []);
+      const have = list2.find((x) => x.title === l.title);
+      if (have) { if (!have.refs.includes(l.ref)) have.refs.push(l.ref); } else list2.push({ title: l.title, refs: [l.ref] });
+    }
     return NextResponse.json({
       ref: base.ref, heRef: base.heRef,
       pesukim: base.he,
       pesukimEn: wantEn ? (base.en.length ? base.en : base.altEn ?? []) : [],
       onkelos: onk ? onk.map((p) => p[0] ?? { he: '', en: '' }) : [],
-      meforshim: chosen.map((x, i) => ({ id: x.id, he: x.he, name: x.name, perPasuk: comms[i] ?? [], missing: !comms[i] })),
+      meforshim: chosen.map((x, i) => ({ id: x.id, he: x.he, name: x.name, perPasuk: comms[i] ?? [], missing: !comms[i], title: `${x.title(book)} ${perek}` })),
+      onRashi,
     });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });

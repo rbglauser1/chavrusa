@@ -347,6 +347,12 @@ export default function Home() {
 
   // The learner tapped a line in the Sefer: learn from there. Saved to the session (so the Chavrusa and a new
   // call start there), and if a call is going, the voice is told right away.
+  // Mikraos Gedolos: "Learn this" on a pasuk or a comment. In a call the chavrusa reads it (as "who reads" says) and
+  // explains it; otherwise it goes to the chavrusa as a question.
+  function learnFromPage(x: { label: string; he: string; en: string }) {
+    if (live.active) { live.pointText(x.label, x.he, x.en); return; }
+    send(`Let's learn ${x.label}. It says: "${x.he.slice(0, 600)}"${x.en ? ` (in English: "${x.en.slice(0, 600)}")` : ''}`);
+  }
   function pointAt(src: SourceData, n: number) {
     // The tap wins: drop what was waiting and any read-through; an answer still being written isn't spoken.
     if (live.active) { liveQueue.current = []; liveDelegation.current = null; }
@@ -490,6 +496,8 @@ export default function Home() {
     switch (e.type) {
       case 'session': setSessionId(e.session.id); break;
       case 'check': logLine('CHECK', e.text); break;
+      // The Mikraos Gedolos page (if open) goes to the pasuk / meforesh this turn is about.
+      case 'mgfocus': window.dispatchEvent(new CustomEvent('mg-focus', { detail: { perek: e.perek, pasuk: e.pasuk, who: e.who } })); break;
       case 'status': setStatus(e.text); if (liveDelegation.current) logLine('BRAIN', `status: ${e.text}`); break;
       case 'source':
         if (!turnRefs.current.some((r) => r.ref === e.source.ref)) turnRefs.current.push({ ref: e.source.ref, heRef: e.source.heRef, url: e.source.url });
@@ -684,6 +692,7 @@ export default function Home() {
             send={(t) => { spokeLast.current = false; if (!live.active) voice.unlock(); send(t); }}
             talk={{ supported: voice.supported, on: talking, state: live.active ? live.state : convo ? voice.state : 'off', heard: live.heard, toggle: toggleTalk, resume: () => live.start() }}
             pointAt={pointAt}
+            learnThis={learnFromPage}
             inlineComm={inlineComm}
             onMenu={() => (newUI ? setView('home') : setDrawer('sessions'))}
             onSettings={() => { if (newUI) { setSettingsFrom('learn'); setView('settings'); } else setDrawer('settings'); }}
