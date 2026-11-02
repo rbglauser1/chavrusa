@@ -148,11 +148,11 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   // which stays hidden) and taps the better. "About the same" keeps the best so far, so a change has to earn its place.
   type Pace = 'slow' | 'relaxed' | 'natural' | 'brisk';
   type Cfg = { mode: HeRead; voice: string; rules: string; instr: 'short' | 'full'; pace: Pace };
-  type StageId = 'way' | 'voice' | 'rules' | 'mix' | 'way2' | 'instr' | 'pace' | 'final';
+  type StageId = 'way' | 'voice' | 'rules' | 'mix' | 'trim' | 'way2' | 'instr' | 'pace' | 'final';
   type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean };
   const cfgKey = (c: Cfg) => `c:${c.mode}|${c.voice}|${c.rules}|${c.instr}|${c.pace}`;
   const sameCfg = (a: Cfg, b: Cfg) => cfgKey(a) === cfgKey(b);
-  const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding good rules together', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now' };
+  const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding rules together, one at a time', trim: 'Taking each rule out again, to see if it’s better without it', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now' };
   const [withVoices, setWithVoices] = useState(true);
   const [withPace, setWithPace] = useState(true);
   const [tune, setTune] = useState<Tune | null>(null);
@@ -166,10 +166,19 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     if (st === 'way2') return t.goodWays.map((m) => (c) => ({ ...c, mode: m }));
     if (st === 'voice') return voicesOk.map((v) => (c) => ({ ...c, voice: v }));
     if (st === 'rules') return ['none', comboId(STANDARD_RULES), ...allRules.map((r) => r.id)].map((r) => (c) => ({ ...c, rules: r, instr: 'short' }));
-    if (st === 'mix') return t.good.map((r) => (c) => {
+    // Adding: every rule gets a turn being added to the best so far (the ones that did well alone first). An addition
+    // only stays if the whole set with it beats the set without it, so a rule that's good alone but spoils the others
+    // never gets in.
+    if (st === 'mix') return [...t.good, ...allRules.map((r) => r.id).filter((r) => !t.good.includes(r))].map((r) => (c) => {
       const have = c.rules === 'none' ? [] : c.rules.split(',');
       if (have.includes(r)) return null;
       return { ...c, rules: comboId([...have, r]), instr: 'short' };
+    });
+    // Taking out: each rule in the best set is tried without it, in case one that helped early is now in the way.
+    if (st === 'trim') return allRules.map((r) => r.id).map((r) => (c) => {
+      const have = c.rules === 'none' ? [] : c.rules.split(',');
+      if (!have.includes(r) || have.length < 2) return null;
+      return { ...c, rules: comboId(have.filter((x) => x !== r)), instr: 'short' };
     });
     if (st === 'instr') return [(c) => ({ ...c, instr: c.instr === 'short' ? 'full' : 'short' })];
     if (st === 'pace') return (['slow', 'relaxed', 'natural', 'brisk'] as Pace[]).map((p) => (c) => ({ ...c, pace: p }));
@@ -190,7 +199,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     return { ...t, si, step, chal: null, done: true, won: !sameCfg(t.champ, t.start) };
   }
   const startTune = () => {
-    const stages: StageId[] = ['way', ...(withVoices ? (['voice'] as StageId[]) : []), 'rules', 'mix', 'way2', 'instr', ...(withPace ? (['pace'] as StageId[]) : []), 'final'];
+    const stages: StageId[] = ['way', ...(withVoices ? (['voice'] as StageId[]) : []), 'rules', 'mix', 'trim', 'way2', 'instr', ...(withPace ? (['pace'] as StageId[]) : []), 'final'];
     setTune(advance({ stages, si: 0, step: 0, champ: startCfg, chal: null, champOnA: true, good: [], goodWays: [], start: startCfg, done: false, won: false }));
   };
   const tuneA = tune?.chal ? (tune.champOnA ? tune.champ : tune.chal) : null;
@@ -229,7 +238,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         <div className="tuner-title">Find the best setup, the easy way</div>
         {!tune && (
           <>
-            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the line above read two ways, A and B, and tap the one that sounds better. Step by step it tries everything that changes how the Hebrew sounds: how the Hebrew is given to the voice, the voices, every rule on its own (yours too), the good rules together, how the Hebrew is given again with those rules, short or full instructions, and the speed. Each step keeps the best so far, and at the end the winner has to beat what calls use now. About 25–35 pairs, about 2¢ a pair (50–70¢ in all). You can stop and start again any time.</div>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the line above read two ways, A and B, and tap the one that sounds better. Step by step it tries everything that changes how the Hebrew sounds: how the Hebrew is given to the voice, the voices, every rule on its own (yours too), adding rules together one at a time (each addition has to beat the set without it), taking each one out again to check it still helps, how the Hebrew is given again with those rules, short or full instructions, and the speed. Each step keeps the best so far, and at the end the winner has to beat what calls use now. About 30–45 pairs, about 2¢ a pair (60–90¢ in all). You can stop and start again any time.</div>
             <label className="tuner-check"><input type="checkbox" checked={withVoices} onChange={(e) => setWithVoices(e.target.checked)} /> Compare the voices too ({voicesOk.length - 1} pairs)</label>
             <label className="tuner-check"><input type="checkbox" checked={withPace} onChange={(e) => setWithPace(e.target.checked)} /> Compare the speaking speeds too (3 pairs; the speed also applies to the rest of the call)</label>
             <button className="btn primary" disabled={disabled || !text.trim()} onClick={startTune}>Start</button>
