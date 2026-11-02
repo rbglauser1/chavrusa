@@ -280,13 +280,19 @@ export async function indexWithCounts(title: string): Promise<any> {
 }
 
 // ---------- Mikraos Gedolos (a printed Chumash page) ----------
-/** A commentary on a whole perek, kept in its comments per pasuk: [pasuk][comment] (Hebrew, bold kept as B_ON/B_OFF). */
-export async function getPerPasuk(ref: string, list: ApprovedEntry[]): Promise<string[][] | null> {
+/** A commentary (or targum) on a whole perek, kept per pasuk: [pasuk][comment] {he, en} (bold kept as B_ON/B_OFF).
+ *  The English is Sefaria's, shown to the learner only (never given to the AI). */
+export async function getPerPasuk(ref: string, list: ApprovedEntry[], withEn = false): Promise<{ he: string; en: string }[][] | null> {
   const verdict = await judgeRef(ref, list).catch(() => null);
   if (!verdict?.allowed) return null;
-  const d = await getJson(`${BASE}/api/v3/texts/${enc(ref)}?version=source`);
-  const v: V3Version | undefined = (Array.isArray(d?.versions) ? d.versions : [])[0];
-  const text = v?.text;
-  if (!Array.isArray(text)) return null;
-  return text.map((p: unknown) => flatten(p).map(stripKeepBold).filter((x) => x.trim()));
+  const d = await getJson(`${BASE}/api/v3/texts/${enc(ref)}?version=source${withEn ? '&version=english' : ''}`);
+  const versions: V3Version[] = Array.isArray(d?.versions) ? d.versions : [];
+  const heV = pick(versions, 'he') ?? versions[0];
+  const enV = withEn ? pick(versions, 'en') : undefined;
+  if (!Array.isArray(heV?.text)) return null;
+  const enText = Array.isArray(enV?.text) ? (enV!.text as unknown[]) : [];
+  return (heV!.text as unknown[]).map((p, i) => {
+    const he = flatten(p), en = flatten(enText[i]);
+    return he.map((h, k) => ({ he: stripKeepBold(h), en: en[k] ? yeshivishEnglish(stripHtml(en[k])) : '' })).filter((x) => x.he.trim());
+  });
 }

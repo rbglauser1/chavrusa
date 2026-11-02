@@ -3,8 +3,11 @@
 // and Rashi, Ramban, Ibn Ezra, Sforno and Or HaChaim below, each comment with its pasuk. A few pesukim per page, the
 // way a printed Chumash turns its pages. Pinch, double-tap or + / − to zoom; a tap for full screen; Talk stays on screen.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { Settings } from '@/lib/config';
+import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
 
-type Data = { ref: string; heRef: string; pesukim: string[]; onkelos: string[]; meforshim: { en: string; he: string; perPasuk: string[][] }[] };
+type HeEn = { he: string; en: string };
+type Data = { ref: string; heRef: string; pesukim: string[]; pesukimEn: string[]; onkelos: HeEn[]; meforshim: { id: string; he: string; name: string; perPasuk: HeEn[][]; missing?: boolean }[] };
 const PER_PAGE = 4;
 const MIN = 1, MAX = 5;
 const BOOK_HE: Record<string, string> = { Genesis: 'בראשית', Exodus: 'שמות', Leviticus: 'ויקרא', Numbers: 'במדבר', Deuteronomy: 'דברים' };
@@ -26,7 +29,12 @@ function Bolded({ t }: { t: string }) {
   return <>{parts.map((p, i) => (p.startsWith('\u0002') ? <b key={i}>{p.slice(1, -1)}</b> : <span key={i}>{p}</span>))}</>;
 }
 
-export default function MikraosPage({ startRef, startPasuk, onClose, talk, status }: { startRef: string; startPasuk?: number; onClose: () => void; talk?: ReactNode; status?: string }) {
+export default function MikraosPage({ startRef, startPasuk, onClose, talk, status, settings, onChange }: { startRef: string; startPasuk?: number; onClose: () => void; talk?: ReactNode; status?: string; settings: Settings; onChange: (p: Partial<Settings>) => void }) {
+  // The learner's page: which meforshim (in the catalog's order), Onkelos, and English under everything.
+  const chosen = MEFORSHIM.filter((m) => (settings.mgMeforshim ?? MG_DEFAULT).includes(m.id)).map((m) => m.id);
+  const withOnk = settings.mgOnkelos !== false, withEn = !!settings.mgEnglish;
+  const [panel, setPanel] = useState(false);
+  const toggleMef = (id: string) => onChange({ mgMeforshim: chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id] });
   const [ref, setRef] = useState(startRef.replace(/:.*$/, ''));
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState('');
@@ -41,13 +49,14 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   useEffect(() => {
     let gone = false;
     setData(null); setErr('');
-    fetch(`/api/mikraos?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => {
+    const q = new URLSearchParams({ ref, m: chosen.join(','), onk: withOnk ? '1' : '0', en: withEn ? '1' : '0' });
+    fetch(`/api/mikraos?${q}`).then((r) => r.json()).then((d) => {
       if (gone) return;
       if (d.error) { setErr(d.error); return; }
       setData(d);
     }).catch(() => { if (!gone) setErr('The page could not be loaded.'); });
     return () => { gone = true; };
-  }, [ref]);
+  }, [ref, chosen.join(','), withOnk, withEn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const book = ref.replace(/ \d+$/, ''), perek = Number(ref.match(/(\d+)$/)?.[1] ?? 1);
   const pages = data ? Math.max(1, Math.ceil(data.pesukim.length / PER_PAGE)) : 1;
@@ -135,9 +144,30 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
           <button className="daf-page-nav" onClick={() => zoomTo(zoom / 1.5)} disabled={zoom <= MIN} aria-label="Zoom out">−</button>
           <button className="daf-page-nav" onClick={() => zoomTo(zoom * 1.5)} disabled={zoom >= MAX} aria-label="Zoom in">+</button>
         </span>
+        <button className={`daf-page-nav ${panel ? 'on' : ''}`} onClick={() => setPanel((v) => !v)} aria-label="Choose meforshim and English" title="Meforshim and English">☰</button>
         <button className="daf-page-nav" onClick={() => setFull(true)} aria-label="Full screen">⤢</button>
         <button className="daf-page-x" onClick={onClose} aria-label="Close">✕</button>
       </div>
+      {panel && (
+        <div className="mg-panel">
+          <div className="mg-panel-row">
+            <label><input type="checkbox" checked={withEn} onChange={() => onChange({ mgEnglish: !withEn })} /> English under everything</label>
+            <label><input type="checkbox" checked={withOnk} onChange={() => onChange({ mgOnkelos: !withOnk })} /> Onkelos</label>
+          </div>
+          <div className="mg-panel-title">Meforshim on your page</div>
+          <div className="mg-panel-grid">
+            {MEFORSHIM.map((m) => {
+              const missing = data?.meforshim.find((x) => x.id === m.id)?.missing;
+              return (
+                <label key={m.id} className={missing ? 'missing' : ''}>
+                  <input type="checkbox" checked={chosen.includes(m.id)} onChange={() => toggleMef(m.id)} /> {m.name} <span className="he">{m.he}</span>{missing ? <small> (not on this sefer)</small> : null}
+                </label>
+              );
+            })}
+          </div>
+          <button className="btn" onClick={() => setPanel(false)}>Done</button>
+        </div>
+      )}
       <div className="daf-page-box mg-box" ref={box}>
         {!data && <div className="daf-page-msg">{err || 'Opening the page…'}</div>}
         {data && (
@@ -145,30 +175,36 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
             <div className="mg-head"><span>{title}</span><span className="mg-head-p">{heNum(first + 1)}–{heNum(Math.min(first + PER_PAGE, data.pesukim.length))}</span></div>
             <div className="mg-top">
               <div className="mg-text">
-                {range.map((i) => <span key={i}><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]} </span>)}
+                {range.map((i) => withEn
+                  ? <div key={i} className="mg-pair"><div><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]}</div>{data.pesukimEn[i] && <div className="mg-en" dir="ltr">{data.pesukimEn[i]}</div>}</div>
+                  : <span key={i}><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]} </span>)}
               </div>
               {data.onkelos.length > 0 && (
                 <div className="mg-onk">
                   <div className="mg-label">אונקלוס</div>
-                  {range.map((i) => data.onkelos[i] ? <span key={i}><span className="mg-num">{heNum(i + 1)}</span> {data.onkelos[i]} </span> : null)}
+                  {range.map((i) => data.onkelos[i]?.he ? (withEn
+                    ? <div key={i} className="mg-pair"><div><span className="mg-num">{heNum(i + 1)}</span> {data.onkelos[i].he}</div>{data.onkelos[i].en && <div className="mg-en" dir="ltr">{data.onkelos[i].en}</div>}</div>
+                    : <span key={i}><span className="mg-num">{heNum(i + 1)}</span> {data.onkelos[i].he} </span>) : null)}
                 </div>
               )}
             </div>
             {data.meforshim.map((m) => {
               const has = range.some((i) => (m.perPasuk[i] ?? []).length);
+              // (A meforesh with nothing on these pesukim is left off this page.)
               if (!has) return null;
               return (
-                <div key={m.en} className={`mg-comm ${m.en === 'Rashi' ? 'mg-rashi' : ''}`}>
+                <div key={m.id} className={`mg-comm ${m.id === 'Rashi' ? 'mg-rashi' : ''}`}>
                   <div className="mg-label">{m.he}</div>
-                  <div className="mg-cols rashi">
-                    {range.map((i) => (m.perPasuk[i] ?? []).length ? (
-                      <span key={i}><span className="mg-num">({heNum(i + 1)})</span> {(m.perPasuk[i] ?? []).map((c, k) => <span key={k}><Bolded t={c} /> </span>)}</span>
+                  <div className={`mg-cols rashi ${withEn ? 'one' : ''}`}>
+                    {range.map((i) => (m.perPasuk[i] ?? []).length ? (withEn
+                      ? <div key={i}>{(m.perPasuk[i] ?? []).map((c, k) => <div key={k} className="mg-pair">{k === 0 && <span className="mg-num">({heNum(i + 1)}) </span>}<Bolded t={c.he} />{c.en && <div className="mg-en" dir="ltr">{c.en}</div>}</div>)}</div>
+                      : <span key={i}><span className="mg-num">({heNum(i + 1)})</span> {(m.perPasuk[i] ?? []).map((c, k) => <span key={k}><Bolded t={c.he} /> </span>)}</span>
                     ) : null)}
                   </div>
                 </div>
               );
             })}
-            <div className="mg-foot">Text from Sefaria · approved sources only</div>
+            <div className="mg-foot">Text from Sefaria · approved sources only{withEn ? ' · English: Sefaria\'s translations' : ''}</div>
           </div>
         )}
       </div>

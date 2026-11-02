@@ -202,7 +202,7 @@ export default function Minimal(p: Props) {
         : <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {mgOpen && src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref) && (
-        <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? (Number(src.ref.match(/:(\d+)/)?.[1] ?? 1))} onClose={() => setMgOpen(false)} status={label}
+        <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? (Number(src.ref.match(/:(\d+)/)?.[1] ?? 1))} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={(x) => p.onToggle?.(x)}
           talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
       )}
       {dafOpen && src && amudOf(src.ref) && (

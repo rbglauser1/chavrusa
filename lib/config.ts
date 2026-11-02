@@ -377,6 +377,9 @@ export interface Settings {
   geminiMyWay?: { word: string; say: string }[];      // "say it my way": word → how Gemini should say it
   lineRules?: boolean;      // a thin line between each line of the text (its Hebrew and English kept together)
   voiceReads?: VoiceReads;  // in a call: the chavrusa reads Hebrew and English (all), only the English, or only the gist
+  mgMeforshim?: string[];   // Mikraos Gedolos page: which meforshim (ids from lib/mikraos), in this order
+  mgOnkelos?: boolean;      // Mikraos Gedolos page: Onkelos beside the pesukim (on by default)
+  mgEnglish?: boolean;      // Mikraos Gedolos page: English right below the pesukim, Onkelos and each comment
   autoRashi?: boolean;      // Rashi (Bartenura on Mishnayos) open under every line, automatically
   autoComms?: boolean;      // show each line's commentary buttons without tapping the line first
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk

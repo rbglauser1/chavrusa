@@ -1496,3 +1496,17 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .mg-cols b { font-weight: 700; }
 .mg-foot { font-family: var(--f-ui); font-size: .85em; color: #888; text-align: center; margin-top: 1em; }
 [data-look='midnight'] .mg-paper { background: #fffdf8; color: #1a1a1a; }
+/* Mikraos Gedolos: the learner's choice of meforshim, and English under everything. */
+.mg-panel { position: absolute; z-index: 5; top: calc(56px + env(safe-area-inset-top)); left: 10px; right: 10px; max-height: 70dvh; overflow-y: auto; background: var(--surface, #fff); color: var(--ink); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow, 0 6px 24px rgba(0,0,0,.18)); padding: 12px 14px; font-family: var(--f-ui); font-size: 14px; }
+.mg-panel-row { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); margin-bottom: 10px; }
+.mg-panel-title { font-weight: 600; margin-bottom: 6px; }
+.mg-panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 12px; }
+.mg-panel label { display: flex; align-items: center; gap: 6px; }
+.mg-panel label .he { color: var(--soft); font-size: 12.5px; }
+.mg-panel label.missing { opacity: .55; }
+.mg-panel label small { color: var(--soft); }
+.daf-page-nav.on { border-color: var(--accent); color: var(--accent); }
+.mg-pair { margin-bottom: .45em; }
+.mg-en { direction: ltr; text-align: left; font-family: var(--f-body, Georgia, serif); font-size: .72em; line-height: 1.45; color: #444; margin-top: .15em; }
+.mg-onk .mg-en, .mg-cols .mg-en { font-size: .85em; }
+.mg-cols.one { column-count: 1; }
