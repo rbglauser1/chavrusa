@@ -278,6 +278,8 @@ export function useGeminiLive(opts: Opts) {
       void ac.resume().catch(() => {});
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       mic.current = stream;
+      // Never stuck on "Connecting…": 15 seconds after the microphone opens, give up and say so.
+      window.setTimeout(() => { if (mic.current === stream && stateRef.current === 'connecting') { optsRef.current.onError('The voice didn’t connect. Check the internet connection and tap Talk again.'); finish('off'); } }, 15_000);
       const sid = optsRef.current.sessionId?.();
       const q = new URLSearchParams();
       if (sid) q.set('session', sid);

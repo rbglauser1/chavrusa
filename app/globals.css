@@ -1552,3 +1552,7 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .mg-sheet-he { font-size: 17px; line-height: 1.6; text-align: justify; color: #1a1a1a; }
 .mg-sheet-en { font-family: var(--f-body, Georgia, serif); font-size: 14px; line-height: 1.5; color: #444; margin-top: 8px; }
 .mg-sheet-foot { padding: 8px 14px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #e6dfcf; }
+/* Why the voice didn't start, by the Talk button: plain sentence case, readable, in the error color. */
+.min-status.err, .daf-page-status.err { text-transform: none; letter-spacing: 0; font-size: 13px; line-height: 1.35; color: var(--danger, #b3261e); }
+.daf-page-status.err { white-space: normal; max-width: 70vw; }
+.daf-page.full .daf-page-status.err { display: inline-block; }

@@ -2,6 +2,8 @@
 // Tzuras hadaf: the printed Vilna page of the amud you're on, drawn by the app itself so you can zoom in right here
 // (pinch, double-tap, or + / −) while the Talk button stays on screen. The amud before and after are one tap away.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+// A message about the voice not starting is shown even in full screen (the chat with it is hidden).
+const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live)/.test(t);
 import { DAF_CREDIT, dafPdfUrl, stepAmud, type Amud } from '@/lib/daf';
 
 // PDF.js, loaded from the CDN the first time a page is opened.
@@ -146,7 +148,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
         // back sits right next to it, where the thumb already is.
         <div className="daf-page-talk">
           {full && <button className="daf-page-exit" onClick={() => setFull(false)} aria-label="Exit full screen">⤡</button>}
-          {!full && status && <span className="daf-page-status">{status}</span>}
+          {status && (!full || isAlert(status)) && <span className={`daf-page-status ${isAlert(status) ? 'err' : ''}`}>{status}</span>}
           {talk}
         </div>
       )}

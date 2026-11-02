@@ -4,6 +4,8 @@
 // way a printed Chumash turns its pages. Pinch, double-tap or + / − to zoom; a tap for full screen; Talk stays on screen.
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { Settings } from '@/lib/config';
+// A message about the voice not starting is shown even in full screen (the chat with it is hidden).
+const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live)/.test(t);
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
 
 type HeEn = { he: string; en: string };
@@ -351,7 +353,7 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
       {(talk || full) && (
         <div className="daf-page-talk">
           {full && <button className="daf-page-exit" onClick={() => setFull(false)} aria-label="Exit full screen">⤡</button>}
-          {!full && status && <span className="daf-page-status">{status}</span>}
+          {status && (!full || isAlert(status)) && <span className={`daf-page-status ${isAlert(status) ? 'err' : ''}`}>{status}</span>}
           {talk}
         </div>
       )}

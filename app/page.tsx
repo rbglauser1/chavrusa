@@ -102,9 +102,14 @@ export default function Home() {
   const coachLog = useRef<{ learner: string; said: string }[]>([]);
   const coachBusy = useRef(false);
   const liveRef = useRef<{ note: (t: string) => void } | null>(null);
+  // Why the voice didn't start (or dropped), shown right by the Talk button for a few seconds: on the
+  // Mikraos Gedolos page or the daf, the chat with the error message is hidden.
+  const [liveErr, setLiveErr] = useState('');
+  const liveErrTimer = useRef(0);
+  const showLiveErr = (m: string) => { setLiveErr(m); window.clearTimeout(liveErrTimer.current); liveErrTimer.current = window.setTimeout(() => setLiveErr(''), 12_000); };
   const liveOpts: Parameters<typeof useLive>[0] = {
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
-    onError: (m) => setItems((it) => [...it, { kind: 'error', text: m }]),
+    onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); showLiveErr(m); },
     onEnded: (seconds) => {
       liveQueue.current = [];
       liveDelegation.current = null;
@@ -163,6 +168,7 @@ export default function Home() {
   }
 
   function toggleTalk() {
+    setLiveErr('');
     if (live.supported) { // the live voice only
       if (convo) setConvoMode(false);
       if (live.active) live.stop(); else { voice.shutdown(); live.start(); }
@@ -690,7 +696,7 @@ export default function Home() {
             input={input}
             setInput={setInput}
             send={(t) => { spokeLast.current = false; if (!live.active) voice.unlock(); send(t); }}
-            talk={{ supported: voice.supported, on: talking, state: live.active ? live.state : convo ? voice.state : 'off', heard: live.heard, toggle: toggleTalk, resume: () => live.start() }}
+            talk={{ supported: voice.supported, on: talking, state: live.active ? live.state : convo ? voice.state : 'off', heard: live.heard, toggle: toggleTalk, resume: () => { setLiveErr(''); live.start(); }, error: liveErr }}
             pointAt={pointAt}
             learnThis={learnFromPage}
             inlineComm={inlineComm}

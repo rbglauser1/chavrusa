@@ -30,7 +30,7 @@ interface Props {
   input: string;
   setInput: (v: string) => void;
   send: (text: string) => void;
-  talk: { supported: boolean; on: boolean; state: string; heard: string; toggle: () => void; resume: () => void };
+  talk: { supported: boolean; on: boolean; state: string; heard: string; toggle: () => void; resume: () => void; error?: string };
   pointAt: (src: SourceData, n: number) => void;
   learnThis?: (x: { label: string; he: string; en: string }) => void; // Mikraos Gedolos: learn a pasuk or comment chosen on the page
   inlineComm: InlineComm;
@@ -59,7 +59,7 @@ const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
 );
 
 function talkLabel(t: Props['talk'], busy: boolean, status: string): string {
-  if (!t.on) return busy ? (status || 'Thinking…') : '';
+  if (!t.on) return t.error ? t.error : busy ? (status || 'Thinking…') : '';
   if (t.state === 'paused') return 'Paused · tap to resume';
   if (t.state === 'connecting') return 'Connecting…';
   if (t.state === 'thinking') return status || 'Looking inside…';
@@ -181,6 +181,7 @@ export default function Minimal(p: Props) {
   const caption = lastSaid.replace(/^\s*>.*$/gm, '').replace(/\*\*|__|`|\[\[\/?say\]\]/g, '').replace(/\s+/g, ' ').trim();
   const src = p.current;
   const label = talkLabel(p.talk, p.busy, p.status);
+  const labelErr = !p.talk.on && !!p.talk.error;
   const onTalk = () => (p.talk.on && p.talk.state === 'paused' ? p.talk.resume() : p.talk.toggle());
   // Next / back: in a call, move to the line (the voice reads it); otherwise ask the chavrusa (free).
   const step = (d: 1 | -1) => {
@@ -284,7 +285,7 @@ export default function Minimal(p: Props) {
         {(caption || label) && (
           <button className="min-caption" onClick={() => setSheet(true)} aria-label="Show the conversation">
             <span className="min-grip" aria-hidden="true" />
-            {label && <span className="min-status inline">{label}</span>}
+            {label && <span className={`min-status inline ${labelErr ? 'err' : ''}`}>{label}</span>}
             {caption && <span className="min-caption-text">{caption.length > 200 ? `${caption.slice(0, 200).replace(/\s+\S*$/, '')}…` : caption}</span>}
           </button>
         )}
@@ -323,7 +324,7 @@ export default function Minimal(p: Props) {
           {p.talk.supported && <button className={`min-talk ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? 'End the call' : 'Talk'}><MicIcon size={26} /></button>}
           <button className="min-step" onClick={() => step(-1)} aria-label="Previous line" disabled={!src}><Chevron dir="right" /></button>
         </footer>
-        <div className="min-status">{label || (p.talk.on ? '' : 'Tap to talk · or swipe up to type')}</div>
+        <div className={`min-status ${labelErr ? 'err' : ''}`}>{label || (p.talk.on ? '' : 'Tap to talk · or swipe up to type')}</div>
         {sheet && (
           <>
             <div className="min-scrim" onClick={() => setSheet(false)} />
@@ -378,7 +379,7 @@ export default function Minimal(p: Props) {
           </main>
         )}
         {/* No words above the bottom row over the text — no caption, no status line. */}
-        {!showText && label && <div className="min-status slim">{label}</div>}
+        {!showText && label && <div className={`min-status slim ${labelErr ? 'err' : ''}`}>{label}</div>}
         {bottom}
       </div>
     );
@@ -430,7 +431,7 @@ export default function Minimal(p: Props) {
           </button>
         </footer>
       )}
-      {label && <div className="min-status overlay">{label}</div>}
+      {label && <div className={`min-status overlay ${labelErr ? 'err' : ''}`}>{label}</div>}
     </div>
   );
 }

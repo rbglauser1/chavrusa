@@ -4,6 +4,7 @@ import { heReadNote, voiceHe, type HeRead } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
+import { silentWav } from './useVoice';
 
 let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
@@ -77,6 +78,8 @@ export function useLive(opts: {
   const wake = useRef<{ stream: MediaStream; ctx: AudioContext; timer: number } | null>(null);
   const bump = () => { lastActivity.current = Date.now(); };
   const lastHeardPaint = useRef(0);
+  const connectTry = useRef(0); // which attempt to connect is current (the 15-second limit checks it)
+  const startRef = useRef<((retry?: boolean) => Promise<void>) | null>(null);
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
   const startWakeRef = useRef<(() => void) | null>(null);
   const setS = (s: LiveState) => { if (stateRef.current !== s) logLine('STATE', s); stateRef.current = s; setState(s); };
@@ -406,29 +409,44 @@ export function useLive(opts: {
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫`) });
   }, [send]);
 
-  const start = useCallback(async () => {
-    if (stateRef.current !== 'off' && stateRef.current !== 'paused') return;
-    const resuming = stateRef.current === 'paused'; // coming back from a pause: no new greeting
+  const start = useCallback(async (retry = false) => {
+    if (!retry && stateRef.current !== 'off' && stateRef.current !== 'paused') return;
+    const resuming = retry || stateRef.current === 'paused'; // coming back from a pause (or a retry): no new greeting
     stopWakeWatch();
     closingTo.current = null;
-    logBegin(optsRef.current.logMeta?.() ?? '', resuming);
+    if (!retry) logBegin(optsRef.current.logMeta?.() ?? '', resuming);
     setS('connecting');
+    // The player starts inside the tap, before anything is awaited: phones only allow sound that a tap began.
+    if (!audio.current) {
+      const el = document.createElement('audio');
+      el.autoplay = true;
+      el.setAttribute('playsinline', '');
+      el.style.display = 'none';
+      el.volume = 1;
+      document.body.appendChild(el);
+      audio.current = el;
+    }
+    if (!audio.current.srcObject) { audio.current.src = silentWav(); audio.current.play().catch(() => {}); }
+    // A connection that never opens would leave Talk on "Connecting…" forever: 15 seconds after the microphone is
+    // open (time spent on the phone's "allow microphone?" question doesn't count), try once more, then say so.
+    const attempt = ++connectTry.current;
+    const armLimit = () => window.setTimeout(() => {
+      if (connectTry.current !== attempt || stateRef.current !== 'connecting') return;
+      logLine('ERROR', `still connecting after 15 s${retry ? ' (second try)' : ', trying again'}`);
+      teardown();
+      if (!retry) { void startRef.current?.(true); return; }
+      optsRef.current.onError('The voice didn’t connect. Check the internet connection and tap Talk again.');
+      logEnd('did not connect');
+      setS('off');
+    }, 15_000);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      if (connectTry.current !== attempt) { stream.getTracks().forEach((t) => t.stop()); return; }
       mic.current = stream;
+      armLimit();
       const peer = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
       pc.current = peer;
-      // A real <audio> element in the page, set to play inline, gives phones the cleanest call playback.
-      if (!audio.current) {
-        const el = document.createElement('audio');
-        el.autoplay = true;
-        el.setAttribute('playsinline', '');
-        el.style.display = 'none';
-        el.volume = 1;
-        document.body.appendChild(el);
-        audio.current = el;
-      }
-      peer.ontrack = (ev) => { if (audio.current) { audio.current.srcObject = ev.streams[0]; audio.current.play().catch(() => {}); } };
+      peer.ontrack = (ev) => { if (audio.current) { audio.current.removeAttribute('src'); audio.current.srcObject = ev.streams[0]; audio.current.play().catch(() => {}); } };
       stream.getAudioTracks().forEach((t) => peer.addTrack(t, stream));
       const channel = peer.createDataChannel('oai-events');
       dc.current = channel;
@@ -454,12 +472,18 @@ export function useLive(opts: {
       const msg = (err as Error).name === 'NotAllowedError'
         ? 'Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.'
         : `Could not start the live voice: ${(err as Error).message}`;
+      if (connectTry.current !== attempt) return; // the time limit already moved on to another try
+      connectTry.current++;
       logLine('ERROR', msg);
-      optsRef.current.onError(msg);
       teardown();
+      // One quiet retry for a network hiccup; a blocked microphone or a server message is shown right away.
+      if (!retry && (err as Error).name !== 'NotAllowedError' && /fetch|network|load failed|status 5/i.test((err as Error).message)) { void startRef.current?.(true); return; }
+      optsRef.current.onError(msg);
+      logEnd('could not start');
       setS('off');
     }
   }, [onEvent, finish, teardown, stopWakeWatch]);
+  startRef.current = start;
 
   // While paused: listen locally (free, nothing is sent anywhere) and reconnect when the learner speaks.
   const startWakeWatch = useCallback(async () => {
