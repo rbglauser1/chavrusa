@@ -1629,3 +1629,7 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .tuner-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .tuner-flash { margin: 0 0 8px; padding: 7px 10px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 14%, transparent); font-size: 13px; font-weight: 500; }
 .tuner-side .btn:disabled { opacity: .45; }
+/* Reading a rule's exact words. */
+.rule-words { margin: 4px 0 8px; padding: 9px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+.rule-words-text { white-space: pre-wrap; font-size: 12.5px; line-height: 1.5; color: var(--ink); margin-bottom: 8px; max-height: 40dvh; overflow: auto; }
+.rule-write textarea { min-height: 120px; }

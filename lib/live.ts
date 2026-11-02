@@ -106,10 +106,14 @@ export type CustomRule = { id: string; name: string; text: string };
 export function rulesText(ids: string[], heRead: HeRead, custom: CustomRule[] = []): string {
   return [
     ...RULES.filter((r) => ids.includes(r.id)).map((r) => RULE_TEXT[r.id](heRead)),
-    ...custom.filter((r) => ids.includes(r.id) && r.text.trim()).map((r) => r.text.trim().slice(0, 800)),
+    ...custom.filter((r) => ids.includes(r.id) && r.text.trim()).map((r) => r.text.trim().slice(0, 3000)),
   ].join('\n');
 }
 export const STANDARD_RULES = ['guide', 'key'];
+/** One built-in rule's exact words, as the voice gets them (for reading in the rule lab). */
+export function ruleText(id: string, heRead: HeRead): string {
+  return RULE_TEXT[id]?.(heRead) ?? '';
+}
 
 export function liveInstructionsShort(nusach: 'ashkenaz' | 'sephardi', pace: 'slow' | 'relaxed' | 'natural' | 'brisk' = 'natural', heRead: HeRead = 'join-kh', reads: VoiceReads = 'all', pauses: 'few' | 'normal' | 'more' | 'most' = 'normal', rules?: string[], custom: CustomRule[] = []): string {
   // A combination from the rule lab replaces the reading key and the pronunciation guide (Ashkenaz only).

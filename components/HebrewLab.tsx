@@ -4,7 +4,7 @@
 // would read it. Pick the one that sounds best by ear, and the app uses it everywhere in calls.
 import { useEffect, useRef, useState } from 'react';
 import { LIVE_VOICES, type Settings } from '@/lib/config';
-import { RULES, STANDARD_RULES } from '@/lib/live';
+import { RULES, ruleText, STANDARD_RULES } from '@/lib/live';
 import { Group } from './SettingsGroup';
 import { hasNikud, HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
 import { silentWav } from './useVoice';
@@ -53,13 +53,18 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const comboId = (ids: string[]) => { const k = allRules.filter((r) => ids.includes(r.id)).map((r) => r.id); return k.length ? k.join(',') : 'none'; };
   const comboName = (id: string) => (id === 'none' ? 'No rules at all' : id.split(',').map((x) => allRules.find((r) => r.id === x)?.name ?? '(a deleted rule)').join(' + '));
   const [draft, setDraft] = useState<{ id: string; name: string; text: string } | null>(null);
+  const [showRule, setShowRule] = useState<string | null>(null); // a built-in rule whose exact words are shown
+  // The rule editor opens at the bottom: bring it into view.
+  const draftRef = useRef<HTMLDivElement | null>(null);
+  const draftOpen = !!draft;
+  useEffect(() => { if (draftOpen) requestAnimationFrame(() => draftRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })); }, [draftOpen]);
   // One rule at a time (each its own row, nothing piles up) or mixing several.
   const [labMode, setLabModeRaw] = useState<'one' | 'mix'>(() => { try { return localStorage.getItem('chavrusa-rule-lab-mode') === 'mix' ? 'mix' : 'one'; } catch { return 'one'; } });
   const setLabMode = (m: 'one' | 'mix') => { setLabModeRaw(m); try { localStorage.setItem('chavrusa-rule-lab-mode', m); } catch { /* not kept */ } };
   function saveDraft() {
     if (!draft || !draft.text.trim()) return;
     const id = draft.id || `my-${Date.now().toString(36)}`;
-    const rule = { id, name: draft.name.trim() || `My rule ${mine.length + 1}`, text: draft.text.trim().slice(0, 800) };
+    const rule = { id, name: draft.name.trim() || `My rule ${mine.length + 1}`, text: draft.text.trim().slice(0, 3000) };
     onChange({ customRules: draft.id ? mine.map((r) => (r.id === id ? rule : r)) : [...mine, rule] });
     if (!draft.id && labMode === 'mix') setCombo((c) => [...c, id]); // a new rule is switched on, ready to hear
     setDraft(null);
@@ -166,10 +171,10 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   type Pace = 'slow' | 'relaxed' | 'natural' | 'brisk';
   type Cfg = { mode: HeRead; voice: string; rules: string; instr: 'short' | 'full'; pace: Pace };
   type StageId = 'way' | 'voice' | 'rules' | 'mix' | 'trim' | 'way2' | 'instr' | 'pace' | 'final';
-  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean; back?: Omit<Tune, 'back'>[] };
+  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean; order?: string[]; prev?: Cfg | null; back?: Omit<Tune, 'back'>[] };
   const cfgKey = (c: Cfg) => `c:${c.mode}|${c.voice}|${c.rules}|${c.instr}|${c.pace}`;
   const sameCfg = (a: Cfg, b: Cfg) => cfgKey(a) === cfgKey(b);
-  const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding rules together, one at a time', trim: 'Taking each rule out again, to see if it’s better without it', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now' };
+  const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding rules together, one at a time', trim: 'Taking each rule out again, to see if it’s better without it', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now (and the last run’s winner)' };
   const [withVoices, setWithVoices] = useState(false); // off: the test is about the rules and instructions, with your own voice
   const [withPace, setWithPace] = useState(true);
   // The test is kept on this device after every pair, so leaving Settings or closing the app doesn't lose it: it comes
@@ -194,30 +199,33 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     }
   }, [votes]); // eslint-disable-line react-hooks/exhaustive-deps
   // The changes each step tries, as "the best so far, with one thing different".
-  function challengers(st: StageId, t: Pick<Tune, 'good' | 'goodWays' | 'start'>): ((c: Cfg) => Cfg | null)[] {
+  function challengers(st: StageId, t: Pick<Tune, 'good' | 'goodWays' | 'start' | 'order' | 'prev'>): ((c: Cfg) => Cfg | null)[] {
     // Every way of giving it the Hebrew (the spelled-out ones need nikud in the line); the second time, only the ways
     // that won or held their own the first time.
     if (st === 'way') return HE_READS.map((m) => m.id).filter((m) => hasNikud(text) || isHebrewLetters(m)).map((m) => (c) => ({ ...c, mode: m }));
     if (st === 'way2') return t.goodWays.map((m) => (c) => ({ ...c, mode: m }));
     if (st === 'voice') return voicesOk.map((v) => (c) => ({ ...c, voice: v }));
-    if (st === 'rules') return ['none', comboId(STANDARD_RULES), ...allRules.map((r) => r.id)].map((r) => (c) => ({ ...c, rules: r, instr: 'short' }));
+    // The rules in this run's own random order (each run a new one), so no rule is favored by always coming first.
+    const ids = [...(t.order ?? []).filter((id) => allRules.some((r) => r.id === id)), ...allRules.map((r) => r.id).filter((id) => !(t.order ?? []).includes(id))];
+    if (st === 'rules') return ['none', comboId(STANDARD_RULES), ...ids].map((r) => (c) => ({ ...c, rules: r, instr: 'short' }));
     // Adding: every rule gets a turn being added to the best so far (the ones that did well alone first). An addition
     // only stays if the whole set with it beats the set without it, so a rule that's good alone but spoils the others
     // never gets in.
-    if (st === 'mix') return [...t.good, ...allRules.map((r) => r.id).filter((r) => !t.good.includes(r))].map((r) => (c) => {
+    if (st === 'mix') return [...t.good, ...ids.filter((r) => !t.good.includes(r))].map((r) => (c) => {
       const have = c.rules === 'none' ? [] : c.rules.split(',');
       if (have.includes(r)) return null;
       return { ...c, rules: comboId([...have, r]), instr: 'short' };
     });
     // Taking out: each rule in the best set is tried without it, in case one that helped early is now in the way.
-    if (st === 'trim') return allRules.map((r) => r.id).map((r) => (c) => {
+    if (st === 'trim') return ids.map((r) => (c) => {
       const have = c.rules === 'none' ? [] : c.rules.split(',');
       if (!have.includes(r) || have.length < 2) return null;
       return { ...c, rules: comboId(have.filter((x) => x !== r)), instr: 'short' };
     });
     if (st === 'instr') return [(c) => ({ ...c, instr: c.instr === 'short' ? 'full' : 'short' })];
     if (st === 'pace') return (['slow', 'relaxed', 'natural', 'brisk'] as Pace[]).map((p) => (c) => ({ ...c, pace: p }));
-    return [() => t.start];
+    // Last check: against what calls use now, and against the winner of the previous run (found in another order).
+    return [() => t.start, ...(t.prev ? [() => t.prev as Cfg] : [])];
   }
   // Move to the next pair: the next change in this step that is really different, or the next step, or the end.
   function advance(t: Tune): Tune {
@@ -231,11 +239,16 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       }
       si++; step = 0;
     }
+    try { localStorage.setItem('chavrusa-voice-tune-last', JSON.stringify(t.champ)); } catch { /* not kept */ }
     return { ...t, si, step, chal: null, done: true, won: !sameCfg(t.champ, t.start) };
   }
+  const LAST_KEY = 'chavrusa-voice-tune-last';
   const startTune = () => {
+    const order = allRules.map((r) => r.id).map((id) => ({ id, k: Math.random() })).sort((a, b) => a.k - b.k).map((x) => x.id);
+    let prev: Cfg | null = null;
+    try { prev = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); } catch { /* none */ }
     const stages: StageId[] = ['way', ...(withVoices ? (['voice'] as StageId[]) : []), 'rules', 'mix', 'trim', 'way2', 'instr', ...(withPace ? (['pace'] as StageId[]) : []), 'final'];
-    setTune(advance({ stages, si: 0, step: 0, champ: startCfg, chal: null, champOnA: true, good: [], goodWays: [], start: startCfg, done: false, won: false }));
+    setTune(advance({ stages, si: 0, step: 0, champ: startCfg, chal: null, champOnA: true, good: [], goodWays: [], start: startCfg, done: false, won: false, order, prev }));
   };
   const tuneA = tune?.chal ? (tune.champOnA ? tune.champ : tune.chal) : null;
   const tuneB = tune?.chal ? (tune.champOnA ? tune.chal : tune.champ) : null;
@@ -390,7 +403,19 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
               return (
                 <div key={id} className={`he-lab-row ${inCalls === id ? 'on' : ''}`}>
                   <div className="he-lab-name">{r.name}{t ? <span className="he-lab-tally"> · {t.good} good of {t.good + t.bad}</span> : null}</div>
-                  <div className="rule-lab-what">{r.about}{isMine && <> <button className="linkish" onClick={() => { const m = mine.find((x) => x.id === r.id); if (m) setDraft({ ...m }); }}>Edit</button></>}</div>
+                  <div className="rule-lab-what">{r.about}{isMine && <> <button className="linkish" onClick={() => { const m = mine.find((x) => x.id === r.id); if (m) setDraft({ ...m }); }}>Edit</button></>}
+                    {!isMine && id !== 'none' && <> <button className="linkish" onClick={() => setShowRule(showRule === id ? null : id)}>{showRule === id ? 'Hide the words' : 'Read the exact words'}</button></>}
+                  </div>
+                  {showRule === id && (() => {
+                    const words = id.split(',').map((x) => ruleText(x, inUse)).filter(Boolean).join('\n\n');
+                    return (
+                      <div className="rule-words">
+                        <div className="rule-words-text" dir="auto">{words}</div>
+                        <button className="btn" onClick={() => { setDraft({ id: '', name: `My ${r.name}`, text: words }); setShowRule(null); }}>Make my own rule from this</button>
+                        <div className="muted" style={{ fontSize: 11.5, marginTop: 4 }}>Opens it as a new rule of yours, to change any words you like. The original stays as it is.</div>
+                      </div>
+                    );
+                  })()}
                   <div className="he-lab-btns">
                     <button className="btn" disabled={disabled || !text.trim()} onClick={() => void hear(inUse, undefined, id)}>{playing === `r:${id}` ? '■ Stop' : '▶ Hear'}</button>
                     <button className="btn" aria-label="Good" onClick={() => voteCombo(true, id)}>👍</button>
@@ -433,9 +458,9 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         </>
       )}
       {draft ? (
-        <div className="rule-write">
+        <div className="rule-write" ref={draftRef}>
           <input type="text" placeholder="A short name (e.g. Lakewood bochur)" value={draft.name} maxLength={40} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-          <textarea rows={4} placeholder="The rule, the way you'd tell the voice. For example: Read the Gemara like a Lakewood bochur saying it over to his chavrusa: relaxed, in the niggun, every word clear." value={draft.text} maxLength={800} onChange={(e) => setDraft({ ...draft, text: e.target.value })} />
+          <textarea rows={4} placeholder="The rule, the way you'd tell the voice. For example: Read the Gemara like a Lakewood bochur saying it over to his chavrusa: relaxed, in the niggun, every word clear." value={draft.text} maxLength={3000} onChange={(e) => setDraft({ ...draft, text: e.target.value })} />
           <div className="he-lab-btns">
             <button className="btn primary" disabled={!draft.text.trim()} onClick={saveDraft}>Save</button>
             <button className="btn" onClick={() => setDraft(null)}>Cancel</button>
