@@ -191,9 +191,13 @@ export function yeshivishEnglish(s: string): string {
 // dash-simple: syllables with dashes, simple vowels, "ch" (like the brain used to write it: ve-ko-nah);
 // join-kh: joined, yeshivish vowels, "kh" (b'khesef: the app's spelling since Nov 1);
 // join-ch: joined, yeshivish vowels, "ch" (b'chesef).
-export type HeRead = 'he' | 'he-key' | 'he-plain' | 'dash-simple' | 'join-kh' | 'join-ch';
+export type HeRead = 'he' | 'he-bare' | 'he-key' | 'he-plain' | 'dash-simple' | 'join-kh' | 'join-ch';
 export const HE_READS: { id: HeRead; name: string }[] = [
   { id: 'he', name: 'Hebrew letters, read the yeshivish way' },
+  // Without the vowels: the way the words look in a Gemara and in most of the Hebrew the voice learned from. With all
+  // the vowel marks, each word reaches the voice chopped into many small pieces it rarely saw, which may be why some
+  // words come out badly garbled, not just in the wrong accent.
+  { id: 'he-bare', name: 'Hebrew letters without vowels (like a Gemara)' },
   { id: 'he-key', name: 'Hebrew letters with a pronunciation key' },
   { id: 'he-plain', name: 'Hebrew letters, the voice on its own' },
   { id: 'dash-simple', name: 'Like the original (ve-ko-nah)' },
@@ -201,11 +205,12 @@ export const HE_READS: { id: HeRead; name: string }[] = [
   { id: 'join-ch', name: 'Joined with ch (b\'chesef)' },
 ];
 export const hasNikud = (he: string) => /[\u05B0-\u05BC\u05C1\u05C2\u05C7]/.test(he);
-export const isHebrewLetters = (m?: HeRead) => m === 'he' || m === 'he-plain' || m === 'he-key';
+export const isHebrewLetters = (m?: HeRead) => m === 'he' || m === 'he-bare' || m === 'he-plain' || m === 'he-key';
 export function voiceHe(he: string, mode: HeRead = 'join-kh'): string {
   // Hebrew with a key: the Hebrew letters (so it reads fluently) and, in brackets, how to say them (so it says them
   // the same way every time).
   if (mode === 'he-key') return `${namesForSpeech(he).replace(/[\u0591-\u05AF\u05BD\u05C0]/g, '')} [${voiceHe(he, 'join-kh')}]`;
+  if (mode === 'he-bare') return stripNikud(namesForSpeech(he)); // the Names first (they're found by their vowels)
   if (isHebrewLetters(mode)) return namesForSpeech(he).replace(/[\u0591-\u05AF\u05BD\u05C0]/g, ''); // vowels kept, trop dropped
   const prev = OPT;
   OPT = { vowels: mode === 'dash-simple' ? 'simple' : 'yeshivish', throat: mode === 'join-kh' ? 'kh' : 'ch' };
@@ -219,6 +224,7 @@ export function voiceHe(he: string, mode: HeRead = 'join-kh'): string {
 export function heReadNote(mode: HeRead = 'join-kh'): string {
   const yeshivish = 'Read it the yeshivish Ashkenazi way, never modern Israeli, and the same way every time a word comes: kamatz as "aw" (BAW-ruch), cholam as "oi" (TOI-rah), tzeirei as "ei" (beis), patach and chataf patach as "a", shuruk and kubutz as "u", tav without a dagesh as "s" (Shabbos), ches and a chof without a dagesh as the throat sound in "Bach" (never "sh"), a shva at the start of a word as a quick breath (b\'reishis), and the stress usually on the second-to-last syllable. Say "Hashem" for the Name and "Elokim" where it is written with a kuf.';
   if (mode === 'he') return `The lashon kodesh between ⟪ ⟫ comes in Hebrew letters with vowels. ${yeshivish} Read it in your own voice and accent, the American yeshiva bochur you always are: Hebrew letters never make you sound Israeli or change your accent.`;
+  if (mode === 'he-bare') return `The lashon kodesh between ⟪ ⟫ comes in Hebrew letters without vowels, the way it is printed in a Gemara. Read it the way a yeshiva bochur reads a Gemara or a pasuk he knows, with the right vowels. ${yeshivish} Read it in your own voice and accent, the American yeshiva bochur you always are: Hebrew letters never make you sound Israeli or change your accent.`;
   if (mode === 'he-key') return `The lashon kodesh between ⟪ ⟫ comes in Hebrew letters with vowels, and right after each piece, in square brackets, how to say it in English letters (hawishaw nikneis = ha-ISH-aw NIK-neis). Read the Hebrew, saying every word exactly as the brackets spell it, smoothly and fluently. The brackets are only a guide: never read them as extra words and never say a word twice. ${yeshivish}`;
   if (mode === 'he-plain') return 'The lashon kodesh between ⟪ ⟫ comes in Hebrew letters with vowels: read it as written.';
   if (mode === 'dash-simple') return 'The lashon kodesh between ⟪ ⟫ is spelled out in English letters with dashes between syllables (ve-ko-nah es atz-mah): read each word smoothly as one word, never syllable by syllable.';
