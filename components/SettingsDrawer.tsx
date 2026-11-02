@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, Tier, TIER_LABELS } from '@/lib/config';
+import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -9,6 +9,7 @@ import GeminiPronunciation from './GeminiPronunciation';
 import CallLogs from './CallLogs';
 import HebrewLab from './HebrewLab';
 import GptPronunciation from './GptPronunciation';
+import { Group } from './SettingsGroup';
 
 interface Props {
   settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
@@ -64,8 +65,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
         <div className={asPage ? '' : 'drawer-body'}>
           {rest && <>
           {loadError && <div className="error">Could not reach the database: {loadError}</div>}
-          <div className="section">
-            <h3>Learning style</h3>
+          <Group id="style" title="Learning style" hint={`${styleById(s.style, s.customStyles).name} · ${s.leads === 'learner' ? 'you explain first' : 'chavrusa explains first'} · ${s.nusach === 'sephardi' ? 'Sephardi' : 'Ashkenaz'}`}>
             <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Or just tell your chavrusa: “be gentler,” “quiz me,” “go deeper.” <a href="/guide">How we learn</a> · <a href="#" onClick={(e) => { e.preventDefault(); onHelp(); }}>What can I ask for?</a> · <a href="/lab">Compare styles</a></p>
             <div className="style-list">
               {STYLES.map((st) => (
@@ -103,10 +103,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Nusach and pronunciation</label>
               <Seg value={s.nusach} options={[['ashkenaz', 'Ashkenaz'], ['sephardi', 'Sephardi']]} onPick={(v) => onChange({ nusach: v })} />
             </div>
-          </div>
+          </Group>
 
-          <div className="section">
-            <h3>Depth and AI model</h3>
+          <Group id="ai" title="Depth, AI and cost" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''}`}>
             <div className="field">
               <label>Company</label>
               <Seg<Provider> value={s.provider} options={[['anthropic', 'Claude'], ['openai', 'OpenAI']]} onPick={(v) => onChange({ provider: v })} />
@@ -136,27 +135,24 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Warn me when a session costs more than (USD, blank for never)</label>
               <input type="number" min={0} step={0.1} value={s.costWarnUsd ?? ''} onChange={(e) => onChange({ costWarnUsd: e.target.value === '' ? null : Number(e.target.value) })} />
             </div>
-          </div>
+            <Group id="ai-cost" level={2} title="Cost, last 30 days" hint={costs ? `$${costs.totalUsd.toFixed(2)}` : undefined}>
+            {!costs && <div className="muted">Loading…</div>}
+            {costs && (
+              <table className="costs">
+                <thead><tr><th>Model</th><th className="n">Exchanges</th><th className="n">USD</th></tr></thead>
+                <tbody>
+                  {Object.entries(costs.byModel).map(([k, v]) => <tr key={k}><td>{k}</td><td className="n">{v.exchanges}</td><td className="n">${v.usd.toFixed(3)}</td></tr>)}
+                  <tr><td><b>Total</b></td><td /><td className="n"><b>${costs.totalUsd.toFixed(2)}</b></td></tr>
+                </tbody>
+              </table>
+            )}
+          </Group>
+          </Group>
 
           </>}
           {themes && (
-          <div className="section">
-            <h3>{asPage ? 'Look' : 'Look and text'}</h3>
-            <div className="field">
-              <label>Lines between lines</label>
-              <Seg value={s.lineRules ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ lineRules: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line between each line of the text, with its Hebrew and English kept together above it. Also in the ⋯ menu.</div>
-            </div>
-            <div className="field">
-              <label>Show commentaries</label>
-              <Seg value={s.autoComms ? 'on' : 'off'} options={[['off', 'When I tap a line'], ['on', 'Under every line']]} onPick={(v) => onChange({ autoComms: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi, Tosafos and the other commentaries&apos; buttons under every line, without tapping it first. Also in the ⋯ menu.</div>
-            </div>
-            <div className="field">
-              <label>Rashi open on every line</label>
-              <Seg value={s.autoRashi ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ autoRashi: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi&apos;s words open by themselves under each line that has a Rashi, on Gemara and Chumash (on Mishnayos, the Bartenura). Also in the ⋯ menu.</div>
-            </div>
+          <Group id="look" title={asPage ? 'Look' : 'Look and text'} hint="Look, fonts, colors, sizes, commentaries" flat={part === 'themes'}>
+            <Group id="look-look" level={2} title="Look and fonts">
             <div className="field">
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
@@ -168,11 +164,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <FontPicker list={FONTS_HE} sample="בְּרֵאשִׁית בָּרָא אֱלֹקִים" rtl value={s.fonts?.[s.theme]?.he ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), he: id } } })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Each look remembers its own fonts. Rashi and Tosafos keep the Rashi script.</div>
             </div>
-            <div className="field">
-              <label>In the English: the translation and the added explanation</label>
-              <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics.</div>
-            </div>
+            </Group>
+            <Group id="look-colors" level={2} title="Colors and bold">
             <div className="field">
               <label>Colors and bold</label>
               {COLOR_PARTS.map((part) => {
@@ -193,10 +186,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               })}
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Meforshim includes their translation and summaries, and Onkelos. The first circle is the text&apos;s own color. <b>B</b> makes that part bold.</div>
             </div>
-            <div className="field">
-              <label>Rashi, Tosafos and other commentaries</label>
-              <Seg value={s.rashiScript ? 'rashi' : 'regular'} options={[['regular', 'Regular letters'], ['rashi', 'Rashi script']]} onPick={(v) => onChange({ rashiScript: v === 'rashi' })} />
-            </div>
+            </Group>
+            <Group id="look-sizes" level={2} title="Text sizes" hint={`Hebrew ${s.heSize} · Rashi ${s.commSize ?? 20} · English ${s.enSize}`}>
             <div className="field">
               <label>Hebrew text size</label>
               <div className="range"><input type="range" min={16} max={36} value={s.heSize} onChange={(e) => onChange({ heSize: Number(e.target.value) })} /><span className="he" style={{ fontSize: s.heSize }}>אבג</span></div>
@@ -209,16 +200,40 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>English text size</label>
               <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
             </div>
-          </div>
+            </Group>
+            <Group id="look-comms" level={2} title="Commentaries on the page" hint={`${s.autoComms ? 'under every line' : 'when I tap a line'}${s.autoRashi ? ' · Rashi open' : ''}${s.rashiScript ? ' · Rashi script' : ''}`}>
+            <div className="field">
+              <label>Show commentaries</label>
+              <Seg value={s.autoComms ? 'on' : 'off'} options={[['off', 'When I tap a line'], ['on', 'Under every line']]} onPick={(v) => onChange({ autoComms: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi, Tosafos and the other commentaries&apos; buttons under every line, without tapping it first. Also in the ⋯ menu.</div>
+            </div>
+            <div className="field">
+              <label>Rashi open on every line</label>
+              <Seg value={s.autoRashi ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ autoRashi: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi&apos;s words open by themselves under each line that has a Rashi, on Gemara and Chumash (on Mishnayos, the Bartenura). Also in the ⋯ menu.</div>
+            </div>
+            <div className="field">
+              <label>Rashi, Tosafos and other commentaries</label>
+              <Seg value={s.rashiScript ? 'rashi' : 'regular'} options={[['regular', 'Regular letters'], ['rashi', 'Rashi script']]} onPick={(v) => onChange({ rashiScript: v === 'rashi' })} />
+            </div>
+            </Group>
+            <Group id="look-lines" level={2} title="Lines and the English">
+            <div className="field">
+              <label>Lines between lines</label>
+              <Seg value={s.lineRules ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ lineRules: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line between each line of the text, with its Hebrew and English kept together above it. Also in the ⋯ menu.</div>
+            </div>
+            <div className="field">
+              <label>In the English: the translation and the added explanation</label>
+              <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics.</div>
+            </div>
+            </Group>
+          </Group>
           )}
           {rest && (
-          <div className="section">
-            <h3>Text and display</h3>
-            <div className="field">
-              <label>Screen during voice conversations</label>
-              <Seg value={s.blankCall ? 'blank' : 'show'} options={[['show', 'Show the conversation'], ['blank', 'Blank (voice only)']]} onPick={(v) => onChange({ blankCall: v === 'blank' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Blank keeps the screen empty while you talk, for focus. It doesn't change the cost. Everything is still saved, so you can read it after the call.</div>
-            </div>
+          <Group id="shown" title="What's shown" hint="The text, translation, AI extras, seforim">
+            <Group id="shown-text" level={2} title="The text and its translation" hint={`${s.display === 'original' ? 'original only' : s.display === 'off' ? 'off (verbal)' : 'with translation'}${s.nikud ? ' · nikud' : ''}${s.onkelos ? ' · Onkelos' : ''}`}>
             <div className="field">
               <label>Source text</label>
               <Seg value={s.display} options={[['toggle', 'With translation'], ['original', 'Original only'], ['off', 'Off (verbal)']]} onPick={(v) => onChange({ display: v })} />
@@ -233,6 +248,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.onkelos ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ onkelos: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Onkelos under each pasuk, with its English when Sefaria has one. Straight from Sefaria, no AI, free. Also in Quiet chat&apos;s ⋯ menu.</div>
             </div>
+            </Group>
+            <Group id="shown-ai" level={2} title="Extras written by the AI" hint="Amud intro, steps, commentary summaries">
             <div className="field">
               <label>Amud intro (a paragraph on what&apos;s coming, at the top of each amud)</label>
               <Seg value={s.amudIntro !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ amudIntro: v === 'on' })} />
@@ -250,6 +267,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.commSummary ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ commSummary: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>When you open a commentary, a sentence or two under each comment saying what it explains or asks (not a literal translation). Made once per commentator per amud (about 1–2 cents), then kept, free. Only for commentaries you open.</div>
             </div>
+            </Group>
+            <Group id="shown-sef" level={2} title="Seforim from Sefaria" hint={s.approveAll ? 'all allowed' : 'classic and approved only'}>
             <div className="field">
               <label>Seforim from Sefaria</label>
               <Seg value={s.approveAll ? 'all' : 'approved'} options={[['all', 'Allow all'], ['approved', 'Classic and approved only']]} onPick={(v) => onChange({ approveAll: v === 'all' })} />
@@ -259,102 +278,125 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Nikud</label>
               <Seg value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ nikud: v === 'on' })} />
             </div>
-          </div>
+            </Group>
+            <Group id="shown-call" level={2} title="The screen during calls" hint={s.blankCall ? 'blank' : 'shows the conversation'}>
+            <div className="field">
+              <label>Screen during voice conversations</label>
+              <Seg value={s.blankCall ? 'blank' : 'show'} options={[['show', 'Show the conversation'], ['blank', 'Blank (voice only)']]} onPick={(v) => onChange({ blankCall: v === 'blank' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Blank keeps the screen empty while you talk, for focus. It doesn't change the cost. Everything is still saved, so you can read it after the call.</div>
+            </div>
+            </Group>
+          </Group>
           )}
 
           {rest && <>
-          <div className="section">
-            <h3>Voice</h3>
+          <Group id="voice" title="Voice" hint={`${s.liveEngine === 'gemini' ? 'Gemini Live' : (LIVE_VOICES.find((v) => v.id === s.liveVoice)?.name ?? (s.customVoices ?? []).find((v) => v.id === s.liveVoice)?.name ?? s.liveVoice).replace(/ \(.*\)$/, '')} · ${({ slow: 'Slow', relaxed: 'Relaxed', natural: 'Normal', brisk: 'Brisk' } as Record<string, string>)[s.livePace ?? 'natural']} · pauses ${s.livePauses ?? 'normal'}`}>
             <div className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>Live voice: natural, answers almost instantly, and can be interrupted. About $0.05 per minute for the voice, plus the AI model.</div>
-            {(
+            <Group id="voice-which" level={2} title="Which voice" hint={(LIVE_VOICES.find((v) => v.id === s.liveVoice)?.name ?? (s.customVoices ?? []).find((v) => v.id === s.liveVoice)?.name ?? s.liveVoice).replace(/ \(.*\)$/, '')}>
+              {(
+                <div className="field">
+                  <label>Live voice (tap ▶ to hear it; a sample costs about 1 cent)</label>
+                  <VoicePicker kind="live" voices={[...(s.customVoices ?? []).map((v) => ({ id: v.id, name: `${v.name} (your design)` })), ...LIVE_VOICES]} value={s.liveVoice} onPick={(v) => onChange({ liveVoice: v })} disabled={liveActive} />
+                  <VoiceDesigner onCreated={(p) => onChange(p)} hasCustom={(s.customVoices ?? []).length > 0} />
+                  <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
+                </div>
+              )}
+            </Group>
+            <Group id="voice-speed" level={2} title="Speed and pauses" hint={`${({ slow: 'Slow', relaxed: 'Relaxed', natural: 'Normal', brisk: 'Brisk' } as Record<string, string>)[s.livePace ?? 'natural']} · pauses ${s.livePauses ?? 'normal'}`}>
+              {(
+                <div className="field">
+                  <label>Speaking speed</label>
+                  <Seg value={s.livePace ?? 'natural'} options={[['slow', 'Slow'], ['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
+                  <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>
+                  <label>Pauses</label>
+                  <Seg value={s.livePauses ?? 'normal'} options={[['few', 'Few'], ['normal', 'Normal'], ['more', 'More'], ['most', 'Most']]} onPick={(v) => onChange({ livePauses: v as 'few' | 'normal' | 'more' | 'most' })} />
+                  <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>More: a short pause between phrases when it reads, a beat after each point, and time to think around a question. Most: long, unhurried pauses after every phrase and point. Applies the next time you tap Talk; in a call you can also say “slow down and pause more.”</div>
+                </div>
+              )}
+            </Group>
+            <Group id="voice-reads" level={2} title="Who reads the text" hint={(s.voiceReads ?? 'all') === 'all' ? 'he reads it all' : s.voiceReads === 'english' ? 'English only' : 'just the gist'}>
               <div className="field">
-                <label>Live voice (tap ▶ to hear it; a sample costs about 1 cent)</label>
-                <VoicePicker kind="live" voices={[...(s.customVoices ?? []).map((v) => ({ id: v.id, name: `${v.name} (your design)` })), ...LIVE_VOICES]} value={s.liveVoice} onPick={(v) => onChange({ liveVoice: v })} disabled={liveActive} />
-                <VoiceDesigner onCreated={(p) => onChange(p)} hasCustom={(s.customVoices ?? []).length > 0} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
+                <label>In a call, who reads the text</label>
+                <Seg value={s.voiceReads ?? 'all'} options={[['all', 'He reads it all'], ['english', 'English only'], ['gist', 'Just the gist']]} onPick={(v) => onChange({ voiceReads: v as 'all' | 'english' | 'gist' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.voiceReads ?? 'all') === 'all' ? 'The chavrusa reads the lashon kodesh and its English, phrase by phrase.' : (s.voiceReads === 'english' ? 'You read the lashon kodesh yourself; the chavrusa reads only the English, then goes on in your style.' : 'You read the text yourself; the chavrusa doesn\'t read it at all, just gives the gist of each piece and goes on in your style (explaining, asking…).')} Works with every style. Also in the ⋯ menu.</div>
               </div>
-            )}
-            {(
+            </Group>
+            <Group id="voice-pron" level={2} title="Pronunciation and tests" hint="Reading test, rule lab, voice test, say it my way">
               <div className="field">
-                <label>Speaking speed</label>
-                <Seg value={s.livePace ?? 'natural'} options={[['slow', 'Slow'], ['relaxed', 'Relaxed'], ['natural', 'Normal'], ['brisk', 'Brisk']]} onPick={(v) => onChange({ livePace: v })} />
-                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>Applies the next time you tap Talk. In a call you can also just say “speak faster.”</div>
-                <label>Pauses</label>
-                <Seg value={s.livePauses ?? 'normal'} options={[['few', 'Few'], ['normal', 'Normal'], ['more', 'More'], ['most', 'Most']]} onPick={(v) => onChange({ livePauses: v as 'few' | 'normal' | 'more' | 'most' })} />
-                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>More: a short pause between phrases when it reads, a beat after each point, and time to think around a question. Most: long, unhurried pauses after every phrase and point. Applies the next time you tap Talk; in a call you can also say “slow down and pause more.”</div>
-                <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
-                <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
-                  <option value="15">15 seconds</option>
-                  <option value="30">30 seconds</option>
-                  <option value="60">1 minute</option>
-                  <option value="120">2 minutes</option>
-                  <option value="300">5 minutes</option>
-                  <option value="0">Never pause</option>
-                </select>
-                {s.saver !== false && s.liveIdleSec > 15 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 15 quiet seconds.</div>}
+                <label>Standard pronunciations</label>
+                <Seg value={s.houseSay !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ houseSay: v === 'on' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On: one fixed way to say the common words, from the app&apos;s yeshivish rules: Tosafos = TOSS-fos, Gemara = g&apos;MOH-rah, Mishnah = MISH-nah, Rashi = RAH-shee, kashya = KOSH-ya, machlokes = mach-LOI-kes, halacha = ha-LOH-cha, Torah = TOI-rah, Moshe = MOI-sheh, Shabbos = SHAH-bos, and more. Your own “say it my way” words win over these.</div>
               </div>
-            )}
-            <div className="field">
-              <label>In a call, who reads the text</label>
-              <Seg value={s.voiceReads ?? 'all'} options={[['all', 'He reads it all'], ['english', 'English only'], ['gist', 'Just the gist']]} onPick={(v) => onChange({ voiceReads: v as 'all' | 'english' | 'gist' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.voiceReads ?? 'all') === 'all' ? 'The chavrusa reads the lashon kodesh and its English, phrase by phrase.' : (s.voiceReads === 'english' ? 'You read the lashon kodesh yourself; the chavrusa reads only the English, then goes on in your style.' : 'You read the text yourself; the chavrusa doesn\'t read it at all, just gives the gist of each piece and goes on in your style (explaining, asking…).')} Works with every style. Also in the ⋯ menu.</div>
-            </div>
-            <div className="field">
-              <label>Keeping the voice steady</label>
-              <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>Three ways to make the good readings the usual ones. Each applies the next time you tap Talk.</div>
-              <label>Instructions to the voice</label>
-              <Seg value={s.liveShort !== false ? 'short' : 'full'} options={[['short', 'Short'], ['full', 'Full']]} onPick={(v) => onChange({ liveShort: v === 'short' })} />
-              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>{s.liveShort !== false ? 'Short: the same rules, each said once, in well under half the words, with the full pronunciation guide kept. Long instructions make a live voice drift in accent and cadence.' : 'Full: every rule as it grew, word for word (Steady mode and the coach work only with these).'}</div>
-              <label>Fresh start at each new section</label>
-              <Seg value={s.liveFresh !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveFresh: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>When you move on to a new Mishnah, piece of Gemara or perek, the voice quietly reconnects at the next quiet moment, so it starts clean instead of drifting as a long call goes on. It remembers where you are; you may hear a second of quiet.</div>
-              <label>Catch skipped words</label>
-              <Seg value={s.liveCheck !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCheck: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app compares what the voice actually said with the text it was given. If it left out the end, it goes back and reads the part it missed. Free.</div>
-            </div>
-            <CallLogs />
-            <div className="field">
-              <label>Steady mode (the voice sticks to your style and instructions)</label>
-              <Seg value={s.liveSteady === true ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveSteady: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveSteady === true
-                ? 'On: every learning turn (reading, explaining, kashyos, your answers, your instructions) goes through the brain, which plans it in your style; the voice reads the text inside and says the rest in its own words. About 1–3 seconds more before an answer, and about 1–3¢ a turn for the brain.'
-                : 'Off: the voice answers quick learning turns itself, faster and more natural. The coach below keeps it on your style and instructions.'}</div>
-            </div>
-            {s.liveSteady !== true && (
+              <HebrewLab s={s} onChange={onChange} disabled={liveActive} />
+              <GptPronunciation s={s} onChange={onChange} disabled={liveActive} />
+            </Group>
+            <Group id="voice-steady" level={2} title="Keeping it steady" hint={`${s.liveShort !== false ? 'short' : 'full'} instructions${s.liveFresh !== false ? ' · fresh starts' : ''}${s.liveCheck !== false ? ' · catch skips' : ''}`}>
               <div className="field">
-                <label>Coach notes</label>
-                <Seg value={s.liveCoach === true ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCoach: v === 'on' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>After each exchange, a quick brain check looks at what the voice said against your style and instructions. If it drifted, the voice quietly gets a short note for its next reply. It never waits for it. About a tenth of a cent an exchange.</div>
+                <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>Ways to make the good readings the usual ones. Each applies the next time you tap Talk.</div>
+                <label>Instructions to the voice</label>
+                <Seg value={s.liveShort !== false ? 'short' : 'full'} options={[['short', 'Short'], ['full', 'Full']]} onPick={(v) => onChange({ liveShort: v === 'short' })} />
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>{s.liveShort !== false ? 'Short: the same rules, each said once, in well under half the words, with the full pronunciation guide kept. Long instructions make a live voice drift in accent and cadence.' : 'Full: every rule as it grew, word for word (Steady mode and the coach work only with these).'}</div>
+                <label>Fresh start at each new section</label>
+                <Seg value={s.liveFresh !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveFresh: v === 'on' })} />
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>When you move on to a new Mishnah, piece of Gemara or perek, the voice quietly reconnects at the next quiet moment, so it starts clean instead of drifting as a long call goes on. It remembers where you are; you may hear a second of quiet.</div>
+                <label>Catch skipped words</label>
+                <Seg value={s.liveCheck !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCheck: v === 'on' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app compares what the voice actually said with the text it was given. If it left out the end, it goes back and reads the part it missed. Free.</div>
               </div>
-            )}
-            <div className="field">
-              <label>Standard pronunciations</label>
-              <Seg value={s.houseSay !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ houseSay: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On: one fixed way to say the common words, from the app&apos;s yeshivish rules: Tosafos = TOSS-fos, Gemara = g&apos;MOH-rah, Mishnah = MISH-nah, Rashi = RAH-shee, kashya = KOSH-ya, machlokes = mach-LOI-kes, halacha = ha-LOH-cha, Torah = TOI-rah, Moshe = MOI-sheh, Shabbos = SHAH-bos, and more. Your own “say it my way” words win over these.</div>
-            </div>
-            <HebrewLab s={s} onChange={onChange} disabled={liveActive} />
-            <GptPronunciation s={s} onChange={onChange} disabled={liveActive} />
-            <div className="field">
-              <label>Live voice for calls</label>
-              <Seg value={s.liveEngine === 'gemini' ? 'gemini' : 'gpt'} options={[['gpt', 'GPT-Live (current)'], ['gemini', 'Gemini Live (test)']]} onPick={(v) => onChange({ liveEngine: v as 'gpt' | 'gemini' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveEngine === 'gemini'
-                ? 'Gemini Live (Google), a test: about 1–2¢ a minute for the voice, plus the AI model for learning turns. Applies the next time you tap Talk; switch back any time.'
-                : 'GPT-Live (OpenAI): about 5¢ a minute for the voice, plus the AI model for learning turns. Gemini Live is cheaper; try it side by side.'}</div>
-            </div>
-            <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
-            <GeminiPronunciation s={s} onChange={onChange} />
-            {s.liveIdleSec > 0 && (
               <div className="field">
-                <label>When paused</label>
-                <Seg value={s.liveWake ? 'wake' : 'tap'} options={[['wake', 'Start talking to resume'], ['tap', 'Tap Resume']]} onPick={(v) => onChange({ liveWake: v === 'wake' })} />
-                {s.liveWake && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Your first second or two may be missed while it reconnects. While paused, the microphone listens only on your device; nothing is sent until you speak.</div>}
+                <label>Steady mode (the voice sticks to your style and instructions)</label>
+                <Seg value={s.liveSteady === true ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveSteady: v === 'on' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveSteady === true
+                  ? 'On: every learning turn (reading, explaining, kashyos, your answers, your instructions) goes through the brain, which plans it in your style; the voice reads the text inside and says the rest in its own words. About 1–3 seconds more before an answer, and about 1–3¢ a turn for the brain.'
+                  : 'Off: the voice answers quick learning turns itself, faster and more natural. The coach below keeps it on your style and instructions.'}</div>
               </div>
-            )}
+              {s.liveSteady !== true && (
+                <div className="field">
+                  <label>Coach notes</label>
+                  <Seg value={s.liveCoach === true ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCoach: v === 'on' })} />
+                  <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>After each exchange, a quick brain check looks at what the voice said against your style and instructions. If it drifted, the voice quietly gets a short note for its next reply. It never waits for it. About a tenth of a cent an exchange.</div>
+                </div>
+              )}
+            </Group>
+            <Group id="voice-save" level={2} title="Pausing to save" hint={s.liveIdleSec ? `after ${s.liveIdleSec < 60 ? `${s.liveIdleSec} s` : `${s.liveIdleSec / 60} min`} quiet` : 'never'}>
+              <div className="field">
+                  <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
+                  <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
+                    <option value="15">15 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="120">2 minutes</option>
+                    <option value="300">5 minutes</option>
+                    <option value="0">Never pause</option>
+                  </select>
+                  {s.saver !== false && s.liveIdleSec > 15 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 15 quiet seconds.</div>}
+              </div>
+              {s.liveIdleSec > 0 && (
+                <div className="field">
+                  <label>When paused</label>
+                  <Seg value={s.liveWake ? 'wake' : 'tap'} options={[['wake', 'Start talking to resume'], ['tap', 'Tap Resume']]} onPick={(v) => onChange({ liveWake: v === 'wake' })} />
+                  {s.liveWake && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Your first second or two may be missed while it reconnects. While paused, the microphone listens only on your device; nothing is sent until you speak.</div>}
+                </div>
+              )}
+            </Group>
+            <Group id="voice-rec" level={2} title="Call recorder" hint="Send me a call's log">
+              <CallLogs />
+            </Group>
+            <Group id="voice-gemini" level={2} title="GPT-Live or Gemini Live" hint={s.liveEngine === 'gemini' ? 'Gemini Live (test)' : 'GPT-Live'}>
+              <div className="field">
+                <label>Live voice for calls</label>
+                <Seg value={s.liveEngine === 'gemini' ? 'gemini' : 'gpt'} options={[['gpt', 'GPT-Live (current)'], ['gemini', 'Gemini Live (test)']]} onPick={(v) => onChange({ liveEngine: v as 'gpt' | 'gemini' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveEngine === 'gemini'
+                  ? 'Gemini Live (Google), a test: about 1–2¢ a minute for the voice, plus the AI model for learning turns. Applies the next time you tap Talk; switch back any time.'
+                  : 'GPT-Live (OpenAI): about 5¢ a minute for the voice, plus the AI model for learning turns. Gemini Live is cheaper; try it side by side.'}</div>
+              </div>
+              <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
+              <GeminiPronunciation s={s} onChange={onChange} />
+            </Group>
             <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
-          </div>
+          </Group>
 
-          <div className="section">
-            <h3>What your chavrusa remembers</h3>
+          <Group id="memory" title="What your chavrusa remembers" hint={memories ? `${memories.length} saved` : undefined}>
             {memories === null && <div className="muted">Loading…</div>}
             {memories?.length === 0 && <div className="muted" style={{ fontSize: 14 }}>Nothing yet. Tell your chavrusa how you like to learn and it will remember.</div>}
             {memories?.map((m) => (
@@ -367,27 +409,12 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <input type="text" placeholder="Add an instruction, e.g. Don't translate Rashi" value={newMem} onChange={(e) => setNewMem(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addMem()} />
               <button className="btn" onClick={addMem}>Add</button>
             </div>
-          </div>
+          </Group>
 
-          <div className="section">
-            <h3>Cost, last 30 days</h3>
-            {!costs && <div className="muted">Loading…</div>}
-            {costs && (
-              <table className="costs">
-                <thead><tr><th>Model</th><th className="n">Exchanges</th><th className="n">USD</th></tr></thead>
-                <tbody>
-                  {Object.entries(costs.byModel).map(([k, v]) => <tr key={k}><td>{k}</td><td className="n">{v.exchanges}</td><td className="n">${v.usd.toFixed(3)}</td></tr>)}
-                  <tr><td><b>Total</b></td><td /><td className="n"><b>${costs.totalUsd.toFixed(2)}</b></td></tr>
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          <div className="section">
-            <h3>About</h3>
+          <Group id="about" title="About and log out">
             <p className="muted" style={{ fontSize: 13 }}>This is an AI learning tool. It can make mistakes. Do not rely on it for accuracy in Torah learning, halacha, or hashkafa. For practical questions, ask your rav.</p>
             <button className="btn" onClick={() => { window.location.href = '/api/logout'; }}>Log out</button>
-          </div>
+          </Group>
           </>}
         </div>
       </div>

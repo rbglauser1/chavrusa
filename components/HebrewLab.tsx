@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { LIVE_VOICES, type Settings } from '@/lib/config';
 import { RULES, STANDARD_RULES } from '@/lib/live';
+import { Group } from './SettingsGroup';
 import { hasNikud, HE_READS, isHebrewLetters, voiceHe, type HeRead } from '@/lib/hebrew';
 import { silentWav } from './useVoice';
 
@@ -119,6 +120,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       <div className="presets">{LINES.map((l) => <button key={l.name} className={`chip ${l.he === text ? 'on' : ''}`} onClick={() => setText(l.he)}>{l.name}</button>)}</div>
       <textarea rows={2} dir="rtl" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a line with nikud" />
       {text.trim() && !hasNikud(text) && <div className="goto-msg" style={{ padding: '6px 0 0' }}>This line has no nikud (vowels). Only the Hebrew-letters versions can read it; the spelled-out ones need the vowels to know how each word sounds. Paste the line with nikud (on Sefaria, turn vowels on) to try them all.</div>}
+      <Group id="lab-ways" level={3} title="Ways of giving it the Hebrew" hint={HE_READS.find((m) => m.id === inUse)?.name}>
       <div className="he-lab-list">
         {HE_READS.map((m) => (
           <div key={m.id} className={`he-lab-row ${inUse === m.id ? 'on' : ''}`}>
@@ -132,7 +134,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
           </div>
         ))}
       </div>
-      <label style={{ marginTop: 16 }}>Try combinations of rules</label>
+      </Group>
+      <Group id="lab-rules" level={3} title="Try combinations of rules" hint={`calls use: ${comboName(inCalls)}`}>
       <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The voice&apos;s pronunciation rules, as separate pieces. Switch some on or off, hear the line, and mark how it sounded. Try each combination a few times (the voice varies), and keep the one with the most good listens for calls. Uses your voice and the way of reading in use above.</div>
       <div className="presets">
         {RULES.map((r) => <button key={r.id} className={`chip ${combo.includes(r.id) ? 'on' : ''}`} title={r.about} onClick={() => setCombo((c) => (c.includes(r.id) ? c.filter((x) => x !== r.id) : [...c, r.id]))}>{r.name}</button>)}
@@ -161,7 +164,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       )}
       <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Calls use: {comboName(inCalls)}{s.liveRules?.length ? <> · <button className="linkish" onClick={() => onChange({ liveRules: [] })}>Back to the standard</button></> : ' (the standard)'}. The rules apply with the Short instructions.</div>
 
-      <label style={{ marginTop: 16 }}>Which voice is steadiest</label>
+      </Group>
+      <Group id="lab-voices" level={3} title="Which voice is steadiest" hint="Hear each voice, mark each listen">
       <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The same line in each voice, read the way in use above. A voice can sound great once and not the next time, so hear each a few times and mark every listen 👍 or 👎. The one with the most good listens is the steadiest. About a cent per listen.</div>
       <div className="he-lab-list">
         {LIVE_VOICES.map((v) => {
@@ -183,6 +187,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         })}
       </div>
       {Object.values(votes).some((x) => x.good || x.bad) && <button className="linkish" style={{ marginTop: 6, fontSize: 12 }} onClick={() => setVotes((x) => Object.fromEntries(Object.entries(x).filter(([, y]) => y.gone)))}>Clear the marks</button>}
+      </Group>
       {disabled && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>End the current call to test.</div>}
     </div>
   );
