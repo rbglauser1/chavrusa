@@ -200,9 +200,9 @@ export const HE_READS: { id: HeRead; name: string }[] = [
   { id: 'he-bare', name: 'Hebrew letters without vowels (like a Gemara)' },
   { id: 'he-key', name: 'Hebrew letters with a pronunciation key' },
   { id: 'he-plain', name: 'Hebrew letters, the voice on its own' },
-  { id: 'dash-simple', name: 'Like the original (ve-ko-nah)' },
-  { id: 'join-kh', name: 'Joined with kh (b\'khesef), current' },
-  { id: 'join-ch', name: 'Joined with ch (b\'chesef)' },
+  { id: 'dash-simple', name: 'Spelled out with dashes (ve-ko-nah)' },
+  { id: 'join-kh', name: 'Spelled out, joined, with kh (b\'khesef)' },
+  { id: 'join-ch', name: 'Spelled out, joined, with ch (b\'chesef)' },
 ];
 export const hasNikud = (he: string) => /[\u05B0-\u05BC\u05C1\u05C2\u05C7]/.test(he);
 export const isHebrewLetters = (m?: HeRead) => m === 'he' || m === 'he-bare' || m === 'he-plain' || m === 'he-key';

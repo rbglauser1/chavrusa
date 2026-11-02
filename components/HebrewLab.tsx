@@ -259,11 +259,26 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const heardBoth = heardAB.id === pairId && heardAB.a && heardAB.b;
   const markHeard = (side: 'A' | 'B') => setHeardAB((h) => (h.id === pairId ? { ...h, [side === 'A' ? 'a' : 'b']: true } : { id: pairId, a: side === 'A', b: side === 'B' }));
   const [flash, setFlash] = useState('');
+  // After a pick, what A and B were (only then, so the listening stays blind).
+  const [lastPair, setLastPair] = useState<{ a: string; b: string; chose: string } | null>(null);
+  const PACE_NAME: Record<Pace, string> = { slow: 'Slow', relaxed: 'Relaxed', natural: 'Normal', brisk: 'Brisk' };
+  const whatDiffers = (st: StageId, c: Cfg): string =>
+    st === 'way' || st === 'way2' ? HE_READS.find((m) => m.id === c.mode)?.name ?? c.mode
+    : st === 'voice' ? (LIVE_VOICES.find((v) => v.id === c.voice)?.name ?? c.voice)
+    : st === 'instr' ? `${c.instr === 'full' ? 'Full' : 'Short'} instructions`
+    : st === 'pace' ? `${PACE_NAME[c.pace]} speed`
+    : st === 'final' ? `${HE_READS.find((m) => m.id === c.mode)?.name ?? c.mode} · ${c.instr === 'full' ? 'Full instructions' : `rules: ${comboName(c.rules)}`} · ${PACE_NAME[c.pace]}`
+    : `Rules: ${comboName(c.rules)}`;
   const flashT = useRef(0);
   const pick = (side: 'A' | 'B' | 'same') => {
     if (!tune?.chal || !heardBoth) return;
     endRef.current?.();
     setFlash(side === 'same' ? '✓ Got it: about the same. Here is the next pair.' : `✓ Got it: ${side} was better. Here is the next pair.`);
+    {
+      const st0 = tune.stages[tune.si];
+      const a = tune.champOnA ? tune.champ : tune.chal, b = tune.champOnA ? tune.chal : tune.champ;
+      setLastPair({ a: whatDiffers(st0, a), b: whatDiffers(st0, b), chose: side === 'same' ? 'about the same (the best so far stays)' : `${side}` });
+    }
     window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2500);
     const st = tune.stages[tune.si];
     const chalWon = side !== 'same' && (side === 'A') !== tune.champOnA;
@@ -284,7 +299,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     endRef.current?.();
     const back = tune.back.slice(0, -1);
     setTune({ ...tune.back[tune.back.length - 1], back });
-    setFlash('↩ Back one pair.');
+    setFlash('↩ Back one pair.'); setLastPair(null);
     window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2500);
   };
   // Back to the first pair of this step (as it was then), to redo the whole step.
@@ -295,7 +310,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     while (i > 0 && tune.back[i - 1].si === tune.si) i--;
     if (i === tune.back.length) return;
     setTune({ ...tune.back[i], back: tune.back.slice(0, i) });
-    setFlash('↩ Back to the start of this step.');
+    setFlash('↩ Back to the start of this step.'); setLastPair(null);
     window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2500);
   };
   const stepStarted = !!tune?.back?.length && tune.back[tune.back.length - 1].si === tune.si;
@@ -329,6 +344,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
           <>
             <div className="tuner-step"><b>Step {tune.si + 1} of {tune.stages.length}:</b> {STAGE_NAME[tune.stages[tune.si]]} · <b>pair {tune.step + 1} of {challengers(tune.stages[tune.si], tune).length}</b> · saved as you go</div>
             {flash && <div className="tuner-flash">{flash}</div>}
+            {lastPair && <div className="tuner-last"><b>The pair you just judged:</b> A was {lastPair.a}; B was {lastPair.b}. You chose {lastPair.chose}.</div>}
             <div className="tuner-ab">
               {(['A', 'B'] as const).map((side) => {
                 const c = side === 'A' ? tuneA : tuneB;
