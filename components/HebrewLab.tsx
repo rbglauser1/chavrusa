@@ -171,7 +171,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   type Pace = 'slow' | 'relaxed' | 'natural' | 'brisk';
   type Cfg = { mode: HeRead; voice: string; rules: string; instr: 'short' | 'full'; pace: Pace };
   type StageId = 'way' | 'voice' | 'rules' | 'mix' | 'trim' | 'way2' | 'instr' | 'pace' | 'final';
-  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean; order?: string[]; prev?: Cfg | null; back?: Omit<Tune, 'back'>[] };
+  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean; order?: string[]; prev?: Cfg | null; picked?: 'A' | 'B' | 'same'; back?: Omit<Tune, 'back'>[] };
   const cfgKey = (c: Cfg) => `c:${c.mode}|${c.voice}|${c.rules}|${c.instr}|${c.pace}`;
   const sameCfg = (a: Cfg, b: Cfg) => cfgKey(a) === cfgKey(b);
   const STAGE_NAME: Record<StageId, string> = { way: 'How the Hebrew is given', voice: 'Which voice', rules: 'The rules, one at a time', mix: 'Adding rules together, one at a time', trim: 'Taking each rule out again, to see if it’s better without it', way2: 'How the Hebrew is given, again, with the rules chosen', instr: 'Short or full instructions', pace: 'Speaking speed', final: 'Last check: against what calls use now (and the last run’s winner)' };
@@ -291,7 +291,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const goodWays = st === 'way' && side !== (tune.champOnA ? 'A' : 'B') ? [...new Set([...tune.goodWays, tune.chal.mode, tune.champ.mode])] : tune.goodWays;
     // Kept for Undo: the test as it was before this pick (the last 80 picks).
     const { back = [], ...before } = tune;
-    setTune({ ...advance({ ...before, champ, good, goodWays, step: tune.step + 1 }), back: [...back, before].slice(-80) });
+    setTune({ ...advance({ ...before, picked: undefined, champ, good, goodWays, step: tune.step + 1 }), back: [...back, { ...before, picked: side }].slice(-200) });
   };
   // Undo: back to the pair before the last pick, as it was (A and B the same way round), as many times as wanted.
   const undo = () => {
@@ -322,6 +322,42 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   ];
   const useSetup = (c: Cfg) => onChange({ heRead: c.mode, liveVoice: c.voice, liveRules: c.rules === 'none' ? ['none'] : c.rules.split(','), liveShort: c.instr === 'short', livePace: c.pace });
   const setupInCalls = sameCfg(startCfg, tune?.champ ?? startCfg);
+  // The whole run written out, every pair and what was chosen, to send to Claude for a closer look.
+  function resultsText(t: Tune): string {
+    const out: string[] = [];
+    out.push(`Chavrusa voice test · ${new Date().toLocaleString()}`);
+    out.push(`Line: ${text}`);
+    out.push(`Started from (what calls used): ${describe(t.start).join(' · ')}`);
+    if (t.order?.length) out.push(`Rule order this run: ${t.order.map((id) => comboName(id)).join(', ')}`);
+    if (t.prev) out.push(`Previous run's winner (in the last check): ${describe(t.prev).join(' · ')}`);
+    const steps = [...(t.back ?? []), t];
+    let lastSi = -1;
+    steps.forEach((x, i) => {
+      if (!x.chal) return;
+      const st = x.stages[x.si];
+      if (x.si !== lastSi) { out.push(''); out.push(`Step ${x.si + 1}: ${STAGE_NAME[st]}`); lastSi = x.si; }
+      const a = x.champOnA ? x.champ : x.chal, b = x.champOnA ? x.chal : x.champ;
+      const next = steps[i + 1];
+      let chose: string;
+      if (!next) chose = '(not judged yet)';
+      else if (x.picked) chose = x.picked === 'same' ? 'about the same (best so far kept)' : `${x.picked} (${whatDiffers(st, x.picked === 'A' ? a : b)})`;
+      else chose = sameCfg(next.champ, x.chal) ? `the change (${whatDiffers(st, x.chal)})` : 'the best so far (or about the same)';
+      out.push(`  A: ${whatDiffers(st, a)} | B: ${whatDiffers(st, b)} → chose ${chose}${sameCfg(a, x.champ) ? ' [A was the best so far]' : ' [B was the best so far]'}`);
+    });
+    out.push('');
+    out.push(t.done ? `Result: ${describe(t.champ).join(' · ')}${t.won ? ' (beat what calls used)' : ' (what calls used held up)'}` : `Not finished yet. Best so far: ${describe(t.champ).join(' · ')}`);
+    return out.join('\n');
+  }
+  const [copied, setCopied] = useState('');
+  async function copyResults(t: Tune) {
+    const txt = resultsText(t);
+    try { await navigator.clipboard.writeText(txt); setCopied('Copied. Paste it into the chat with Claude.'); }
+    catch {
+      try { await navigator.share({ title: 'Chavrusa voice test', text: txt }); setCopied(''); }
+      catch { setCopied('Couldn’t copy here.'); }
+    }
+    window.setTimeout(() => setCopied(''), 4000);
+  }
 
   return (
     <div className="field he-lab">
@@ -364,6 +400,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
               {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
               {stepStarted && <button className="btn" onClick={redoStep}>↺ Redo this step</button>}
               <span>Not sure? Hear them again.</span>
+              <button className="linkish" onClick={() => void copyResults(tune)}>Copy the results so far</button>
               <button className="linkish" onClick={() => { endRef.current?.(); setTune(null); }}>Stop and start over</button>
             </div>
           </>
@@ -377,11 +414,13 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
               {tune.champ.voice !== tune.start.voice && <button className="btn" onClick={() => useSetup({ ...tune.champ, voice: tune.start.voice })}>Use it, but keep {LIVE_VOICES.find((v) => v.id === tune.start.voice)?.name.replace(/ \(.*\)$/, '') ?? tune.start.voice}</button>}
               <button className="btn" onClick={startTune}>Test again</button>
               {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
+              <button className="btn" onClick={() => void copyResults(tune)}>Copy the results (for Claude)</button>
               <button className="linkish" onClick={() => setTune(null)}>Done</button>
             </div>
             <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>The voice varies from one listen to the next. If the same setup wins twice, it&apos;s the one.</div>
           </>
         )}
+        {copied && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{copied}</div>}
         <div className="tuner-now">Calls use now: {describe(startCfg).join(' · ')}</div>
       </div>
       <div className="muted" style={{ fontSize: 12, margin: '14px 0 2px' }}>More (to test things one at a time yourself):</div>
