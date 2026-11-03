@@ -485,8 +485,11 @@ export function useLive(opts: {
       if (lastUtter.current.at !== at) return;                      // it spoke again since
       if (pending.current.size || lastDelegAt.current > at - 4000) return; // a request did come (or was already on its way)
       if (lastInputAt.current > at || stateRef.current !== 'listening' || !pc.current) return;
+      if (quietJobs.current.some((j) => j.name === 'auto')) return; // Keep going by itself will bring the next piece
       const id = `app_${Date.now()}`;
-      const text = lastLearner.current || 'Yes, go on.';
+      // A greeting or a short yes isn't a new request: it means go on from where we are.
+      const last = lastLearner.current.trim();
+      const text = !last || /^(hi|hello|hey|shalom|yes|yeah|yep|sure|right|ok(ay)?|go ahead|go on|ready|let'?s go)[\s.!,]*$/i.test(last) ? 'Yes, go on.' : last;
       logLine('CHECK', `the voice said "${u.text.slice(-40)}" but never asked the app: asking the brain for it ("${text}")`);
       pending.current.add(id);
       setS('thinking');
@@ -641,7 +644,21 @@ export function useLive(opts: {
       const channel = peer.createDataChannel('oai-events');
       dc.current = channel;
       channel.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch { /* ignore */ } };
-      channel.onopen = () => { startedAt.current = Date.now(); bump(); setS('listening'); micWatch(peer); };
+      channel.onopen = () => {
+        startedAt.current = Date.now(); bump(); setS('listening'); micWatch(peer);
+        // The voice is told to speak first; sometimes it doesn't. With Keep going by itself, after 6 silent seconds
+        // the app simply brings the next piece.
+        const opened = Date.now();
+        window.setTimeout(() => {
+          if (pc.current !== peer || !autoStart.current || lastUtter.current.at > opened || recOut.current || lastInputAt.current > opened || pending.current.size) return;
+          autoStart.current = false;
+          const id = `app_${Date.now()}`;
+          logLine('CHECK', 'the voice didn\'t open the call: going on by itself');
+          pending.current.add(id);
+          setS('thinking');
+          optsRef.current.onRequest('Yes, go on.', id);
+        }, 6000);
+      };
       peer.onconnectionstatechange = () => {
         if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {
           if (pc.current === peer) { optsRef.current.onError('The live connection dropped. Tap Talk to reconnect.'); finish('off'); }
