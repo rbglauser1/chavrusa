@@ -328,7 +328,7 @@ export async function POST(req: NextRequest) {
               if (!b) continue;
               const sec = await section(b, sources, approved);
               // With "just the literal words", the app's own corrections of the block use the literal English too.
-              if (sec?.he.length) secs.push({ base: b, he: sec.he, en: settings.translate && settings.translate !== 'full' && sec.enB?.length ? sec.en.map((e, i) => englishFor(e, sec.enB?.[i], settings.translate)) : sec.en });
+              if (sec?.he.length) secs.push({ base: b, he: sec.he, en: settings.translate && settings.translate !== 'full' && sec.enB?.length ? sec.en.map((e, i) => englishFor(e, sec.enB?.[i], settings.translate, false, sec.he[i] ?? '')) : sec.en });
             }
             // He asked to go on: the reading must start right after where he is (the brain sometimes jumps ahead).
             if (secs.length) {

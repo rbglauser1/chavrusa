@@ -246,14 +246,14 @@ export function openingReply(s: SourceData, spoken: boolean, mode?: HeRead, tran
   // One mishnah / pasuk (e.g. "Peah 1:4"): show it whole, with its translation.
   if (!/\d+[ab](:|$)/.test(s.ref) && /:\d+$/.test(s.ref)) {
     const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
-    const en = spoken ? englishFor(s.en.join(' ').trim(), s.enB?.join(' '), translate) : s.en.join(' ').trim();
+    const en = spoken ? englishFor(s.en.join(' ').trim(), s.enB?.join(' '), translate, false, s.he.join(' ')) : s.en.join(' ').trim();
     if (spoken) return `${name}. ${sayLine(s.he.join(' '), en, mode)}${en ? '' : ` There's no approved translation for this one.`}`;
     return `**${name}**\n\n> ${s.he.join(' ').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
   }
   // A perek of Mishnah (or of Tanach): start right in, with the first mishnah / pasuk and its translation.
   if (!/\d+[ab](:|$)/.test(s.ref) && s.he.length > 1) {
     const unit = /^Mishnah /.test(s.ref) ? 'mishnah' : 'pasuk';
-    const en = spoken ? englishFor((s.en[0] ?? '').trim(), s.enB?.[0], translate) : (s.en[0] ?? '').trim();
+    const en = spoken ? englishFor((s.en[0] ?? '').trim(), s.enB?.[0], translate, false, s.he[0] ?? '') : (s.en[0] ?? '').trim();
     if (spoken) return `${name}. ${sayLine(s.he[0] ?? '', en, mode)}${en ? '' : ` There's no approved translation for this one.`}`;
     return `**${name}:1**\n\n> ${(s.he[0] ?? '').trim()}${en ? `\n> "${en}"` : ''}\n\n${en ? `Any question on this ${unit}, or next ${unit}?` : `Want me to explain this ${unit}, or go on to the next?`}`;
   }

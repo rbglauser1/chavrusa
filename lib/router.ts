@@ -395,9 +395,9 @@ async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
     // literal words" (or "own", which needs the brain, so here its nearest), only Sefaria's bold, word-for-word part.
     const tr = ctx.settings.translate;
     if (ctx.spoken && tr && tr !== 'full' && src.enB?.length) {
-      const enB = src.enB.join(' ');
-      const piece = usePart ? splitPieces(src.he.join(' '), enB)[usePart - 1]?.en : enB;
-      line = { ...line, en: englishFor(line.en, piece, tr) };
+      // The piece's own stretch of the English, found by its plain words (cutting the marked English separately
+      // could split it differently: that once left a piece with only "the matter itself").
+      line = { ...line, en: englishFor(line.en, src.enB.join(' '), tr, !!usePart, line.he) };
     }
     // Show the whole perek / amud in the Sefer, scrolled to this line, so the learner can look around it.
     const whole = await tryText(p.base, ctx.approved);
