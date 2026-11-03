@@ -326,7 +326,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="field">
                 <label>Standard pronunciations</label>
                 <Seg value={s.houseSay !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ houseSay: v === 'on' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On: one fixed way to say the common words, from the app&apos;s yeshivish rules: Tosafos = TOSS-fos, Gemara = g&apos;MOH-rah, Mishnah = MISH-nah, Rashi = RAH-shee, kashya = KOSH-ya, machlokes = mach-LOI-kes, halacha = ha-LOH-cha, Torah = TOI-rah, Moshe = MOI-sheh, Shabbos = SHAH-bos, and more. Your own “say it my way” words win over these.</div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On: one fixed way to say the common words, from the app&apos;s yeshivish rules: Tosafos = TOSS-fos, Gemara = g&apos;MAW-rah, Mishnah = MISH-nah, Rashi = RAH-shee, kashya = KOSH-ya, machlokes = mach-LOI-kes, halacha = ha-LAW-cha, Torah = TOI-rah, Moshe = MOI-sheh, Shabbos = SHAH-bos, and more. Your own “say it my way” words win over these.</div>
               </div>
               <HebrewLab s={s} onChange={onChange} disabled={liveActive} />
               <GptPronunciation s={s} onChange={onChange} disabled={liveActive} />
