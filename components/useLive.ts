@@ -128,7 +128,29 @@ export function useLive(opts: {
   }, []);
   sendRef.current = send;
 
+  // The call recorder's microphone check: every 10 seconds, how loud the microphone was at its loudest (from the
+  // connection's own numbers). A learner who spoke but isn't in the log, with the mic "silent", means no sound reached
+  // the app (muted, the wrong microphone, Bluetooth…), not that the voice ignored him.
+  const micTimer = useRef<number | undefined>(undefined);
+  function micWatch(peer: RTCPeerConnection) {
+    window.clearInterval(micTimer.current);
+    let peak = 0, ticks = 0, lastWord = '';
+    micTimer.current = window.setInterval(async () => {
+      if (pc.current !== peer) { window.clearInterval(micTimer.current); return; }
+      try {
+        (await peer.getStats()).forEach((r: { type?: string; kind?: string; audioLevel?: number }) => {
+          if ((r.type === 'media-source' || r.type === 'track') && r.kind === 'audio' && typeof r.audioLevel === 'number') peak = Math.max(peak, r.audioLevel);
+        });
+      } catch { /* not available here */ }
+      if (++ticks < 10) return;
+      const word = peak < 0.01 ? 'silent' : peak < 0.05 ? 'very quiet' : 'hearing sound';
+      // Logged every 10 seconds while it changes, and every 30 seconds otherwise, to keep the log short.
+      if (word !== lastWord || ticks >= 30) { logLine('MIC', `${word} (loudest ${peak.toFixed(2)} in the last ${ticks} s)`); lastWord = word; ticks = 0; peak = 0; }
+      else if (ticks % 10 === 0) peak = 0;
+    }, 1000);
+  }
   const teardown = useCallback(() => {
+    window.clearInterval(micTimer.current);
     try { dc.current?.close(); } catch { /* ignore */ }
     try { pc.current?.close(); } catch { /* ignore */ }
     mic.current?.getTracks().forEach((t) => t.stop());
@@ -257,6 +279,7 @@ export function useLive(opts: {
           const wasAnswer = answering.current;
           if (!pending.current.size) answering.current = false;
           if (!pending.current.size && wasAnswer) autoNext();
+          else if (!pending.current.size && autoStart.current) { autoStart.current = false; autoNext(true); }
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
           if (!pending.current.size) checkSkip();
           if (!pending.current.size) watchStall();
@@ -474,9 +497,10 @@ export function useLive(opts: {
   // (he didn't speak), the app asks for the next piece itself. Not after a question (he should answer it), and not
   // while he has said to stop or wait, until he says to go on again.
   const autoHold = useRef(false);
-  function autoNext() {
+  const autoStart = useRef(false); // the opening said where we are: go on after it by itself (Keep going by itself)
+  function autoNext(force = false) {
     const secs = optsRef.current.autoGo?.() ?? 0;
-    if (!secs || autoHold.current || /\?\s*["”']?\s*$/.test(lastUtter.current.text)) return;
+    if (!secs || autoHold.current || (!force && /\?\s*["”']?\s*$/.test(lastUtter.current.text))) return;
     const at = lastUtter.current.at;
     whenQuiet('auto', () => {
       if (lastUtter.current.at !== at || autoHold.current || pending.current.size || lastInputAt.current > at || !pc.current) return;
@@ -617,7 +641,7 @@ export function useLive(opts: {
       const channel = peer.createDataChannel('oai-events');
       dc.current = channel;
       channel.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch { /* ignore */ } };
-      channel.onopen = () => { startedAt.current = Date.now(); bump(); setS('listening'); };
+      channel.onopen = () => { startedAt.current = Date.now(); bump(); setS('listening'); micWatch(peer); };
       peer.onconnectionstatechange = () => {
         if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {
           if (pc.current === peer) { optsRef.current.onError('The live connection dropped. Tap Talk to reconnect.'); finish('off'); }
@@ -632,7 +656,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; }
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
       if (data.rulesUsed) logLine('──', `in this call: voice ${data.voiceUsed ?? '?'} · Hebrew given as ${data.speech?.heRead ?? '?'} · rules: ${data.rulesUsed}`);
       if (data.notice) { logLine('──', String(data.notice)); optsRef.current.onError(String(data.notice)); }

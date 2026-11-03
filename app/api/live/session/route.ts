@@ -98,13 +98,16 @@ export async function POST(req: NextRequest) {
   const recapBlock = recap ? `\n\n# The conversation so far in this session (most recent last)\n${recap}` : '';
   // How the call opens depends on the circumstances, like a real chavrusa: no formal hello if we were just learning.
   const mins = lastAt ? (Date.now() - new Date(lastAt).getTime()) / 60000 : null;
+  // Keep going by itself (Settings): the opening doesn't ask whether to go on; the app goes on after it by itself.
+  const auto = s.autoGo === true && !preview;
+  const goOnAsk = auto ? 'say in a few words that we will go on now (do not ask), and stop: the app brings the next piece' : 'ask in a few words if he\'s ready to go on';
   const hello = pointed
     ? `Speak first, briefly. ${mins !== null && mins < 20 ? 'We were just learning; do not greet.' : 'At most a short natural opener; no formal greeting.'} ${pointed} Then listen.${recapBlock}`
     : !recap
     ? `Speak first, briefly and naturally, the way a chavrusa would when sitting down to learn: a short, warm, natural opener (not a formula, and different each time), ${placeName ? `then mention that last time we were on ${placeName} and ask if he wants to pick up there` : 'then ask what we are learning today'}. Then stop and listen.`
     : mins !== null && mins < 20
-      ? `We were learning together just a few minutes ago. Do not greet. Speak first, very briefly, and simply continue from your last message: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again in a few words; otherwise ask in a few words if he's ready to go on. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then listen.${recapBlock}`
-      : `Speak first, briefly and naturally. Use a short, casual opener only if it fits (we last learned ${mins !== null && mins < 24 * 60 ? 'earlier today' : 'on an earlier day'}); no formal greeting. In one sentence say where we were${placeName ? ` (${placeName})` : ''}. Your last message was: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again briefly; otherwise ask if he's ready to go on. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then stop and listen.${recapBlock}`;
+      ? `We were learning together just a few minutes ago. Do not greet. Speak first, very briefly, and simply continue from your last message: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again in a few words; otherwise ${goOnAsk}. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then listen.${recapBlock}`
+      : `Speak first, briefly and naturally. Use a short, casual opener only if it fits (we last learned ${mins !== null && mins < 24 * 60 ? 'earlier today' : 'on an earlier day'}); no formal greeting. In one sentence say where we were${placeName ? ` (${placeName})` : ''}. Your last message was: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again briefly; otherwise ${goOnAsk}. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then stop and listen.${recapBlock}`;
   const resumeNote = pointed ? `The call is resuming after a short pause. Do not greet. ${pointed}${recapBlock}` : `The call is resuming after a short pause, in the middle of learning. Do not greet and do not recap. Continue exactly where you left off. Your last message was: "${lastSaid}". If the learner hasn't answered it yet, wait for him; when he speaks, carry on from there.${recapBlock}`;
   // A pronunciation test (Settings → Voice → Test it): say one line, spelled the way a call would get it.
   const testText = preview ? String(req.nextUrl.searchParams.get('say') ?? '').slice(0, 400) : '';
@@ -179,5 +182,5 @@ export async function POST(req: NextRequest) {
     : rulesFinal.map(ruleName).join(' + ');
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all' }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: auto && !resume && !!(placeName || recap) && !pointed }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
 }
