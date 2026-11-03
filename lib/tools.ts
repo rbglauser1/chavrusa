@@ -86,17 +86,19 @@ export const TOOLS: ToolDef[] = [
 ];
 
 // The lean copy of a source that the AI reads (the learner sees the full text).
-export function textForModel(s: SourceData, lean = false): string {
+export function textForModel(s: SourceData, lean = false, literal = false): string {
   // Lean (spoken Saver turns): a shorter excerpt, since a spoken reply covers one small step anyway.
   const comm = / on /i.test(s.ref);
   const he = clip(s.he.map(stripNikud), comm ? (lean ? 2500 : 4000) : lean ? 1500 : MAX_HE_CHARS);
-  const en = clip(s.en, comm ? 1500 : lean ? 700 : MAX_EN_CHARS);
+  // "Just the literal words": the English with Sefaria's literal (bold) part marked « … », so the brain can give only that.
+  const marked = literal && s.enB?.length ? s.enB.map((l) => l.replace(/\u0002/g, '«').replace(/\u0003/g, '»')) : null;
+  const en = clip(marked ?? s.en, comm ? 1500 : lean ? 700 : MAX_EN_CHARS);
   return [
     `REF: ${s.ref} (${s.heRef})`,
     `Shown to learner in the Sefer panel. Lines are numbered.`,
     `ORIGINAL:\n${he.text}${he.clipped ? '[…text continues; request a narrower ref for the rest]\n' : ''}`,
     s.translation
-      ? `APPROVED TRANSLATION (${s.translation})${s.archaic ? ' [old-fashioned English: when you quote it, put it into plain modern English and mark it "(my translation, based on this one)"]' : ''}:\n${en.text}${en.clipped ? '[…]\n' : ''}`
+      ? `APPROVED TRANSLATION (${s.translation})${marked ? ' [the words between « and » are the literal, word-for-word translation; the rest is added explanation]' : ''}${s.archaic ? ' [old-fashioned English: when you quote it, put it into plain modern English and mark it "(my translation, based on this one)"]' : ''}:\n${en.text}${en.clipped ? '[…]\n' : ''}`
       : 'No approved translation available. If you translate, say it is your own translation.',
   ].join('\n\n');
 }
@@ -135,6 +137,7 @@ export function isCommentaryRef(ref: string): boolean { return / on /i.test(ref)
 
 export function makeExecutor(ctx: {
   allowCommentary?: boolean; // false: the learner hasn't asked about a commentary, so don't spend money reading one
+  literal?: boolean; // the learner chose "just the literal words": show the brain which words are literal
   sessionId: string;
   approved: ApprovedEntry[];
   saveSettings: (p: Partial<Settings>) => Promise<Settings>;
@@ -166,7 +169,7 @@ export function makeExecutor(ctx: {
         const shown = await forPanel(source, ctx.approved);
         ctx.emit({ type: 'source', source: shown });
         await addSource(ctx.sessionId, shown);
-        return textForModel(source);
+        return textForModel(source, false, !!ctx.literal);
       }
       case 'get_connections': {
         const ref = String(args.ref ?? '');

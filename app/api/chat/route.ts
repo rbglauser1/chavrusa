@@ -17,7 +17,7 @@ import { forReader, stripNikud } from '@/lib/hebrew';
 import { nextSection } from '@/lib/refs';
 import { after } from 'next/server';
 import { addSource, SourceData } from '@/lib/db';
-import { getText } from '@/lib/sefaria';
+import { englishFor, getText } from '@/lib/sefaria';
 
 export const runtime = 'nodejs';
 
@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
           }
           send({ type: 'source', source: comm.src });
           focusMg(comm.src.ref, comm.line ?? null);
-          commNote = `\n\n[The app opened ${comm.src.ref} for the learner (${comm.count} comment${comm.count > 1 ? 's' : ''}). Its text is below, so you do not need get_text for it.]\n${textForModel(comm.src, spoken)}`;
+          commNote = `\n\n[The app opened ${comm.src.ref} for the learner (${comm.count} comment${comm.count > 1 ? 's' : ''}). Its text is below, so you do not need get_text for it.]\n${textForModel(comm.src, spoken, spoken && settings.translate === 'literal')}`;
         } else if (comm && 'missing' in comm) {
           commNote = `\n\n[The app checked Sefaria: there is no approved ${comm.missing} on ${comm.on}. Tell the learner that plainly; do not guess what it says.${comm.available.length ? ` The commentaries this text does have: ${comm.available.join(', ')}. Offer one of them (for Mishnayos, usually the Bartenura).` : ''}]`;
         }
@@ -238,6 +238,7 @@ export async function POST(req: NextRequest) {
         const emit = (e: ToolEvent) => send(e);
         const baseExecute = makeExecutor({
           allowCommentary,
+          literal: spoken && settings.translate === 'literal',
           sessionId: sid,
           approved,
           saveSettings: async (p) => (settings = await saveSettings(p)),
@@ -293,7 +294,7 @@ export async function POST(req: NextRequest) {
             { role: 'user' as const, content: (inHand
               ? `${message}\n\n${inHand}`
               : pre
-                ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean)}`
+                ? `${message}\n\n[The app already opened this source for the learner. Its text is below, so you do not need get_text for it.]\n${textForModel(pre, lean, spoken && settings.translate === 'literal')}`
                 : message)
               + commNote
               + readNext
@@ -326,7 +327,8 @@ export async function POST(req: NextRequest) {
             for (const b of [...new Set([base, marked.base, base ? nextSection(base) : null])]) {
               if (!b) continue;
               const sec = await section(b, sources, approved);
-              if (sec?.he.length) secs.push({ base: b, he: sec.he, en: sec.en });
+              // With "just the literal words", the app's own corrections of the block use the literal English too.
+              if (sec?.he.length) secs.push({ base: b, he: sec.he, en: settings.translate && settings.translate !== 'full' && sec.enB?.length ? sec.en.map((e, i) => englishFor(e, sec.enB?.[i], settings.translate)) : sec.en });
             }
             // He asked to go on: the reading must start right after where he is (the brain sometimes jumps ahead).
             if (secs.length) {

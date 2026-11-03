@@ -44,6 +44,18 @@ export function stripKeepBold(s: string): string {
   return t.replace(new RegExp(`${B_ON}\\s*${B_OFF}`, 'g'), '');
 }
 const hasBold = (lines: string[]) => lines.some((l) => l.includes(B_ON));
+/** Just the literal translation: the words Sefaria's English marks in bold (its word-for-word part), without the
+ *  explanation it adds in plain type. Empty when nothing is marked. */
+export function literalOf(enB: string | undefined): string {
+  if (!enB || !enB.includes(B_ON)) return '';
+  const parts = [...enB.matchAll(new RegExp(`${B_ON}([\\s\\S]*?)(?:${B_OFF}|$)`, 'g'))].map((m) => m[1].trim()).filter(Boolean);
+  return parts.join(' ').replace(/\s+([,.;:?!])/g, '$1').replace(/\s+/g, ' ').trim();
+}
+/** The English for the voice to read with the text, by the learner's choice (the literal words when Sefaria marks them). */
+export function englishFor(full: string, enB: string | undefined, translate?: string): string {
+  if (translate === 'literal' || translate === 'own') return literalOf(enB) || full;
+  return full;
+}
 
 export function stripHtml(s: string): string {
   return s.replace(/<sup[^>]*>.*?<\/sup>/gi, '').replace(/<i class="footnote">.*?<\/i>/gi, '')

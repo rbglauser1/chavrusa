@@ -6,7 +6,7 @@ import { ApprovedEntry, COMMENTARY_BOOK } from './approval';
 import { MODELS, Provider, Settings, styleById, Tier } from './config';
 import { listMessages, listSessions, listSources, Memory, MessageRow, sessionCost, SourceData, SourceRow } from './db';
 import { isJustOpening, openingReply } from './prefetch';
-import { getLinks, getText, todaysLearning } from './sefaria';
+import { englishFor, getLinks, getText, todaysLearning } from './sefaria';
 import { currentPlace, splitRef } from './place';
 import { splitPieces } from './pieces';
 import { namesForSpeechEn, voiceHe, type HeRead } from './hebrew';
@@ -388,9 +388,17 @@ async function moveLine(ctx: RouteCtx, dir: 1 | -1): Promise<Routed | null> {
     const p = splitRef(src.ref);
     const pcs = ctx.spoken ? piecesOf(src) : [];
     const usePart = ctx.spoken && pcs.length > 1 ? Math.min(Math.max(part ?? 1, 1), pcs.length) : null;
-    const line: LineText = usePart
+    let line: LineText = usePart
       ? { ref: src.ref, he: pcs[usePart - 1].he, en: pcs[usePart - 1].en, translation: src.translation, part: usePart, parts: pcs.length }
       : lineFromSource(src);
+    // In a call, the English read with the text follows his choice (Settings → Voice → Translation): with "just the
+    // literal words" (or "own", which needs the brain, so here its nearest), only Sefaria's bold, word-for-word part.
+    const tr = ctx.settings.translate;
+    if (ctx.spoken && tr && tr !== 'full' && src.enB?.length) {
+      const enB = src.enB.join(' ');
+      const piece = usePart ? splitPieces(src.he.join(' '), enB)[usePart - 1]?.en : enB;
+      line = { ...line, en: englishFor(line.en, piece, tr) };
+    }
     // Show the whole perek / amud in the Sefer, scrolled to this line, so the learner can look around it.
     const whole = await tryText(p.base, ctx.approved);
     // Went on into the next amud / perek: say so in a word, and carry straight on.
@@ -464,7 +472,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
 
   // Open a named place ("Berachos 36b", "today's daf", "what's this week's parsha?").
   if (pre && (isJustOpening(message) || (/\b(today'?s daf|daf yomi|this week'?s parsha|parsha this week)\b/.test(s) && s.split(' ').length <= 8))) {
-    return { reply: openingReply(pre, spoken, ctx.settings.heRead), source: pre };
+    return { reply: openingReply(pre, spoken, ctx.settings.heRead, ctx.settings.translate), source: pre };
   }
   if (pre) return null; // a question about a named place: that's for the AI
 
@@ -537,7 +545,7 @@ export async function routeWithoutAI(ctx: RouteCtx): Promise<Routed | null> {
     }
     for (const ref of stepRef(main.ref, dir, unitOf(word))) {
       const src = await tryText(ref, ctx.approved);
-      if (src) return { reply: openingReply(src, spoken, ctx.settings.heRead), source: src };
+      if (src) return { reply: openingReply(src, spoken, ctx.settings.heRead, ctx.settings.translate), source: src };
     }
     return { reply: dir === 1 ? `That's the end of ${main.ref.replace(/\s\d.*$/, '')}.` : "We're already at the beginning." };
   }

@@ -315,11 +315,20 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 </div>
               )}
             </Group>
-            <Group id="voice-reads" level={2} title="Who reads the text" hint={(s.voiceReads ?? 'all') === 'all' ? 'he reads it all' : s.voiceReads === 'english' ? 'English only' : 'just the gist'}>
+            <Group id="voice-reads" level={2} title="Who reads the text, and the English" hint={`${(s.voiceReads ?? 'all') === 'all' ? 'he reads it all' : s.voiceReads === 'english' ? 'English only' : 'just the gist'} · ${(s.translate ?? 'full') === 'full' ? 'Sefaria’s full English' : s.translate === 'literal' ? 'just the literal words' : 'his own translation'}`}>
               <div className="field">
                 <label>In a call, who reads the text</label>
                 <Seg value={s.voiceReads ?? 'all'} options={[['all', 'He reads it all'], ['english', 'English only'], ['gist', 'Just the gist']]} onPick={(v) => onChange({ voiceReads: v as 'all' | 'english' | 'gist' })} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.voiceReads ?? 'all') === 'all' ? 'The chavrusa reads the lashon kodesh and its English, phrase by phrase.' : (s.voiceReads === 'english' ? 'You read the lashon kodesh yourself; the chavrusa reads only the English, then goes on in your style.' : 'You read the text yourself; the chavrusa doesn\'t read it at all, just gives the gist of each piece and goes on in your style (explaining, asking…).')} Works with every style. Also in the ⋯ menu.</div>
+              </div>
+              <div className="field">
+                <label>The English read with the text</label>
+                <Seg value={s.translate ?? 'full'} options={[['full', 'Sefaria’s full English'], ['literal', 'Just the literal words'], ['own', 'The chavrusa’s own']]} onPick={(v) => onChange({ translate: v as 'full' | 'literal' | 'own' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.translate ?? 'full') === 'full'
+                  ? 'Sefaria’s English as it is, including the explanation it adds (on the Gemara it can run long).'
+                  : s.translate === 'literal'
+                    ? 'Only the word-for-word part of Sefaria’s English (the part it marks in bold), without the added explanation: shorter and closer to the words. Where Sefaria marks nothing, its full English.'
+                    : 'A short, literal translation in the chavrusa’s own words, the way a rebbi translates inside in shiur. When the app reads a line by itself (no brain), it uses the literal words instead.'} In calls; applies from the next thing he reads.</div>
               </div>
             </Group>
             <Group id="voice-pron" level={2} title="Pronunciation and tests" hint="Reading test, rule lab, voice test, say it my way">
