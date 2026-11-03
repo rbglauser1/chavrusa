@@ -408,9 +408,10 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
                     <div className="tuner-rate" role="group" aria-label={`How good was ${side} on its own?`}>
                       {(['good', 'ok', 'bad'] as Rate[]).map((r) => {
                         const cur = side === 'A' ? tune.rA : tune.rB;
-                        return <button key={r} className={`chip ${cur === r ? 'on' : ''}`} disabled={!(heardAB.id === pairId && heardAB[side === 'A' ? 'a' : 'b'])} onClick={() => setTune({ ...tune, [side === 'A' ? 'rA' : 'rB']: cur === r ? undefined : r })}>{r === 'good' ? 'Good' : r === 'ok' ? 'OK' : 'Bad'}</button>;
+                        return <button key={r} aria-pressed={cur === r} className={`chip rate-${r} ${cur === r ? 'picked' : ''}`} disabled={!(heardAB.id === pairId && heardAB[side === 'A' ? 'a' : 'b'])} onClick={() => setTune({ ...tune, [side === 'A' ? 'rA' : 'rB']: cur === r ? undefined : r })}>{cur === r ? '✓ ' : ''}{r === 'good' ? 'Good' : r === 'ok' ? 'OK' : 'Bad'}</button>;
                       })}
                     </div>
+                    {(side === 'A' ? tune.rA : tune.rB) && <div className="tuner-rated">{side} marked: <b>{(side === 'A' ? tune.rA : tune.rB) === 'good' ? 'Good' : (side === 'A' ? tune.rA : tune.rB) === 'ok' ? 'OK' : 'Bad'}</b></div>}
                     <button className="btn primary" disabled={!heardBoth} onClick={() => pick(side)}>{side} is better</button>
                   </div>
                 );

@@ -1639,3 +1639,10 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .tuner-rate .chip { padding: 3px 9px; font-size: 12px; }
 .tuner-rate .chip:disabled { opacity: .4; }
 .tuner-warn { color: var(--danger, #b3261e); }
+/* A chosen rating: filled in its own color, with a check, so it's plain to see. */
+.tuner-rate .chip.picked { color: #fff; font-weight: 600; border-color: transparent; }
+.tuner-rate .chip.rate-good.picked { background: #2e7d4f; }
+.tuner-rate .chip.rate-ok.picked { background: #a3770f; }
+.tuner-rate .chip.rate-bad.picked { background: #b3261e; }
+.tuner-rated { text-align: center; font-size: 12px; color: var(--soft); }
+.tuner-rated b { color: var(--ink); }
