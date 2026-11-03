@@ -364,6 +364,7 @@ export interface Settings {
   gptSpell?: 'stressed' | 'joined' | 'plain';       // GPT-Live: how lashon kodesh is spelled out for it
   gptMyWay?: { word: string; say: string }[];       // GPT-Live: "say it my way" list
   customRules?: { id: string; name: string; text: string }[]; // rules the learner wrote himself, for the rule lab
+  autoGo?: boolean;              // in a call, go on to the next piece by itself after a short quiet (default off: wait for the learner)
   translate?: 'full' | 'literal' | 'own'; // in calls, the English with each phrase: Sefaria's full English, just its literal (bold) words, or the chavrusa's own short translation
   liveRules?: string[];          // the rule lab's combination for calls ([] = the standard: guide + key; ['none'] = no rules)
   liveShort?: boolean;           // the voice gets the short instructions (default) or the full ones
@@ -445,6 +446,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveShort: true,
   liveRules: [],
   translate: 'full',
+  autoGo: false,
   customRules: [],
   liveFresh: true,
   liveCheck: true,

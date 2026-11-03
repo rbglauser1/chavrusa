@@ -322,6 +322,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.voiceReads ?? 'all') === 'all' ? 'The chavrusa reads the lashon kodesh and its English, phrase by phrase.' : (s.voiceReads === 'english' ? 'You read the lashon kodesh yourself; the chavrusa reads only the English, then goes on in your style.' : 'You read the text yourself; the chavrusa doesn\'t read it at all, just gives the gist of each piece and goes on in your style (explaining, asking…).')} Works with every style. Also in the ⋯ menu.</div>
               </div>
               <div className="field">
+                <label>After each piece</label>
+                <Seg value={s.autoGo ? 'go' : 'wait'} options={[['wait', 'Wait for me'], ['go', 'Keep going by itself']]} onPick={(v) => onChange({ autoGo: v === 'go' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.autoGo
+                  ? `After reading and explaining a piece, the chavrusa waits a few seconds (${({ few: 2, normal: 4, more: 6, most: 8 } as Record<string, number>)[s.livePauses ?? 'normal'] ?? 4}, by your Pauses setting) and goes on to the next one by itself. Just start talking to stop him; say "stop" or "wait" to hold, and "go on" to start again. Not after a question: he waits for your answer. Good for Bekius.`
+                  : 'After each piece he stops and waits for you to say "go on" (or anything else).'}</div>
+              </div>
+              <div className="field">
                 <label>The English read with the text</label>
                 <Seg value={s.translate ?? 'full'} options={[['full', 'Sefaria’s full English'], ['literal', 'Just the literal words'], ['own', 'The chavrusa’s own']]} onPick={(v) => onChange({ translate: v as 'full' | 'literal' | 'own' })} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.translate ?? 'full') === 'full'

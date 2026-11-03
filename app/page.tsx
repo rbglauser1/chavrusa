@@ -111,6 +111,8 @@ export default function Home() {
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); showLiveErr(m); },
     checkOn: () => settingsRef.current.liveCheck !== false,
+    // Keep going by itself: the pause before going on follows the Pauses setting.
+    autoGo: () => (settingsRef.current.autoGo ? ({ few: 2, normal: 4, more: 6, most: 8 } as Record<string, number>)[settingsRef.current.livePauses ?? 'normal'] ?? 4 : 0),
     onEnded: (seconds) => {
       liveQueue.current = [];
       liveDelegation.current = null;

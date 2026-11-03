@@ -54,6 +54,7 @@ export function useLive(opts: {
   reminder?: () => string; // the style card + the learner's instructions, re-sent during the call so they don't fade
   onTurn?: (learner: string, said: string) => void; // the voice finished a turn (anything it said): for coach notes
   checkOn?: () => boolean; // catch skipped words: compare what the voice said with the text it was given
+  autoGo?: () => number;   // keep going by itself: seconds of quiet after a piece before going on (0 = wait for the learner)
   onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
   const [state, setState] = useState<LiveState>('off');
@@ -205,7 +206,15 @@ export function useLive(opts: {
           if (!recIn.current.text) logLine('LEARNER', `▶ starts speaking${stateRef.current === 'speaking' ? ' (WHILE THE VOICE IS SPEAKING)' : ''}`);
           recIn.current.text += e.delta;
           if (recIn.current.timer) clearTimeout(recIn.current.timer);
-          recIn.current.timer = window.setTimeout(() => { logLine('LEARNER', `■ "${recIn.current.text.trim()}"`); lastLearner.current = recIn.current.text.trim() || lastLearner.current; recIn.current.text = ''; }, 1200);
+          recIn.current.timer = window.setTimeout(() => {
+            const said = recIn.current.text.trim();
+            logLine('LEARNER', `■ "${said}"`);
+            lastLearner.current = said || lastLearner.current;
+            // "Stop", "wait": no going on by itself until he says to go on again.
+            if (/\b(stop|wait|hold on|pause|enough|hang on|let me think|not yet)\b/i.test(said)) autoHold.current = true;
+            else if (/\b(go on|next|continue|keep going|yes|ok(ay)?|go ahead)\b/i.test(said)) autoHold.current = false;
+            recIn.current.text = '';
+          }, 1200);
           lastInputAt.current = Date.now();
           bump();
           if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
@@ -245,7 +254,9 @@ export function useLive(opts: {
             turns.current++;
             if (REMINDERS && (remindDirty.current || turns.current % 2 === 0)) remindNow(null);
           }
+          const wasAnswer = answering.current;
           if (!pending.current.size) answering.current = false;
+          if (!pending.current.size && wasAnswer) autoNext();
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
           if (!pending.current.size) checkSkip();
           if (!pending.current.size) watchStall();
@@ -459,6 +470,23 @@ export function useLive(opts: {
       optsRef.current.onRequest(text, id);
     }, 3000);
   }
+  // Keep going by itself (Settings): after a piece has been read and explained, and it has been quiet for a few seconds
+  // (he didn't speak), the app asks for the next piece itself. Not after a question (he should answer it), and not
+  // while he has said to stop or wait, until he says to go on again.
+  const autoHold = useRef(false);
+  function autoNext() {
+    const secs = optsRef.current.autoGo?.() ?? 0;
+    if (!secs || autoHold.current || /\?\s*["”']?\s*$/.test(lastUtter.current.text)) return;
+    const at = lastUtter.current.at;
+    whenQuiet('auto', () => {
+      if (lastUtter.current.at !== at || autoHold.current || pending.current.size || lastInputAt.current > at || !pc.current) return;
+      const id = `app_${Date.now()}`;
+      logLine('──', `keep going by itself: ${secs} s quiet after the piece, asking for the next one`);
+      pending.current.add(id);
+      setS('thinking');
+      optsRef.current.onRequest('next', id);
+    }, secs * 1000);
+  }
   // An answer to a request the app made itself (above) has no GPT-Live request to attach to: it's handed to the voice
   // as something to say now.
   const isAppId = (id: string) => id.startsWith('app_');
@@ -469,8 +497,11 @@ export function useLive(opts: {
   // `need`: how long it must be quiet first (long enough that a pause in the reading isn't taken for its end).
   function whenQuiet(name: string, run: () => void, need = 4000) {
     if (quietJobs.current.some((j) => j.name === name)) return;
-    // Checking the reading comes before a fresh start (which would end this connection).
-    if (name === 'fresh') quietJobs.current.push({ name, run, need }); else quietJobs.current.unshift({ name, run, need });
+    // In order: checking the reading (and reading what was skipped) first, then going on by itself, then a fresh start
+    // (which ends this connection).
+    const rank = (n: string) => (n === 'check' || n === 'skip' ? 0 : n === 'auto' ? 1 : 2);
+    const at = quietJobs.current.findIndex((j) => rank(j.name) > rank(name));
+    if (at < 0) quietJobs.current.push({ name, run, need }); else quietJobs.current.splice(at, 0, { name, run, need });
     if (quietTimer.current) return;
     let since = 0;
     const t0 = Date.now();
@@ -487,7 +518,8 @@ export function useLive(opts: {
       if (busy) { since = 0; return; }
       if (!since) { since = Date.now(); return; }
       if (Date.now() - since < quietJobs.current[0].need) return;
-      since = 0;
+      // The quiet keeps counting: the next job waits only for its own need (a job that makes the voice speak ends
+      // the quiet by itself).
       const job = quietJobs.current.shift();
       if (!quietJobs.current.length) { window.clearInterval(quietTimer.current); quietTimer.current = undefined; }
       job?.run();
