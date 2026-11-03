@@ -92,6 +92,10 @@ export function useLive(opts: {
   const quietJobs = useRef<{ name: string; run: () => void; need: number }[]>([]);
   const quietTimer = useRef<number | undefined>(undefined);
   const refreshing = useRef(false);
+  // Caught when the voice says "one moment" but never actually asks the app (it then waits in silence forever).
+  const lastUtter = useRef({ text: '', at: 0 });   // what the voice said in its last stretch of speech, and when it ended
+  const lastLearner = useRef('');                  // the learner's last words
+  const lastDelegAt = useRef(0);                   // when the voice last asked the app for something
   const setS = (s: LiveState) => { if (stateRef.current !== s) logLine('STATE', s); stateRef.current = s; setState(s); };
   // Reminders: the style card and the learner's instructions, re-sent every few turns (and at once when they change),
   // attached to a turn being handed to the brain, so the voice holds onto them all call long.
@@ -113,7 +117,9 @@ export function useLive(opts: {
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
   const g = (t: string) => forVoice(t, speech.current.spell, speech.current.myWay, speech.current.house);
 
-  const send = useCallback((obj: Record<string, unknown>) => {
+  const send = useCallback((obj0: Record<string, unknown>) => {
+    // A request the app made by itself (app_…) isn't GPT-Live's: anything for it goes to the voice as plain speech.
+    const obj = typeof obj0.delegation_id === 'string' && obj0.delegation_id.startsWith('app_') ? { ...obj0, delegation_id: null } : obj0;
     const ch = dc.current;
     const o = obj as { type?: string; delegation_id?: string | null; content?: string };
     logLine('APP→VOICE', `${o.type ?? '?'}${o.delegation_id ? ` [${String(o.delegation_id).slice(-5)}]` : ''}${o.content ? `: ${String(o.content).slice(0, 900)}` : ''}${ch && ch.readyState === 'open' ? '' : ' (NOT SENT: channel closed)'}`);
@@ -199,7 +205,7 @@ export function useLive(opts: {
           if (!recIn.current.text) logLine('LEARNER', `▶ starts speaking${stateRef.current === 'speaking' ? ' (WHILE THE VOICE IS SPEAKING)' : ''}`);
           recIn.current.text += e.delta;
           if (recIn.current.timer) clearTimeout(recIn.current.timer);
-          recIn.current.timer = window.setTimeout(() => { logLine('LEARNER', `■ "${recIn.current.text.trim()}"`); recIn.current.text = ''; }, 1200);
+          recIn.current.timer = window.setTimeout(() => { logLine('LEARNER', `■ "${recIn.current.text.trim()}"`); lastLearner.current = recIn.current.text.trim() || lastLearner.current; recIn.current.text = ''; }, 1200);
           lastInputAt.current = Date.now();
           bump();
           if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
@@ -220,7 +226,7 @@ export function useLive(opts: {
         }
         if (speakTimer.current) clearTimeout(speakTimer.current);
         speakTimer.current = window.setTimeout(() => {
-          if (recOut.current) { logLine('VOICE', `■ stopped after ${((Date.now() - 900 - recOutAt.current) / 1000).toFixed(1)} s: "${recOut.current.trim()}"`); recOut.current = ''; }
+          if (recOut.current) { logLine('VOICE', `■ stopped after ${((Date.now() - 900 - recOutAt.current) / 1000).toFixed(1)} s: "${recOut.current.trim()}"`); lastUtter.current = { text: recOut.current.trim(), at: Date.now() }; recOut.current = ''; }
           if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
           // The voice finished a turn: hand the exchange to the coach (if on), then start fresh.
           if (!pending.current.size && saidAll.current.trim()) {
@@ -242,6 +248,7 @@ export function useLive(opts: {
           if (!pending.current.size) answering.current = false;
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
           if (!pending.current.size) checkSkip();
+          if (!pending.current.size) watchStall();
           // A read-through piece finished (allowing for the audio running a little behind the words).
           if (reading.current) {
             const r = reading.current;
@@ -252,6 +259,7 @@ export function useLive(opts: {
         break;
       case 'session.delegation.created':
         bump();
+        lastDelegAt.current = Date.now();
         if (e.delegation?.id) handleDelegation(e.delegation.id);
         break;
       case 'session.usage.updated':
@@ -325,7 +333,7 @@ export function useLive(opts: {
     bump();
     // The tap overrides everything: stop a read-through, and drop any answer still on its way (closing it for the voice).
     const r = reading.current; reading.current = null; r?.(false);
-    pending.current.forEach((id) => send({ type: 'session.commentary.append', delegation_id: id, content: '(Skip this: the learner just moved to a different place.)' }));
+    pending.current.forEach((id) => { if (!isAppId(id)) send({ type: 'session.commentary.append', delegation_id: id, content: '(Skip this: the learner just moved to a different place.)' }); });
     pending.current.clear(); partial.current.clear(); exactTold.current.clear();
     userBuf.current = ''; voiceBuf.current = ''; setHeard('');
     setS('speaking');
@@ -342,7 +350,7 @@ export function useLive(opts: {
   const pointText = useCallback((label: string, he: string, en: string) => {
     bump();
     const r = reading.current; reading.current = null; r?.(false);
-    pending.current.forEach((id) => send({ type: 'session.commentary.append', delegation_id: id, content: '(Skip this: the learner just moved to a different place.)' }));
+    pending.current.forEach((id) => { if (!isAppId(id)) send({ type: 'session.commentary.append', delegation_id: id, content: '(Skip this: the learner just moved to a different place.)' }); });
     pending.current.clear(); partial.current.clear(); exactTold.current.clear();
     userBuf.current = ''; voiceBuf.current = ''; setHeard('');
     setS('speaking');
@@ -405,6 +413,12 @@ export function useLive(opts: {
     const whole = [b, ex ? `⟪${ex}⟫` : '', a].filter(Boolean).join(' ') || 'Let’s keep going.';
     handed.current = { text: whole, at: Date.now() };
     toCheck(whole);
+    if (isAppId(delegationId)) {
+      setS('speaking');
+      send({ type: 'session.instructions.append', delegation_id: null, content: 'Here is the answer to what the learner just said. Say it now, the way you say any result: read the text between ⟪ and ⟫ inside, every phrase, the lashon kodesh and then its English, then the rest in your own words. Then stop and wait.' });
+      for (const c of chunks(whole)) send({ type: 'session.commentary.append', delegation_id: null, content: g(c) });
+      return;
+    }
     for (const c of chunks(whole)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
 
@@ -424,6 +438,30 @@ export function useLive(opts: {
     bump();
     send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫`) });
   }, [send]);
+
+  // ---------- The voice said "one moment" but didn't ask ----------
+  // GPT-Live sometimes says its waiting words ("one moment", "let me look") and then never hands the request to the app,
+  // so nothing comes and it sits in silence. If no request arrives within 3 seconds of such words (and the learner
+  // hasn't spoken since), the app asks the brain itself, with the learner's last words, and has the voice say the answer.
+  function watchStall() {
+    const u = lastUtter.current;
+    if (!/(one moment|one sec|one second|just a (sec|second|moment)|let me (look|check|see|read|find|pull|get)|give me a (sec|second|moment)|hold on|bear with me)[^a-z]*$/i.test(u.text)) return;
+    const at = u.at;
+    window.setTimeout(() => {
+      if (lastUtter.current.at !== at) return;                      // it spoke again since
+      if (pending.current.size || lastDelegAt.current > at - 4000) return; // a request did come (or was already on its way)
+      if (lastInputAt.current > at || stateRef.current !== 'listening' || !pc.current) return;
+      const id = `app_${Date.now()}`;
+      const text = lastLearner.current || 'Yes, go on.';
+      logLine('CHECK', `the voice said "${u.text.slice(-40)}" but never asked the app: asking the brain for it ("${text}")`);
+      pending.current.add(id);
+      setS('thinking');
+      optsRef.current.onRequest(text, id);
+    }, 3000);
+  }
+  // An answer to a request the app made itself (above) has no GPT-Live request to attach to: it's handed to the voice
+  // as something to say now.
+  const isAppId = (id: string) => id.startsWith('app_');
 
   // ---------- Keeping it steady ----------
   // Run a job once the voice has really finished (its sound, not just its words) and nobody is talking. One job per
