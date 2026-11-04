@@ -230,6 +230,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line between each line of the text, with its Hebrew and English kept together above it. Also in the ⋯ menu.</div>
             </div>
             <div className="field">
+              <label>English layout</label>
+              <Seg value={s.interlinear ? 'phrase' : 'line'} options={[['line', 'Under the line'], ['phrase', 'Phrase by phrase']]} onPick={(v) => onChange({ interlinear: v === 'phrase' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Phrase by phrase: each line is cut into short Hebrew phrases, each with its English right under it. Lined up by Sefaria&apos;s word-for-word translation, so it&apos;s most exact on the Gemara; a line that can&apos;t be lined up is shown the usual way.</div>
+            </div>
+            <div className="field">
               <label>In the English: the translation and the added explanation</label>
               <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics'], ['only', 'Only translation']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' | 'only' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics. Only translation: just Sefaria&apos;s word-for-word translation, with the explanation left out (a line with nothing marked shows all of it).</div>

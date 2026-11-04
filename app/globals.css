@@ -1674,3 +1674,13 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 [data-enmark='only'] .en .en-x, [data-enmark='only'] .min-en .en-x { display: none; }
 [data-enmark='only'] .en .en-sep, [data-enmark='only'] .min-en .en-sep { display: inline; }
 [data-enmark='only'] .en b, [data-enmark='only'] .min-en b { font-weight: inherit; }
+
+/* Phrase by phrase (Settings → Look → English layout): each Hebrew phrase with its English right under it. */
+.il { display: flex; flex-direction: column; gap: 10px; }
+.il-pair { display: flex; flex-direction: column; }
+.il .il-he { margin: 0; }
+.il .il-en, .line .il .il-en { direction: ltr; text-align: left; font-family: var(--f-body); font-size: var(--en-size, 16px); line-height: 1.45; margin: 1px 0 0; padding: 0; border: 0; }
+.min-he .il .il-he { font-size: inherit; text-align: right; }
+.il-pair + .il-pair { padding-top: 8px; border-top: 1px dotted color-mix(in srgb, var(--rule) 70%, transparent); }
+[data-hespace='closer'] .il { gap: 6px; }
+[data-hespace='closer'] .il-pair + .il-pair { padding-top: 5px; }

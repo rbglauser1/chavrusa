@@ -11,6 +11,7 @@ import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
+import { Interlinear, pairPhrases } from './Interlinear';
 import AutoScroll from './AutoScroll';
 import DafPage from './DafPage';
 import MikraosPage from './MikraosPage';
@@ -86,13 +87,14 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const n = i + 1, on = n === focus;
         const en = src.en[i] || (src.en.length ? '' : src.altEn?.[i] ?? '');
         const c = inlineComm && inlineComm.main === src.ref && inlineComm.line === n ? inlineComm : null;
+        const pairs = settings.interlinear && showEn && en && (englishAll || on) ? pairPhrases(line, src.enB?.[i], en) : null;
         return (
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''}`}>
             {(outline.byLine[n] ?? []).map((m, k) => <div key={k} className="move">{m}</div>)}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
-              {settings.nikud ? line : stripNikud(line)}
+              {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} /> : settings.nikud ? line : stripNikud(line)}
             </button>
-            {showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}</p>}
+            {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}</p>}
             {c && (
               <div className="min-comm">
                 <span className="min-comm-title">{c.title === 'Tosafot' ? 'Tosafos' : c.title}</span>

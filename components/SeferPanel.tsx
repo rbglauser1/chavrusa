@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoldEn } from './BoldEn';
+import { Interlinear, pairPhrases } from './Interlinear';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -589,11 +590,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const isOpen = canTranslate && (showAll || open.has(i));
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
               const key = `${src.ref}#${i}`;
+              const pairs = settings.interlinear && isOpen && en ? pairPhrases(line, src.enB?.[i], en) : null;
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
-                  <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                  {pairs
+                    ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
+                    : <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>Summary</span> {ownGists.list[i]}</div>}
                   {(() => {
                     if (kind === 'none') return null;
@@ -668,7 +672,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       </div>
                     );
                   })}
-                  {isOpen && (
+                  {isOpen && !pairs && (
                     <div className="en" onClick={(e) => { e.stopPropagation(); if (dbl) tap(() => {}); }}>
                       {en ? (src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)) : aiText[key] ? (
                         <><span className="label-ai">AI translation</span><div>{aiText[key]}</div></>
