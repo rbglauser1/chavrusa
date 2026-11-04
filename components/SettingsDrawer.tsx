@@ -231,8 +231,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>In the English: the translation and the added explanation</label>
-              <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics.</div>
+              <Seg value={s.enMark ?? 'plain'} options={[['plain', 'Plain'], ['soft', 'Softer'], ['light', 'Lighter'], ['italic', 'Italics'], ['only', 'Only translation']]} onPick={(v) => onChange({ enMark: v as 'plain' | 'soft' | 'light' | 'italic' | 'only' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics. Only translation: just Sefaria&apos;s word-for-word translation, with the explanation left out (a line with nothing marked shows all of it).</div>
             </div>
             </Group>
           </Group>

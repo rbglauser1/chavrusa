@@ -8,5 +8,8 @@ export function BoldEn({ text }: { text: string }) {
     else if (seg === '\u0003') bold = false;
     else if (seg) parts.push({ t: seg, b: bold });
   }
-  return <>{parts.map((p, i) => (p.b ? <b key={i}>{p.t}</b> : <span key={i} className="en-x">{p.t}</span>))}</>;
+  // Nothing marked: all of it is the translation (so "only the translation" still shows it).
+  if (!parts.some((p) => p.b)) return <>{text.replace(/[\u0002\u0003]/g, '')}</>;
+  // Each added explanation also gets a hidden space, shown when only the translation is (so its words don't run together).
+  return <>{parts.map((p, i) => (p.b ? <b key={i}>{p.t}</b> : <span key={i}><span className="en-x">{p.t}</span>{/\s/.test(p.t) && <span className="en-sep"> </span>}</span>))}</>;
 }

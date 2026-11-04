@@ -1668,3 +1668,9 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 [data-hespace='closer'] .min-text { gap: 8px; }
 [data-hespace='closer'] .min-line { gap: 5px; }
 [data-hespace='closer'] .line { padding-top: 5px; padding-bottom: 5px; }
+
+/* English: only Sefaria's word-for-word translation (its bold words); the added explanation is hidden. */
+.en-sep { display: none; }
+[data-enmark='only'] .en .en-x, [data-enmark='only'] .min-en .en-x { display: none; }
+[data-enmark='only'] .en .en-sep, [data-enmark='only'] .min-en .en-sep { display: inline; }
+[data-enmark='only'] .en b, [data-enmark='only'] .min-en b { font-weight: inherit; }
