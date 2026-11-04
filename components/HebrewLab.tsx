@@ -474,10 +474,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   return (
     <div className="field he-lab">
       <label>Hebrew reading test</label>
-      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>Choose a line (or paste one), then use the easy test below. Whatever you choose applies from the next Talk.</div>
-      <div className="presets">{LINES.map((l) => <button key={l.name} className={`chip ${l.he === text ? 'on' : ''}`} onClick={() => setText(l.he)}>{l.name}</button>)}</div>
-      <textarea rows={2} dir="rtl" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a line with nikud" />
-      {text.trim() && !hasNikud(text) && <div className="goto-msg" style={{ padding: '6px 0 0' }}>This line has no nikud (vowels). Only the Hebrew-letters versions can read it; the spelled-out ones need the vowels to know how each word sounds. Paste the line with nikud (on Sefaria, turn vowels on) to try them all.</div>}
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>Tick the lines to test with in the list below; both tests use them, a different line for each pair. Whatever you choose applies from the next Talk.</div>
       <div className="ab-lines">
         <div className="ab-lines-title">Lines for the tests ({abChosen.length} chosen)</div>
         <div className="muted" style={{ fontSize: 12, margin: '0 0 4px' }}>Both tests below use these, a different line for each pair in turn, so no single line decides. Tick the ones to use, or add your own.</div>
@@ -501,7 +498,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         ) : (
           <div className="he-lab-btns" style={{ marginTop: 6 }}>
             <button className="linkish" onClick={() => setAbNew({ name: '', he: '' })}>+ Add a line</button>
-            {text.trim() && !abLines.some((x) => x.he.trim() === text.trim()) && <button className="linkish" onClick={() => setAbLines([...abLines, { name: 'The line in the box', he: text.trim(), on: true, mine: true }])}>+ Add the line in the box above</button>}
+            {text.trim() && !abLines.some((x) => x.he.trim() === text.trim()) && <button className="linkish" onClick={() => setAbLines([...abLines, { name: 'The line in the box', he: text.trim(), on: true, mine: true }])}>+ Add the line from the box below</button>}
           </div>
         )}
       </div>
@@ -643,6 +640,10 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         })()}
       </div>
       <div className="muted" style={{ fontSize: 12, margin: '14px 0 2px' }}>More (to test things one at a time yourself):</div>
+      <div className="muted" style={{ fontSize: 12, margin: '4px 0 4px' }}>The line for these one-at-a-time sections (the two tests above use the ticked list instead):</div>
+      <div className="presets">{LINES.map((l) => <button key={l.name} className={`chip ${l.he === text ? 'on' : ''}`} onClick={() => setText(l.he)}>{l.name}</button>)}</div>
+      <textarea rows={2} dir="rtl" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a line with nikud" />
+      {text.trim() && !hasNikud(text) && <div className="goto-msg" style={{ padding: '6px 0 0' }}>This line has no nikud (vowels). Only the Hebrew-letters versions can read it; the spelled-out ones need the vowels to know how each word sounds. Paste the line with nikud (on Sefaria, turn vowels on) to try them all.</div>}
       <Group id="lab-ways" level={3} title="Ways of giving it the Hebrew" hint={HE_READS.find((m) => m.id === inUse)?.name}>
       <div className="he-lab-list">
         {HE_READS.map((m) => (
