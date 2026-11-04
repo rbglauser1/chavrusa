@@ -1699,3 +1699,9 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 /* Rashi script: its font has very narrow spaces, so its words get clear space between them, whatever the Hebrew
    spacing setting (that brings Rashi's lines closer, never its words). */
 html[data-rashi='on'] :is(.sefer .comm .he.rashi, .sefer .line .he.rashi, .min-he.rashi, .min-comm p.rashi, .rashi) { word-spacing: 0.25em; letter-spacing: normal; }
+
+/* Phrase by phrase: under each phrase Sefaria's full English, or only its word-for-word translation (Settings → Look). */
+html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { display: inline; }
+html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-sep { display: none; }
+html[data-ilen='only'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { display: none; }
+html[data-ilen='only'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-sep { display: inline; }

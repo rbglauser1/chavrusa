@@ -252,6 +252,7 @@ export default function Home() {
     root.dataset.enmark = settings.enMark ?? 'plain';
     root.dataset.hespace = settings.heSpacing ?? 'normal';
     root.dataset.enbold = settings.enBold === false ? 'off' : 'on';
+    root.dataset.ilen = settings.ilEn ?? (settings.enMark === 'only' ? 'only' : 'full');
     for (const p of ['he', 'en', 'comm', 'intro'] as const) { root.setAttribute(`data-c-${p}`, colorOf(settings, p)); root.setAttribute(`data-b-${p}`, settings.bold?.[p] ? 'on' : 'off'); }
     root.style.setProperty('--he-size', `${settings.heSize}px`);
     root.style.setProperty('--en-size', `${settings.enSize}px`);
@@ -261,7 +262,7 @@ export default function Home() {
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
     if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
     if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
-  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold]);
+  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 
