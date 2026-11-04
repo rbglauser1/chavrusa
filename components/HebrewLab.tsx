@@ -171,6 +171,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         // word "voice" did, so a busy moment, too many listens in a row, wrongly marked voices as unavailable.)
         const noSuchVoice = voice && voice !== 'meridian' && (status === 400 || status === 404) && /(invalid|unsupported|not supported|unknown|not found|does not exist|not available)[^.]*voice|voice[^.]*(invalid|unsupported|not supported|unknown|not found|does not exist|not available)/i.test(why);
         if (noSuchVoice) { setVotes((v) => ({ ...v, [voice]: { good: 0, bad: 0, gone: true } })); note(`Not available on GPT-Live. OpenAI says: ${why}`); return; }
+        // Out of credit: OpenAI refuses every connection until credit is added (not "busy").
+        if (/quota|billing|insufficient|credit|payment/i.test(why)) { note(`Your OpenAI account is out of credit, so OpenAI is refusing the voice. Add credit at platform.openai.com → Settings → Billing, then try again. OpenAI says: ${why}`); return; }
         if (status === 429 || /rate limit|too many|concurrent/i.test(why)) { note(`OpenAI is busy right now (too many listens in a row). Wait about a minute, then tap Hear again. OpenAI says: ${why}`); return; }
         note(err ? `Couldn't play this one. OpenAI says: ${why}` : 'Could not start the test.'); return;
       }
@@ -570,7 +572,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             <button className="btn" style={{ width: '100%', marginTop: 8 }} disabled={!heardBoth} onClick={() => pick('same')}>About the same</button>
             {!heardBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hear both A and B first; then the buttons to choose come on.</div>}
             {heardBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Under each, you can also mark how it was on its own (Good, OK, Bad) and what was wrong (the words, the vowels, the stress, the accent). Mark these before choosing.</div>}
-            {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.mode.startsWith('A:') ? 'A' : 'B'}: {msg.text}</div>}
+            {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your OpenAI|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.mode.startsWith('A:') ? 'A' : 'B'}: {msg.text}</div>}
             <div className="tuner-foot">
               {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
               {stepStarted && <button className="btn" onClick={redoStep}>↺ Redo this step</button>}
@@ -648,7 +650,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             </div>
             <button className="btn" style={{ width: '100%', marginTop: 8 }} disabled={!abBoth} onClick={() => abPick('same')}>About the same</button>
             {!abBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hear both first. Then mark each (Good, OK, Bad, and what was wrong), and choose.</div>}
-            {msg && /^ab\d+:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
+            {msg && /^ab\d+:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your OpenAI|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
             <div className="tuner-foot">
               {ab.i > 0 && <button className="btn" onClick={() => { endRef.current?.(); setAbLast(''); setAb({ ...ab, i: ab.i - 1 }); }}>← Back one pair</button>}
               <button className="linkish" onClick={() => void copyAb(ab)}>Copy the results so far</button>

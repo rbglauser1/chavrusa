@@ -680,7 +680,9 @@ export function useLive(opts: {
     } catch (err) {
       const msg = (err as Error).name === 'NotAllowedError'
         ? 'Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.'
-        : `Could not start the live voice: ${(err as Error).message}`;
+        : /quota|billing|insufficient|credit|payment/i.test((err as Error).message)
+          ? `Your OpenAI account is out of credit, so the voice can't start. Add credit at platform.openai.com → Settings → Billing, then tap Talk again. (${(err as Error).message})`
+          : `Could not start the live voice: ${(err as Error).message}`;
       if (connectTry.current !== attempt) return; // the time limit already moved on to another try
       connectTry.current++;
       logLine('ERROR', msg);

@@ -3,7 +3,7 @@
 // (pinch, double-tap, or + / −) while the Talk button stays on screen. The amud before and after are one tap away.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 // A message about the voice not starting is shown even in full screen (the chat with it is hidden).
-const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live)/.test(t);
+const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live|Your OpenAI)/.test(t);
 import { DAF_CREDIT, dafPdfUrl, stepAmud, type Amud } from '@/lib/daf';
 
 // PDF.js, loaded from the CDN the first time a page is opened.

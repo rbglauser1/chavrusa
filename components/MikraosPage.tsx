@@ -5,7 +5,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { Settings } from '@/lib/config';
 // A message about the voice not starting is shown even in full screen (the chat with it is hidden).
-const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live)/.test(t);
+const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live|Your OpenAI)/.test(t);
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
 
 type HeEn = { he: string; en: string };
