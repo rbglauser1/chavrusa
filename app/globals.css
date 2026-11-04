@@ -1661,3 +1661,10 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .ab-line:not(.on) .ab-line-name { color: var(--soft); }
 .ab-change { margin: 0 0 10px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
 .ab-change .ab-line span { font-size: 12.5px; line-height: 1.4; }
+
+/* Hebrew spacing (Settings → Look → Text sizes): lines and words closer together, more like a printed sefer. */
+[data-hespace='close'] :is(.sefer .line .he, .sefer .comm .he, .min-he, .min-comm p, .pin-text .he, .quote .q-he) { line-height: 1.5; word-spacing: -0.06em; }
+[data-hespace='closer'] :is(.sefer .line .he, .sefer .comm .he, .min-he, .min-comm p, .pin-text .he, .quote .q-he) { line-height: 1.32; word-spacing: -0.12em; letter-spacing: -0.01em; }
+[data-hespace='closer'] .min-text { gap: 8px; }
+[data-hespace='closer'] .min-line { gap: 5px; }
+[data-hespace='closer'] .line { padding-top: 5px; padding-bottom: 5px; }

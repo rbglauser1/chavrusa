@@ -345,6 +345,7 @@ export interface Settings {
   outline: boolean;        // a one-line summary of each move above its line in the Sefer (AI, made once per amud)
   commSummary: boolean;    // Rashi, Tosafos, Bartenura…: a short English summary under each comment (AI, made once per amud)
   heSize: number;           // px
+  heSpacing?: 'normal' | 'close' | 'closer'; // how tightly the Hebrew text is set: lines and words closer together
   enSize: number;           // px
   commSize: number;         // px: Rashi, Tosafos and other commentaries
   costWarnUsd: number | null;
@@ -422,6 +423,7 @@ export const DEFAULT_SETTINGS: Settings = {
   outline: false,
   commSummary: false,
   heSize: 22,
+  heSpacing: 'normal',
   enSize: 16,
   commSize: 20,
   costWarnUsd: null,

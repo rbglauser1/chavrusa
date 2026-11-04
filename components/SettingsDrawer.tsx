@@ -188,10 +188,15 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Meforshim includes their translation and summaries, and Onkelos. The first circle is the text&apos;s own color. <b>B</b> makes that part bold.</div>
             </div>
             </Group>
-            <Group id="look-sizes" level={2} title="Text sizes" hint={`Hebrew ${s.heSize} · Rashi ${s.commSize ?? 20} · English ${s.enSize}`}>
+            <Group id="look-sizes" level={2} title="Text sizes" hint={`Hebrew ${s.heSize}${(s.heSpacing ?? 'normal') !== 'normal' ? ` (${s.heSpacing})` : ''} · Rashi ${s.commSize ?? 20} · English ${s.enSize}`}>
             <div className="field">
               <label>Hebrew text size</label>
               <div className="range"><input type="range" min={16} max={36} value={s.heSize} onChange={(e) => onChange({ heSize: Number(e.target.value) })} /><span className="he" style={{ fontSize: s.heSize }}>אבג</span></div>
+            </div>
+            <div className="field">
+              <label>Hebrew spacing</label>
+              <Seg value={s.heSpacing ?? 'normal'} options={[['normal', 'Normal'], ['close', 'Close'], ['closer', 'Closer']]} onPick={(v) => onChange({ heSpacing: v as 'normal' | 'close' | 'closer' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>How tightly the Hebrew is set: the lines and the words closer together, more like a printed sefer. Rashi and the meforshim too.</div>
             </div>
             <div className="field">
               <label>Commentary text size (Rashi, Tosafos…)</label>
