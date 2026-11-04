@@ -405,8 +405,19 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const next = have.includes('key') ? have.map((r) => (r === 'key' ? 'keyB' : r)) : [...have.filter((r) => r !== 'keyB'), 'keyB'];
     return { ...c, rules: comboId(next), instr: 'short' };
   };
+  // The lines the A-or-B test uses: the samples and any he added, each ticked on or off (kept on this device).
+  const ABL_KEY = 'chavrusa-ab-lines';
+  type AbLine = { name: string; he: string; on: boolean; mine?: boolean };
+  const [abLines, setAbLinesRaw] = useState<AbLine[]>(() => {
+    try { const x = JSON.parse(localStorage.getItem(ABL_KEY) || 'null'); if (Array.isArray(x) && x.length) return x; } catch { /* first time */ }
+    return LINES.map((l) => ({ name: l.name, he: l.he, on: true }));
+  });
+  const setAbLines = (x: AbLine[]) => { setAbLinesRaw(x); try { localStorage.setItem(ABL_KEY, JSON.stringify(x)); } catch { /* not kept */ } };
+  const [abNew, setAbNew] = useState<{ name: string; he: string } | null>(null);
+  const abChosen = abLines.filter((l) => l.on && l.he.trim());
   const startAb = () => {
-    const lines = [...new Set([text.trim(), ...LINES.map((l) => l.he)].filter(Boolean))].slice(0, 6);
+    const lines = [...new Set(abChosen.map((l) => l.he.trim()))];
+    if (!lines.length) return;
     const pairs: AbPair[] = lines.flatMap((_, k) => [{ line: k, bOnA: Math.random() < 0.5 }, { line: k, bOnA: Math.random() < 0.5 }]).map((p) => ({ p, k: Math.random() })).sort((x, y) => x.k - y.k).map((x) => x.p);
     setAb({ a: startCfg, b: withKeyB(startCfg), lines, pairs, i: 0, name: 'Vowel key, version B' });
   };
@@ -540,8 +551,34 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         {copied && <div className="goto-msg" style={{ padding: '2px 0 6px' }}>{copied}</div>}
         {!ab && (
           <>
-            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}><b>A</b> is exactly what your calls use now. <b>B</b> is the same with one change: the <b>Vowel key, version B</b> (from OpenAI&apos;s review: the shva a very short &ldquo;e&rdquo; with no breath, the chirik &ldquo;i&rdquo; or &ldquo;ee&rdquo; by a clear rule, and the short kamatz as &ldquo;o&rdquo;). You&apos;ll hear several lines, each twice, A and B in a hidden order, and pick the better each time. About 12 pairs, about 25¢.</div>
-            <button className="btn primary" disabled={disabled} onClick={startAb}>Start A or B</button>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}><b>A</b> is exactly what your calls use now. <b>B</b> is the same with one change: the <b>Vowel key, version B</b> (from OpenAI&apos;s review: the shva a very short &ldquo;e&rdquo; with no breath, the chirik &ldquo;i&rdquo; or &ldquo;ee&rdquo; by a clear rule, and the short kamatz as &ldquo;o&rdquo;). You&apos;ll hear each line you choose below twice, A and B in a hidden order, and pick the better each time. About 2¢ a pair.</div>
+            <div className="ab-lines">
+              <div className="ab-lines-title">Lines for this test ({abChosen.length} chosen, {abChosen.length * 2} pairs)</div>
+              {abLines.map((l, k) => (
+                <label key={k} className={`ab-line ${l.on ? 'on' : ''}`}>
+                  <input type="checkbox" checked={l.on} onChange={() => setAbLines(abLines.map((x, j) => (j === k ? { ...x, on: !x.on } : x)))} />
+                  <span className="ab-line-name">{l.name}</span>
+                  <span className="ab-line-he" dir="rtl">{l.he.split(/\s+/).slice(0, 5).join(' ')}…</span>
+                  {l.mine && <button className="calllog-x" aria-label={`Remove ${l.name}`} onClick={(e) => { e.preventDefault(); setAbLines(abLines.filter((_, j) => j !== k)); }}>×</button>}
+                </label>
+              ))}
+              {abNew ? (
+                <div className="rule-write">
+                  <input type="text" placeholder="A short name (e.g. Rashi on Bereishis)" value={abNew.name} maxLength={40} onChange={(e) => setAbNew({ ...abNew, name: e.target.value })} />
+                  <textarea rows={3} dir="rtl" placeholder="Paste the line in Hebrew (with nikud if you have it)" value={abNew.he} onChange={(e) => setAbNew({ ...abNew, he: e.target.value })} />
+                  <div className="he-lab-btns">
+                    <button className="btn primary" disabled={!abNew.he.trim()} onClick={() => { setAbLines([...abLines, { name: abNew.name.trim() || `My line ${abLines.filter((x) => x.mine).length + 1}`, he: abNew.he.trim(), on: true, mine: true }]); setAbNew(null); }}>Add</button>
+                    <button className="btn" onClick={() => setAbNew(null)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="he-lab-btns" style={{ marginTop: 6 }}>
+                  <button className="linkish" onClick={() => setAbNew({ name: '', he: '' })}>+ Add a line</button>
+                  {text.trim() && !abLines.some((x) => x.he.trim() === text.trim()) && <button className="linkish" onClick={() => setAbLines([...abLines, { name: 'The line in the box', he: text.trim(), on: true, mine: true }])}>+ Add the line in the box above</button>}
+                </div>
+              )}
+            </div>
+            <button className="btn primary" disabled={disabled || !abChosen.length} onClick={startAb}>Start A or B</button>
           </>
         )}
         {ab && abPair && (

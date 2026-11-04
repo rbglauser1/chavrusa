@@ -1651,3 +1651,11 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .tuner-wrong .chip { padding: 3px 8px; font-size: 11.5px; }
 .tuner-wrong .chip.picked { background: #6b3fa0; color: #fff; border-color: transparent; font-weight: 600; }
 .tuner-wrong .chip:disabled { opacity: .4; }
+/* A-or-B test: choosing the lines. */
+.ab-lines { margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+.ab-lines-title { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+.ab-line { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; border-top: 1px solid color-mix(in srgb, var(--rule) 50%, transparent); }
+.ab-line:first-of-type { border-top: 0; }
+.ab-line-name { flex: none; font-weight: 500; }
+.ab-line-he { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--soft); font-family: var(--f-he); }
+.ab-line:not(.on) .ab-line-name { color: var(--soft); }
