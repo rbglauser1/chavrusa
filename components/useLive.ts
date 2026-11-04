@@ -84,6 +84,7 @@ export function useLive(opts: {
   const lastHeardPaint = useRef(0);
   const connectTry = useRef(0); // which attempt to connect is current (the 15-second limit checks it)
   const startRef = useRef<((retry?: boolean | 'silent') => Promise<void>) | null>(null);
+  const pointToRef = useRef<((ref: string, n: number, he: string, en: string) => void) | null>(null);
   const firstResume = useRef(false); // whether the call being started is a resume (a retry keeps the same opening)
   const silentTry = useRef(0);       // reconnects because the voice said nothing after connecting
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
@@ -382,6 +383,7 @@ export function useLive(opts: {
     send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
     if (exact) { toCheck(`⟪${exact}⟫`); send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) }); }
   }, [send]);
+  pointToRef.current = pointTo;
   // The learner chose something on the Mikraos Gedolos page (a pasuk, a comment, a meforesh on Rashi): read it the way
   // his "who reads" setting says, say briefly what it's bothered by or adds, and wait.
   const pointText = useCallback((label: string, he: string, en: string) => {
@@ -503,6 +505,7 @@ export function useLive(opts: {
   // (he didn't speak), the app asks for the next piece itself. Not after a question (he should answer it), and not
   // while he has said to stop or wait, until he says to go on again.
   const autoHold = useRef(false);
+  const pointOpen = useRef<{ ref: string; n: number; he: string; en: string } | null>(null); // a tapped line to open the call with
   const autoStart = useRef(false); // the opening said where we are: go on after it by itself (Keep going by itself)
   function autoNext(force = false) {
     const secs = optsRef.current.autoGo?.() ?? 0;
@@ -694,6 +697,13 @@ export function useLive(opts: {
         // (the voice opens with a few words as it reads it).
         const opened = Date.now();
         window.setTimeout(() => {
+          if (pc.current === peer && pointOpen.current && !recOut.current && lastInputAt.current <= opened) {
+            const p = pointOpen.current; pointOpen.current = null; autoStart.current = false;
+            logLine('AUTO', `opening the call with the line you tapped (${p.ref}, line ${p.n})`);
+            pointToRef.current?.(p.ref, p.n, p.he, p.en);
+            return;
+          }
+          pointOpen.current = null;
           if (pc.current !== peer || !autoStart.current || lastUtter.current.at > opened || recOut.current || lastInputAt.current > opened || pending.current.size) return;
           autoStart.current = false;
           const id = `app_${Date.now()}`;
@@ -718,7 +728,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; }
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
       if (data.rulesUsed) logLine('──', `in this call: voice ${data.voiceUsed ?? '?'} · Hebrew given as ${data.speech?.heRead ?? '?'} · rules: ${data.rulesUsed}`);
       if (data.notice) { logLine('──', String(data.notice)); optsRef.current.onError(String(data.notice)); }
