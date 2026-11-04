@@ -178,6 +178,17 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     } catch (e) { said = 'x'; end(); note((e as Error).message); }
   }
 
+  // The lines both tests use (a different one for each pair, in turn): the samples and any he added, each ticked on or off (kept on this device).
+  const ABL_KEY = 'chavrusa-ab-lines';
+  type AbLine = { name: string; he: string; on: boolean; mine?: boolean };
+  const [abLines, setAbLinesRaw] = useState<AbLine[]>(() => {
+    try { const x = JSON.parse(localStorage.getItem(ABL_KEY) || 'null'); if (Array.isArray(x) && x.length) return x; } catch { /* first time */ }
+    return LINES.map((l) => ({ name: l.name, he: l.he, on: true }));
+  });
+  const setAbLines = (x: AbLine[]) => { setAbLinesRaw(x); try { localStorage.setItem(ABL_KEY, JSON.stringify(x)); } catch { /* not kept */ } };
+  const [abNew, setAbNew] = useState<{ name: string; he: string } | null>(null);
+  const abChosen = abLines.filter((l) => l.on && l.he.trim());
+  const abLinesChosen = () => [...new Set(abChosen.map((l) => l.he.trim()))];
   // ---------- The easy way: "which sounds better, A or B?" ----------
   // A whole setup is tuned, one choice at a time, by ear alone: how the Hebrew is given, (optionally) which voice, the
   // rules one by one, then adding the good rules together, then short or full instructions, and last a check of the
@@ -267,6 +278,9 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const stages: StageId[] = ['way', ...(withVoices ? (['voice'] as StageId[]) : []), 'rules', 'mix', 'trim', 'way2', 'instr', ...(withPace ? (['pace'] as StageId[]) : []), 'final'];
     setTune(advance({ stages, si: 0, step: 0, champ: startCfg, chal: null, champOnA: true, good: [], goodWays: [], start: startCfg, done: false, won: false, order, prev }));
   };
+  // The line for this pair: the chosen lines in turn (or the line in the box, if none is chosen).
+  const tuneLineOf = (n: number) => { const ls = abLinesChosen(); return ls.length ? ls[n % ls.length] : text; };
+  const tuneLine = tuneLineOf(tune?.back?.length ?? 0);
   const tuneA = tune?.chal ? (tune.champOnA ? tune.champ : tune.chal) : null;
   const tuneB = tune?.chal ? (tune.champOnA ? tune.chal : tune.champ) : null;
   // Which of this pair's two readings he has heard (a pick is only allowed after hearing both), and a short "got it"
@@ -343,7 +357,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   function resultsText(t: Tune): string {
     const out: string[] = [];
     out.push(`Chavrusa voice test · ${new Date().toLocaleString()}`);
-    out.push(`Line: ${text}`);
+    out.push(`Lines: ${abLinesChosen().map((l) => l.split(/\s+/).slice(0, 4).join(' ')).join(' | ') || text}`);
     out.push(`Started from (what calls used): ${describe(t.start).join(' · ')}`);
     if (t.order?.length) out.push(`Rule order this run: ${t.order.map((id) => comboName(id)).join(', ')}`);
     if (t.prev) out.push(`Previous run's winner (in the last check): ${describe(t.prev).join(' · ')}`);
@@ -405,16 +419,6 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const next = have.includes('key') ? have.map((r) => (r === 'key' ? 'keyB' : r)) : [...have.filter((r) => r !== 'keyB'), 'keyB'];
     return { ...c, rules: comboId(next), instr: 'short' };
   };
-  // The lines the A-or-B test uses: the samples and any he added, each ticked on or off (kept on this device).
-  const ABL_KEY = 'chavrusa-ab-lines';
-  type AbLine = { name: string; he: string; on: boolean; mine?: boolean };
-  const [abLines, setAbLinesRaw] = useState<AbLine[]>(() => {
-    try { const x = JSON.parse(localStorage.getItem(ABL_KEY) || 'null'); if (Array.isArray(x) && x.length) return x; } catch { /* first time */ }
-    return LINES.map((l) => ({ name: l.name, he: l.he, on: true }));
-  });
-  const setAbLines = (x: AbLine[]) => { setAbLinesRaw(x); try { localStorage.setItem(ABL_KEY, JSON.stringify(x)); } catch { /* not kept */ } };
-  const [abNew, setAbNew] = useState<{ name: string; he: string } | null>(null);
-  const abChosen = abLines.filter((l) => l.on && l.he.trim());
   const startAb = () => {
     const lines = [...new Set(abChosen.map((l) => l.he.trim()))];
     if (!lines.length) return;
@@ -474,19 +478,47 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       <div className="presets">{LINES.map((l) => <button key={l.name} className={`chip ${l.he === text ? 'on' : ''}`} onClick={() => setText(l.he)}>{l.name}</button>)}</div>
       <textarea rows={2} dir="rtl" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a line with nikud" />
       {text.trim() && !hasNikud(text) && <div className="goto-msg" style={{ padding: '6px 0 0' }}>This line has no nikud (vowels). Only the Hebrew-letters versions can read it; the spelled-out ones need the vowels to know how each word sounds. Paste the line with nikud (on Sefaria, turn vowels on) to try them all.</div>}
+      <div className="ab-lines">
+        <div className="ab-lines-title">Lines for the tests ({abChosen.length} chosen)</div>
+        <div className="muted" style={{ fontSize: 12, margin: '0 0 4px' }}>Both tests below use these, a different line for each pair in turn, so no single line decides. Tick the ones to use, or add your own.</div>
+        {abLines.map((l, k) => (
+          <label key={k} className={`ab-line ${l.on ? 'on' : ''}`}>
+            <input type="checkbox" checked={l.on} onChange={() => setAbLines(abLines.map((x, j) => (j === k ? { ...x, on: !x.on } : x)))} />
+            <span className="ab-line-name">{l.name}</span>
+            <span className="ab-line-he" dir="rtl">{l.he.split(/\s+/).slice(0, 5).join(' ')}…</span>
+            {l.mine && <button className="calllog-x" aria-label={`Remove ${l.name}`} onClick={(e) => { e.preventDefault(); setAbLines(abLines.filter((_, j) => j !== k)); }}>×</button>}
+          </label>
+        ))}
+        {abNew ? (
+          <div className="rule-write">
+            <input type="text" placeholder="A short name (e.g. Rashi on Bereishis)" value={abNew.name} maxLength={40} onChange={(e) => setAbNew({ ...abNew, name: e.target.value })} />
+            <textarea rows={3} dir="rtl" placeholder="Paste the line in Hebrew (with nikud if you have it)" value={abNew.he} onChange={(e) => setAbNew({ ...abNew, he: e.target.value })} />
+            <div className="he-lab-btns">
+              <button className="btn primary" disabled={!abNew.he.trim()} onClick={() => { setAbLines([...abLines, { name: abNew.name.trim() || `My line ${abLines.filter((x) => x.mine).length + 1}`, he: abNew.he.trim(), on: true, mine: true }]); setAbNew(null); }}>Add</button>
+              <button className="btn" onClick={() => setAbNew(null)}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <div className="he-lab-btns" style={{ marginTop: 6 }}>
+            <button className="linkish" onClick={() => setAbNew({ name: '', he: '' })}>+ Add a line</button>
+            {text.trim() && !abLines.some((x) => x.he.trim() === text.trim()) && <button className="linkish" onClick={() => setAbLines([...abLines, { name: 'The line in the box', he: text.trim(), on: true, mine: true }])}>+ Add the line in the box above</button>}
+          </div>
+        )}
+      </div>
       <div className="tuner">
         <div className="tuner-title">Find the best setup, the easy way</div>
         {!tune && (
           <>
-            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the line above read two ways, A and B, and tap the one that sounds better. Step by step it tries everything that changes how the Hebrew sounds: how the Hebrew is given to the voice, the voices, every rule on its own (yours too), adding rules together one at a time (each addition has to beat the set without it), taking each one out again to check it still helps, how the Hebrew is given again with those rules, short or full instructions, and the speed. Each step keeps the best so far, and at the end the winner has to beat what calls use now. About 30–45 pairs, about 2¢ a pair (60–90¢ in all). You can stop and start again any time.</div>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}>You&apos;ll hear the chosen lines read two ways, A and B (a different line each pair), and tap the one that sounds better. Step by step it tries everything that changes how the Hebrew sounds: how the Hebrew is given to the voice, the voices, every rule on its own (yours too), adding rules together one at a time (each addition has to beat the set without it), taking each one out again to check it still helps, how the Hebrew is given again with those rules, short or full instructions, and the speed. Each step keeps the best so far, and at the end the winner has to beat what calls use now. About 30–45 pairs, about 2¢ a pair (60–90¢ in all). You can stop and start again any time.</div>
             <label className="tuner-check"><input type="checkbox" checked={withVoices} onChange={(e) => setWithVoices(e.target.checked)} /> Compare the voices too ({voicesOk.length - 1} pairs). Each voice sounds different; leave this off to keep your own voice and test only the rules and instructions.</label>
             <label className="tuner-check"><input type="checkbox" checked={withPace} onChange={(e) => setWithPace(e.target.checked)} /> Compare the speaking speeds too (3 pairs; the speed also applies to the rest of the call)</label>
-            <button className="btn primary" disabled={disabled || !text.trim()} onClick={startTune}>Start</button>
+            <button className="btn primary" disabled={disabled || !tuneLine.trim()} onClick={startTune}>Start</button>
           </>
         )}
         {tune && !tune.done && tuneA && tuneB && (
           <>
             <div className="tuner-step"><b>Step {tune.si + 1} of {tune.stages.length}:</b> {STAGE_NAME[tune.stages[tune.si]]} · <b>pair {tune.step + 1} of {challengers(tune.stages[tune.si], tune).length}</b> · saved as you go</div>
+            <div className="tuner-step">This pair&apos;s line: <span dir="rtl">{tuneLine.split(/\s+/).slice(0, 5).join(' ')}…</span></div>
             {flash && <div className="tuner-flash">{flash}</div>}
             {lastPair && <div className="tuner-last"><b>The pair you just judged:</b> A was {lastPair.a}; B was {lastPair.b}. You chose {lastPair.chose}.</div>}
             <div className="tuner-ab">
@@ -495,7 +527,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
                 const key = `${side}:${cfgKey(c)}`;
                 return (
                   <div key={side} className="tuner-side">
-                    <button className="btn tuner-play" disabled={disabled} onClick={() => { markHeard(side); void hear(c.mode, c.voice, c.rules, c.instr, key, c.pace); }}>{playing === key ? '■ Stop' : `▶ Hear ${side}`}{heardAB.id === pairId && heardAB[side === 'A' ? 'a' : 'b'] && playing !== key ? ' ✓' : ''}</button>
+                    <button className="btn tuner-play" disabled={disabled} onClick={() => { markHeard(side); void hear(c.mode, c.voice, c.rules, c.instr, key, c.pace, tuneLine); }}>{playing === key ? '■ Stop' : `▶ Hear ${side}`}{heardAB.id === pairId && heardAB[side === 'A' ? 'a' : 'b'] && playing !== key ? ' ✓' : ''}</button>
                     <div className="tuner-rate" role="group" aria-label={`How good was ${side} on its own?`}>
                       {(['good', 'ok', 'bad'] as Rate[]).map((r) => {
                         const cur = side === 'A' ? tune.rA : tune.rB;
@@ -551,33 +583,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         {copied && <div className="goto-msg" style={{ padding: '2px 0 6px' }}>{copied}</div>}
         {!ab && (
           <>
-            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}><b>A</b> is exactly what your calls use now. <b>B</b> is the same with one change: the <b>Vowel key, version B</b> (from OpenAI&apos;s review: the shva a very short &ldquo;e&rdquo; with no breath, the chirik &ldquo;i&rdquo; or &ldquo;ee&rdquo; by a clear rule, and the short kamatz as &ldquo;o&rdquo;). You&apos;ll hear each line you choose below twice, A and B in a hidden order, and pick the better each time. About 2¢ a pair.</div>
-            <div className="ab-lines">
-              <div className="ab-lines-title">Lines for this test ({abChosen.length} chosen, {abChosen.length * 2} pairs)</div>
-              {abLines.map((l, k) => (
-                <label key={k} className={`ab-line ${l.on ? 'on' : ''}`}>
-                  <input type="checkbox" checked={l.on} onChange={() => setAbLines(abLines.map((x, j) => (j === k ? { ...x, on: !x.on } : x)))} />
-                  <span className="ab-line-name">{l.name}</span>
-                  <span className="ab-line-he" dir="rtl">{l.he.split(/\s+/).slice(0, 5).join(' ')}…</span>
-                  {l.mine && <button className="calllog-x" aria-label={`Remove ${l.name}`} onClick={(e) => { e.preventDefault(); setAbLines(abLines.filter((_, j) => j !== k)); }}>×</button>}
-                </label>
-              ))}
-              {abNew ? (
-                <div className="rule-write">
-                  <input type="text" placeholder="A short name (e.g. Rashi on Bereishis)" value={abNew.name} maxLength={40} onChange={(e) => setAbNew({ ...abNew, name: e.target.value })} />
-                  <textarea rows={3} dir="rtl" placeholder="Paste the line in Hebrew (with nikud if you have it)" value={abNew.he} onChange={(e) => setAbNew({ ...abNew, he: e.target.value })} />
-                  <div className="he-lab-btns">
-                    <button className="btn primary" disabled={!abNew.he.trim()} onClick={() => { setAbLines([...abLines, { name: abNew.name.trim() || `My line ${abLines.filter((x) => x.mine).length + 1}`, he: abNew.he.trim(), on: true, mine: true }]); setAbNew(null); }}>Add</button>
-                    <button className="btn" onClick={() => setAbNew(null)}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="he-lab-btns" style={{ marginTop: 6 }}>
-                  <button className="linkish" onClick={() => setAbNew({ name: '', he: '' })}>+ Add a line</button>
-                  {text.trim() && !abLines.some((x) => x.he.trim() === text.trim()) && <button className="linkish" onClick={() => setAbLines([...abLines, { name: 'The line in the box', he: text.trim(), on: true, mine: true }])}>+ Add the line in the box above</button>}
-                </div>
-              )}
-            </div>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}><b>A</b> is exactly what your calls use now. <b>B</b> is the same with one change: the <b>Vowel key, version B</b> (from OpenAI&apos;s review: the shva a very short &ldquo;e&rdquo; with no breath, the chirik &ldquo;i&rdquo; or &ldquo;ee&rdquo; by a clear rule, and the short kamatz as &ldquo;o&rdquo;). You&apos;ll hear each line chosen above twice, A and B in a hidden order, and pick the better each time. About 2¢ a pair.</div>
             <button className="btn primary" disabled={disabled || !abChosen.length} onClick={startAb}>Start A or B</button>
           </>
         )}
