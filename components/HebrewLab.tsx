@@ -623,6 +623,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         )}
         {ab && abPair && (
           <>
+            <div className="tuner-step"><b>Testing:</b> what calls use now against <b>{ab.name}</b> (which is A and which is B changes each pair)</div>
             <div className="tuner-step"><b>Pair {ab.i + 1} of {ab.pairs.length}</b> · line: <span dir="rtl">{ab.lines[abPair.line].split(/\s+/).slice(0, 4).join(' ')}…</span> · saved as you go</div>
             {flash && <div className="tuner-flash">{flash}</div>}
             {abLast && ab.i > 0 && <div className="tuner-last"><b>The pair you just judged:</b> {abLast}</div>}
