@@ -1659,3 +1659,5 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .ab-line-name { flex: none; font-weight: 500; }
 .ab-line-he { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--soft); font-family: var(--f-he); }
 .ab-line:not(.on) .ab-line-name { color: var(--soft); }
+.ab-change { margin: 0 0 10px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+.ab-change .ab-line span { font-size: 12.5px; line-height: 1.4; }

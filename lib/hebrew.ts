@@ -229,6 +229,12 @@ export function heReadNoteB(mode: HeRead = 'join-kh'): string {
     .replace('chirik as "i" as in "sit" or "ee",', 'chirik as a short "i" as in "sit" when its syllable ends in a consonant (MISH-nah, MITZ-vah, NIK-neis) and as "ee" when the syllable ends open (ree-SHOI-nim),')
     .replace("a shva at the start of a word as a quick breath (b\'reishis).", "a shva at the start of a word as a very short, unstressed \"e\", with no pause and no breath (b\'reishis, never b-reishis); a shva that closes a syllable in the middle of a word is silent (av-RAW-hom).");
 }
+/** Version C (Nov 3): the original key with only version B's shva (B sounded smoother but less correct; the shva
+ *  wording is the likely source of the smoothness, the chirik and kamatz-katan rules of the lost correctness). */
+export function heReadNoteC(mode: HeRead = 'join-kh'): string {
+  return heReadNote(mode)
+    .replace("a shva at the start of a word as a quick breath (b\'reishis).", "a shva at the start of a word as a very short, unstressed \"e\", with no pause and no breath (b\'reishis, never b-reishis); a shva that closes a syllable in the middle of a word is silent (av-RAW-hom).");
+}
 /** The note in the voice's instructions that goes with each way of giving it the lashon kodesh. */
 export function heReadNote(mode: HeRead = 'join-kh'): string {
   const yeshivish = 'Read it the yeshivish Ashkenazi way, never modern Israeli, and the same way every time a word comes: kamatz as "aw" (BAW-ruch), cholam as "oi" (TOI-rah), tzeirei as "ei" (beis), segol and chataf segol as a short "eh" as in "bed" (שֶׁ is "sheh", never "shei" or "sha"), patach and chataf patach as "a", chirik as "i" as in "sit" or "ee", shuruk and kubutz as "u", tav without a dagesh as "s" (Shabbos), ches and a chof without a dagesh as the throat sound in "Bach" (never "sh"), a shva at the start of a word as a quick breath (b\'reishis). Stress: put the stress of every word of two or more syllables on its second-to-last syllable (BAW-ruch, AW-mar, TOI-rah, b\'REI-shis, NIK-neis, d\'RAW-chim), never on the last syllable, even where modern Israeli Hebrew stresses the last (the one exception: "Hashem", said hah-SHEM); this is the single most important rule for sounding yeshivish. Say "Hashem" for the Name and "Elokim" where it is written with a kuf.';

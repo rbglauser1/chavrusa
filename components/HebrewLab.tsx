@@ -414,16 +414,25 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const AB_KEY = 'chavrusa-voice-ab';
   const [ab, setAbRaw] = useState<Ab | null>(() => { try { const x = JSON.parse(localStorage.getItem(AB_KEY) || 'null'); return x && Array.isArray(x.pairs) ? x : null; } catch { return null; } });
   const setAb = (x: Ab | null) => { setAbRaw(x); try { if (x) localStorage.setItem(AB_KEY, JSON.stringify(x)); else localStorage.removeItem(AB_KEY); } catch { /* not kept */ } };
-  const withKeyB = (c: Cfg): Cfg => {
+  // Which change B is: a version of the Vowel key in place of the one in use.
+  const AB_CHANGES = [
+    { id: 'keyC', name: 'Vowel key, version C', about: 'your current Vowel key with only the new shva (a very short "e", no pause or breath)' },
+    { id: 'keyB', name: 'Vowel key, version B', about: 'the new shva, the chirik "i" or "ee" by a rule, and the short kamatz as "o"' },
+  ];
+  const [abChange, setAbChangeRaw] = useState<string>(() => { try { return localStorage.getItem('chavrusa-ab-change') || 'keyC'; } catch { return 'keyC'; } });
+  const setAbChange = (v: string) => { setAbChangeRaw(v); try { localStorage.setItem('chavrusa-ab-change', v); } catch { /* not kept */ } };
+  const withKey = (c: Cfg, k: string): Cfg => {
     const have = c.rules === 'none' || c.instr === 'full' ? [] : c.rules.split(',');
-    const next = have.includes('key') ? have.map((r) => (r === 'key' ? 'keyB' : r)) : [...have.filter((r) => r !== 'keyB'), 'keyB'];
-    return { ...c, rules: comboId(next), instr: 'short' };
+    const keys = ['key', 'keyB', 'keyC'];
+    const next = have.some((r) => keys.includes(r)) ? have.map((r) => (keys.includes(r) ? k : r)) : [...have, k];
+    return { ...c, rules: comboId([...new Set(next)]), instr: 'short' };
   };
   const startAb = () => {
     const lines = [...new Set(abChosen.map((l) => l.he.trim()))];
     if (!lines.length) return;
     const pairs: AbPair[] = lines.flatMap((_, k) => [{ line: k, bOnA: Math.random() < 0.5 }, { line: k, bOnA: Math.random() < 0.5 }]).map((p) => ({ p, k: Math.random() })).sort((x, y) => x.k - y.k).map((x) => x.p);
-    setAb({ a: startCfg, b: withKeyB(startCfg), lines, pairs, i: 0, name: 'Vowel key, version B' });
+    const ch = AB_CHANGES.find((x) => x.id === abChange) ?? AB_CHANGES[0];
+    setAb({ a: startCfg, b: withKey(startCfg, ch.id), lines, pairs, i: 0, name: ch.name });
   };
   // Ticking lines on or off in the middle of a run changes the rest of the run right away: the pairs already judged
   // stay as they were, and the pairs still to come are made again from the lines ticked now (two each, shuffled).
@@ -600,7 +609,15 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         {copied && <div className="goto-msg" style={{ padding: '2px 0 6px' }}>{copied}</div>}
         {!ab && (
           <>
-            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}><b>A</b> is exactly what your calls use now. <b>B</b> is the same with one change: the <b>Vowel key, version B</b> (from OpenAI&apos;s review: the shva a very short &ldquo;e&rdquo; with no breath, the chirik &ldquo;i&rdquo; or &ldquo;ee&rdquo; by a clear rule, and the short kamatz as &ldquo;o&rdquo;). You&apos;ll hear each line chosen above twice, A and B in a hidden order, and pick the better each time. About 2¢ a pair.</div>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 8px' }}><b>A</b> is exactly what your calls use now. <b>B</b> is the same with one change, chosen here. You&apos;ll hear each line ticked above twice, A and B in a hidden order, and pick the better each time. About 2¢ a pair.</div>
+            <div className="ab-change" role="radiogroup" aria-label="What B changes">
+              {AB_CHANGES.map((x) => (
+                <label key={x.id} className={`ab-line ${abChange === x.id ? 'on' : ''}`}>
+                  <input type="radio" name="ab-change" checked={abChange === x.id} onChange={() => setAbChange(x.id)} />
+                  <span><b>{x.name}:</b> {x.about}</span>
+                </label>
+              ))}
+            </div>
             <button className="btn primary" disabled={disabled || !abChosen.length} onClick={startAb}>Start A or B</button>
           </>
         )}
