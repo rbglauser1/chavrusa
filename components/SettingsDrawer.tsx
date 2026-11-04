@@ -232,7 +232,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>English layout</label>
               <Seg value={s.interlinear ? 'phrase' : 'line'} options={[['line', 'Under the line'], ['phrase', 'Phrase by phrase']]} onPick={(v) => onChange({ interlinear: v === 'phrase' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Phrase by phrase: each line is cut into short Hebrew phrases, each with its English right under it. Lined up by Sefaria&apos;s word-for-word translation, so it&apos;s most exact on the Gemara; a line that can&apos;t be lined up is shown the usual way.</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Phrase by phrase: each line is cut into short Hebrew phrases, each with its English right under it. On the Gemara it&apos;s lined up by Sefaria&apos;s word-for-word translation, so it&apos;s exact. In Chumash and Tanach each pasuk is cut at its trop (etnachta, zakef…), and in the Mishnah and other seforim at the punctuation; there the English is matched by length, so now and then a word lands one phrase off. A line that can&apos;t be lined up is shown the usual way. Also on the Mikraos Gedolos page, when its English is on.</div>
             </div>
             <div className="field">
               <label>The word-for-word translation in bold</label>

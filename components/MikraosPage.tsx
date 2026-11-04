@@ -7,6 +7,7 @@ import type { Settings } from '@/lib/config';
 // A message about the voice not starting is shown even in full screen (the chat with it is hidden).
 const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live|Your OpenAI)/.test(t);
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
+import { pairPhrases } from '@/lib/interlinear';
 
 type HeEn = { he: string; en: string };
 type Data = { ref: string; heRef: string; pesukim: string[]; pesukimEn: string[]; onkelos: HeEn[]; meforshim: { id: string; he: string; name: string; title?: string; perPasuk: HeEn[][]; missing?: boolean }[]; onRashi?: Record<string, { title: string; refs: string[] }[]> };
@@ -292,9 +293,15 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
             <div className="mg-head"><span>{title}</span><span className="mg-head-p">{heNum(first + 1)}{shown > 1 ? `–${heNum(first + shown)}` : ''}</span></div>
             <div className="mg-top">
               <div className="mg-text">
-                {range.map((i) => withEn
+                {range.map((i) => {
+                  // Phrase by phrase (Settings → Look → English layout): each phrase of the pasuk with its English under it.
+                  const pairs = withEn && settings.interlinear && data.pesukimEn[i] ? pairPhrases(data.pesukim[i], undefined, data.pesukimEn[i]) : null;
+                  return pairs
+                  ? <div key={i} data-mg={`p:${i}`} className={`mg-pair mg-il ${isSel({ kind: 'p', i }) ? 'mg-sel' : ''}`}>{pairs.map((p, k) => <div key={k} className="mg-il-pair"><div>{k === 0 && <><span className="mg-num">{heNum(i + 1)}</span> </>}{p.he}</div><div className="mg-en" dir="ltr">{p.en.replace(/[\u0002\u0003]/g, '')}</div></div>)}</div>
+                  : withEn
                   ? <div key={i} data-mg={`p:${i}`} className={`mg-pair ${isSel({ kind: 'p', i }) ? 'mg-sel' : ''}`}><div><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]}</div>{data.pesukimEn[i] && <div className="mg-en" dir="ltr">{data.pesukimEn[i]}</div>}</div>
-                  : <span key={i} data-mg={`p:${i}`} className={isSel({ kind: 'p', i }) ? 'mg-sel' : ''}><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]} </span>)}
+                  : <span key={i} data-mg={`p:${i}`} className={isSel({ kind: 'p', i }) ? 'mg-sel' : ''}><span className="mg-num">{heNum(i + 1)}</span> {data.pesukim[i]} </span>;
+                })}
               </div>
               {data.onkelos.length > 0 && (
                 <div className="mg-onk">

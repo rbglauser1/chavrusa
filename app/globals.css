@@ -1687,3 +1687,5 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 
 /* The word-for-word translation in bold, as on Sefaria (Settings → Look). */
 [data-enbold='on'] .en b, [data-enbold='on'] .min-en b { font-weight: 700; }
+.mg-il-pair + .mg-il-pair { margin-top: .3em; }
+.mg-il .mg-en { margin-top: 0; }
