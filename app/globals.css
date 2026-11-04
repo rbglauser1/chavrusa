@@ -1684,3 +1684,6 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .il-pair + .il-pair { padding-top: 8px; border-top: 1px dotted color-mix(in srgb, var(--rule) 70%, transparent); }
 [data-hespace='closer'] .il { gap: 6px; }
 [data-hespace='closer'] .il-pair + .il-pair { padding-top: 5px; }
+
+/* The word-for-word translation in bold, as on Sefaria (Settings → Look). */
+[data-enbold='on'] .en b, [data-enbold='on'] .min-en b { font-weight: 700; }

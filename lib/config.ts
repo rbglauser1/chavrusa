@@ -398,6 +398,7 @@ export interface Settings {
   colors?: Partial<Record<ColorPart, ColorId>>;
   bold?: Partial<Record<ColorPart, boolean>>;    // Settings → Look → Colors: bold for any of the four
   // Settings → Look → Colors: the color of each kind of thing on the page
+  enBold?: boolean;         // Sefaria's word-for-word translation in bold, as on Sefaria (default on)
   interlinear?: boolean;    // the English phrase by phrase: each short Hebrew phrase with its English right under it
   enMark?: 'plain' | 'soft' | 'light' | 'italic' | 'only'; // English under the Gemara: how Sefaria's translation words stand apart from the added explanation
   rashiScript: boolean;
@@ -441,6 +442,7 @@ export const DEFAULT_SETTINGS: Settings = {
   blankCall: false,
   seferEnglish: true,
   interlinear: false,
+  enBold: true,
   enMark: 'plain',
   colors: { he: 'ink', en: 'ink', comm: 'sepia', intro: 'slate' },
   ui: 'classic',
