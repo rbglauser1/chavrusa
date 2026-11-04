@@ -1646,3 +1646,8 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .tuner-rate .chip.rate-bad.picked { background: #b3261e; }
 .tuner-rated { text-align: center; font-size: 12px; color: var(--soft); }
 .tuner-rated b { color: var(--ink); }
+/* What was wrong with a reading: Words, Vowels, Stress, Accent. */
+.tuner-wrong { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.tuner-wrong .chip { padding: 3px 8px; font-size: 11.5px; }
+.tuner-wrong .chip.picked { background: #6b3fa0; color: #fff; border-color: transparent; font-weight: 600; }
+.tuner-wrong .chip:disabled { opacity: .4; }

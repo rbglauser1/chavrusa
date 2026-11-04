@@ -18,7 +18,22 @@ const LINES = [
   { name: 'Beis Shammai', he: 'בְּכֶסֶף, בֵּית שַׁמַּאי אוֹמְרִים: בְּדִינָר וּבְשָׁוֶה דִינָר. וּבֵית הִלֵּל אוֹמְרִים: בִּפְרוּטָה וּבְשָׁוֶה פְרוּטָה.' },
   { name: 'Gemara', he: 'מַאי שְׁנָא הָכָא דְּתָנֵי הָאִשָּׁה נִקְנֵית, וּמַאי שְׁנָא הָתָם דְּתָנֵי הָאִישׁ מְקַדֵּשׁ?' },
   { name: 'Bereishis', he: 'בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ.' },
+  { name: 'Hard Gemara', he: 'אָמַר רַב יוֹסֵף: סְמִיכָה אִיכָּא בֵּינַיְיהוּ. לְמַאן דְּאָמַר כׇּל הַכָּתוּב בָּהֶן מְעַכֵּב בָּהֶן, סְמִיכָה מְעַכְּבָא.' },
 ];
+// What was wrong with a reading (tapped after hearing it), so the kind of mistake can be told apart: the words
+// themselves, the vowels, the stress, or the accent. Each needs a different fix.
+const WRONG = [['word', 'Words'], ['vowel', 'Vowels'], ['stress', 'Stress'], ['accent', 'Accent']] as const;
+type Wrong = (typeof WRONG)[number][0];
+function WrongChips({ value, onChange, disabled }: { value: Wrong[]; onChange: (v: Wrong[]) => void; disabled?: boolean }) {
+  return (
+    <div className="tuner-wrong" role="group" aria-label="What was wrong">
+      {WRONG.map(([id, name]) => {
+        const on = value.includes(id);
+        return <button key={id} className={`chip ${on ? 'picked' : ''}`} aria-pressed={on} disabled={disabled} onClick={() => onChange(on ? value.filter((x) => x !== id) : [...value, id])}>{on ? '✗ ' : ''}{name}</button>;
+      })}
+    </div>
+  );
+}
 
 // A two-way switch (the same look as the switches in Settings).
 function Seg2<T extends string>({ value, options, onPick }: { value: T; options: [T, string][]; onPick: (v: T) => void }) {
@@ -90,7 +105,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   const inUse: HeRead = s.heRead ?? 'join-kh';
 
   // Have GPT-Live read the line given this way, the way a call would (a short Live connection, about a cent).
-  async function hear(mode: HeRead, voice?: string, rules?: string, instr?: 'short' | 'full', keyAs?: string, pace?: string) {
+  async function hear(mode: HeRead, voice?: string, rules?: string, instr?: 'short' | 'full', keyAs?: string, pace?: string, say?: string) {
     const key = keyAs ?? (rules !== undefined ? `r:${rules}` : voice ? `v:${voice}` : mode);
     if (playing) { endRef.current?.(); if (playing === key) return; }
     setMsg(null);
@@ -141,7 +156,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     try {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      const q = new URLSearchParams({ preview: '1', voice: voice || s.liveVoice || 'meridian', say: text, mode });
+      const q = new URLSearchParams({ preview: '1', voice: voice || s.liveVoice || 'meridian', say: say ?? text, mode });
       if (rules !== undefined) q.set('rules', rules);
       if (instr) q.set('instr', instr);
       if (pace) q.set('pace', pace);
@@ -171,7 +186,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
   type Pace = 'slow' | 'relaxed' | 'natural' | 'brisk';
   type Cfg = { mode: HeRead; voice: string; rules: string; instr: 'short' | 'full'; pace: Pace };
   type StageId = 'way' | 'voice' | 'rules' | 'mix' | 'trim' | 'way2' | 'instr' | 'pace' | 'final';
-  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean; order?: string[]; prev?: Cfg | null; picked?: 'A' | 'B' | 'same'; rA?: Rate; rB?: Rate; back?: Omit<Tune, 'back'>[] };
+  type Tune = { stages: StageId[]; si: number; step: number; champ: Cfg; chal: Cfg | null; champOnA: boolean; good: string[]; goodWays: HeRead[]; start: Cfg; done: boolean; won: boolean; order?: string[]; prev?: Cfg | null; picked?: 'A' | 'B' | 'same'; rA?: Rate; rB?: Rate; wA?: Wrong[]; wB?: Wrong[]; back?: Omit<Tune, 'back'>[] };
   // How good a reading was on its own (not just better or worse than the other): good, OK or bad.
   type Rate = 'good' | 'ok' | 'bad';
   const cfgKey = (c: Cfg) => `c:${c.mode}|${c.voice}|${c.rules}|${c.instr}|${c.pace}`;
@@ -293,7 +308,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const goodWays = st === 'way' && side !== (tune.champOnA ? 'A' : 'B') ? [...new Set([...tune.goodWays, tune.chal.mode, tune.champ.mode])] : tune.goodWays;
     // Kept for Undo: the test as it was before this pick (the last 80 picks).
     const { back = [], ...before } = tune;
-    setTune({ ...advance({ ...before, picked: undefined, rA: undefined, rB: undefined, champ, good, goodWays, step: tune.step + 1 }), back: [...back, { ...before, picked: side }].slice(-200) });
+    setTune({ ...advance({ ...before, picked: undefined, rA: undefined, rB: undefined, wA: undefined, wB: undefined, champ, good, goodWays, step: tune.step + 1 }), back: [...back, { ...before, picked: side }].slice(-200) });
   };
   // Undo: back to the pair before the last pick, as it was (A and B the same way round), as many times as wanted.
   const undo = () => {
@@ -344,8 +359,8 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       if (!next) chose = '(not judged yet)';
       else if (x.picked) chose = x.picked === 'same' ? 'about the same (best so far kept)' : `${x.picked} (${whatDiffers(st, x.picked === 'A' ? a : b)})`;
       else chose = sameCfg(next.champ, x.chal) ? `the change (${whatDiffers(st, x.chal)})` : 'the best so far (or about the same)';
-      const rt = (r?: Rate) => (r ? ` (${r === 'ok' ? 'OK' : r})` : '');
-      out.push(`  A: ${whatDiffers(st, a)}${rt(x.rA)} | B: ${whatDiffers(st, b)}${rt(x.rB)} → chose ${chose}${sameCfg(a, x.champ) ? ' [A was the best so far]' : ' [B was the best so far]'}`);
+      const rt = (r?: Rate, w?: Wrong[]) => (r || w?.length ? ` (${[r === 'ok' ? 'OK' : r, w?.length ? `wrong: ${w.join(', ')}` : ''].filter(Boolean).join('; ')})` : '');
+      out.push(`  A: ${whatDiffers(st, a)}${rt(x.rA, x.wA)} | B: ${whatDiffers(st, b)}${rt(x.rB, x.wB)} → chose ${chose}${sameCfg(a, x.champ) ? ' [A was the best so far]' : ' [B was the best so far]'}`);
     });
     out.push('');
     out.push(t.done ? `Result: ${describe(t.champ).join(' · ')}${t.won ? ' (beat what calls used)' : ' (what calls used held up)'}` : `Not finished yet. Best so far: ${describe(t.champ).join(' · ')}`);
@@ -373,6 +388,71 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
       try { await navigator.share({ title: 'Chavrusa voice test', text: txt }); setCopied(''); }
       catch { setCopied('Couldn’t copy here.'); }
     }
+    window.setTimeout(() => setCopied(''), 4000);
+  }
+
+  // ---------- A or B: two fixed versions, head to head ----------
+  // A is exactly what calls use now; B is the same with one change (here: the Vowel key, version B). Each of several
+  // lines (the line in the box and the samples, a hard Aramaic one included) is heard twice, A and B in a hidden,
+  // shuffled order, so one lucky reading or one easy line can't decide it.
+  type AbPair = { line: number; bOnA: boolean; pick?: 'A' | 'B' | 'same'; rA?: Rate; rB?: Rate; wA?: Wrong[]; wB?: Wrong[] };
+  type Ab = { a: Cfg; b: Cfg; lines: string[]; pairs: AbPair[]; i: number; name: string };
+  const AB_KEY = 'chavrusa-voice-ab';
+  const [ab, setAbRaw] = useState<Ab | null>(() => { try { const x = JSON.parse(localStorage.getItem(AB_KEY) || 'null'); return x && Array.isArray(x.pairs) ? x : null; } catch { return null; } });
+  const setAb = (x: Ab | null) => { setAbRaw(x); try { if (x) localStorage.setItem(AB_KEY, JSON.stringify(x)); else localStorage.removeItem(AB_KEY); } catch { /* not kept */ } };
+  const withKeyB = (c: Cfg): Cfg => {
+    const have = c.rules === 'none' || c.instr === 'full' ? [] : c.rules.split(',');
+    const next = have.includes('key') ? have.map((r) => (r === 'key' ? 'keyB' : r)) : [...have.filter((r) => r !== 'keyB'), 'keyB'];
+    return { ...c, rules: comboId(next), instr: 'short' };
+  };
+  const startAb = () => {
+    const lines = [...new Set([text.trim(), ...LINES.map((l) => l.he)].filter(Boolean))].slice(0, 6);
+    const pairs: AbPair[] = lines.flatMap((_, k) => [{ line: k, bOnA: Math.random() < 0.5 }, { line: k, bOnA: Math.random() < 0.5 }]).map((p) => ({ p, k: Math.random() })).sort((x, y) => x.k - y.k).map((x) => x.p);
+    setAb({ a: startCfg, b: withKeyB(startCfg), lines, pairs, i: 0, name: 'Vowel key, version B' });
+  };
+  const abPair = ab && ab.i < ab.pairs.length ? ab.pairs[ab.i] : null;
+  const [abHeard, setAbHeard] = useState<{ i: number; a: boolean; b: boolean }>({ i: -1, a: false, b: false });
+  const abBoth = !!ab && abHeard.i === ab.i && abHeard.a && abHeard.b;
+  const abSet = (patch: Partial<AbPair>) => { if (!ab || !abPair) return; const pairs = ab.pairs.slice(); pairs[ab.i] = { ...abPair, ...patch }; setAb({ ...ab, pairs }); };
+  const abPick = (side: 'A' | 'B' | 'same') => {
+    if (!ab || !abPair || !abBoth) return;
+    endRef.current?.();
+    const pairs = ab.pairs.slice(); pairs[ab.i] = { ...abPair, pick: side };
+    setAb({ ...ab, pairs, i: ab.i + 1 });
+    setFlash(side === 'same' ? '✓ Got it: about the same.' : `✓ Got it: ${side} was better.`);
+    window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2000);
+  };
+  // The tally, by version (not by side): which won, how each was rated, what was wrong with each.
+  function abTally(x: Ab) {
+    const t = { a: 0, b: 0, same: 0, rate: { a: [] as Rate[], b: [] as Rate[] }, wrong: { a: [] as Wrong[], b: [] as Wrong[] } };
+    for (const p of x.pairs) {
+      if (!p.pick) continue;
+      const pickedB = p.pick !== 'same' && (p.pick === 'A') === p.bOnA;
+      if (p.pick === 'same') t.same++; else if (pickedB) t.b++; else t.a++;
+      const [rOfA, rOfB] = p.bOnA ? [p.rB, p.rA] : [p.rA, p.rB];
+      const [wOfA, wOfB] = p.bOnA ? [p.wB, p.wA] : [p.wA, p.wB];
+      if (rOfA) t.rate.a.push(rOfA); if (rOfB) t.rate.b.push(rOfB);
+      t.wrong.a.push(...(wOfA ?? [])); t.wrong.b.push(...(wOfB ?? []));
+    }
+    return t;
+  }
+  const countOf = (xs: string[]) => Object.entries(xs.reduce((m, w) => ({ ...m, [w]: (m[w] ?? 0) + 1 }), {} as Record<string, number>)).map(([w, n]) => `${WRONG.find((x) => x[0] === w)?.[1] ?? w} ${n}`).join(', ') || 'nothing marked';
+  const rateOf = (xs: Rate[]) => xs.length ? `${xs.filter((r) => r === 'good').length} good, ${xs.filter((r) => r === 'ok').length} OK, ${xs.filter((r) => r === 'bad').length} bad` : 'not rated';
+  function abText(x: Ab): string {
+    const t = abTally(x);
+    const out = [`Chavrusa A-or-B test · ${new Date().toLocaleString()}`, `A (what calls use): ${describe(x.a).join(' · ')}`, `B: ${describe(x.b).join(' · ')}`, ''];
+    x.pairs.forEach((p, k) => {
+      if (!p.pick) return;
+      const rt = (r?: Rate, w?: Wrong[]) => [r === 'ok' ? 'OK' : r, w?.length ? `wrong: ${w.join(', ')}` : ''].filter(Boolean).join('; ');
+      const [labA, labB] = p.bOnA ? ['B', 'A'] : ['A', 'B'];
+      out.push(`Pair ${k + 1} · line ${p.line + 1} (${x.lines[p.line].slice(0, 30)}…): left=${labA}${rt(p.rA, p.wA) ? ` (${rt(p.rA, p.wA)})` : ''}, right=${labB}${rt(p.rB, p.wB) ? ` (${rt(p.rB, p.wB)})` : ''} → ${p.pick === 'same' ? 'about the same' : `${p.pick === 'A' ? labA : labB} better`}`);
+    });
+    out.push('', `A won ${t.a}, B won ${t.b}, about the same ${t.same}.`, `A rated: ${rateOf(t.rate.a)}; wrong: ${countOf(t.wrong.a)}.`, `B rated: ${rateOf(t.rate.b)}; wrong: ${countOf(t.wrong.b)}.`);
+    return out.join('\n');
+  }
+  async function copyAb(x: Ab) {
+    try { await navigator.clipboard.writeText(abText(x)); setCopied('Copied. Paste it into the chat with Claude.'); }
+    catch { try { await navigator.share({ title: 'Chavrusa A-or-B test', text: abText(x) }); } catch { setCopied('Couldn’t copy here.'); } }
     window.setTimeout(() => setCopied(''), 4000);
   }
 
@@ -411,6 +491,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
                         return <button key={r} aria-pressed={cur === r} className={`chip rate-${r} ${cur === r ? 'picked' : ''}`} disabled={!(heardAB.id === pairId && heardAB[side === 'A' ? 'a' : 'b'])} onClick={() => setTune({ ...tune, [side === 'A' ? 'rA' : 'rB']: cur === r ? undefined : r })}>{cur === r ? '✓ ' : ''}{r === 'good' ? 'Good' : r === 'ok' ? 'OK' : 'Bad'}</button>;
                       })}
                     </div>
+                    <WrongChips value={(side === 'A' ? tune.wA : tune.wB) ?? []} disabled={!(heardAB.id === pairId && heardAB[side === 'A' ? 'a' : 'b'])} onChange={(v) => setTune({ ...tune, [side === 'A' ? 'wA' : 'wB']: v })} />
                     {(side === 'A' ? tune.rA : tune.rB) && <div className="tuner-rated">{side} marked: <b>{(side === 'A' ? tune.rA : tune.rB) === 'good' ? 'Good' : (side === 'A' ? tune.rA : tune.rB) === 'ok' ? 'OK' : 'Bad'}</b></div>}
                     <button className="btn primary" disabled={!heardBoth} onClick={() => pick(side)}>{side} is better</button>
                   </div>
@@ -419,7 +500,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             </div>
             <button className="btn" style={{ width: '100%', marginTop: 8 }} disabled={!heardBoth} onClick={() => pick('same')}>About the same</button>
             {!heardBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hear both A and B first; then the buttons to choose come on.</div>}
-            {heardBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Under each, you can also mark how it was on its own (Good, OK, Bad), so the test knows when even the better one is still bad.</div>}
+            {heardBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Under each, you can also mark how it was on its own (Good, OK, Bad) and what was wrong (the words, the vowels, the stress, the accent). Mark these before choosing.</div>}
             {msg && /^[AB]:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.mode.startsWith('A:') ? 'A' : 'B'}: {msg.text}</div>}
             <div className="tuner-foot">
               {!!tune.back?.length && <button className="btn" onClick={undo}>← Undo last pick</button>}
@@ -453,6 +534,70 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
         )}
         {copied && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{copied}</div>}
         <div className="tuner-now">Calls use now: {describe(startCfg).join(' · ')}</div>
+      </div>
+      <div className="tuner">
+        <div className="tuner-title">A or B: test one change</div>
+        {copied && <div className="goto-msg" style={{ padding: '2px 0 6px' }}>{copied}</div>}
+        {!ab && (
+          <>
+            <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 10px' }}><b>A</b> is exactly what your calls use now. <b>B</b> is the same with one change: the <b>Vowel key, version B</b> (from OpenAI&apos;s review: the shva a very short &ldquo;e&rdquo; with no breath, the chirik &ldquo;i&rdquo; or &ldquo;ee&rdquo; by a clear rule, and the short kamatz as &ldquo;o&rdquo;). You&apos;ll hear several lines, each twice, A and B in a hidden order, and pick the better each time. About 12 pairs, about 25¢.</div>
+            <button className="btn primary" disabled={disabled} onClick={startAb}>Start A or B</button>
+          </>
+        )}
+        {ab && abPair && (
+          <>
+            <div className="tuner-step"><b>Pair {ab.i + 1} of {ab.pairs.length}</b> · line: <span dir="rtl">{ab.lines[abPair.line].split(/\s+/).slice(0, 4).join(' ')}…</span> · saved as you go</div>
+            {flash && <div className="tuner-flash">{flash}</div>}
+            <div className="tuner-ab">
+              {(['A', 'B'] as const).map((side) => {
+                const isB = (side === 'A') === abPair.bOnA;
+                const c = isB ? ab.b : ab.a;
+                const key = `ab${ab.i}:${side}`;
+                const heard = abHeard.i === ab.i && abHeard[side === 'A' ? 'a' : 'b'];
+                const r = side === 'A' ? abPair.rA : abPair.rB;
+                return (
+                  <div key={side} className="tuner-side">
+                    <button className="btn tuner-play" disabled={disabled} onClick={() => { setAbHeard((h) => (h.i === ab.i ? { ...h, [side === 'A' ? 'a' : 'b']: true } : { i: ab.i, a: side === 'A', b: side === 'B' })); void hear(c.mode, c.voice, c.rules, c.instr, key, c.pace, ab.lines[abPair.line]); }}>{playing === key ? '■ Stop' : `▶ Hear ${side}`}{heard && playing !== key ? ' ✓' : ''}</button>
+                    <div className="tuner-rate">
+                      {(['good', 'ok', 'bad'] as Rate[]).map((x) => <button key={x} aria-pressed={r === x} className={`chip rate-${x} ${r === x ? 'picked' : ''}`} disabled={!heard} onClick={() => abSet({ [side === 'A' ? 'rA' : 'rB']: r === x ? undefined : x })}>{r === x ? '✓ ' : ''}{x === 'good' ? 'Good' : x === 'ok' ? 'OK' : 'Bad'}</button>)}
+                    </div>
+                    <WrongChips value={(side === 'A' ? abPair.wA : abPair.wB) ?? []} disabled={!heard} onChange={(v) => abSet({ [side === 'A' ? 'wA' : 'wB']: v })} />
+                    <button className="btn primary" disabled={!abBoth} onClick={() => abPick(side)}>{side} is better</button>
+                  </div>
+                );
+              })}
+            </div>
+            <button className="btn" style={{ width: '100%', marginTop: 8 }} disabled={!abBoth} onClick={() => abPick('same')}>About the same</button>
+            {!abBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hear both first. Then mark each (Good, OK, Bad, and what was wrong), and choose.</div>}
+            {msg && /^ab\d+:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
+            <div className="tuner-foot">
+              {ab.i > 0 && <button className="btn" onClick={() => { endRef.current?.(); setAb({ ...ab, i: ab.i - 1 }); }}>← Back one pair</button>}
+              <button className="linkish" onClick={() => void copyAb(ab)}>Copy the results so far</button>
+              <button className="linkish" onClick={() => { endRef.current?.(); setAb(null); }}>Stop and start over</button>
+            </div>
+          </>
+        )}
+        {ab && !abPair && (() => {
+          const t = abTally(ab);
+          const verdict = t.b >= t.a + 2 ? 'b' : t.a >= t.b + 2 ? 'a' : 'tie';
+          return (
+            <>
+              <div className="tuner-win">{verdict === 'b' ? 'B is better.' : verdict === 'a' ? 'A, what calls use now, is better.' : 'Too close to call.'}</div>
+              <ul className="tuner-setup">
+                <li>A won {t.a}, B won {t.b}, about the same {t.same}</li>
+                <li>A rated {rateOf(t.rate.a)}; wrong: {countOf(t.wrong.a)}</li>
+                <li>B rated {rateOf(t.rate.b)}; wrong: {countOf(t.wrong.b)}</li>
+              </ul>
+              <div className="he-lab-btns">
+                {verdict === 'b' && (sameCfg(startCfg, ab.b) ? <span className="he-lab-inuse">✓ Calls use B</span> : <button className="btn primary" onClick={() => useSetup(ab.b)}>Use B in calls</button>)}
+                <button className="btn" onClick={() => void copyAb(ab)}>Copy the results (for Claude)</button>
+                <button className="btn" onClick={startAb}>Test again</button>
+                <button className="linkish" onClick={() => setAb(null)}>Done</button>
+              </div>
+              {verdict === 'tie' && <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>Neither won by 2 or more. Test again, or keep A.</div>}
+            </>
+          );
+        })()}
       </div>
       <div className="muted" style={{ fontSize: 12, margin: '14px 0 2px' }}>More (to test things one at a time yourself):</div>
       <Group id="lab-ways" level={3} title="Ways of giving it the Hebrew" hint={HE_READS.find((m) => m.id === inUse)?.name}>
