@@ -111,6 +111,7 @@ export default function Home() {
     onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
     onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); showLiveErr(m); },
     checkOn: () => settingsRef.current.liveCheck !== false,
+    checkHeOn: () => settingsRef.current.liveCheckHe !== false && (settingsRef.current.voiceReads ?? 'all') === 'all',
     // Keep going by itself: the pause before going on follows the Pauses setting.
     autoGo: () => (settingsRef.current.autoGo ? ({ few: 2, normal: 4, more: 6, most: 8 } as Record<string, number>)[settingsRef.current.livePauses ?? 'normal'] ?? 4 : 0),
     onEnded: (seconds) => {
@@ -144,7 +145,7 @@ export default function Home() {
     // The call recorder's summary line: the settings that shape the voice.
     logMeta: () => {
       const st = settingsRef.current;
-      return `style ${st.style}${st.blend ? `+${st.blend}` : ''} · voice ${st.liveVoice} · pace ${st.livePace ?? 'natural'} · pauses ${st.livePauses ?? 'normal'} · instructions ${st.liveShort !== false ? 'short' : 'full'} · reads ${st.voiceReads ?? 'all'} · English ${st.translate ?? 'full'} · keep going ${st.autoGo ? 'on' : 'off'} · ${st.nusach} · accent ${st.liveAccent ? 'on' : 'off'} · spelling ${st.gptSpell ?? 'stressed'} · standard words ${st.houseSay !== false ? 'on' : 'off'} · steady ${st.liveSteady === true ? 'on' : 'off'} · coach ${st.liveCoach === true ? 'on' : 'off'} · saver ${st.saver !== false ? 'on' : 'off'} · pause after ${st.liveIdleSec ?? 60}s · amud intro voice ${st.introVoice !== false ? 'on' : 'off'} · brain ${st.provider}/${st.tier}`;
+      return `style ${st.style}${st.blend ? `+${st.blend}` : ''} · voice ${st.liveVoice} · pace ${st.livePace ?? 'natural'} · pauses ${st.livePauses ?? 'normal'} · instructions ${st.liveShort !== false ? 'short' : 'full'} · skip check ${st.liveCheck === false ? 'off' : st.liveCheckHe === false ? 'end only' : 'end + Hebrew'} · reads ${st.voiceReads ?? 'all'} · English ${st.translate ?? 'full'} · keep going ${st.autoGo ? 'on' : 'off'} · ${st.nusach} · accent ${st.liveAccent ? 'on' : 'off'} · spelling ${st.gptSpell ?? 'stressed'} · standard words ${st.houseSay !== false ? 'on' : 'off'} · steady ${st.liveSteady === true ? 'on' : 'off'} · coach ${st.liveCoach === true ? 'on' : 'off'} · saver ${st.saver !== false ? 'on' : 'off'} · pause after ${st.liveIdleSec ?? 60}s · amud intro voice ${st.introVoice !== false ? 'on' : 'off'} · brain ${st.provider}/${st.tier}`;
     },
     // What the voice is reminded of during a call: the style in a few lines, and the learner's instructions for this session.
     reminder: () => {

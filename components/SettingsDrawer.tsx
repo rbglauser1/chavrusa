@@ -378,7 +378,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>When you move on to a new Mishnah, piece of Gemara or perek, the voice quietly reconnects at the next quiet moment, so it starts clean instead of drifting as a long call goes on. It remembers where you are; you may hear a second of quiet.</div>
                 <label>Catch skipped words</label>
                 <Seg value={s.liveCheck !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCheck: v === 'on' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app compares what the voice actually said with the text it was given. If it left out the end, it goes back and reads the part it missed. Free.</div>
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>The app compares what the voice actually said with the text it was given. If it left out the end, it goes back and reads the part it missed. Free.</div>
+                <label>Catch skipped Hebrew</label>
+                <Seg value={s.liveCheckHe !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCheckHe: v === 'on' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>After it reads, the app looks for each Hebrew phrase in what the voice said. If it read only the English of some phrases, or skipped their Hebrew, it reads that part again, inside. It acts only on a clear miss (turn it off if it ever re-reads what it said). Free.</div>
               </div>
               <div className="field">
                 <label>Steady mode (the voice sticks to your style and instructions)</label>

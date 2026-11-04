@@ -5,7 +5,7 @@ import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 import { silentWav } from './useVoice';
-import { missingTail } from '@/lib/skipCheck';
+import { missingHebrew, missingTail } from '@/lib/skipCheck';
 
 let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
@@ -54,6 +54,7 @@ export function useLive(opts: {
   reminder?: () => string; // the style card + the learner's instructions, re-sent during the call so they don't fade
   onTurn?: (learner: string, said: string) => void; // the voice finished a turn (anything it said): for coach notes
   checkOn?: () => boolean; // catch skipped words: compare what the voice said with the text it was given
+  checkHeOn?: () => boolean; // catch skipped Hebrew: look for each Hebrew phrase in what the voice said (English letters)
   autoGo?: () => number;   // keep going by itself: seconds of quiet after a piece before going on (0 = wait for the learner)
   onAside?: (learner: string, voice: string) => void; // an exchange the voice handled by itself (not sent to the brain)              // the current learning session (so the voice knows the style, place and requests)                  // while paused, reconnect when the learner starts talking
 }) {
@@ -569,9 +570,11 @@ export function useLive(opts: {
     check.current = null;
     if (lastInputAt.current > c.at) return; // the learner cut in: stopping was right
     const said = voiceAll.current.slice(c.from);
-    const left = missingTail(c.text, said);
+    const tail = missingTail(c.text, said);
+    const heGap = !tail && optsRef.current.checkHeOn?.() !== false ? missingHebrew(c.text, said) : null;
+    const left = tail ?? heGap;
     if (!left) return;
-    logLine('CHECK', `the voice left out the end of the text: "${left.slice(0, 300)}"${c.redo ? ' (already asked once: leaving it)' : ': asking it to read the rest'}`);
+    logLine('CHECK', `${tail ? 'the voice left out the end of the text' : 'the voice left out the Hebrew of'}: "${left.slice(0, 300)}"${c.redo ? ' (already asked once: leaving it)' : tail ? ': asking it to read the rest' : ': asking it to read that again, inside'}`);
     if (c.redo) return;
     whenQuiet('skip', () => {
       if (lastInputAt.current > c.at) return;
@@ -580,7 +583,9 @@ export function useLive(opts: {
       setS('speaking');
       const content = `⟪${left}⟫`;
       toCheck(content, 1);
-      sendRef.current({ type: 'session.instructions.append', delegation_id: null, content: 'You stopped before the end of the text. Say "and the rest of it:" (a few words, no apology), then read the rest of the text now, the way you read inside, every phrase in order to the very end. Do not repeat what you already read. Then stop and wait.' });
+      sendRef.current({ type: 'session.instructions.append', delegation_id: null, content: tail
+        ? 'You stopped before the end of the text. Say "and the rest of it:" (a few words, no apology), then read the rest of the text now, the way you read inside, every phrase in order to the very end. Do not repeat what you already read. Then stop and wait.'
+        : 'You left out the Hebrew of part of the text. Say "let me read that inside:" (a few words, no apology), then read this part now the way you read inside: every Hebrew phrase in the Hebrew, every word of it, and then its English, in order to the end. Then stop and wait.' });
       sendRef.current({ type: 'session.commentary.append', delegation_id: null, content: g(content) });
     }, 300);
   }
