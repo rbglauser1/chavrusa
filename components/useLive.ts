@@ -587,7 +587,8 @@ export function useLive(opts: {
   // A new section: at the next quiet moment, quietly reconnect, so the voice starts clean (it keeps the place and the
   // conversation, from the session). Long calls drift; a fresh connection doesn't carry that drift.
   const freshStart = useCallback(() => {
-    if (!pc.current) return;
+    // Not in a call's first minute: the place often updates just as a call opens, and that isn't a new section.
+    if (!pc.current || !startedAt.current || Date.now() - startedAt.current < 60000) return;
     whenQuiet('fresh', () => {
       if (!pc.current || closingTo.current) return;
       logLine('──', 'fresh start (new section): reconnecting');
@@ -646,18 +647,18 @@ export function useLive(opts: {
       channel.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch { /* ignore */ } };
       channel.onopen = () => {
         startedAt.current = Date.now(); bump(); setS('listening'); micWatch(peer);
-        // The voice is told to speak first; sometimes it doesn't. With Keep going by itself, after 6 silent seconds
-        // the app simply brings the next piece.
+        // With Keep going by itself the voice is told not to open the call: the app brings the next piece right away
+        // (the voice opens with a few words as it reads it).
         const opened = Date.now();
         window.setTimeout(() => {
           if (pc.current !== peer || !autoStart.current || lastUtter.current.at > opened || recOut.current || lastInputAt.current > opened || pending.current.size) return;
           autoStart.current = false;
           const id = `app_${Date.now()}`;
-          logLine('CHECK', 'the voice didn\'t open the call: going on by itself');
+          logLine('AUTO', 'opening the call with the next piece');
           pending.current.add(id);
           setS('thinking');
           optsRef.current.onRequest('Yes, go on.', id);
-        }, 6000);
+        }, 400);
       };
       peer.onconnectionstatechange = () => {
         if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {

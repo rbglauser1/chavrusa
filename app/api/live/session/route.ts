@@ -100,8 +100,13 @@ export async function POST(req: NextRequest) {
   const mins = lastAt ? (Date.now() - new Date(lastAt).getTime()) / 60000 : null;
   // Keep going by itself (Settings): the opening doesn't ask whether to go on; the app goes on after it by itself.
   const auto = s.autoGo === true && !preview;
-  const goOnAsk = auto ? 'say in a few words that we will go on now (do not ask), and stop: the app brings the next piece' : 'ask in a few words if he\'s ready to go on';
-  const hello = pointed
+  const goOnAsk = 'ask in a few words if he\'s ready to go on';
+  // With Keep going by itself the voice doesn't open the call at all: the app hands it the next piece right away, and it
+  // opens with a few words as it reads that piece. (Told to open first, it sometimes read the text from memory.)
+  const autoOpen = auto && !resume && !!(placeName || recap) && !pointed;
+  const hello = autoOpen
+    ? `Do not speak first, and do not say, read, recite or summarize any text yourself. In a moment the app hands you the next piece of the text${placeName ? ` (we are on ${placeName})` : ''}; when it arrives, begin with a few natural words (no formal greeting${mins !== null && mins < 20 ? '; we were just learning' : ''}) and then read it exactly as given, every word of it.${recapBlock}`
+    : pointed
     ? `Speak first, briefly. ${mins !== null && mins < 20 ? 'We were just learning; do not greet.' : 'At most a short natural opener; no formal greeting.'} ${pointed} Then listen.${recapBlock}`
     : !recap
     ? `Speak first, briefly and naturally, the way a chavrusa would when sitting down to learn: a short, warm, natural opener (not a formula, and different each time), ${placeName ? `then mention that last time we were on ${placeName} and ask if he wants to pick up there` : 'then ask what we are learning today'}. Then stop and listen.`
@@ -182,5 +187,5 @@ export async function POST(req: NextRequest) {
     : rulesFinal.map(ruleName).join(' + ');
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: auto && !resume && !!(placeName || recap) && !pointed }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: autoOpen }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
 }
