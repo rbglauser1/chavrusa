@@ -83,7 +83,9 @@ export function useLive(opts: {
   const bump = () => { lastActivity.current = Date.now(); };
   const lastHeardPaint = useRef(0);
   const connectTry = useRef(0); // which attempt to connect is current (the 15-second limit checks it)
-  const startRef = useRef<((retry?: boolean) => Promise<void>) | null>(null);
+  const startRef = useRef<((retry?: boolean | 'silent') => Promise<void>) | null>(null);
+  const firstResume = useRef(false); // whether the call being started is a resume (a retry keeps the same opening)
+  const silentTry = useRef(0);       // reconnects because the voice said nothing after connecting
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
   const startWakeRef = useRef<(() => void) | null>(null);
   // Keeping it steady: what the voice said (all of it), the text it was last given to read (to check nothing was
@@ -608,9 +610,44 @@ export function useLive(opts: {
     });
   }, [finish]);
 
-  const start = useCallback(async (retry = false) => {
+  // The voice opens a new call within a second or two. Sometimes OpenAI never finishes setting the voice up (the call
+  // connects, the mic is on, and nothing happens; OpenAI's error at the end says its "context injection" never
+  // completed). So: if the voice has said nothing 6 seconds after connecting (counted from when the app's first piece
+  // is ready, if the app is bringing one), and the learner hasn't spoken, reconnect once; if it's silent again, say so.
+  function openWatch(peer: RTCPeerConnection) {
+    const opened = Date.now();
+    let waitFrom = opened;
+    const t = window.setInterval(() => {
+      const now = Date.now();
+      if (pc.current !== peer || closingTo.current || recOut.current || lastUtter.current.at > opened || lastInputAt.current > opened || now - opened > 60_000) { window.clearInterval(t); return; }
+      if (pending.current.size) { waitFrom = now; return; } // the brain is still preparing what the voice will say
+      if (now - waitFrom < 6000) return;
+      window.clearInterval(t);
+      if (silentTry.current >= 1) {
+        logLine('ERROR', 'the voice said nothing again after reconnecting: stopping');
+        closingTo.current = 'off';
+        sendRef.current({ type: 'session.close' });
+        window.setTimeout(() => { if (pc.current === peer) { closingTo.current = null; finish('off'); } }, 300);
+        optsRef.current.onError('OpenAI’s voice isn’t answering right now. Try again in a few minutes.');
+        return;
+      }
+      silentTry.current++;
+      logLine('CHECK', 'the voice said nothing for 6 s after connecting: reconnecting once');
+      refreshing.current = true;
+      closingTo.current = 'paused';
+      sendRef.current({ type: 'session.close' });
+      window.setTimeout(() => {
+        if (pc.current === peer) { closingTo.current = null; finish('paused'); }
+        refreshing.current = false;
+        void startRef.current?.('silent');
+      }, 300);
+    }, 500);
+  }
+  const start = useCallback(async (retry: boolean | 'silent' = false) => {
     if (!retry && stateRef.current !== 'off' && stateRef.current !== 'paused') return;
-    const resuming = retry || stateRef.current === 'paused'; // coming back from a pause (or a retry): no new greeting
+    // Coming back from a pause: no new greeting. A retry opens the same way as the try it replaces.
+    const resuming = retry ? firstResume.current : stateRef.current === 'paused';
+    if (!retry) { firstResume.current = resuming; silentTry.current = 0; }
     stopWakeWatch();
     closingTo.current = null;
     if (!retry) logBegin(optsRef.current.logMeta?.() ?? '', resuming);
@@ -652,6 +689,7 @@ export function useLive(opts: {
       channel.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch { /* ignore */ } };
       channel.onopen = () => {
         startedAt.current = Date.now(); bump(); setS('listening'); micWatch(peer);
+        if (!resuming) openWatch(peer);
         // With Keep going by itself the voice is told not to open the call: the app brings the next piece right away
         // (the voice opens with a few words as it reads it).
         const opened = Date.now();
