@@ -43,6 +43,9 @@ export async function POST(req: NextRequest) {
   const askPace = req.nextUrl.searchParams.get('pace');
   const pace = (['slow', 'relaxed', 'natural', 'brisk'] as const).find((x) => x === askPace) ?? s.livePace;
   const short = askInstr === 'short' ? true : askInstr === 'full' ? false : askRules !== null || s.liveShort !== false;
+  // A plain opening: the app's retry after a call whose voice never started. Only the place: no tapped line, no recap
+  // of the conversation, no instructions saved for this session (one of them may be what held the voice up).
+  const plainOpen = req.nextUrl.searchParams.get('plain') === '1';
   if (!preview) {
     try {
       const sid = req.nextUrl.searchParams.get('session');
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
         styleRules: st.behavior,
         leads: st.asks === false ? 'you explain' : s.leads === 'learner' ? 'the learner explains first' : 'you explain first, then ask',
         place: place ? `${place.base}, line ${place.n}` : null,
-        requests: memories.filter((m) => m.scope === `session:${sid}`).map((m) => m.content),
+        requests: plainOpen ? [] : memories.filter((m) => m.scope === `session:${sid}`).map((m) => m.content),
         saved: memories.filter((m) => m.kind === 'instruction' && !m.scope?.startsWith('session:')).map((m) => m.content),
         noticed: memories.filter((m) => m.kind === 'observation').map((m) => m.content),
         card: styleCard(s.style, s.customStyles) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles).replace(/^.*?this style's part\. /, '')}` : ''),
@@ -73,13 +76,13 @@ export async function POST(req: NextRequest) {
         const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '), cut.lastIndexOf('." '), cut.lastIndexOf('?" '));
         return end > n * 0.4 ? cut.slice(0, end + 1) : cut.replace(/\s+\S*$/, '') + '…';
       };
-      const recent = history.slice(-12);
+      const recent = plainOpen ? [] : history.slice(-12);
       recap = recent.map((m) => `${m.role === 'user' ? 'Learner' : 'You'}: ${clip(plain(m.content), 320)}`).join('\n');
       const lastBot = [...recent].reverse().find((m) => m.role === 'assistant');
       lastSaid = lastBot ? clip(plain(lastBot.content), 600) : '';
       lastAt = recent.length ? recent[recent.length - 1].created_at : null;
       const tapped = [...sources].reverse().find((x) => x.data?.focus);
-      if (tapped && (!lastAt || tapped.created_at > lastAt)) {
+      if (tapped && !plainOpen && (!lastAt || tapped.created_at > lastAt)) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
         const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';

@@ -632,7 +632,7 @@ export function useLive(opts: {
         return;
       }
       silentTry.current++;
-      logLine('CHECK', 'the voice said nothing for 6 s after connecting: reconnecting once');
+      logLine('CHECK', 'the voice said nothing for 6 s after connecting: reconnecting once, with a plain opening (only the place: no tapped line, no recap, no session instructions)');
       refreshing.current = true;
       closingTo.current = 'paused';
       sendRef.current({ type: 'session.close' });
@@ -714,6 +714,7 @@ export function useLive(opts: {
       const q = new URLSearchParams();
       if (sid) q.set('session', sid);
       if (resuming) q.set('resume', '1');
+      if (retry === 'silent') q.set('plain', '1');
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
