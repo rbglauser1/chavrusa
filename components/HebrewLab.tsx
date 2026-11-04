@@ -451,7 +451,12 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     setAb({ ...ab, pairs, i: ab.i + 1 });
     setFlash(side === 'same' ? '✓ Got it: about the same.' : `✓ Got it: ${side} was better.`);
     window.clearTimeout(flashT.current); flashT.current = window.setTimeout(() => setFlash(''), 2000);
+    // Only now, after the choice, say which version was on which side.
+    const nameA = abPair.bOnA ? ab.name : 'what calls use now', nameB = abPair.bOnA ? 'what calls use now' : ab.name;
+    const chose = side === 'same' ? 'about the same' : `${side} (${side === 'A' ? nameA : nameB})`;
+    setAbLast(`A was ${nameA}; B was ${nameB}. You chose ${chose}.`);
   };
+  const [abLast, setAbLast] = useState('');
   // The tally, by version (not by side): which won, how each was rated, what was wrong with each.
   function abTally(x: Ab) {
     const t = { a: 0, b: 0, same: 0, rate: { a: [] as Rate[], b: [] as Rate[] }, wrong: { a: [] as Wrong[], b: [] as Wrong[] } };
@@ -603,6 +608,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
           <>
             <div className="tuner-step"><b>Pair {ab.i + 1} of {ab.pairs.length}</b> · line: <span dir="rtl">{ab.lines[abPair.line].split(/\s+/).slice(0, 4).join(' ')}…</span> · saved as you go</div>
             {flash && <div className="tuner-flash">{flash}</div>}
+            {abLast && ab.i > 0 && <div className="tuner-last"><b>The pair you just judged:</b> {abLast}</div>}
             <div className="tuner-ab">
               {(['A', 'B'] as const).map((side) => {
                 const isB = (side === 'A') === abPair.bOnA;
@@ -626,7 +632,7 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
             {!abBoth && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hear both first. Then mark each (Good, OK, Bad, and what was wrong), and choose.</div>}
             {msg && /^ab\d+:/.test(msg.mode) && /^(Live voice|Could not|Couldn|OpenAI is busy|Your phone|The voice connected|Not available)/.test(msg.text) && <div className="he-lab-said">{msg.text}</div>}
             <div className="tuner-foot">
-              {ab.i > 0 && <button className="btn" onClick={() => { endRef.current?.(); setAb({ ...ab, i: ab.i - 1 }); }}>← Back one pair</button>}
+              {ab.i > 0 && <button className="btn" onClick={() => { endRef.current?.(); setAbLast(''); setAb({ ...ab, i: ab.i - 1 }); }}>← Back one pair</button>}
               <button className="linkish" onClick={() => void copyAb(ab)}>Copy the results so far</button>
               <button className="linkish" onClick={() => { endRef.current?.(); setAb(null); }}>Stop and start over</button>
             </div>
