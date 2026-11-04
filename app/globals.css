@@ -1689,3 +1689,10 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 [data-enbold='on'] .en b, [data-enbold='on'] .min-en b { font-weight: 700; }
 .mg-il-pair + .mg-il-pair { margin-top: .3em; }
 .mg-il .mg-en { margin-top: 0; }
+/* Phrase by phrase: the Hebrew and English colors and bold (Settings → Look → Colors) apply to each phrase too. */
+[data-c-he]:not([data-c-he='ink']) :is(.sefer .line .il-he, .min-he .il-he):not(.rashi) { color: color-mix(in srgb, var(--he-hue) 94%, var(--ink)); }
+[data-c-en]:not([data-c-en='ink']) :is(.sefer .line .il-en, .min-he .il-en) { color: color-mix(in srgb, var(--en-hue) 94%, var(--ink)); }
+[data-b-he='on'] :is(.sefer .line .il-he, .min-he .il-he):not(.rashi) { font-weight: 700; }
+[data-b-en='on'] :is(.sefer .line .il-en, .min-he .il-en) { font-weight: 600; }
+[data-c-comm]:not([data-c-comm='ink']) .il-he.rashi { color: color-mix(in srgb, var(--comm-hue) 94%, var(--ink)); }
+[data-b-comm='on'] .il-he.rashi { font-weight: 700; }
