@@ -425,6 +425,21 @@ export default function HebrewLab({ s, onChange, disabled }: { s: Settings; onCh
     const pairs: AbPair[] = lines.flatMap((_, k) => [{ line: k, bOnA: Math.random() < 0.5 }, { line: k, bOnA: Math.random() < 0.5 }]).map((p) => ({ p, k: Math.random() })).sort((x, y) => x.k - y.k).map((x) => x.p);
     setAb({ a: startCfg, b: withKeyB(startCfg), lines, pairs, i: 0, name: 'Vowel key, version B' });
   };
+  // Ticking lines on or off in the middle of a run changes the rest of the run right away: the pairs already judged
+  // stay as they were, and the pairs still to come are made again from the lines ticked now (two each, shuffled).
+  const chosenKey = abChosen.map((l) => l.he.trim()).join('\u0001');
+  useEffect(() => {
+    if (!ab || ab.i >= ab.pairs.length) return;
+    const now = [...new Set(abChosen.map((l) => l.he.trim()))];
+    if (!now.length) return;
+    const ahead = ab.pairs.slice(ab.i);
+    if (ahead.every((p) => now.includes(ab.lines[p.line])) && now.every((l) => ahead.some((p) => ab.lines[p.line] === l))) return; // already matches
+    const lines = [...ab.lines, ...now.filter((l) => !ab.lines.includes(l))];
+    const fresh: AbPair[] = now.flatMap((l) => [0, 1].map(() => ({ line: lines.indexOf(l), bOnA: Math.random() < 0.5 })))
+      .map((p) => ({ p, k: Math.random() })).sort((x, y) => x.k - y.k).map((x) => x.p);
+    setAb({ ...ab, lines, pairs: [...ab.pairs.slice(0, ab.i), ...fresh] });
+    setAbHeard({ i: -1, a: false, b: false }); // a new pair: hear both again
+  }, [chosenKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const abPair = ab && ab.i < ab.pairs.length ? ab.pairs[ab.i] : null;
   const [abHeard, setAbHeard] = useState<{ i: number; a: boolean; b: boolean }>({ i: -1, a: false, b: false });
   const abBoth = !!ab && abHeard.i === ab.i && abHeard.a && abHeard.b;
