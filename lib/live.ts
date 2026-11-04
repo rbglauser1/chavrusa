@@ -1,4 +1,4 @@
-import { heReadNote, heReadNoteB, heReadNoteC, voiceReadsNote, type HeRead, type VoiceReads } from './hebrew';
+import { heReadNote, heReadNoteB, heReadNoteC, heReadNoteD, voiceReadsNote, type HeRead, type VoiceReads } from './hebrew';
 // Instructions for the Live voice. The voice handles conversation; all learning content comes from the Chavrusa brain.
 // How much the voice pauses (Settings → Voice → Pauses).
 const PAUSES: Record<string, string> = {
@@ -84,6 +84,7 @@ export function liveContext(o: { styleName: string; styleRules: string; leads: s
 export const RULES: { id: string; name: string; about: string }[] = [
   { id: 'guide', name: 'Yeshivish guide', about: 'The long pronunciation guide you liked from the start: the vowels, the stress, the learning words, the Names.' },
   { id: 'key', name: 'Vowel key', about: 'How to read each vowel in the Hebrew letters (kamatz "aw", cholam "oi", tav "s"…), for the way of reading in use.' },
+  { id: 'keyD', name: 'Vowel key, version D', about: 'The original Vowel key with a better shva: a quick "e" that is always heard, with no pause or breath (s\'MI-chah, never smicha). Meant to be smooth like C without swallowing shvas.' },
   { id: 'keyC', name: 'Vowel key, version C', about: 'The original Vowel key with only one change from version B: the shva as a very short "e" with no pause or breath (silent in mid-word). The chirik and kamatz stay as in the original.' },
   { id: 'keyB', name: 'Vowel key, version B', about: 'The Vowel key with the fixes from OpenAI\'s review: the shva a very short "e" with no breath (silent in mid-word), the chirik "i" in a closed syllable and "ee" in an open one, and the short kamatz as "o" (kol).' },
   { id: 'notIsraeli', name: 'Not Israeli', about: 'A list of the Israeli habits to avoid: last-syllable stress, kamatz as "ah", cholam as "o", tav as "t", the Israeli r.' },
@@ -98,6 +99,7 @@ const RULE_TEXT: Record<string, (heRead: HeRead) => string> = {
   key: (heRead) => heReadNote(heRead),
   keyB: (heRead) => heReadNoteB(heRead),
   keyC: (heRead) => heReadNoteC(heRead),
+  keyD: (heRead) => heReadNoteD(heRead),
   notIsraeli: () => 'This is not Israeli Hebrew, and you never use Israeli pronunciation: no stress on the last syllable; kamatz is never "ah" but "aw"; cholam is never "o" but "oy"; tav without a dagesh is "s", never "t"; the "r" is your American r, never the Israeli throat r; ches and chof are the throat sound as in Bach.',
   pairs: () => 'How the words sound (the yeshivish way, never the Israeli way): בָּרוּךְ BAW-ruch (not ba-RUCH); תּוֹרָה TOI-rah (not to-RAH); שַׁבָּת SHAH-bos (not sha-BAT); אָמַר רַב AW-mar RAV (not a-MAR); מִצְוֹת MITZ-vos (not mitz-VOT); בְּרֵאשִׁית b\'REI-shis (not be-re-SHEET); גְּמָרָא g\'MAW-rah (not ge-ma-RA); הָכָא HAW-chaw (not ha-KHA); אִיכָּא EE-kaw (not ee-KA); בֵּינַיְיהוּ bei-NAI-hu.',
   bochur: () => 'When you read lashon kodesh you are an American yeshiva bochur reading inside in the beis medrash, the way he learned it from his rebbeim: the same American voice as your English, never a different accent.',

@@ -338,7 +338,27 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                     : 'A short, literal translation in the chavrusa’s own words, the way a rebbi translates inside in shiur. When the app reads a line by itself (no brain), it uses the literal words instead.'} In calls; applies from the next thing he reads.</div>
               </div>
             </Group>
-            <Group id="voice-pron" level={2} title="Pronunciation and tests" hint="Reading test, rule lab, voice test, say it my way">
+            <Group id="voice-pron" level={2} title="Pronunciation and tests" hint={`Vowel key ${({ key: 'A', keyB: 'B', keyC: 'C', keyD: 'D' } as Record<string, string>)[(s.liveRules?.length ? s.liveRules : ['key']).find((r) => /^key[BCD]?$/.test(r)) ?? 'key'] ?? 'A'} · tests · say it my way`}>
+              {(() => {
+                // The Vowel key's versions, to choose and simply learn with (no test needed). Each is the same key with
+                // one difference; all keep the rest of the rules in use.
+                const VERSIONS: [string, string, string][] = [
+                  ['key', 'A', 'The original: the tested best so far, and what you have been using. Most correct in the A-or-B tests.'],
+                  ['keyD', 'D', 'A with a better shva: a quick "e" that is always heard, with no pause or breath (s\'MI-chah, never smicha). Meant to be smooth without swallowing shvas.'],
+                  ['keyC', 'C', 'A with a very short shva, with no pause or breath. Smoothest on simple lines, but it can swallow shvas on hard Aramaic.'],
+                  ['keyB', 'B', 'C plus a chirik rule and the short kamatz as "o". Smooth, but less correct in your test.'],
+                ];
+                const cur = s.liveRules?.length ? s.liveRules : ['guide', 'key'];
+                const curKey = cur.find((r) => /^key[BCD]?$/.test(r)) ?? (cur[0] === 'none' ? '' : 'key');
+                const pick = (k: string) => onChange({ liveRules: [...(cur[0] === 'none' ? [] : cur.filter((r) => !/^key[BCD]?$/.test(r))), k], liveShort: true });
+                return (
+                  <div className="field">
+                    <label>Vowel key: which version to learn with</label>
+                    <Seg value={curKey || 'key'} options={VERSIONS.map(([id, name]) => [id, name] as [string, string])} onPick={pick} />
+                    <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{VERSIONS.find(([id]) => id === (curKey || 'key'))?.[2]} Applies from the next Talk; switch any time and just learn with it. The call recorder shows which version each call used.</div>
+                  </div>
+                );
+              })()}
               <div className="field">
                 <label>Standard pronunciations</label>
                 <Seg value={s.houseSay !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ houseSay: v === 'on' })} />

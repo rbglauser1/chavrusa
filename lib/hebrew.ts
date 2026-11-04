@@ -235,6 +235,13 @@ export function heReadNoteC(mode: HeRead = 'join-kh'): string {
   return heReadNote(mode)
     .replace("a shva at the start of a word as a quick breath (b\'reishis).", "a shva at the start of a word as a very short, unstressed \"e\", with no pause and no breath (b\'reishis, never b-reishis); a shva that closes a syllable in the middle of a word is silent (av-RAW-hom).");
 }
+/** Version D (Nov 3): the original key with a better shva. From C's test: "no pause, no breath" made it smoother, but
+ *  "very short" (and "silent in mid-word") let it swallow shvas on hard Aramaic (smicha for s'micha). D keeps the
+ *  smoothness and says the shva is always heard. */
+export function heReadNoteD(mode: HeRead = 'join-kh'): string {
+  return heReadNote(mode)
+    .replace("a shva at the start of a word as a quick breath (b\'reishis).", "a shva at the start of a word as a quick \"e\" that is always heard, with no pause and no breath before the rest of the word (s\'MI-chah, never smicha and never s-micha; d\'AW-mar; b\'reishis).");
+}
 /** The note in the voice's instructions that goes with each way of giving it the lashon kodesh. */
 export function heReadNote(mode: HeRead = 'join-kh'): string {
   const yeshivish = 'Read it the yeshivish Ashkenazi way, never modern Israeli, and the same way every time a word comes: kamatz as "aw" (BAW-ruch), cholam as "oi" (TOI-rah), tzeirei as "ei" (beis), segol and chataf segol as a short "eh" as in "bed" (שֶׁ is "sheh", never "shei" or "sha"), patach and chataf patach as "a", chirik as "i" as in "sit" or "ee", shuruk and kubutz as "u", tav without a dagesh as "s" (Shabbos), ches and a chof without a dagesh as the throat sound in "Bach" (never "sh"), a shva at the start of a word as a quick breath (b\'reishis). Stress: put the stress of every word of two or more syllables on its second-to-last syllable (BAW-ruch, AW-mar, TOI-rah, b\'REI-shis, NIK-neis, d\'RAW-chim), never on the last syllable, even where modern Israeli Hebrew stresses the last (the one exception: "Hashem", said hah-SHEM); this is the single most important rule for sounding yeshivish. A prefix at the start of a word (the ha-, ba-, la-, va-, ka-, mi-, she-, d\'-, u-, b\'-, l\'-) is never stressed and always quick and light: הָאִשָּׁה is ha-ISH-aw, never HAW-ish-aw; and a kamatz that is not the stressed syllable is a light, quick "aw", never leaned on or drawn out. Say "Hashem" for the Name and "Elokim" where it is written with a kuf.';
