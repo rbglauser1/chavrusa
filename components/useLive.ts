@@ -513,6 +513,7 @@ export function useLive(opts: {
   // while he has said to stop or wait, until he says to go on again.
   const autoHold = useRef(false);
   const pointOpen = useRef<{ ref: string; n: number; he: string; en: string } | null>(null); // a tapped line to open the call with
+  const oldOpen = useRef(false); // "Open calls the Nov 3 way" (a test): no app-brought opening, no silent-start retry
   const autoStart = useRef(false); // the opening said where we are: go on after it by itself (Keep going by itself)
   function autoNext(force = false) {
     const secs = optsRef.current.autoGo?.() ?? 0;
@@ -700,11 +701,24 @@ export function useLive(opts: {
       channel.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch { /* ignore */ } };
       channel.onopen = () => {
         startedAt.current = Date.now(); bump(); setS('listening'); micWatch(peer);
-        if (!resuming) openWatch(peer);
+        if (!resuming && !oldOpen.current) openWatch(peer);
         // With Keep going by itself the voice is told not to open the call: the app brings the next piece right away
         // (the voice opens with a few words as it reads it).
         const opened = Date.now();
-        window.setTimeout(() => {
+        if (oldOpen.current) {
+          // The Nov 3 way (a test): the voice opens the call; with Keep going by itself, after 6 silent seconds the app
+          // brings the next piece.
+          logLine('──', 'opening the Nov 3 way (a test)');
+          window.setTimeout(() => {
+            if (pc.current !== peer || !autoStart.current || lastUtter.current.at > opened || recOut.current || lastInputAt.current > opened || pending.current.size) return;
+            autoStart.current = false;
+            const id = `app_${Date.now()}`;
+            logLine('CHECK', 'the voice didn\'t open the call: going on by itself');
+            pending.current.add(id);
+            setS('thinking');
+            optsRef.current.onRequest('Yes, go on.', id);
+          }, 6000);
+        } else window.setTimeout(() => {
           if (pc.current === peer && pointOpen.current && !recOut.current && lastInputAt.current <= opened) {
             const p = pointOpen.current; pointOpen.current = null; autoStart.current = false;
             logLine('AUTO', `opening the call with the line you tapped (${p.ref}, line ${p.n})`);
@@ -736,7 +750,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; }
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; oldOpen.current = data.speech.oldOpen === true; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
       if (data.rulesUsed) logLine('──', `in this call: voice ${data.voiceUsed ?? '?'} · Hebrew given as ${data.speech?.heRead ?? '?'} · rules: ${data.rulesUsed}`);
       if (data.notice) { logLine('──', String(data.notice)); optsRef.current.onError(String(data.notice)); }

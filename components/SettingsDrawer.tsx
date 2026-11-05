@@ -403,6 +403,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <label>Catch skipped words</label>
                 <Seg value={s.liveCheck !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCheck: v === 'on' })} />
                 <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>The app compares what the voice actually said with the text it was given. If it left out the end, it goes back and reads the part it missed. Free.</div>
+                <label>Open calls the Nov 3 way (a test)</label>
+                <Seg value={s.liveOldOpen ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ liveOldOpen: v === 'on' })} />
+                <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>A test of the calls that don&apos;t start: on, a call opens exactly the way it did on Nov 3 before the changes since (the voice opens the call itself, nothing is brought at the start, no automatic retry). Try a few calls with it on and a few with it off, and send the logs.</div>
                 <label>Catch skipped Hebrew</label>
                 <Seg value={s.liveCheckHe !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ liveCheckHe: v === 'on' })} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>After it reads, the app looks for each Hebrew phrase in what the voice said. If it read only the English of some phrases, or skipped their Hebrew, it reads that part again, inside. It acts only on a clear miss (turn it off if it ever re-reads what it said). Free.</div>

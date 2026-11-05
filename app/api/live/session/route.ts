@@ -107,13 +107,16 @@ export async function POST(req: NextRequest) {
   const mins = lastAt ? (Date.now() - new Date(lastAt).getTime()) / 60000 : null;
   // Keep going by itself (Settings): the opening doesn't ask whether to go on; the app goes on after it by itself.
   const auto = s.autoGo === true && !preview;
-  const goOnAsk = 'ask in a few words if he\'s ready to go on';
+  // "Open calls the Nov 3 way" (Settings, a test): everything about how a call opens as it was on Nov 3 at 9:23 PM,
+  // before the changes since (the voice opens the call itself; the app brings nothing at the start; no retry).
+  const oldOpen = s.liveOldOpen === true;
+  const goOnAsk = oldOpen && auto ? 'say in a few words that we will go on now (do not ask), and stop: the app brings the next piece' : 'ask in a few words if he\'s ready to go on';
   // With Keep going by itself the voice doesn't open the call at all: the app hands it the next piece right away, and it
   // opens with a few words as it reads that piece. (Told to open first, it sometimes read the text from memory.)
-  const autoOpen = auto && !resume && !!(placeName || recap) && !pointed;
+  const autoOpen = !oldOpen && auto && !resume && !!(placeName || recap) && !pointed;
   // A tapped line: the app hands it to the voice as soon as the call opens (the way a tap mid-call does). Told to read
   // it from here, the voice said "let's start right here" and waited for the app, since its text comes only from the app.
-  const pointOpen = point ? `Do not speak first, and do not say, read or recite any text yourself. In a moment the app hands you the line the learner chose (${point.ref}, line ${point.n}); when it arrives, begin with a few natural words (no formal greeting${mins !== null && mins < 20 ? '; we were just learning' : ''}) and do exactly what it says.${recapBlock}` : '';
+  const pointOpen = point && !oldOpen ? `Do not speak first, and do not say, read or recite any text yourself. In a moment the app hands you the line the learner chose (${point.ref}, line ${point.n}); when it arrives, begin with a few natural words (no formal greeting${mins !== null && mins < 20 ? '; we were just learning' : ''}) and do exactly what it says.${recapBlock}` : '';
   const hello = pointOpen ? pointOpen : autoOpen
     ? `Do not speak first, and do not say, read, recite or summarize any text yourself. In a moment the app hands you the next piece of the text${placeName ? ` (we are on ${placeName})` : ''}; when it arrives, begin with a few natural words (no formal greeting${mins !== null && mins < 20 ? '; we were just learning' : ''}) and then read it exactly as given, every word of it.${recapBlock}`
     : pointed
@@ -197,5 +200,5 @@ export async function POST(req: NextRequest) {
     : rulesFinal.map(ruleName).join(' + ');
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: autoOpen, ...(point ? { point } : {}) }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: oldOpen ? auto && !resume && !!(placeName || recap) && !pointed : autoOpen, ...(point && !oldOpen ? { point } : {}), ...(oldOpen ? { oldOpen: true } : {}) }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
 }

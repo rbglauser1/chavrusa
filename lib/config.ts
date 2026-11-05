@@ -371,6 +371,7 @@ export interface Settings {
   liveShort?: boolean;           // the voice gets the short instructions (default) or the full ones
   liveFresh?: boolean;           // quietly start the voice fresh at each new section (default on)
   liveCheck?: boolean;           // check what the voice said against the text; have it read anything it skipped (default on)
+  liveOldOpen?: boolean;         // a test: open calls the way they opened on Nov 3 (9:23 PM), before the changes since
   liveCheckHe?: boolean;         // also look for each Hebrew phrase in what it said; have it re-read Hebrew it skipped (default on)
   liveSteady?: boolean;          // steady mode: every learning turn goes through the brain (off by default since Oct 30: stiff and slow)
   steadyOffDone?: boolean;
@@ -460,6 +461,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveFresh: true,
   liveCheck: true,
   liveCheckHe: true,
+  liveOldOpen: false,
   houseSay: true,
   heRead: 'he',
   liveCoach: false,
