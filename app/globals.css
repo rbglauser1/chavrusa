@@ -1848,10 +1848,26 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 [data-look='ink'] .sefer.embedded .sefer-flow { background-image: var(--tx-q-page); background-size: 900px 900px; }
 [data-look='stone'] .sefer.embedded { background-image: none; }
 [data-look='stone'] .sefer.embedded .sefer-flow { background-image: var(--js-page); background-size: 260px 260px; }
+[data-look='midnight'] .sefer.embedded .sefer-body { background-color: #121214; }
+
+/* Midnight, with a bit of spice: between the plain black and the first colored version. Quiet indigo, teal and plum
+   glows at about half their first strength, with the ivory lamplight. On the page they drift past with the words
+   (a band of glows that repeats every 1400px, each glow fading out inside its band, so there's no seam); around the
+   page they stay in the corners. */
 [data-look='midnight'] .sefer.embedded .sefer-flow {
   background-image:
-    radial-gradient(75% 34% at 55% -4%, rgba(236, 228, 210, 0.085), transparent 70%),
-    radial-gradient(80% 50% at 100% 105%, rgba(236, 228, 210, 0.035), transparent 60%),
-    radial-gradient(60% 40% at 92% 25%, rgba(236, 228, 210, 0.03), transparent 65%);
+    radial-gradient(70% 300px at 55% 330px, rgba(236, 228, 210, 0.07), rgba(236, 228, 210, 0.032) 45%, rgba(236, 228, 210, 0.008) 75%, transparent 100%),
+    radial-gradient(60% 400px at 6% 420px, rgba(96, 82, 168, 0.19), rgba(96, 82, 168, 0.086) 45%, rgba(96, 82, 168, 0.023) 75%, transparent 100%),
+    radial-gradient(45% 260px at 92% 640px, rgba(132, 74, 104, 0.09), rgba(132, 74, 104, 0.041) 45%, rgba(132, 74, 104, 0.011) 75%, transparent 100%),
+    radial-gradient(65% 380px at 96% 1000px, rgba(32, 110, 116, 0.16), rgba(32, 110, 116, 0.072) 45%, rgba(32, 110, 116, 0.019) 75%, transparent 100%);
+  background-size: 100% 1400px; background-repeat: repeat-y;
 }
-[data-look='midnight'] .sefer.embedded .sefer-body { background-color: #121214; }
+[data-look='midnight'] body {
+  background-image:
+    radial-gradient(75% 34% at 55% -4%, rgba(236, 228, 210, 0.085), transparent 70%),
+    radial-gradient(90% 55% at 12% -8%, rgba(96, 82, 168, 0.2), transparent 62%),
+    radial-gradient(80% 50% at 100% 105%, rgba(32, 110, 116, 0.17), transparent 60%),
+    radial-gradient(60% 40% at 92% 25%, rgba(132, 74, 104, 0.08), transparent 65%),
+    radial-gradient(140% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
+}
+.mini.midnight { background: radial-gradient(90% 60% at 15% 0%, #201e2c, #121214 70%); }
