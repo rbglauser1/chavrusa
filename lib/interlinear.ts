@@ -36,7 +36,13 @@ function hebrewPhrases(he: string): string[] {
   const toks = he.trim().split(/\s+/).filter(Boolean);
   const out: string[][] = [];
   let cur: string[] = [];
-  for (const t of toks) { cur.push(t); if (END.test(t)) { out.push(cur); cur = []; } }
+  for (const t of toks) {
+    // A quotation (a pasuk, a Mishnah) is its own phrase: cut before its opening quote mark and after its closing one,
+    // and at a dash standing alone.
+    if (/^["“״]/.test(t) && cur.length >= 2) { out.push(cur); cur = []; }
+    cur.push(t);
+    if (END.test(t) || /^[-–—]$/.test(t) || (/[^"“”״]["”״]$/.test(t) && !/^["“״]/.test(t))) { out.push(cur); cur = []; }
+  }
   if (cur.length) { if (cur.length < 2 && out.length) out[out.length - 1].push(...cur); else out.push(cur); }
   return out.map((p) => p.join(' '));
 }
