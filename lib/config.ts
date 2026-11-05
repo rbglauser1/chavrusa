@@ -284,7 +284,7 @@ export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'shtender', name: 'Shtender (white oak)', blurb: 'Pale white oak, like a shtender in the beis medrash' },
   { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
   { id: 'midnight', name: 'Midnight', blurb: 'Navy and gold, clean and modern, with quoted passages' },
-  { id: 'stone', name: 'Yerushalayim stone (new)', blurb: 'Warm limestone, bronze and gold: bright and calm' },
+  { id: 'stone', name: 'Yerushalayim stone', blurb: 'Dressed Jerusalem stone like the Kosel: honey limestone, bronze and gold' },
   { id: 'leather', name: 'Leather Shas (new)', blurb: 'Oxblood leather and gold leaf, the text on a cream page' },
   { id: 'vilna', name: 'Vilna green (new)', blurb: 'Deep bottle green and brass, the text on a cream page' },
   { id: 'ink', name: 'Ink and stone (white quartz)', blurb: 'Very light white-grey quartz with soft grey veins, crisp black ink' },
