@@ -1878,7 +1878,10 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
    only hides them on a scroll); everything around it is white, so no colored band shows at the edges. */
 body[data-dafull] :is(.app, .main, .min, .min-quiet) { height: auto; min-height: 100dvh; overflow: visible; }
 .daf-page.full { position: absolute; top: 0; left: 0; right: 0; bottom: auto; min-height: calc(100lvh + 80px); display: block; background: #fff; }
-.daf-page.full .daf-page-box { overflow-x: auto; overflow-y: visible; padding-top: 0; min-height: calc(100lvh + 80px); }
+.daf-page.full .daf-page-box { overflow: visible; padding-top: 0; min-height: calc(100lvh + 80px); }
+/* (overflow-x: auto on the box would quietly make it scroll up and down too, and then Safari never hides its bars:
+   in full screen nothing scrolls but the document, both ways.) */
+html:has(body[data-dafull]), body[data-dafull] { overflow: visible; height: auto; min-height: 100%; }
 .daf-page.full .daf-page-talk { position: fixed; }
 html:has(body[data-dafull]), body[data-dafull] { background: #fff; background-image: none; }
 body[data-dafull]::before { display: none; }
