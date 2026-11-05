@@ -26,6 +26,36 @@ function loadPdfJs(): Promise<PdfLib> {
 const MIN = 1, MAX = 5;
 const ref = (a: Amud) => `${a.tractate} ${a.daf}${a.amud}`;
 
+
+// The printed page has blank paper around it (above the first line, below the last, at the sides). Cut it off, so the
+// daf itself reaches the edges (the very top of the phone in full screen) and the letters come out bigger. The page is
+// looked at small (a copy about 300px wide) to find where the print starts and ends; a thin edge is kept.
+function trimMargins(c: HTMLCanvasElement) {
+  try {
+    const W = 300, H = Math.round((c.height / c.width) * W);
+    const t = document.createElement('canvas'); t.width = W; t.height = H;
+    const tx = t.getContext('2d', { willReadFrequently: true })!;
+    tx.drawImage(c, 0, 0, W, H);
+    const px = tx.getImageData(0, 0, W, H).data;
+    const dark = (x: number, y: number) => { const i = (y * W + x) * 4; return px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11 < 200; };
+    const rowInk = (y: number) => { let n = 0; for (let x = 0; x < W; x++) if (dark(x, y) && ++n >= 3) return true; return false; };
+    const colInk = (x: number) => { let n = 0; for (let y = 0; y < H; y++) if (dark(x, y) && ++n >= 3) return true; return false; };
+    let top = 0, bot = H - 1, left = 0, right = W - 1;
+    while (top < H && !rowInk(top)) top++;
+    while (bot > top && !rowInk(bot)) bot--;
+    while (left < W && !colInk(left)) left++;
+    while (right > left && !colInk(right)) right--;
+    if (bot - top < H * 0.5 || right - left < W * 0.5) return; // not sure where the print is: leave the page as it is
+    const k = c.width / W, pad = 3;
+    const sx = Math.max(0, Math.floor((left - pad) * k)), sy = Math.max(0, Math.floor((top - pad) * k));
+    const sw = Math.min(c.width - sx, Math.ceil((right - left + 2 * pad) * k)), sh = Math.min(c.height - sy, Math.ceil((bot - top + 2 * pad) * k));
+    const copy = document.createElement('canvas'); copy.width = sw; copy.height = sh;
+    copy.getContext('2d')!.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
+    c.width = sw; c.height = sh;
+    c.getContext('2d')!.drawImage(copy, 0, 0);
+  } catch { /* leave the page as it is */ }
+}
+
 export default function DafPage({ start, onClose, talk, status }: { start: Amud; onClose: () => void; talk?: ReactNode; status?: string }) {
   const [a, setA] = useState<Amud>(start);
   const [state, setState] = useState<'loading' | 'ok' | 'error'>('loading');
@@ -50,7 +80,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   // Draw the page, sharp enough to zoom in on Rashi and Tosafos.
   useEffect(() => {
     let gone = false;
-    setState('loading'); setErr(''); setZoom(1); zoomRef.current = 1; if (canvas.current) canvas.current.style.width = '100%';
+    setState('loading'); setErr(''); setZoom(1); zoomRef.current = 1; if (canvas.current) canvas.current.style.width = fullRef.current ? '100vw' : '100%';
     (async () => {
       try {
         const lib = await loadPdfJs();
@@ -62,6 +92,8 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
         if (gone || !c) return;
         c.width = Math.round(vp.width); c.height = Math.round(vp.height);
         await page.render({ canvasContext: c.getContext('2d')!, viewport: vp }).promise;
+        if (gone) return;
+        trimMargins(c);
         if (!gone) setState('ok');
       } catch (e) {
         if (!gone) { setErr((e as Error).message || 'The page could not be loaded.'); setState('error'); }
