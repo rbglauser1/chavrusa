@@ -624,10 +624,11 @@ export function useLive(opts: {
       const now = Date.now();
       if (pc.current !== peer || closingTo.current || recOut.current || lastUtter.current.at > opened || lastInputAt.current > opened || now - opened > 60_000) { window.clearInterval(t); return; }
       if (pending.current.size) { waitFrom = now; return; } // the brain is still preparing what the voice will say
-      if (now - waitFrom < 6000) return;
+      // 6 s on the first try; the retry gets longer (some sessions are only slow to start, not stuck).
+      if (now - waitFrom < (silentTry.current ? 15000 : 6000)) return;
       window.clearInterval(t);
       if (silentTry.current >= 1) {
-        logLine('ERROR', 'the voice said nothing again after reconnecting: stopping');
+        logLine('ERROR', `the voice said nothing for 15 s after reconnecting: stopping (OpenAI never started the voice)`);
         closingTo.current = 'off';
         sendRef.current({ type: 'session.close' });
         window.setTimeout(() => { if (pc.current === peer) { closingTo.current = null; finish('off'); } }, 300);
@@ -635,7 +636,7 @@ export function useLive(opts: {
         return;
       }
       silentTry.current++;
-      logLine('CHECK', 'the voice said nothing for 6 s after connecting: reconnecting once, with a plain opening (only the place: no tapped line, no recap, no session instructions)');
+      logLine('CHECK', 'the voice said nothing for 6 s after connecting: reconnecting once (waiting up to 15 s this time), with a plain opening (only the place: no tapped line, no recap, no session instructions)');
       refreshing.current = true;
       closingTo.current = 'paused';
       sendRef.current({ type: 'session.close' });
