@@ -281,7 +281,7 @@ export const colorOf = (s: { colors?: Partial<Record<ColorPart, ColorId>> }, p: 
 
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
-  { id: 'shtender', name: 'Shtender at night', blurb: 'Warm wood and lamplight, easy on the eyes at night' },
+  { id: 'shtender', name: 'Shtender (white oak)', blurb: 'Pale white oak, like a shtender in the beis medrash' },
   { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
   { id: 'midnight', name: 'Midnight', blurb: 'Navy and gold, clean and modern, with quoted passages' },
   { id: 'stone', name: 'Yerushalayim stone (new)', blurb: 'Warm limestone, bronze and gold: bright and calm' },
