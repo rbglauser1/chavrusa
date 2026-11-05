@@ -283,7 +283,7 @@ export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
   { id: 'shtender', name: 'Shtender (white oak)', blurb: 'Pale white oak, like a shtender in the beis medrash' },
   { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
-  { id: 'midnight', name: 'Midnight', blurb: 'Soft off-black with quiet indigo and teal light, ivory text and champagne gold' },
+  { id: 'midnight', name: 'Midnight', blurb: 'Soft off-black with gentle whitish light, ivory text and champagne gold' },
   { id: 'stone', name: 'Yerushalayim stone', blurb: 'Dressed Jerusalem stone like the Kosel: honey limestone, bronze and gold' },
   { id: 'leather', name: 'Leather Shas (new)', blurb: 'Oxblood leather and gold leaf, the text on a cream page' },
   { id: 'vilna', name: 'Vilna green (new)', blurb: 'Deep bottle green and brass, the text on a cream page' },
