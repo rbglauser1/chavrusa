@@ -389,6 +389,7 @@ export interface Settings {
   mgMeforshim?: string[];   // Mikraos Gedolos page: which meforshim (ids from lib/mikraos), in this order
   mgOnkelos?: boolean;      // Mikraos Gedolos page: Onkelos beside the pesukim (on by default)
   mgEnglish?: boolean;      // Mikraos Gedolos page: English right below the pesukim, Onkelos and each comment
+  autoTosfos?: boolean;     // Tosafos open under every line of Gemara, automatically
   autoRashi?: boolean;      // Rashi (Bartenura on Mishnayos) open under every line, automatically
   autoComms?: boolean;      // show each line's commentary buttons without tapping the line first
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk
@@ -470,6 +471,7 @@ export const DEFAULT_SETTINGS: Settings = {
   geminiMyWay: [],
   autoComms: false,
   autoRashi: false,
+  autoTosfos: false,
   // Every setting needs a default here, or the settings API won't save it (it only takes known keys).
   livePauses: 'normal',
   mgMeforshim: ['Rashi', 'Ramban', 'Ibn Ezra', 'Sforno', 'Or HaChaim'],

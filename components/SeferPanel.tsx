@@ -131,6 +131,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Printed-sefer names for Sefaria's titles.
   const NICE: Record<string, string> = { Tosafot: 'Tosafos', 'Tosafot Yom Tov': 'Tosfos Yom Tov', 'Turei Zahav': 'Taz', 'Siftei Kohen': 'Shach', 'Magen Avraham': 'Magen Avraham', 'Be\'er HaGolah': 'Be\'er HaGolah', 'Mishnah Berurah': 'Mishnah Berurah', 'Sha\'ar HaTziyun': 'Sha\'ar HaTziyun', 'Biur Halacha': 'Biur Halacha', 'Onkelos': 'Onkelos', 'Rabbeinu Bahya': 'Rabbeinu Bachya', 'Sforno': 'Sforno', 'Rashbam': 'Rashbam' };
   const nice = (t: string) => NICE[t] ?? t;
+  // Under a line: Rashi (or the Bartenura) first, then Tosafos, then the rest in the order they were opened.
+  const commRank = (key: string) => { const l = key.slice(key.indexOf(':') + 1); return /^(Rashi|Bartenura)/.test(l) ? 0 : /^Tosaf/.test(l) ? 1 : 2; };
   const FIRST = ['Rashi', 'Tosafot', 'Bartenura', 'Onkelos', 'Ramban', 'Mishnah Berurah', 'Magen Avraham', 'Turei Zahav', 'Siftei Kohen', 'Tosafot Yom Tov', 'Rashbam', 'Ibn Ezra', 'Sforno', 'Biur Halacha', 'Sha\'ar HaTziyun', 'Ba\'er Hetev', 'Be\'er Hetev'];
   const rank = (t: string) => { const k = FIRST.indexOf(t); return k < 0 ? 99 : k; };
   function lineComms(i: number) {
@@ -188,11 +190,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Rashi open on every line (Settings → Look, or the ⋯ menu): once Sefaria's list of commentaries for this amud /
   // perek arrives, Rashi (on Mishnayos, the Bartenura) opens by itself under each line that has one, a few at a time.
+  // Tosafos open on every line too (Gemara only), the same way.
   const autoWho = kind === 'gemara' || kind === 'tanakh' ? 'Rashi' : kind === 'mishnah' ? 'Bartenura' : null;
+  useAutoOpen(!!settings.autoRashi, autoWho);
+  useAutoOpen(!!settings.autoTosfos, kind === 'gemara' ? 'Tosafot' : null);
+  function useAutoOpen(on: boolean, autoWho: string | null) {
   useEffect(() => {
     if (!src || !autoWho || !conns) return;
     const label = nice(autoWho);
-    if (!settings.autoRashi) {
+    if (!on) {
       // Switched off: close the boxes it opened.
       setComm((c) => { const n = { ...c }; for (const k of Object.keys(n)) if (k.endsWith(`:${label}`)) delete n[k]; return n; });
       return;
@@ -209,7 +215,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     void Promise.all([work(), work(), work(), work()]);
     return () => { gone = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.autoRashi, conns, src?.ref]);
+  }, [on, autoWho, conns, src?.ref]);
+  }
   const outline = useOutline(src?.ref, !!settings.outline);
 
   // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).
@@ -631,7 +638,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       ))}
                     </div>
                   )}
-                  {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).map(([k, c]) => {
+                  {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).sort(([a], [b]) => commRank(a) - commRank(b)).map(([k, c]) => {
                     const label = k.slice(k.indexOf(':') + 1);
                     return (
                       <div key={k} className="comm" onClick={(e) => { e.stopPropagation(); if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>

@@ -207,7 +207,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
             </div>
             </Group>
-            <Group id="look-comms" level={2} title="Commentaries on the page" hint={`${s.autoComms ? 'under every line' : 'when I tap a line'}${s.autoRashi ? ' · Rashi open' : ''}${s.rashiScript ? ' · Rashi script' : ''}`}>
+            <Group id="look-comms" level={2} title="Commentaries on the page" hint={`${s.autoComms ? 'under every line' : 'when I tap a line'}${s.autoRashi ? ' · Rashi open' : ''}${s.autoTosfos ? ' · Tosafos open' : ''}${s.rashiScript ? ' · Rashi script' : ''}`}>
             <div className="field">
               <label>Show commentaries</label>
               <Seg value={s.autoComms ? 'on' : 'off'} options={[['off', 'When I tap a line'], ['on', 'Under every line']]} onPick={(v) => onChange({ autoComms: v === 'on' })} />
@@ -217,6 +217,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Rashi open on every line</label>
               <Seg value={s.autoRashi ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ autoRashi: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi&apos;s words open by themselves under each line that has a Rashi, on Gemara and Chumash (on Mishnayos, the Bartenura). Also in the ⋯ menu.</div>
+            </div>
+            <div className="field">
+              <label>Tosafos open on every line</label>
+              <Seg value={s.autoTosfos ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ autoTosfos: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On the Gemara, Tosafos opens by itself under each line that has a Tosafos (after Rashi, if Rashi is on too). Also in the ⋯ menu.</div>
             </div>
             <div className="field">
               <label>Rashi, Tosafos and other commentaries</label>
