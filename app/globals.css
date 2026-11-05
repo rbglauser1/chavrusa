@@ -1785,3 +1785,6 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 }
 [data-look='ink'] .sefer.embedded { margin: 0 10px; width: auto; border-radius: 10px; box-shadow: 0 1px 10px rgba(0, 0, 0, 0.09); overflow: hidden; }
 [data-look='ink'] .topbar { background: rgba(250, 250, 249, 0.55); }
+/* Ink and stone: the reading box only faintly set off from the stone (a see-through white, no shadow, a hairline edge). */
+[data-look='ink'] :is(.sefer, .sefer.embedded) { background-color: rgba(251, 251, 250, 0.45); }
+[data-look='ink'] .sefer.embedded { box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.05); }
