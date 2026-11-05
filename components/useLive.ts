@@ -136,16 +136,28 @@ export function useLive(opts: {
   // connection's own numbers). A learner who spoke but isn't in the log, with the mic "silent", means no sound reached
   // the app (muted, the wrong microphone, Bluetooth…), not that the voice ignored him.
   const micTimer = useRef<number | undefined>(undefined);
+  const seconds8 = useRef(0);
   function micWatch(peer: RTCPeerConnection) {
     window.clearInterval(micTimer.current);
+    seconds8.current = 0;
     let peak = 0, ticks = 0, lastWord = '';
     micTimer.current = window.setInterval(async () => {
       if (pc.current !== peer) { window.clearInterval(micTimer.current); return; }
+      let sent = -1, got = -1, level = -1;
       try {
-        (await peer.getStats()).forEach((r: { type?: string; kind?: string; audioLevel?: number }) => {
-          if ((r.type === 'media-source' || r.type === 'track') && r.kind === 'audio' && typeof r.audioLevel === 'number') peak = Math.max(peak, r.audioLevel);
+        (await peer.getStats()).forEach((r: { type?: string; kind?: string; audioLevel?: number; packetsSent?: number; packetsReceived?: number }) => {
+          if ((r.type === 'media-source' || r.type === 'track') && r.kind === 'audio' && typeof r.audioLevel === 'number') { peak = Math.max(peak, r.audioLevel); level = r.audioLevel; }
+          if (r.type === 'outbound-rtp' && r.kind === 'audio' && typeof r.packetsSent === 'number') sent = r.packetsSent;
+          if (r.type === 'inbound-rtp' && r.kind === 'audio' && typeof r.packetsReceived === 'number') got = r.packetsReceived;
         });
       } catch { /* not available here */ }
+      // The first 8 seconds of a connection, second by second: is the phone's sound really going out to OpenAI, and is
+      // anything coming back? (Some calls never start; this tells a silent microphone from OpenAI not starting.)
+      if (seconds8.current < 8) {
+        seconds8.current++;
+        const t = mic.current?.getAudioTracks()[0];
+        logLine('AUDIO', `${seconds8.current} s: sent to OpenAI ${sent < 0 ? '?' : sent} sound packets · received ${got < 0 ? '?' : got} · mic level ${level < 0 ? '?' : level.toFixed(3)} · mic ${t ? `${t.readyState}${t.muted ? ', MUTED' : ''}${t.enabled ? '' : ', off'}` : 'none'}`);
+      }
       if (++ticks < 10) return;
       const word = peak < 0.01 ? 'silent' : peak < 0.05 ? 'very quiet' : 'hearing sound';
       // Logged every 10 seconds while it changes, and every 30 seconds otherwise, to keep the log short.
