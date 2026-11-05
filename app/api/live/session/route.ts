@@ -191,6 +191,12 @@ export async function POST(req: NextRequest) {
   if (!res.ok) {
     return NextResponse.json({ error: `Live voice could not start (${res.status}): ${data?.error?.message ?? 'unknown error'}` }, { status: 502 });
   }
+  // How much text OpenAI got at the start of this call (for the call recorder: some calls never start, and it may be
+  // the size or content of what a particular learning session sends).
+  const opening = preview ? '' : fv(resume ? resumeNote : hello);
+  const heCount = (t: string) => (t.match(/[\u05D0-\u05EA]/g) ?? []).length;
+  const instr = build(rulesFinal);
+  const sizes = `instructions ${instr.length} chars (${heCount(instr)} Hebrew letters) · context ${context.length} · opening ${opening.length} (${heCount(opening)} Hebrew) · recap ${recap.length} · tapped line ${pointed ? 'yes' : 'no'}`;
   // Which pronunciation rules this call really got, in words, for the call recorder.
   const ruleName = (id: string) => RULES.find((r) => r.id === id)?.name ?? (s.customRules ?? []).find((r) => r.id === id)?.name ?? id;
   const rulesUsed = !short ? 'full instructions (the rule lab applies only with Short)'
@@ -200,5 +206,5 @@ export async function POST(req: NextRequest) {
     : rulesFinal.map(ruleName).join(' + ');
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: oldOpen ? auto && !resume && !!(placeName || recap) && !pointed : autoOpen, ...(point && !oldOpen ? { point } : {}), ...(oldOpen ? { oldOpen: true } : {}) }, ...(notice ? { notice } : {}), rulesUsed, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: oldOpen ? auto && !resume && !!(placeName || recap) && !pointed : autoOpen, ...(point && !oldOpen ? { point } : {}), ...(oldOpen ? { oldOpen: true } : {}) }, ...(notice ? { notice } : {}), rulesUsed, sizes, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
 }

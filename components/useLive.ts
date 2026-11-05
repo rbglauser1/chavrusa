@@ -753,6 +753,7 @@ export function useLive(opts: {
       if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; oldOpen.current = data.speech.oldOpen === true; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
       if (data.rulesUsed) logLine('──', `in this call: voice ${data.voiceUsed ?? '?'} · Hebrew given as ${data.speech?.heRead ?? '?'} · rules: ${data.rulesUsed}`);
+      if (data.sizes) logLine('──', `sent to OpenAI at the start: ${data.sizes}`);
       if (data.notice) { logLine('──', String(data.notice)); optsRef.current.onError(String(data.notice)); }
     } catch (err) {
       const msg = (err as Error).name === 'NotAllowedError'
