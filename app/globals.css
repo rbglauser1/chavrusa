@@ -1835,6 +1835,25 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 [data-look='midnight'] .quote { background: rgba(201, 169, 106, 0.07); }
 .mini.midnight { background: radial-gradient(90% 60% at 55% 0%, #26252a, #121214 70%); }
 
-/* The background stays still everywhere, full screen too: it's painted on a layer fixed to the screen, so only the
-   words scroll over it (phones ignore "background-attachment: fixed", so a fixed layer is used instead). */
-body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: inherit; }
+/* The background moves with the words, the same in full screen and not (the learner's choice): in the regular view the
+   text scrolls inside its box, so the box's texture is painted on the scrolling part ("local") and scrolls along. */
+[data-look='shtender'] body, [data-look='midnight'] body { background-attachment: scroll; }
+[data-look] .sefer.embedded .sefer-body { background-attachment: local; }
+[data-look='shtender'] .sefer.embedded { background-image: linear-gradient(180deg, #fcf9f3, #f7f1e6); background-size: 100% 100%; }
+[data-look='shtender'] .sefer.embedded .sefer-body { background-image: var(--tx-page); background-size: 1000px 700px; }
+[data-look='ink'] .sefer.embedded { background-image: none; }
+[data-look='ink'] .sefer.embedded .sefer-body { background-image: var(--tx-q-page); background-size: 900px 900px; }
+[data-look='stone'] .sefer.embedded { background-image: none; }
+[data-look='stone'] .sefer.embedded .sefer-body { background-image: var(--js-page); background-size: 260px 260px; }
+[data-look='midnight'] .sefer.embedded .sefer-body {
+  background-color: #121214;
+  background-image:
+    radial-gradient(75% 34% at 55% -4%, rgba(236, 228, 210, 0.085), transparent 70%),
+    radial-gradient(80% 50% at 100% 105%, rgba(236, 228, 210, 0.035), transparent 60%),
+    radial-gradient(60% 40% at 92% 25%, rgba(236, 228, 210, 0.03), transparent 65%);
+}
+/* In full screen the whole page scrolls (the box is as tall as the text), so there the box keeps its own texture. */
+body[data-full] .sefer.embedded .sefer-body { background-image: none; background-color: transparent; }
+[data-look='shtender'] body[data-full] .sefer.embedded { background-image: var(--tx-page), linear-gradient(180deg, #fcf9f3, #f7f1e6); background-size: 1000px 700px, 100% 100%; }
+[data-look='ink'] body[data-full] .sefer.embedded { background-image: var(--tx-q-page); background-size: 900px 900px; }
+[data-look='stone'] body[data-full] .sefer.embedded { background-image: var(--js-page); background-size: 260px 260px; }
