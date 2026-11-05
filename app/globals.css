@@ -1705,3 +1705,8 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-sep { display: none; }
 html[data-ilen='only'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { display: none; }
 html[data-ilen='only'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-sep { display: inline; }
+/* The translation in bold: the explanation around it is never bold (even with the English "B" on), so the two stand
+   apart; and under each phrase, with Sefaria's full English, the explanation is a shade lighter too. */
+html[data-enbold='on'] :is(.sefer .line .en, .sefer .line .il-en, .min-he .il-en, .min-en, .en) .en-x { font-weight: 400; }
+html[data-enbold='on'] :is(.sefer .line .en, .sefer .line .il-en, .min-he .il-en, .min-en, .en) b { font-weight: 700; }
+html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { color: color-mix(in srgb, currentColor 62%, transparent); }
