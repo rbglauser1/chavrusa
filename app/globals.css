@@ -1726,5 +1726,4 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 [data-look='techelet'] :is(.line .en, .il-pair + .il-pair) { border-top-color: #b6c9e6; }
 [data-look='techelet'] .sefer .comm, [data-look='techelet'] .min-comm { background: #e1eaf8; }
 [data-look='techelet'] .min-line.on { border-color: #9fb7dc; }
-[data-look='techelet'] .min-pill { background: #fff; border-color: #9fb7dc; color: #1f4a8f; }
 [data-look='techelet'] .move { color: #1f4a8f; }
