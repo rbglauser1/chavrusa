@@ -1710,3 +1710,21 @@ html[data-ilen='only'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-sep 
 html[data-enbold='on'] :is(.sefer .line .en, .sefer .line .il-en, .min-he .il-en, .min-en, .en) .en-x { font-weight: 400; }
 html[data-enbold='on'] :is(.sefer .line .en, .sefer .line .il-en, .min-he .il-en, .min-en, .en) b { font-weight: 700; }
 html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { color: color-mix(in srgb, currentColor 62%, transparent); }
+
+/* Techeles: more blue, so it's clearly its own look. A pale blue page, navy text, a techeles band at the top,
+   the English in a soft blue, and Rashi / Tosafos in light blue boxes with a techeles edge. */
+[data-look='techelet'] {
+  --bg: #eef3fa; --surface: #ffffff; --surface-2: #e2ebf7; --ink: #132a4f; --soft: #52678d;
+  --rule: #c8d6ec; --accent: #1f4a8f; --accent-soft: #d9e5f6;
+}
+[data-look='techelet'] .min-head { background: #1f4a8f; }
+[data-look='techelet'] .min-head > :is(.min-icon, .min-brand, .min-place),
+[data-look='techelet'] .min-head > .min-place :is(.he, small, span) { color: #fff; }
+[data-look='techelet'] .min-head > .min-icon:hover { background: rgba(255, 255, 255, 0.15); }
+[data-look='techelet'][data-c-en='ink'] :is(.line .en, .min-en, .il-en) { color: #2b5394; }
+[data-look='techelet'] :is(.line .en, .il-pair + .il-pair) { border-top-color: #b6c9e6; }
+[data-look='techelet'] .sefer .comm, [data-look='techelet'] .min-comm { background: #e1eaf8; border-inline-start: 3px solid #1f4a8f; }
+[data-look='techelet'] .sefer .line.focus { background: #d6e3f6; box-shadow: inset 3px 0 0 #1f4a8f; }
+[data-look='techelet'] .min-line.on { border-color: #9fb7dc; }
+[data-look='techelet'] .min-pill { background: #fff; border-color: #9fb7dc; color: #1f4a8f; }
+[data-look='techelet'] .move { color: #1f4a8f; border-left-color: #1f4a8f; }
