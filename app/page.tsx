@@ -1,4 +1,5 @@
 'use client';
+import { englishFor } from '@/lib/literal';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { logLine } from '@/lib/callLog';
 import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
@@ -88,6 +89,11 @@ export default function Home() {
   // ---------- Live voice ----------
   const liveQueue = useRef<{ text: string; id: string }[]>([]);
   const liveDelegation = useRef<string | null>(null);
+  const liveAsked = useRef(''); // the words of the request the brain is working on now
+  // "Go on" in any words ("yeah, go ahead", "go further", "next"…): a second one while the first is still coming is
+  // the same request (he often says it twice while the voice says "one moment"), not a second step forward.
+  const GO_WORDS = new Set('yeah yes yep ok okay sure right alright go on ahead further next continue keep going carry please let lets so and um uh the'.split(' '));
+  const isGoOn = (t: string) => { const w = t.toLowerCase().replace(/[’']/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean); return w.length > 0 && w.length <= 8 && w.some((x) => /^(go|going|next|continue|further)$/.test(x)) && w.every((x) => GO_WORDS.has(x)); };
   const liveSpeech = useRef({ buf: '', out: '', sent: false }); // the answer, as it streams, for the Live voice
   const exactSent = useRef(0);      // phrases of a [[say]] block already handed to the voice
   const afterSay = useRef(false);   // the [[say]] block is done; the rest is handed over at the end
@@ -108,7 +114,11 @@ export default function Home() {
   const liveErrTimer = useRef(0);
   const showLiveErr = (m: string) => { setLiveErr(m); window.clearTimeout(liveErrTimer.current); liveErrTimer.current = window.setTimeout(() => setLiveErr(''), 12_000); };
   const liveOpts: Parameters<typeof useLive>[0] = {
-    onRequest: (text, id) => { liveQueue.current.push({ text, id }); pumpLive(); },
+    onRequest: (text, id) => {
+      const dismiss = 'dismiss' in live ? live.dismiss : null; // GPT-Live (Gemini has no such step)
+      if (dismiss && isGoOn(text) && ((liveDelegation.current && isGoOn(liveAsked.current)) || liveQueue.current.some((q) => isGoOn(q.text)))) { dismiss(id); return; }
+      liveQueue.current.push({ text, id }); pumpLive();
+    },
     onError: (m) => { setItems((it) => [...it, { kind: 'error', text: m }]); showLiveErr(m); },
     checkOn: () => settingsRef.current.liveCheck !== false,
     checkHeOn: () => settingsRef.current.liveCheckHe !== false && (settingsRef.current.voiceReads ?? 'all') === 'all',
@@ -168,6 +178,7 @@ export default function Home() {
     if (busyRef.current || liveDelegation.current || !liveQueue.current.length) return;
     const next = liveQueue.current.shift()!;
     liveDelegation.current = next.id;
+    liveAsked.current = next.text;
     send(next.text, { live: true });
   }
 
@@ -373,7 +384,8 @@ export default function Home() {
     showSource({ ...src, focus: n }); // also the next amud / perek shown under the text: it becomes its own tab
     const sid = sessionIdRef.current;
     if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src, ...(live.active ? { part: 1 } : {}) }) }).catch(() => {});
-    if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', src.en[n - 1] ?? src.altEn?.[n - 1] ?? '');
+    // The English as the learner chose it for the voice (the literal words, when Sefaria marks them).
+    if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', englishFor(src.en[n - 1] ?? src.altEn?.[n - 1] ?? '', src.enB?.[n - 1], settings.translate, false, src.he[n - 1] ?? ''));
     setItems((it) => [...it, { kind: 'event', text: `📍 Learning from ${src.ref}, line ${n}.` }]);
   }
 

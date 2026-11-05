@@ -1,3 +1,4 @@
+import { englishFor } from '@/lib/literal';
 import { NextRequest, NextResponse } from 'next/server';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
@@ -86,7 +87,8 @@ export async function POST(req: NextRequest) {
       if (tapped && !plainOpen && (!lastAt || tapped.created_at > lastAt)) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
-        const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';
+        // The English as the learner chose it (Settings → Voice: the literal words, when Sefaria marks them).
+        const en = englishFor(tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '', tapped.data.enB?.[n - 1], s.translate, false, he);
         const reads = s.voiceReads ?? 'all';
         point = { ref: tapped.ref, n, he, en };
         const enLine = en ? clip(namesForSpeechEn(en), 600) : '';

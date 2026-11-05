@@ -386,6 +386,13 @@ export function useLive(opts: {
   pointToRef.current = pointTo;
   // The learner chose something on the Mikraos Gedolos page (a pasuk, a comment, a meforesh on Rashi): read it the way
   // his "who reads" setting says, say briefly what it's bothered by or adds, and wait.
+  // A request the app won't send on (a second "go on" while the first is still coming): close it quietly.
+  const dismiss = useCallback((id: string) => {
+    if (!pending.current.has(id)) return;
+    pending.current.delete(id);
+    logLine('CHECK', 'a second "go on" while the first is still on its way: going on once, not twice');
+    if (!isAppId(id)) send({ type: 'session.commentary.append', delegation_id: id, content: '(Already on its way: say nothing about this one.)' });
+  }, [send]);
   const pointText = useCallback((label: string, he: string, en: string) => {
     bump();
     const r = reading.current; reading.current = null; r?.(false);
@@ -827,5 +834,5 @@ export function useLive(opts: {
     if (!text.trim()) return;
     send({ type: 'session.instructions.append', delegation_id: null, content: `COACH NOTE from the app (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` });
   }, [send]);
-  return { freshStart, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { dismiss, freshStart, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
 }
