@@ -36,6 +36,13 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const box = useRef<HTMLDivElement | null>(null);
   useEffect(() => { setA(start); }, [start.tractate, start.daf, start.amud]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Full screen like the Gemara's: the whole document scrolls (not a box inside it), so Safari tucks its bars away and
+  // the page runs from the very top of the phone to the very bottom.
+  useEffect(() => {
+    document.body.toggleAttribute('data-dafull', full);
+    window.scrollTo(0, 0);
+    return () => document.body.removeAttribute('data-dafull');
+  }, [full]);
   const prev = stepAmud(a, -1), next = stepAmud(a, 1);
 
   // Draw the page, sharp enough to zoom in on Rashi and Tosafos.
@@ -70,9 +77,23 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
     const old = zoomRef.current;
     if (!el || !c || nz === old) { zoomRef.current = nz; setZoom(nz); return; }
     const r = el.getBoundingClientRect();
-    const px = (cx ?? r.left + r.width / 2) - r.left, py = (cy ?? r.top + r.height / 2) - r.top;
-    const x = el.scrollLeft + px, y = el.scrollTop + py; // the spot, in the page as it is now
+    const px = (cx ?? r.left + r.width / 2) - r.left;
     const k = nz / old;
+    if (fullRef.current) {
+      // Full screen: up and down is the document's scroll; across is the box's.
+      const vy = cy ?? window.innerHeight / 2;
+      const top = c.getBoundingClientRect().top + window.scrollY; // the page's top, in the document
+      const y = window.scrollY + vy - top; // the spot, from the top of the page
+      const x = el.scrollLeft + px;
+      c.style.width = `${nz * 100}%`;
+      zoomRef.current = nz;
+      el.scrollLeft = x * k - px;
+      window.scrollTo(window.scrollX, top + y * k - vy);
+      setZoom(nz);
+      return;
+    }
+    const py = (cy ?? r.top + r.height / 2) - r.top;
+    const x = el.scrollLeft + px, y = el.scrollTop + py; // the spot, in the page as it is now
     c.style.width = `${nz * 100}%`;
     zoomRef.current = nz;
     el.scrollLeft = x * k - px;
@@ -102,7 +123,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
       const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2, cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       zoomTo(startZoom * (dist(e.touches) / startDist), cx, cy);
       // Moving both fingers together drags the page.
-      if (box.current) { box.current.scrollLeft -= cx - midX; box.current.scrollTop -= cy - midY; }
+      if (box.current) { box.current.scrollLeft -= cx - midX; if (fullRef.current) window.scrollBy(0, -(cy - midY)); else box.current.scrollTop -= cy - midY; }
       midX = cx; midY = cy;
     };
     // A single tap (not a drag, not the first of a double-tap): full screen on and off.
