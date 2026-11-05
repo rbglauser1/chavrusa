@@ -1834,3 +1834,7 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 [data-look='midnight'] .sefer .comm, [data-look='midnight'] .min-comm { background: rgba(255, 255, 255, 0.035); }
 [data-look='midnight'] .quote { background: rgba(201, 169, 106, 0.07); }
 .mini.midnight { background: radial-gradient(90% 60% at 55% 0%, #26252a, #121214 70%); }
+
+/* The background stays still everywhere, full screen too: it's painted on a layer fixed to the screen, so only the
+   words scroll over it (phones ignore "background-attachment: fixed", so a fixed layer is used instead). */
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: inherit; }
