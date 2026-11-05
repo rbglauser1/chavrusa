@@ -1814,8 +1814,8 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 .mini.stone { background: #e3d3b2; }
 .mini.stone .m-src { background: #f7f0e2; }
 
-/* Midnight, refined: off-black (a warm charcoal, not pure black), with quiet hues at the edges: a deep indigo glow
-   at the top, a dark teal at the bottom, a soft vignette; ivory text and a muted champagne gold. */
+/* Midnight, refined: off-black (a warm charcoal, not pure black), with only soft whitish highlights (no colored
+   tints: the learner asked to take the bluish one out), a soft vignette; ivory text and a muted champagne gold. */
 [data-look='midnight'] {
   --bg: #121214; --surface: #19191c; --surface-2: #202024; --ink: #ece6da; --soft: #9d978c;
   --rule: #2b2a2f; --accent: #c9a96a; --accent-ink: #17140e; --accent-soft: rgba(201, 169, 106, 0.12);
@@ -1824,14 +1824,13 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 [data-look='midnight'] body {
   background-color: #121214;
   background-image:
-    radial-gradient(70% 32% at 58% -4%, rgba(236, 228, 210, 0.075), transparent 70%),
-    radial-gradient(90% 55% at 15% -8%, rgba(96, 82, 168, 0.38), transparent 62%),
-    radial-gradient(80% 50% at 100% 105%, rgba(32, 110, 116, 0.34), transparent 60%),
-    radial-gradient(60% 40% at 92% 25%, rgba(132, 74, 104, 0.17), transparent 65%),
+    radial-gradient(75% 34% at 55% -4%, rgba(236, 228, 210, 0.085), transparent 70%),
+    radial-gradient(80% 50% at 100% 105%, rgba(236, 228, 210, 0.035), transparent 60%),
+    radial-gradient(60% 40% at 92% 25%, rgba(236, 228, 210, 0.03), transparent 65%),
     radial-gradient(140% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
   background-attachment: fixed;
 }
 [data-look='midnight'][data-c-en='ink'] :is(.sefer .line .en, .sefer .il-en, .min-en) { color: #bdb6aa; }
 [data-look='midnight'] .sefer .comm, [data-look='midnight'] .min-comm { background: rgba(255, 255, 255, 0.035); }
 [data-look='midnight'] .quote { background: rgba(201, 169, 106, 0.07); }
-.mini.midnight { background: radial-gradient(90% 60% at 15% 0%, #2a2540, #121214 70%); }
+.mini.midnight { background: radial-gradient(90% 60% at 55% 0%, #26252a, #121214 70%); }
