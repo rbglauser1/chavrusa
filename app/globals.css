@@ -1873,9 +1873,12 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 .mini.midnight { background: radial-gradient(90% 60% at 15% 0%, #201e2c, #121214 70%); }
 
 /* Tzuras hadaf in full screen, like the Gemara's: the document itself scrolls (so Safari tucks its bars away) and the
-   page runs from the very top of the phone to the very bottom; Talk and the exit button stay on screen. */
+   page runs from the very top of the phone to the very bottom; Talk and the exit button stay on screen. The page is a
+   little taller than the screen even when the daf fits on it, so one small swipe up can hide Safari's bars (Safari
+   only hides them on a scroll); everything around it is white, so no colored band shows at the edges. */
 body[data-dafull] :is(.app, .main, .min, .min-quiet) { height: auto; min-height: 100dvh; overflow: visible; }
-.daf-page.full { position: absolute; top: 0; left: 0; right: 0; bottom: auto; min-height: 100dvh; display: block; background: #fff; }
-.daf-page.full .daf-page-box { overflow-x: auto; overflow-y: visible; padding-top: 0; min-height: 100dvh; }
+.daf-page.full { position: absolute; top: 0; left: 0; right: 0; bottom: auto; min-height: calc(100lvh + 80px); display: block; background: #fff; }
+.daf-page.full .daf-page-box { overflow-x: auto; overflow-y: visible; padding-top: 0; min-height: calc(100lvh + 80px); }
 .daf-page.full .daf-page-talk { position: fixed; }
-body[data-dafull] { background: #fff; }
+html:has(body[data-dafull]), body[data-dafull] { background: #fff; background-image: none; }
+body[data-dafull]::before { display: none; }
