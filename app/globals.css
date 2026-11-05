@@ -1813,3 +1813,24 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 [data-look='stone'] .topbar { background: rgba(230, 216, 187, 0.72); }
 .mini.stone { background: #e3d3b2; }
 .mini.stone .m-src { background: #f7f0e2; }
+
+/* Midnight, refined: off-black (a warm charcoal, not pure black), with quiet hues at the edges: a deep indigo glow
+   at the top, a dark teal at the bottom, a soft vignette; ivory text and a muted champagne gold. */
+[data-look='midnight'] {
+  --bg: #121214; --surface: #19191c; --surface-2: #202024; --ink: #ece6da; --soft: #9d978c;
+  --rule: #2b2a2f; --accent: #c9a96a; --accent-ink: #17140e; --accent-soft: rgba(201, 169, 106, 0.12);
+  --me: #ece6da; --src-bg: #1b1b1f; --src-ink: #ece6da; --src-rule: #2b2a2f;
+}
+[data-look='midnight'] body {
+  background-color: #121214;
+  background-image:
+    radial-gradient(90% 55% at 15% -8%, rgba(92, 78, 160, 0.32), transparent 62%),
+    radial-gradient(80% 50% at 100% 105%, rgba(30, 104, 110, 0.28), transparent 60%),
+    radial-gradient(60% 40% at 92% 25%, rgba(128, 72, 100, 0.13), transparent 65%),
+    radial-gradient(140% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
+  background-attachment: fixed;
+}
+[data-look='midnight'][data-c-en='ink'] :is(.sefer .line .en, .sefer .il-en, .min-en) { color: #bdb6aa; }
+[data-look='midnight'] .sefer .comm, [data-look='midnight'] .min-comm { background: rgba(255, 255, 255, 0.035); }
+[data-look='midnight'] .quote { background: rgba(201, 169, 106, 0.07); }
+.mini.midnight { background: radial-gradient(90% 60% at 15% 0%, #2a2540, #121214 70%); }
