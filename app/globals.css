@@ -1715,7 +1715,7 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
    the English in a soft blue, and Rashi / Tosafos in light blue boxes (no side lines, and the line
    you're on isn't boxed: as in the other looks). */
 [data-look='techelet'] {
-  --bg: #eef3fa; --surface: #ffffff; --surface-2: #e2ebf7; --ink: #132a4f; --soft: #52678d;
+  --bg: #e4edf9; --surface: #ffffff; --surface-2: #d8e4f5; --ink: #132a4f; --soft: #52678d;
   --rule: #c8d6ec; --accent: #1f4a8f; --accent-soft: #d9e5f6;
 }
 [data-look='techelet'] .min-head { background: #1f4a8f; }
@@ -1724,17 +1724,17 @@ html[data-ilen='full'] :is(.sefer .line .il-en, .min-he .il-en, .il-en) .en-x { 
 [data-look='techelet'] .min-head > .min-icon:hover { background: rgba(255, 255, 255, 0.15); }
 [data-look='techelet'][data-c-en='ink'] :is(.line .en, .min-en, .il-en) { color: #2b5394; }
 [data-look='techelet'] :is(.line .en, .il-pair + .il-pair) { border-top-color: #b6c9e6; }
-[data-look='techelet'] .sefer .comm, [data-look='techelet'] .min-comm { background: #e1eaf8; }
+[data-look='techelet'] .sefer .comm, [data-look='techelet'] .min-comm { background: #d6e3f6; }
 [data-look='techelet'] .min-line.on { border-color: #9fb7dc; }
 [data-look='techelet'] .move { color: #1f4a8f; }
 
 /* Vilna green: the page a very light green, nearly white (not cream), like the Techeles blue page, on the dark green baize; deep green ink. */
-[data-look='vilna'] { --src-bg: #eef6f0; --src-ink: #11291f; }
-[data-look='vilna'] .sefer { --bg: #eef6f0; --surface: #ffffff; --surface-2: #dcebdf; --ink: #11291f; --soft: #46604f; --rule: #b6cfbc; --accent: #1f5a48; --accent-ink: #f1f7f2; --accent-soft: #d0e3d5; }
-[data-look='vilna'] :is(.sefer, .sefer.embedded, .turn.them .say, .pin-inner, .quote) { background-color: #eef6f0; background-image: none; }
+[data-look='vilna'] { --src-bg: #e3f1e7; --src-ink: #11291f; }
+[data-look='vilna'] .sefer { --bg: #e3f1e7; --surface: #ffffff; --surface-2: #dcebdf; --ink: #11291f; --soft: #46604f; --rule: #b6cfbc; --accent: #1f5a48; --accent-ink: #f1f7f2; --accent-soft: #d0e3d5; }
+[data-look='vilna'] :is(.sefer, .sefer.embedded, .turn.them .say, .pin-inner, .quote) { background-color: #e3f1e7; background-image: none; }
 [data-look='vilna'] .turn.them .say { color: #11291f; }
 [data-look='vilna'][data-c-en='ink'] :is(.sefer .line .en, .sefer .il-en, .min-en) { color: #2a6a50; }
-[data-look='vilna'] .sefer .comm { background: #dcebdf; }
+[data-look='vilna'] .sefer .comm { background: #d3e8d9; }
 
 /* Shtender at night: a walnut shtender, its wood grain behind every page (home, the menus, and around the page of
    Gemara), with the lamp's glow at the top. The grain: long soft bands bent by a slow wave, and fine light pores. */
