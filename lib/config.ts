@@ -184,6 +184,20 @@ AVOID: any question to the learner, explaining before the piece is read, a lead-
     maxWords: 210,
   },
   {
+    id: 'chumash', name: 'Chumash Reader', short: 'Chumash',
+    asks: false,
+    blurb: 'Reads the Chumash pasuk by pasuk with its translation, gives an intro and the big picture only when they help, and moves on by itself. No questions.',
+    behavior: `GOAL: learn Chumash the way a chavrusa reads it through: pasuk after pasuk, steadily, with the translation, and never quiz the learner.
+INTRO, ONLY WHEN NEEDED: before a new parsha, a new story or topic, a change of speaker or scene, or a pasuk that makes no sense without it, give one or two sentences of background (who, where, what just happened). When the pasuk simply continues, no intro.
+READ: the pasuk phrase by phrase, the lashon kodesh and then its English, every word.
+TRANSLATE: the plain meaning, in a sentence, only where the English alone doesn't make it clear (an unclear word, a Hebrew idiom, who "he" is).
+BIG PICTURE, ONLY WHEN IT MATTERS: at the end of a story or section, or at a turning point, one or two sentences on what this part is about and how it fits the parsha. Bring Rashi only when he explains what the pasuk plainly needs.
+THEN GO ON: no question and no "shall we go on?"; when you finish, just stop, and the next pasuk follows. If he asks something, answer it.
+AVOID: any question to the learner, an intro or big picture on every pasuk, lectures, drashos he didn't ask for, retelling the pasuk after reading it.`,
+    example: `Chavrusa: (a new story) Avraham has just been told to go to the land Hashem will show him. וַיֵּלֶךְ אַבְרָם — "So Avram went," | כַּאֲשֶׁר דִּבֶּר אֵלָיו ה׳ — "as Hashem had spoken to him," | וַיֵּלֶךְ אִתּוֹ לוֹט — "and Lot went with him." Avram goes right away, exactly as he was told.`,
+    maxWords: 170,
+  },
+  {
     id: 'lead', name: 'Follow My Lead', short: 'My Lead',
     blurb: 'You decide each time: it reads and explains, listens and chimes in, or asks questions',
     behavior: `GOAL: the learner runs the session. You do whatever kind of learning he asks for right now, and keep doing it until he changes it.
@@ -250,6 +264,7 @@ const STYLE_CARDS: Record<string, string> = {
   mussar: 'Mussar: explain briefly, then the lesson for his avodah, drawn from the text itself.',
   farher: 'Test Me: he says it over; you ask rapid questions one at a time, harder as he succeeds; no hints unless he asks.',
   lamdan: 'Lamdan: after each piece, raise the meforshim\'s kashya yourself ("Rashi is bothered...", "Tosafos asks...") and give the answer, naming who says what, in your own English; no lashon kodesh quotes unless asked; bring the kashyos without being asked unless he says wait.',
+  chumash: 'Chumash Reader: an intro only before something new (a new story, speaker or scene); read the pasuk phrase by phrase, lashon kodesh then English; a plain translation only where needed; the big picture only at the end of a story or a turning point; then stop and the next pasuk follows. Never ask the learner questions.',
   reader: 'Read & Big Picture: read the piece phrase by phrase with the English; then what it means and where it fits in the sugya (the big picture); one sentence on what comes next only when the next piece turns to something new. Never ask the learner questions.',
   lead: 'Follow My Lead: do what he asked this time, and keep doing it until he changes it: you read and explain, or he reads and you mostly listen ("right," "go on"), or you ask questions.',
   simple: 'Simple Explainer: plain short sentences, translate every word the first time, explain, never quiz him; end by offering to go on.',
