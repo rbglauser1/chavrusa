@@ -9,6 +9,7 @@ import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
 import type { LiveState, useLive } from './useLive';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
+import { logBegin, logEnd, logLine } from '@/lib/callLog';
 
 type Opts = Parameters<typeof useLive>[0];
 const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
@@ -62,7 +63,13 @@ export function useGeminiLive(opts: Opts) {
   const optsRef = useRef(opts);
   optsRef.current = opts;
   const stateRef = useRef<LiveState>('off');
-  const setS = (s: LiveState) => { stateRef.current = s; setState(s); };
+  const setS = (s: LiveState) => { if (stateRef.current !== s) logLine('STATE', s); stateRef.current = s; setState(s); };
+  // The call recorder (as for GPT-Live): what the learner and the voice said, turn by turn.
+  const recIn = useRef('');  // the learner's words not yet written to the log
+  const recOut = useRef(''); // the voice's words this turn
+  const flushIn = () => { const t = recIn.current.trim(); recIn.current = ''; if (t) logLine('LEARNER', `"${t}"`); };
+  const flushOut = (how = '') => { const t = recOut.current.trim(); recOut.current = ''; if (t) logLine('VOICE', `said${how}: "${t}"`); };
+  const gotSound = useRef(false); // Gemini has sent sound since the call opened
 
   const ws = useRef<WebSocket | null>(null);
   const ctx = useRef<AudioContext | null>(null);
@@ -99,6 +106,7 @@ export function useGeminiLive(opts: Opts) {
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
   const g = (t: string) => forVoice(t, speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
+    logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [send]);
@@ -140,6 +148,8 @@ export function useGeminiLive(opts: Opts) {
     const f = new Float32Array(n);
     for (let i = 0; i < n; i++) f[i] = dv.getInt16(i * 2, true) / 32768;
     pl.port.postMessage(f, [f.buffer]);
+    if (!audioBusy.current) { flushIn(); logLine('VOICE', '▶ starts speaking'); }
+    gotSound.current = true;
     audioBusy.current = true;
     bump();
     if (stateRef.current !== 'speaking') setS('speaking');
@@ -166,6 +176,8 @@ export function useGeminiLive(opts: Opts) {
   const finish = useCallback((next: 'off' | 'paused' = 'off') => {
     const secs = startedAt.current ? (Date.now() - startedAt.current) / 1000 : 0;
     const was = stateRef.current;
+    flushIn(); flushOut(' (cut off)');
+    if (next === 'off') logEnd(`ended after ${Math.round(secs)} s`); else logLine('──', 'paused (the next word or tap reconnects)');
     teardown();
     setS(next === 'off' ? 'off' : 'paused');
     setPauseIn(null);
@@ -186,6 +198,8 @@ export function useGeminiLive(opts: Opts) {
 
   // Gemini asked the backend (a learning turn): pass the learner's words to the brain.
   const handleCall = useCallback((id: string, request: string) => {
+    flushIn(); flushOut();
+    logLine('EVENT', `asks the app [${id.slice(-5)}]: "${request}"`);
     pending.current.set(id, []);
     setS('thinking');
     bump();
@@ -206,6 +220,7 @@ export function useGeminiLive(opts: Opts) {
     answering.current = true;
     voiceBuf.current = '';
     bump();
+    logLine('APP→VOICE', `result [${id.slice(-5)}]: ${g(result)}`);
     send({ toolResponse: { functionResponses: [{ id, name: 'ask_backend', response: { result: g(result) } }] } });
   }
   const resultOf = (segs: Seg[]) => segs.map((s) => (s.kind === 'exact' ? `TEXT: ${s.text} END.` : s.text)).join(' ').trim();
@@ -250,32 +265,42 @@ export function useGeminiLive(opts: Opts) {
 
   const onMessage = useCallback((m: any) => {
     if (m.setupComplete) {
+      logLine('EVENT', 'setup complete: the call is open');
       ready.current = true;
       startedAt.current = Date.now(); bump(); setS('listening');
       const opening = openingRef.current;
       if (opening) appSay(opening);
+      // A call that opens but never speaks: if Gemini has sent no sound 8 s after the opening and the learner hasn't
+      // spoken, ask it once more to begin (the recorder shows a CHECK line).
+      const sock = ws.current;
+      window.setTimeout(() => {
+        if (ws.current !== sock || gotSound.current || recIn.current.trim() || userBuf.current.trim() || pending.current.size) return;
+        logLine('CHECK', 'no sound from Gemini 8 s after the opening: asking it to begin');
+        appSay('The call is open and the learner is listening. Begin now, as your instructions say.');
+      }, 8000);
       return;
     }
     if (m.toolCall?.functionCalls) {
       for (const c of m.toolCall.functionCalls) if (c?.id) handleCall(String(c.id), String(c.args?.request ?? ''));
       return;
     }
-    if (m.toolCallCancellation?.ids) { for (const id of m.toolCallCancellation.ids) pending.current.delete(String(id)); return; }
-    if (m.goAway) return; // the session will close soon; we reconnect as a pause
+    if (m.toolCallCancellation?.ids) { logLine('EVENT', `cancelled its request: ${m.toolCallCancellation.ids.map((x: string) => String(x).slice(-5)).join(', ')}`); for (const id of m.toolCallCancellation.ids) pending.current.delete(String(id)); return; }
+    if (m.goAway) { logLine('EVENT', `Gemini will close the session soon (time left: ${m.goAway.timeLeft ?? '?'})`); return; } // we reconnect as a pause
     const sc = m.serverContent;
     if (!sc) return;
     if (sc.inputTranscription?.text) {
       userBuf.current += sc.inputTranscription.text;
+      recIn.current += sc.inputTranscription.text;
       heardAll.current += sc.inputTranscription.text;
       bump();
       if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
       const r = reading.current; if (r && sc.inputTranscription.text.trim()) { reading.current = null; r(false); }
     }
     if (sc.outputTranscription?.text && !answering.current && !pending.current.size) voiceBuf.current += sc.outputTranscription.text;
-    if (sc.outputTranscription?.text) saidAll.current += sc.outputTranscription.text;
+    if (sc.outputTranscription?.text) { saidAll.current += sc.outputTranscription.text; recOut.current += sc.outputTranscription.text; }
     for (const p of sc.modelTurn?.parts ?? []) if (p?.inlineData?.data && String(p.inlineData.mimeType ?? '').startsWith('audio')) playPcm(p.inlineData.data);
-    if (sc.interrupted) { stopPlayback(); setS(pending.current.size ? 'thinking' : 'listening'); }
-    if (sc.turnComplete) { turnDone.current = true; player.current?.port.postMessage('flush'); afterTurn(); }
+    if (sc.interrupted) { logLine('EVENT', 'interrupted (the learner spoke)'); flushOut(' (interrupted)'); stopPlayback(); setS(pending.current.size ? 'thinking' : 'listening'); }
+    if (sc.turnComplete) { flushIn(); flushOut(); turnDone.current = true; player.current?.port.postMessage('flush'); afterTurn(); }
   }, [appSay, handleCall, playPcm, stopPlayback, afterTurn]);
 
   const openingRef = useRef('');
@@ -286,6 +311,8 @@ export function useGeminiLive(opts: Opts) {
     const resuming = stateRef.current === 'paused';
     stopWakeWatch();
     closingTo.current = null;
+    logBegin(`${optsRef.current.logMeta?.() ?? ''} · engine gemini`, resuming);
+    gotSound.current = false;
     setS('connecting');
     try {
       // The player and microphone start inside the tap (phones only allow sound that a tap began).
@@ -296,7 +323,7 @@ export function useGeminiLive(opts: Opts) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       mic.current = stream;
       // Never stuck on "Connecting…": 15 seconds after the microphone opens, give up and say so.
-      window.setTimeout(() => { if (mic.current === stream && stateRef.current === 'connecting') { optsRef.current.onError('The voice didn’t connect. Check the internet connection and tap Talk again.'); finish('off'); } }, 15_000);
+      window.setTimeout(() => { if (mic.current === stream && stateRef.current === 'connecting') { logLine('ERROR', `still connecting after 15 s (${ws.current ? (ready.current ? 'set up' : 'the setup never completed') : 'no connection to Gemini yet'})`); optsRef.current.onError('The voice didn’t connect. Check the internet connection and tap Talk again.'); finish('off'); } }, 15_000);
       const sid = optsRef.current.sessionId?.();
       const q = new URLSearchParams();
       if (sid) q.set('session', sid);
@@ -305,6 +332,7 @@ export function useGeminiLive(opts: Opts) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) throw new Error(data.error ?? `status ${res.status}`);
       openingRef.current = String(data.opening ?? '');
+      logLine('──', `in this call: Gemini ${String(data.setup?.model ?? '?').replace('models/', '')} · voice ${data.setup?.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName ?? '?'} · instructions ${String(data.setup?.systemInstruction?.parts?.[0]?.text ?? '').length} chars`);
       if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false };
 
       // Microphone → 16 kHz, 16-bit blocks → Gemini.
@@ -322,9 +350,17 @@ export function useGeminiLive(opts: Opts) {
       node.connect(silent); silent.connect(ac.destination);
       const ratio = ac.sampleRate / 16000;
       let acc: number[] = [];
+      // The recorder's AUDIO lines: blocks of the learner's sound sent to Gemini, and the mic level, for the first 8 s.
+      let sentBlocks = 0, peak = 0, sec = 0;
+      const audioWatch = window.setInterval(() => {
+        if (mic.current !== stream || ++sec > 8) { window.clearInterval(audioWatch); return; }
+        logLine('AUDIO', `${sec} s: sent to Gemini ${sentBlocks} sound blocks · mic level ${peak.toFixed(3)} · mic ${stream.getAudioTracks()[0]?.readyState ?? '?'} · Gemini sound ${gotSound.current ? 'yes' : 'not yet'}`);
+        peak = 0;
+      }, 1000);
       let pos = 0; // where the next 16 kHz sample falls in the incoming block (carried across blocks)
       node.port.onmessage = (e: MessageEvent<Float32Array>) => {
         const f = e.data;
+        for (let i = 0; i < f.length; i += 16) { const a = Math.abs(f[i]); if (a > peak) peak = a; }
         for (; pos < f.length; pos += ratio) {
           const v = Math.max(-1, Math.min(1, f[Math.floor(pos)]));
           acc.push(v < 0 ? v * 0x8000 : v * 0x7fff);
@@ -335,13 +371,14 @@ export function useGeminiLive(opts: Opts) {
           const pcm = new Int16Array(acc);
           acc = [];
           send({ realtimeInput: { audio: { data: b64FromBytes(new Uint8Array(pcm.buffer)), mimeType: 'audio/pcm;rate=16000' } } });
+          sentBlocks++;
         }
       };
 
       const sock = new WebSocket(data.url);
       sock.binaryType = 'arraybuffer';
       ws.current = sock;
-      sock.onopen = () => sock.send(JSON.stringify({ setup: data.setup }));
+      sock.onopen = () => { logLine('EVENT', 'connected to Gemini: sending the setup'); sock.send(JSON.stringify({ setup: data.setup })); };
       sock.onmessage = async (ev) => {
         try {
           const d = ev.data as unknown;
@@ -352,6 +389,7 @@ export function useGeminiLive(opts: Opts) {
       sock.onerror = () => { /* the close that follows says what happened */ };
       sock.onclose = (ev) => {
         if (ws.current !== sock) return;
+        logLine('EVENT', `connection closed (code ${ev.code}${ev.reason ? `: ${ev.reason}` : ''})`);
         const to = closingTo.current;
         closingTo.current = null;
         if (to) { finish(to); return; }
@@ -368,6 +406,8 @@ export function useGeminiLive(opts: Opts) {
       const msg = (err as Error).name === 'NotAllowedError'
         ? 'Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.'
         : `Could not start Gemini Live: ${(err as Error).message}`;
+      logLine('ERROR', msg);
+      logEnd('could not start');
       optsRef.current.onError(msg);
       teardown();
       setS('off');
