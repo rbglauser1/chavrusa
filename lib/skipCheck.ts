@@ -123,3 +123,20 @@ export function missingHebrew(text: string, said: string): string | null {
   }
   return pieces.slice(missed[0].i, missed[missed.length - 1].i + 1).join(' … ');
 }
+
+/** Has the voice reached the end of the text it was handed (the last phrase's words are in what it said)? Used to
+ *  hold what comes after a reading (the explanation) until the reading is done. */
+export function endHeard(text: string, said: string): boolean {
+  const pieces = text.split(/\s*…\s*/).map((p) => p.trim()).filter(Boolean);
+  const last = pieces[pieces.length - 1] ?? '';
+  const want = enWords(last);
+  if (want.length) {
+    const got = new Set(enWords(said));
+    return want.filter((w) => got.has(w)).length / want.length >= 0.5;
+  }
+  const he = (last.replace(NIKUD, '').match(/[א-ת]+/g) ?? []).map(heSkel).filter((x) => x.length >= 2);
+  if (!he.length) return said.trim().length > 0;
+  const stream = (said.match(/[A-Za-z][A-Za-z'’]*/g) ?? []).map(latSkel);
+  const heSaid = heWords(said);
+  return he.filter((w) => stream.some((x) => near(w, x)) || heSaid.length > 0).length / he.length >= 0.5;
+}

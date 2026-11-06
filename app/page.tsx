@@ -90,6 +90,7 @@ export default function Home() {
   const liveQueue = useRef<{ text: string; id: string }[]>([]);
   const liveDelegation = useRef<string | null>(null);
   const liveAsked = useRef(''); // the words of the request the brain is working on now
+  const earlyHanded = useRef<string | null>(null); // the request whose next piece was already handed to the voice
   // "Go on" in any words ("yeah, go ahead", "go further", "next"…): a second one while the first is still coming is
   // the same request (he often says it twice while the voice says "one moment"), not a second step forward.
   const GO_WORDS = new Set('yeah yes yep ok okay sure right alright go on ahead further next continue keep going carry please let lets so and um uh the'.split(' '));
@@ -560,6 +561,15 @@ export default function Home() {
         setStatus('');
         break;
       }
+      case 'early': {
+        // Read at once, explain after: the next piece goes to the voice now; the explanation follows in 'reply'.
+        if (liveDelegation.current && 'readNow' in live) {
+          const body = String(e.text).match(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/i)?.[1] ?? '';
+          const lead = String(e.text).split('[[say]]')[0].trim();
+          if (body) { logLine('BRAIN', `next piece handed at once: ${body.slice(0, 300)}`); live.readNow(liveDelegation.current, `${lead ? `${lead} ` : ''}${body}`); earlyHanded.current = liveDelegation.current; }
+        }
+        break;
+      }
       case 'reply': {
         const finalText: string = e.text;
         if (liveDelegation.current) logLine('BRAIN', `answer finished (${finalText.length} chars, model ${e.model ?? '?'}): ${finalText.slice(0, 1500)}`);
@@ -574,7 +584,12 @@ export default function Home() {
           return copy;
         });
         liveIdx.current = null;
-        if (liveDelegation.current) {
+        if (liveDelegation.current && e.early && earlyHanded.current === liveDelegation.current && 'explainAfter' in live) {
+          // The piece is already being read: the rest (the explanation) waits until the reading is done.
+          live.explainAfter(liveDelegation.current, String(e.after ?? ''));
+          earlyHanded.current = null;
+          liveDelegation.current = null;
+        } else if (liveDelegation.current) {
           // The whole answer, at once: the text blocks (read exactly) as TEXT … END in their places, and the rest around them.
           const whole = finalText
             .replace(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/gi, (_m: string, body: string) => ` ⟪${body.split('|').map((x) => x.trim()).filter(Boolean).join(' … ')}⟫ `)

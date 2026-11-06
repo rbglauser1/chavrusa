@@ -5,7 +5,7 @@ import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 import { silentWav } from './useVoice';
-import { missingHebrew, missingTail } from '@/lib/skipCheck';
+import { endHeard, missingHebrew, missingTail } from '@/lib/skipCheck';
 
 let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
@@ -475,6 +475,50 @@ export function useLive(opts: {
     else for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
 
+  // Read at once, explain after: on "go on" the app hands the voice the next piece right away (readNow), while the
+  // brain writes the explanation; that is held until the voice has read the piece to its end (explainAfter), so
+  // nothing new arrives in the middle of a reading (that made it stop, pivot, or jump to the next line).
+  const early = useRef<{ id: string; text: string; at: number; from: number } | null>(null);
+  const readNow = useCallback((delegationId: string, body: string) => {
+    if (!pending.current.has(delegationId)) return;
+    const ex = forSpeech(body.replace(/\s*\|\s*/g, ' … '));
+    if (!ex) return;
+    partial.current.add(delegationId);
+    answering.current = true;
+    voiceBuf.current = '';
+    bump();
+    setS('speaking');
+    handed.current = { text: `⟪${ex}⟫`, at: Date.now() };
+    toCheck(`⟪${ex}⟫`);
+    early.current = { id: delegationId, text: ex, at: Date.now(), from: voiceAll.current.length };
+    logLine('AUTO', 'reading the next piece at once; the explanation follows when it has been read');
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the text between ⟪ and ⟫ is the next piece of the text itself. Read it now, the way a chavrusa reads inside: every phrase in order to the end, each lashon kodesh phrase and then its English. Then stop: what comes after the reading follows in a moment.' });
+    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫`) });
+  }, [send]);
+  const explainAfter = useCallback((delegationId: string, text: string) => {
+    const e = early.current;
+    if (!e || e.id !== delegationId) { answer(delegationId, text); return; }
+    const timer = window.setInterval(() => {
+      if (!pending.current.has(delegationId) || !pc.current) { window.clearInterval(timer); early.current = null; return; }
+      // He spoke during the reading (a question, "wait"…): the explanation is no longer wanted.
+      if (lastInputAt.current > e.at) {
+        window.clearInterval(timer); early.current = null;
+        pending.current.delete(delegationId); partial.current.delete(delegationId);
+        logLine('CHECK', 'the learner spoke during the reading: the explanation is left out');
+        send({ type: 'session.commentary.append', delegation_id: delegationId, content: '(Nothing more to add here: answer what the learner just said.)' });
+        return;
+      }
+      const said = voiceAll.current.slice(e.from);
+      const quietFor = recOut.current ? 0 : Date.now() - lastUtter.current.at;
+      const done = !!said.trim() && endHeard(e.text, said);
+      if ((done && quietFor > 700) || (Date.now() - e.at > 40_000 && quietFor > 1500)) {
+        window.clearInterval(timer); early.current = null;
+        logLine('AUTO', done ? 'the piece has been read: now the explanation' : 'the explanation (the reading took long)');
+        answer(delegationId, text);
+      }
+    }, 250);
+  }, [answer, send]);
+
   // The answer has text to say word for word (lashon kodesh phrase by phrase, with its English): the voice is told,
   // for this request, to read that part exactly, every phrase and in order, and only then say the rest.
   const answerExact = useCallback((delegationId: string, exact: string, rest: string) => {
@@ -895,5 +939,5 @@ export function useLive(opts: {
     if (!text.trim()) return;
     send({ type: 'session.instructions.append', delegation_id: null, content: `COACH NOTE from the app (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` });
   }, [send]);
-  return { dismiss, freshStart, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
+  return { readNow, explainAfter, dismiss, freshStart, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
 }

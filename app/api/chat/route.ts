@@ -13,7 +13,9 @@ import { openingPlace, prefetchSource, prepareCommentaries, prepareLamdan, warmT
 import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, section, splitRef, textInHand } from '@/lib/place';
 import { fixSay, nextPiece, type Expect, type Section } from '@/lib/sayFix';
-import { forReader, stripNikud } from '@/lib/hebrew';
+import { forReader, namesForSpeechEn, stripNikud, voiceHe } from '@/lib/hebrew';
+import { pairPhrases } from '@/lib/interlinear';
+import { literalOf } from '@/lib/literal';
 import { nextSection } from '@/lib/refs';
 import { after } from 'next/server';
 import { addSource, SourceData } from '@/lib/db';
@@ -261,6 +263,10 @@ export async function POST(req: NextRequest) {
         const goOn = spoken && message.length < 80 && (/\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message) || (yes && askedOn));
         let readNext = '';
         let nextAt: Expect | null = null; // the piece "go on" brings (its place is kept even when nothing is read aloud)
+        // Read at once, explain after (in a GPT-Live call): on "go on" the app hands the voice the next piece right away
+        // (the Hebrew and its English, phrase by phrase), and the brain writes only what comes after the reading.
+        // The app holds that until the voice has finished reading, so nothing new arrives in the middle of it.
+        let early = '';
         // Only the gist: the learner reads the text himself, so the chavrusa doesn't read it at all.
         const gistNote = spoken && settings.voiceReads === 'gist' ? '\n\n[THE LEARNER READS THE TEXT HIMSELF: do not use a [[say]] block and do not read or quote the text, in Hebrew or English. Give the gist of the piece in a sentence or two, in your own words (its steps), then go on with your style\'s part.]' : '';
         if (goOn && place && settings.nusach !== 'sephardi' && !/ on /i.test(place.base)) {
@@ -273,7 +279,21 @@ export async function POST(req: NextRequest) {
               const sec2 = b2 ? await section(b2, sources, approved) : null;
               if (b2 && sec2?.he.length) { nb = b2; nx = nextPiece({ base: b2, he: sec2.he, en: sec2.en }, { n: 0 }) ?? null; }
             }
-            if (nx) {
+            const sx = nb === place.base ? sec : await section(nb, sources, approved);
+            if (nx && settings.voiceReads !== 'gist' && settings.liveEngine !== 'gemini' && !lamdan && !introFor) {
+              // The English as he chose it; phrase by phrase when the line can be cut into phrases.
+              const lit = settings.translate && settings.translate !== 'full';
+              const enB = sx?.enB?.[nx.n - 1];
+              const plain = (t: string) => t.replace(/[\u0002\u0003]/g, '').replace(/\s+/g, ' ').trim();
+              const pairs = !nx.part ? pairPhrases(nx.he, enB, nx.en) : null;
+              const body = pairs
+                ? pairs.map((pp) => `${voiceHe(pp.he, settings.heRead)} — ${namesForSpeechEn(lit && pp.en.includes('\u0002') ? (literalOf(pp.en) || plain(pp.en)) : plain(pp.en))}`).join(' | ')
+                : `${voiceHe(nx.he, settings.heRead)}${nx.en ? ` — ${namesForSpeechEn(englishFor(nx.en, enB, settings.translate, !!nx.part, nx.he))}` : ''}`;
+              early = `${nb !== place.base ? `${nb}. ` : ''}[[say]]${body}[[/say]]`;
+              send({ type: 'early', text: early });
+              readNext = `\n\n[ALREADY BEING READ: the learner said to go on, and the app has already handed the voice the next piece, ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}, which it is reading aloud right now:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nDo not read it again and write no [[say]] block. Write only what comes after the reading in your style (the explanation, and a question if your style asks one), starting right in, as if continuing straight after the reading.]`;
+              nextAt = { base: nb, n: nx.n, ...(nx.part ? { part: nx.part } : {}) };
+            } else if (nx) {
               readNext = settings.voiceReads === 'gist'
                 ? `\n\n[NEXT PIECE: the learner said to go on. The next piece, right after where he is, is ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nHe reads it himself. Do not read it: give the gist of exactly this piece, then your style's part. Do not skip ahead and do not go back.]`
                 : `\n\n[READ NEXT: the learner said to go on. The next piece, right after where he is, is ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nRead exactly this piece now, all of it, in one [[say]] block, then your style's part. Do not skip ahead and do not go back.]`;
@@ -320,7 +340,8 @@ export async function POST(req: NextRequest) {
         let reply = marked.text || 'I got lost looking up sources. Could you say that again, or point me to a specific source?';
         // Spoken: the text the voice reads comes from the sefer itself. The brain's [[say]] phrases are matched to the
         // real words, checked that nothing was skipped, and written out in the app's yeshivish pronunciation.
-        if (spoken && /\[\[say\]\]/i.test(reply) && settings.nusach !== 'sephardi') {
+        if (early) reply = reply.replace(/\[\[say\]\][\s\S]*?\[\[\/say\]\]/gi, ' ').replace(/\s+/g, ' ').trim(); // the text was already handed over
+        if (!early && spoken && /\[\[say\]\]/i.test(reply) && settings.nusach !== 'sephardi') {
           try {
             const base = place?.base || marked.base || mainRef.replace(/:\d+(-\d+)?$/, '');
             const secs: Section[] = [];
@@ -341,7 +362,7 @@ export async function POST(req: NextRequest) {
           } catch { /* the reply still goes out as the brain wrote it */ }
         }
         if (spoken) {
-          if (settings.voiceReads === 'gist' && nextAt && !readPlace) readPlace = nextAt;
+          if ((settings.voiceReads === 'gist' || early) && nextAt && !readPlace) readPlace = nextAt;
           reply = forReader(reply, settings.voiceReads ?? 'all') || reply;
         }
         // The learner tapped a line while this answer was being written: his tap wins, so don't move the place.
@@ -363,8 +384,10 @@ export async function POST(req: NextRequest) {
         }
         const usd = costUsd(model, result.inputTokens, result.outputTokens, result.cachedTokens ?? 0, result.cacheWriteTokens ?? 0);
         const usage = { ai: true, model: model.label, reason, usd, lookups };
+        const after2 = reply; // with "read at once": what the voice says after the reading
+        if (early) reply = `${early}\n\n${reply}`;
         await addMessage(sid, 'assistant', reply, { model: model.id, style: settings.style, blend: settings.blend, usage, ...(introFor ? { introFor } : {}), ...(newPlace ? { pos: newPlace } : {}) });
-        send({ type: 'reply', text: reply, model: model.label, usage });
+        send({ type: 'reply', text: reply, model: model.label, usage, ...(early ? { early: true, after: after2 } : {}) });
 
         await logCost({ sessionId: sid, provider: settings.provider, model: model.id, inputTokens: result.inputTokens, outputTokens: result.outputTokens, costUsd: usd });
         await touchSession(sid);
