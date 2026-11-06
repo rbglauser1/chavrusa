@@ -133,7 +133,11 @@ export async function POST(req: NextRequest) {
   const askMode = req.nextUrl.searchParams.get('mode') as HeRead | null;
   const heRead: HeRead = askMode && HE_READS.some((m) => m.id === askMode) ? askMode : s.heRead ?? 'join-kh';
   const testLine = testText ? gptLine(testText, s, heRead) : '';
-  const greeting = testLine
+  // The how-to movie's narration (components/HowTo.tsx): one line, said in Meridian, recorded once by the app.
+  const narrate = preview && req.nextUrl.searchParams.get('narrate') === '1';
+  const greeting = narrate
+    ? `Say exactly this now, once, then stop: "${forVoice(testText, s.gptSpell ?? 'stressed', s.gptMyWay ?? [], s.houseSay !== false)}"`
+    : testLine
     ? (askMode ? `Read this lashon kodesh aloud now, once, the way you read inside in a call: every word, from the first to the very last, in lashon kodesh. It has no English here: do not translate it, do not explain it, and never switch to English partway. Then stop. ⟪${testLine}⟫` : `Say exactly this now, once, the way you would in a call, then stop: "${testLine}"`)
     : `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
   const spell = s.gptSpell ?? 'stressed';
@@ -149,6 +153,7 @@ export async function POST(req: NextRequest) {
   // The instructions for a call (or a test), with a given set of rules (so a failed start can try the standard ones).
   const build = (rl: string[]) => {
     const base = short ? liveInstructionsShort(s.nusach, pace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rl, s.customRules ?? [], slowBrain) : liveInstructions(s.nusach, pace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', slowBrain);
+    if (narrate) return 'You are the narrator of a short how-to film for a Torah learning app, an American yeshiva bochur with a warm, calm, friendly voice and a natural yeshivish accent. Speak first, as soon as the session starts: say the line you are given, exactly as given, once, at an easy, unhurried pace, then stop. Do not add anything.' + voiceNote;
     return (preview && !testLine
       ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
       : preview && askMode === 'he-plain' && askRules === null

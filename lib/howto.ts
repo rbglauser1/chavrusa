@@ -5,7 +5,17 @@
 //
 // To change a scene: edit its caption, words or timing here. `dur` is how long the scene plays before the next one.
 
-export interface HowToScene { caption: string; sub: string; html: string; dur: number }
+export interface HowToScene { caption: string; sub: string; html: string; dur: number; say?: string } // say: the narration, if not caption + sub
+
+/** What the narrator says in a scene. */
+export const narrationOf = (s: HowToScene) => s.say ?? `${s.caption.replace(/[.…]$/, '')}. ${s.sub}`;
+/** A fingerprint of all the narration: a change to any scene's words records the narration afresh. */
+export function narrationVersion(): string {
+  const all = 'meridian|' + HOWTO_SCENES.map(narrationOf).join('|');
+  let h = 5381;
+  for (let i = 0; i < all.length; i++) h = ((h * 33) ^ all.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
 
 const d = (s: number) => `style="--d:${s}s"`;
 const at = (s: number, top: number, left: number) => `style="--d:${s}s;top:${top}%;left:${left}%"`;
@@ -50,6 +60,7 @@ export const HOWTO_SCENES: HowToScene[] = [
   {
     caption: 'Tap Talk',
     sub: 'Then just talk, the way you would across the table.',
+    say: 'Tap Talk. Then just talk, the way you would across the table: “Let’s learn Yoma, five A.”',
     dur: 6,
     html: `<div class="ht-screen ht-center">
       <div class="ht-bigmic ht-live" ${d(1.4)}>${mic(40)}</div>
@@ -88,6 +99,7 @@ export const HOWTO_SCENES: HowToScene[] = [
   {
     caption: 'Just say it',
     sub: 'Stop it, ask it, send it back. Any words work.',
+    say: 'Just say it. “Wait.” “Say that again.” “What does Rashi say?” “Go deeper.” “Go on.” Any words work.',
     dur: 8,
     html: `<div class="ht-screen ht-center ht-says">
       <span class="ht-say ht-in" ${d(0.5)}>“Wait.”</span>
@@ -143,6 +155,7 @@ export const HOWTO_SCENES: HowToScene[] = [
   {
     caption: 'That’s it',
     sub: 'Tap Talk and say what you’d like to learn.',
+    say: 'That’s it. Tap Talk, and say what you’d like to learn.',
     dur: 0, // the last scene stays until closed
     html: `<div class="ht-title">
       <div class="ht-title-he ht-in" ${d(0.2)}>חברותא</div>

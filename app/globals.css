@@ -1993,3 +1993,4 @@ body[data-dafull]::before { display: none; }
 /* the Home link */
 .home-howto { display: block; margin: 14px auto 0; border: 0; background: transparent; color: var(--soft); font-family: var(--f-ui); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .ht *, .ht *::after { animation-duration: .01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; } }
+.ht-sound { margin-top: 8px; border: 0; background: transparent; color: var(--soft); font-family: var(--f-ui); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

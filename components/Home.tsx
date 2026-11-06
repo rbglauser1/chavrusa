@@ -3,7 +3,7 @@
 // A card to pick up where you left off, four circles (Library, Recent, Themes, Settings), and a Talk button
 // that starts a fresh call and waits for the learner to say what he wants to learn.
 import { useEffect, useState, type ReactNode } from 'react';
-import { HowTo, howToSeen } from '@/components/HowTo';
+import { HowTo, howToSeen, unlockNarration } from '@/components/HowTo';
 
 type SessionRow = { id: string; title: string; updated_at: string };
 
@@ -101,7 +101,7 @@ export function Home(p: {
           {!p.talkOn && <div className="home-talk-hint">Tell your chavrusa what you’d like to learn</div>}
         </div>
       )}
-      <button className="home-howto" onClick={() => setHowTo(true)}>How to use the app</button>
+      <button className="home-howto" onClick={() => { unlockNarration(); setHowTo(true); }}>How to use the app</button>
       {howTo && <HowTo onClose={() => setHowTo(false)} />}
     </div>
   );
