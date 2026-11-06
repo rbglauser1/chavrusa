@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   let lastSaid = '';
   let lastAt: string | null = null;
   let pointed = ''; // the line the learner tapped in the Sefer since we last spoke: start there
-  let point: { ref: string; n: number; he: string; en: string } | null = null; // …which the app hands the voice itself
+  let point: { ref: string; n: number; he: string; en: string; enB?: string; literal?: boolean } | null = null; // …which the app hands the voice itself
   // Short instructions (Settings → Voice → Instructions), the default: about a third of the words.
   // The rule lab: a test can ask for a combination of pronunciation rules (always with the short instructions); calls use
   // the combination the learner chose (Settings), or the standard.
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         // The English as the learner chose it (Settings → Voice: the literal words, when Sefaria marks them).
         const en = englishFor(tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '', tapped.data.enB?.[n - 1], s.translate, false, he);
         const reads = s.voiceReads ?? 'all';
-        point = { ref: tapped.ref, n, he, en };
+        point = { ref: tapped.ref, n, he, en, enB: tapped.data.enB?.[n - 1], literal: !!s.translate && s.translate !== 'full' };
         const enLine = en ? clip(namesForSpeechEn(en), 600) : '';
         pointed = reads === 'gist'
           ? `The learner has chosen where to learn: ${tapped.ref}, line ${n}. He reads it himself. In English it says: "${enLine}". In a sentence or two, give the gist of this line in your own words (do not read it), then stop and wait. Do not go past this line by yourself.`

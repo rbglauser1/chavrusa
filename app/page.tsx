@@ -386,7 +386,7 @@ export default function Home() {
     const sid = sessionIdRef.current;
     if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src, ...(live.active ? { part: 1 } : {}) }) }).catch(() => {});
     // The English as the learner chose it for the voice (the literal words, when Sefaria marks them).
-    if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', englishFor(src.en[n - 1] ?? src.altEn?.[n - 1] ?? '', src.enB?.[n - 1], settings.translate, false, src.he[n - 1] ?? ''));
+    if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', englishFor(src.en[n - 1] ?? src.altEn?.[n - 1] ?? '', src.enB?.[n - 1], settings.translate, false, src.he[n - 1] ?? ''), src.enB?.[n - 1], !!settings.translate && settings.translate !== 'full');
     setItems((it) => [...it, { kind: 'event', text: `📍 Learning from ${src.ref}, line ${n}.` }]);
   }
 

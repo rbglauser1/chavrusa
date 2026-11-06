@@ -6,6 +6,8 @@ import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 import { silentWav } from './useVoice';
 import { endHeard, missingHebrew, missingTail } from '@/lib/skipCheck';
+import { pairPhrases } from '@/lib/interlinear';
+import { literalOf } from '@/lib/literal';
 
 let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
@@ -107,7 +109,7 @@ export function useLive(opts: {
   const lastHeardPaint = useRef(0);
   const connectTry = useRef(0); // which attempt to connect is current (the 15-second limit checks it)
   const startRef = useRef<((retry?: boolean | 'silent') => Promise<void>) | null>(null);
-  const pointToRef = useRef<((ref: string, n: number, he: string, en: string) => void) | null>(null);
+  const pointToRef = useRef<((ref: string, n: number, he: string, en: string, enB?: string, literal?: boolean) => void) | null>(null);
   const firstResume = useRef(false); // whether the call being started is a resume (a retry keeps the same opening)
   const silentTry = useRef(0);       // reconnects because the voice said nothing after connecting
   const closingTo = useRef<'off' | 'paused' | null>(null); // set when we asked the session to close
@@ -413,7 +415,8 @@ export function useLive(opts: {
     });
   }, [send]);
   // The learner pointed to a line mid-call: go there now (the line's words are given, so nothing is said from memory).
-  const pointTo = useCallback((ref: string, n: number, he: string, en: string) => {
+  // enB: the line's English with Sefaria's bold marked (to line the phrases up by); literal: only its bold words are read.
+  const pointTo = useCallback((ref: string, n: number, he: string, en: string, enB?: string, literal?: boolean) => {
     bump();
     // The tap overrides everything: stop a read-through, and drop any answer still on its way (closing it for the voice).
     const r = reading.current; reading.current = null; r?.(false);
@@ -422,7 +425,14 @@ export function useLive(opts: {
     userBuf.current = ''; voiceBuf.current = ''; setHeard('');
     setS('speaking');
     const first = he ? splitPieces(he, en)[0] : null; // a long line: its first piece ("next" goes on)
-    const exact = !first ? '' : READS === 'english' ? first.en.slice(0, 900) : READS === 'gist' ? '' : `${toSpeech(first.he)}${first.en ? ` — ${first.en.slice(0, 900)}` : ''}`;
+    // Phrase by phrase (each Hebrew phrase, then its English), as the brain's readings are: given as one block (all
+    // the Hebrew, then all the English), the voice read the first phrases and then only the English of the rest.
+    const whole = !!first && first.he.trim() === he.trim(); // the line wasn't cut into pieces: its bold-marked English fits it
+    const pairs = first && first.en && READS === 'all' ? pairPhrases(first.he, whole ? enB : undefined, whole && enB ? enB.replace(/[\u0002\u0003]/g, '') : first.en) : null;
+    const plain = (t: string) => t.replace(/[\u0002\u0003]/g, '').replace(/\s+/g, ' ').trim();
+    const exact = !first ? '' : READS === 'english' ? first.en.slice(0, 900) : READS === 'gist' ? ''
+      : pairs ? pairs.map((pp) => `${toSpeech(pp.he)} — ${literal && pp.en.includes('\u0002') ? (literalOf(pp.en) || plain(pp.en)) : plain(pp.en)}`).join(' … ')
+      : `${toSpeech(first.he)}${first.en ? ` — ${first.en.slice(0, 900)}` : ''}`;
     const gist = READS === 'gist' && first?.en ? first.en.slice(0, 900) : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
@@ -602,7 +612,7 @@ export function useLive(opts: {
   // (he didn't speak), the app asks for the next piece itself. Not after a question (he should answer it), and not
   // while he has said to stop or wait, until he says to go on again.
   const autoHold = useRef(false);
-  const pointOpen = useRef<{ ref: string; n: number; he: string; en: string } | null>(null); // a tapped line to open the call with
+  const pointOpen = useRef<{ ref: string; n: number; he: string; en: string; enB?: string; literal?: boolean } | null>(null); // a tapped line to open the call with
   const oldOpen = useRef(false); // "Open calls the Nov 3 way" (a test): no app-brought opening, no silent-start retry
   const autoStart = useRef(false); // the opening said where we are: go on after it by itself (Keep going by itself)
   function autoNext(force = false) {
@@ -812,7 +822,7 @@ export function useLive(opts: {
           if (pc.current === peer && pointOpen.current && !recOut.current && lastInputAt.current <= opened) {
             const p = pointOpen.current; pointOpen.current = null; autoStart.current = false;
             logLine('AUTO', `opening the call with the line you tapped (${p.ref}, line ${p.n})`);
-            pointToRef.current?.(p.ref, p.n, p.he, p.en);
+            pointToRef.current?.(p.ref, p.n, p.he, p.en, p.enB, p.literal);
             return;
           }
           pointOpen.current = null;

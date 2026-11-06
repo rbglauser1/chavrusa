@@ -106,6 +106,8 @@ function wordToSyllables(word: string): Syl[] {
     if (i > 0 && l === 'ו' && m.includes(V.cholam)) { vowelSyllable(vowelOf('oi')); continue; }                            // cholam male
     if (i > 0 && l === 'ו' && m.includes(V.dagesh) && !hasVowel(m) && !hasVowel(units[i - 1].m)) { vowelSyllable('u'); continue; } // shuruk
     if (l === 'י' && !hasVowel(m) && !m.includes(V.shva) && i > 0 && /[\u05B4\u05B5\u05B6]/.test(units[i - 1].m)) continue;    // yud of chirik/tzeirei
+    if (l === 'י' && !hasVowel(m) && i > 0 && units[i - 1].l === 'י') continue;                                                 // a second yud is silent: חִיָּיא = khiyaw
+    if (l === 'י' && !hasVowel(m) && i === units.length - 2 && units[i + 1].l === 'ו' && !hasVowel(units[i + 1].m) && units[i - 1]?.m.includes('\u05B8')) continue; // ָיו = awv: בָּנָיו = bawnawv
     const c = consonant(l, m, last);
     let vowel = '';
     for (const k of Object.keys(VOWEL_SOUND)) if (m.includes(k)) { vowel = vowelOf(VOWEL_SOUND[k]); break; }
