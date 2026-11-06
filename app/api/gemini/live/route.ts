@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GEMINI_LIVE, GEMINI_VOICES, styleById, styleCard } from '@/lib/config';
 import { getSettings, listMemories, listMessages, listSources } from '@/lib/db';
-import { liveContext, liveInstructions } from '@/lib/live';
+import { GEMINI_VOICE, liveContext, liveInstructions } from '@/lib/live';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { currentPlace } from '@/lib/place';
 import { geminiPronunciation, sayNote } from '@/lib/geminiPron';
@@ -91,7 +91,9 @@ export async function POST(req: NextRequest) {
   const myWay = s.geminiMyWay ?? [];
   const house = s.houseSay !== false, steady = s.liveSteady === true;
   void myWayNote;
-  const instructions = forVoice(liveInstructions(s.nusach, s.livePace, false, pron, steady) + context + HANDOFF, spell, myWay, house) + sayNote(myWay, house);
+  // The yeshivish speaker first, and the yeshivish accent note (not "a normal American accent"), for Ashkenaz.
+  const ashk = s.nusach !== 'sephardi';
+  const instructions = forVoice((ashk ? GEMINI_VOICE : '') + liveInstructions(s.nusach, s.livePace, ashk, pron, steady) + context + HANDOFF, spell, myWay, house) + sayNote(myWay, house);
 
   // The short-lived pass: one use, a minute to start the call, half an hour of call.
   const now = Date.now();

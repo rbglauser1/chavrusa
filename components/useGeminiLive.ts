@@ -16,7 +16,30 @@ function forSpeech(text: string): string {
   return text.replace(/\[\[\/?say\]\]/gi, '').replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
 }
 // Captures the microphone in small blocks, for sending to Gemini.
-const WORKLET = `class Cap extends AudioWorkletProcessor { process(inputs) { const ch = inputs[0] && inputs[0][0]; if (ch && ch.length) this.port.postMessage(ch.slice(0)); return true; } } registerProcessor('chavrusa-cap', Cap);`;
+// The microphone tap (Cap) and the player (Play). The player fixes the crackle (Nov 6): Gemini's sound arrives in
+// small pieces at 24 kHz; each used to be played as its own clip, resampled on its own (a click at every seam) and
+// started 20 ms ahead (any network hiccup left a gap: crackling). Now the pieces go into one steady stream, resampled
+// smoothly, started only once ~180 ms is waiting (the end of a turn plays at once), and faded in and out at any gap.
+const WORKLET = `class Cap extends AudioWorkletProcessor { process(inputs) { const ch = inputs[0] && inputs[0][0]; if (ch && ch.length) this.port.postMessage(ch.slice(0)); return true; } } registerProcessor('chavrusa-cap', Cap);
+class Play extends AudioWorkletProcessor {
+  constructor() { super(); this.N = 24000 * 180; this.b = new Float32Array(this.N); this.w = 0; this.r = 0; this.step = 24000 / sampleRate; this.on = false; this.busy = false; this.flush = false; this.g = 0; this.last = 0;
+    this.port.onmessage = (e) => { const d = e.data;
+      if (d === 'clear') { this.w = 0; this.r = 0; this.on = false; this.flush = false; this.g = 0; this.last = 0; if (this.busy) { this.busy = false; this.port.postMessage('idle'); } return; }
+      if (d === 'flush') { this.flush = true; if (!this.busy) this.port.postMessage('idle'); return; }
+      for (let i = 0; i < d.length; i++) this.b[(this.w + i) % this.N] = d[i];
+      this.w += d.length; this.flush = false;
+      if (!this.busy) { this.busy = true; this.port.postMessage('busy'); } }; }
+  process(inputs, outputs) { const o = outputs[0][0]; if (!o) return true;
+    if (!this.on && this.w - this.r > 0 && (this.w - this.r >= 24000 * 0.18 || this.flush)) this.on = true;
+    for (let k = 0; k < o.length; k++) {
+      if (this.on && this.w - this.r >= 2) { const i = Math.floor(this.r), f = this.r - i; const a = this.b[i % this.N], c = this.b[(i + 1) % this.N];
+        if (this.g < 1) this.g = Math.min(1, this.g + 0.004); this.last = a + (c - a) * f; o[k] = this.last * this.g; this.r += this.step; }
+      else { if (this.on) this.on = false; this.g = Math.max(0, this.g - 0.004); this.last *= 0.995; o[k] = this.last * this.g; }
+    }
+    for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(o);
+    if (this.busy && !this.on && this.flush && this.w - this.r < 2) { this.busy = false; this.flush = false; this.w = 0; this.r = 0; this.port.postMessage('idle'); }
+    return true; } }
+registerProcessor('chavrusa-play', Play);`;
 
 function b64FromBytes(u8: Uint8Array): string {
   let s = '';
@@ -45,8 +68,8 @@ export function useGeminiLive(opts: Opts) {
   const ctx = useRef<AudioContext | null>(null);
   const mic = useRef<MediaStream | null>(null);
   const capNode = useRef<AudioWorkletNode | null>(null);
-  const playing = useRef<Set<AudioBufferSourceNode>>(new Set());
-  const nextAt = useRef(0);
+  const player = useRef<AudioWorkletNode | null>(null);
+  const audioBusy = useRef(false); // the player still has the voice's sound to play
   const pending = useRef<Map<string, Seg[]>>(new Map()); // tool calls waiting for the brain
   const userBuf = useRef('');
   const voiceBuf = useRef('');
@@ -81,14 +104,13 @@ export function useGeminiLive(opts: Opts) {
   }, [send]);
 
   const stopPlayback = useCallback(() => {
-    playing.current.forEach((s) => { try { s.stop(); } catch { /* ignore */ } });
-    playing.current.clear();
-    nextAt.current = 0;
+    player.current?.port.postMessage('clear');
+    audioBusy.current = false;
   }, []);
 
   // When the voice has finished a turn and its audio has played out: record a reply it made by itself, finish a read-through.
   const afterTurn = useCallback(() => {
-    if (playing.current.size) return; // still playing; checked again when the audio ends
+    if (audioBusy.current) return; // still playing; checked again when the player runs dry
     if (!turnDone.current) return;
     turnDone.current = false;
     if (stateRef.current === 'speaking') setS(pending.current.size ? 'thinking' : 'listening');
@@ -109,23 +131,16 @@ export function useGeminiLive(opts: Opts) {
   }, []);
 
   const playPcm = useCallback((b64: string) => {
-    const ac = ctx.current;
-    if (!ac) return;
+    const pl = player.current;
+    if (!pl) return;
     const bytes = bytesFromB64(b64);
     const n = Math.floor(bytes.length / 2);
     if (!n) return;
     const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    const buf = ac.createBuffer(1, n, 24000);
-    const ch = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) ch[i] = dv.getInt16(i * 2, true) / 32768;
-    const src = ac.createBufferSource();
-    src.buffer = buf;
-    src.connect(ac.destination);
-    const at = Math.max(ac.currentTime + 0.02, nextAt.current);
-    src.start(at);
-    nextAt.current = at + buf.duration;
-    playing.current.add(src);
-    src.onended = () => { playing.current.delete(src); if (!playing.current.size) { nextAt.current = 0; afterTurn(); } };
+    const f = new Float32Array(n);
+    for (let i = 0; i < n; i++) f[i] = dv.getInt16(i * 2, true) / 32768;
+    pl.port.postMessage(f, [f.buffer]);
+    audioBusy.current = true;
     bump();
     if (stateRef.current !== 'speaking') setS('speaking');
   }, [afterTurn]);
@@ -137,6 +152,8 @@ export function useGeminiLive(opts: Opts) {
     stopPlayback();
     try { capNode.current?.disconnect(); } catch { /* ignore */ }
     capNode.current = null;
+    try { player.current?.disconnect(); } catch { /* ignore */ }
+    player.current = null;
     mic.current?.getTracks().forEach((t) => t.stop());
     mic.current = null;
     ctx.current?.close().catch(() => {});
@@ -258,7 +275,7 @@ export function useGeminiLive(opts: Opts) {
     if (sc.outputTranscription?.text) saidAll.current += sc.outputTranscription.text;
     for (const p of sc.modelTurn?.parts ?? []) if (p?.inlineData?.data && String(p.inlineData.mimeType ?? '').startsWith('audio')) playPcm(p.inlineData.data);
     if (sc.interrupted) { stopPlayback(); setS(pending.current.size ? 'thinking' : 'listening'); }
-    if (sc.turnComplete) { turnDone.current = true; afterTurn(); }
+    if (sc.turnComplete) { turnDone.current = true; player.current?.port.postMessage('flush'); afterTurn(); }
   }, [appSay, handleCall, playPcm, stopPlayback, afterTurn]);
 
   const openingRef = useRef('');
@@ -294,6 +311,10 @@ export function useGeminiLive(opts: Opts) {
       const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));
       await ac.audioWorklet.addModule(url);
       URL.revokeObjectURL(url);
+      const pl = new AudioWorkletNode(ac, 'chavrusa-play', { numberOfInputs: 0, outputChannelCount: [ac.destination.channelCount > 1 ? 2 : 1] });
+      pl.connect(ac.destination);
+      pl.port.onmessage = (e) => { if (e.data === 'idle') { audioBusy.current = false; afterTurn(); } else if (e.data === 'busy') audioBusy.current = true; };
+      player.current = pl;
       const node = new AudioWorkletNode(ac, 'chavrusa-cap');
       capNode.current = node;
       const silent = ac.createGain(); silent.gain.value = 0;
