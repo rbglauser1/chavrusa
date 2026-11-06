@@ -2,7 +2,8 @@
 // The new main screen (Settings → Main screen → New): one home that always opens first.
 // A card to pick up where you left off, four circles (Library, Recent, Themes, Settings), and a Talk button
 // that starts a fresh call and waits for the learner to say what he wants to learn.
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { HowTo, howToSeen } from '@/components/HowTo';
 
 type SessionRow = { id: string; title: string; updated_at: string };
 
@@ -48,6 +49,9 @@ export function Home(p: {
   talkOn: boolean;
 }) {
   const c = p.cont;
+  // The how-to movie: one tap away, and it opens by itself the first time the app is opened on this device.
+  const [howTo, setHowTo] = useState(false);
+  useEffect(() => { if (!howToSeen()) setHowTo(true); }, []);
   const rows: [keyof typeof ICONS, string, string, () => void][] = [
     ['library', 'Library', 'Gemara, Chumash and every sefer', p.onLibrary],
     ['recent', 'Recent', 'Your sessions, newest first', p.onRecent],
@@ -97,6 +101,8 @@ export function Home(p: {
           {!p.talkOn && <div className="home-talk-hint">Tell your chavrusa what you’d like to learn</div>}
         </div>
       )}
+      <button className="home-howto" onClick={() => setHowTo(true)}>How to use the app</button>
+      {howTo && <HowTo onClose={() => setHowTo(false)} />}
     </div>
   );
 }
