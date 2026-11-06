@@ -32,6 +32,24 @@ function tropPhrases(he: string): string[] {
   return cut(toks, BREAK).flatMap((p) => (p.length >= 7 ? cut(p, BREAK2) : [p])).map((p) => p.join(' ').replace(/\s+/g, ' '));
 }
 
+/** The lashon kodesh in short phrases, for the voice to read (log of Nov 6, 9:25 AM: a whole pasuk handed as one
+ *  unbroken run, with no commas to cut at, came out Israeli; short phrases with a breath between them keep it
+ *  yeshivish). By the trop when the text has it, else at punctuation; any stretch still longer than 6 words is cut
+ *  into even parts of 3–5 words. */
+export function voicePhrases(he: string): string[] {
+  const t = he.trim();
+  if (!t) return [];
+  const base = /[\u0591-\u05AF]/.test(t) ? tropPhrases(t) : hebrewPhrases(t);
+  return base.flatMap((p) => {
+    const ws = p.split(/\s+/).filter(Boolean);
+    if (ws.length <= 6) return [p];
+    const parts = Math.ceil(ws.length / 5), size = Math.ceil(ws.length / parts);
+    const out: string[] = [];
+    for (let i = 0; i < ws.length; i += size) out.push(ws.slice(i, i + size).join(' '));
+    return out;
+  });
+}
+
 function hebrewPhrases(he: string): string[] {
   const toks = he.trim().split(/\s+/).filter(Boolean);
   const out: string[][] = [];

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { heReadNote, voiceHe, type HeRead } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
+import { voicePhrases } from '@/lib/interlinear';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 import { silentWav } from './useVoice';
 import { endHeard, missingHebrew, missingTail } from '@/lib/skipCheck';
@@ -453,7 +454,7 @@ export function useLive(opts: {
     // The lashon kodesh phrase by phrase, then the English of the whole piece. (Pairing each phrase with its own
     // English by position put English under the wrong Hebrew where the word order differs: "why do I need X and Y"
     // for "X, Y, למה לי". Exact pairs come only from the brain, which pairs by meaning.)
-    const hePhrases = first ? first.he.split(/(?<=[,:.?!;׃])\s+/).map((x) => x.trim()).filter(Boolean) : [];
+    const hePhrases = first ? voicePhrases(first.he) : [];
     const plainEn = (t: string) => t.replace(/[\u0002\u0003]/g, '').replace(/\s+/g, ' ').trim();
     void enB; void literal; // (kept for the call signature)
     const exact = !first ? '' : READS === 'english' ? first.en.slice(0, 900) : READS === 'gist' ? ''
@@ -462,7 +463,7 @@ export function useLive(opts: {
     const gist = READS === 'gist' && first?.en ? first.en.slice(0, 900) : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
-    for (const c of chunks(g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`))) send({ type: 'session.instructions.append', delegation_id: null, content: c });
+    for (const c of chunks(g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your American yeshivish accent (never Israeli) and your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`))) send({ type: 'session.instructions.append', delegation_id: null, content: c });
     if (exact) { toCheck(`⟪${exact}⟫`); for (const c of textChunks(exact)) send({ type: 'session.commentary.append', delegation_id: null, content: g(c) }); }
   }, [send]);
   pointToRef.current = pointTo;
@@ -528,7 +529,7 @@ export function useLive(opts: {
     toCheck(`⟪${ex}⟫`);
     early.current = { id: delegationId, text: ex, at: Date.now(), from: voiceAll.current.length };
     logLine('AUTO', 'reading the next piece at once; the explanation follows when it has been read');
-    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the text between ⟪ and ⟫ is the next piece of the text itself. Read it now, the way a chavrusa reads inside: every phrase in order to the end, each lashon kodesh phrase and then its English. Then stop: what comes after the reading follows in a moment.' });
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the text between ⟪ and ⟫ is the next piece of the text itself. Read it now, the way a chavrusa reads inside, in your American yeshivish accent (never Israeli): every phrase in order to the end, each lashon kodesh phrase and then its English. Then stop: what comes after the reading follows in a moment.' });
     for (const c of textChunks(ex)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
   const explainAfter = useCallback((delegationId: string, text: string) => {

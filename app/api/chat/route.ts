@@ -17,6 +17,7 @@ import { forReader, namesForSpeechEn, stripNikud, voiceHe } from '@/lib/hebrew';
 import { nextSection } from '@/lib/refs';
 import { after } from 'next/server';
 import { addSource, SourceData } from '@/lib/db';
+import { voicePhrases } from '@/lib/interlinear';
 import { englishFor, getText } from '@/lib/sefaria';
 
 export const runtime = 'nodejs';
@@ -291,7 +292,7 @@ export async function POST(req: NextRequest) {
               // The lashon kodesh phrase by phrase, then the English of the whole piece. (Pairing each phrase with its
               // own English by position put English under the wrong Hebrew where the word order differs; exact
               // phrase-by-phrase pairs come only from the brain, which pairs by meaning.)
-              const hePh = nx.he.split(/(?<=[,:.?!;׃])\s+/).map((x) => x.trim()).filter(Boolean);
+              const hePh = voicePhrases(nx.he);
               const enLine = nx.en ? namesForSpeechEn(englishFor(nx.en, enB, settings.translate, !!nx.part, nx.he)) : '';
               const body = `${hePh.map((x) => voiceHe(x, settings.heRead)).join(' | ')}${enLine ? ` | ${enLine}` : ''}`;
               early = `${nb !== place.base ? `${nb}. ` : ''}[[say]]${body}[[/say]]`;
