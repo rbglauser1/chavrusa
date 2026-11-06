@@ -512,6 +512,15 @@ export function useLive(opts: {
     const t = forSpeech(text);
     if (t) handed.current = { text: hadPart ? `${handed.current.text} ${t}` : t, at: Date.now() };
     if (!t && hadPart) return; // everything was already handed over
+    // A request the app made itself (keep going by itself, the opening's next piece) has no GPT-Live request behind it,
+    // so a result alone is never spoken (log of Nov 6, 2:07 PM: the explanation after the opening's piece was handed
+    // and the voice stayed silent). It's told to say it now.
+    if (isAppId(delegationId) && t) {
+      setS('speaking');
+      send({ type: 'session.instructions.append', delegation_id: null, content: `${hadPart ? 'The reading is done. Now say what comes after it' : 'Here is the answer to what the learner just said. Say it now'}, in your own voice (the text that follows), then stop.` });
+      for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: null, content: g(c) });
+      return;
+    }
     if (!t) send({ type: 'session.commentary.append', delegation_id: delegationId, content: 'Let’s keep going.' });
     else for (const c of chunks(t)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
