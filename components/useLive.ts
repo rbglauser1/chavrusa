@@ -23,27 +23,40 @@ export type LiveState = 'off' | 'connecting' | 'listening' | 'thinking' | 'speak
 // (Oct 31, 2026). The style card is still in the instructions at the start of every call.
 const REMINDERS = false;
 
-const MAX_CHARS = 1800; // the voice accepts about 500 tokens per hand-back
+const MAX_TOKENS = 420; // the voice accepts at most 500 tokens per message: kept safely under
+
+// About how many tokens a stretch of text is: English runs about 4 characters a token; Hebrew letters with their
+// nikud take far more (each letter and mark is close to a token of its own).
+function tokensOf(t: string): number {
+  const he = (t.match(/[\u0591-\u05F4]/g) ?? []).length;
+  return Math.ceil((t.length - he) / 4 + he * 0.9);
+}
 
 function forSpeech(text: string): string {
   return text.replace(/\[\[\/?say\]\]/gi, '').replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
 }
-// A long answer is handed over in several pieces (each within what the voice accepts at once), split at the end
-// of a sentence, so nothing is cut off in the middle.
+// A long answer is handed over in several pieces (each within what the voice accepts at once, counted in tokens),
+// split at the end of a sentence or between phrases, so nothing is cut off in the middle.
 function chunks(t: string): string[] {
   const out: string[] = [];
-  let rest = t;
-  while (rest.length > MAX_CHARS) {
-    const cut = rest.slice(0, MAX_CHARS);
-    const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '), cut.lastIndexOf('\n'), cut.lastIndexOf(' | '));
-    const at = end > 400 ? end + 1 : cut.lastIndexOf(' ') > 400 ? cut.lastIndexOf(' ') : MAX_CHARS;
+  let rest = t.trim();
+  while (rest && tokensOf(rest) > MAX_TOKENS) {
+    // The longest start of it that fits.
+    let lo = 1, hi = rest.length;
+    while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (tokensOf(rest.slice(0, mid)) <= MAX_TOKENS) lo = mid; else hi = mid - 1; }
+    const cut = rest.slice(0, lo);
+    const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '), cut.lastIndexOf('\n'), cut.lastIndexOf(' … '), cut.lastIndexOf(' | '));
+    const at = end > lo * 0.4 ? end + 1 : cut.lastIndexOf(' ') > lo * 0.4 ? cut.lastIndexOf(' ') : lo;
     out.push(rest.slice(0, at).trim());
     rest = rest.slice(at).trim();
   }
   if (rest) out.push(rest);
   return out;
 }
-
+// A text block (⟪ … ⟫) handed over in pieces: each piece is its own ⟪ … ⟫, so the voice reads each as text.
+function textChunks(ex: string): string[] {
+  return chunks(ex).map((c) => `⟪${c.replace(/^⟪|⟫$/g, '').replace(/^…\s*/, '')}⟫`);
+}
 
 // ── One microphone for the page ───────────────────────────────────────────────────────────────────────────────────
 // On an iPhone, asking for the microphone again on the same page sometimes gives a microphone that reports itself
@@ -426,8 +439,8 @@ export function useLive(opts: {
     const gist = READS === 'gist' && first?.en ? first.en.slice(0, 900) : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
-    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`) });
-    if (exact) { toCheck(`⟪${exact}⟫`); send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) }); }
+    for (const c of chunks(g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`))) send({ type: 'session.instructions.append', delegation_id: null, content: c });
+    if (exact) { toCheck(`⟪${exact}⟫`); for (const c of textChunks(exact)) send({ type: 'session.commentary.append', delegation_id: null, content: g(c) }); }
   }, [send]);
   pointToRef.current = pointTo;
   // The learner chose something on the Mikraos Gedolos page (a pasuk, a comment, a meforesh on Rashi): read it the way
@@ -455,8 +468,8 @@ export function useLive(opts: {
       : exact
         ? `Read it now, the way a chavrusa reads inside, in your lively voice at the speed and with the pauses set in your instructions, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out. Then, in two or three sentences of your own, say what it is bothered by or what it adds, and stop.`
         : 'Say in a few words that we are there now, and wait.';
-    send({ type: 'session.instructions.append', delegation_id: null, content: g(`STOP what you are saying right now. The learner chose ${label} on the Mikraos Gedolos page: that is what we are learning now. ${how} Do not go back to what you were saying before.`) });
-    if (exact) { toCheck(`⟪${exact}⟫`); send({ type: 'session.commentary.append', delegation_id: null, content: g(`⟪${exact}⟫`) }); }
+    for (const c of chunks(g(`STOP what you are saying right now. The learner chose ${label} on the Mikraos Gedolos page: that is what we are learning now. ${how} Do not go back to what you were saying before.`))) send({ type: 'session.instructions.append', delegation_id: null, content: c });
+    if (exact) { toCheck(`⟪${exact}⟫`); for (const c of textChunks(exact)) send({ type: 'session.commentary.append', delegation_id: null, content: g(c) }); }
   }, [send]);
   const stopReading = useCallback(() => { const r = reading.current; reading.current = null; r?.(false); }, []);
 
@@ -493,7 +506,7 @@ export function useLive(opts: {
     early.current = { id: delegationId, text: ex, at: Date.now(), from: voiceAll.current.length };
     logLine('AUTO', 'reading the next piece at once; the explanation follows when it has been read');
     send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the text between ⟪ and ⟫ is the next piece of the text itself. Read it now, the way a chavrusa reads inside: every phrase in order to the end, each lashon kodesh phrase and then its English. Then stop: what comes after the reading follows in a moment.' });
-    send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(`⟪${ex}⟫`) });
+    for (const c of textChunks(ex)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
   const explainAfter = useCallback((delegationId: string, text: string) => {
     const e = early.current;
@@ -845,7 +858,8 @@ export function useLive(opts: {
           const op = openingNow.current; openingNow.current = null;
           if (op) {
             // The opening: what the voice was told to do at the start of this call (greet, pick up where we were, wait…).
-            send({ type: 'session.instructions.append', delegation_id: null, content: op.text });
+            // In pieces: OpenAI takes at most 500 tokens per message (a long recap was turned down whole).
+            for (const c of chunks(op.text)) send({ type: 'session.instructions.append', delegation_id: null, content: c });
             if (op.speaks) send({ type: 'session.commentary.append', delegation_id: null, content: '(The call is open and the learner is listening: open it now, as your instructions say.)' });
           }
           if (!resuming) openWatch(peer);
