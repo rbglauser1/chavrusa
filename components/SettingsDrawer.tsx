@@ -278,7 +278,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Amud intro (a paragraph on what&apos;s coming, at the top of each amud)</label>
               <Seg value={s.amudIntro !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ amudIntro: v === 'on' })} />
-              <label style={{ marginTop: 10 }}>Voice says the intro (Read, Explain, Ask)</label>
+              <label style={{ marginTop: 10 }}>Voice says the intro (Read &amp; Big Picture)</label>
               <Seg value={s.introVoice !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ introVoice: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The AI writes each amud&apos;s intro once (about 1–2 cents the first time), then it&apos;s kept, free. In Read, Explain, Ask the voice says it when a new amud begins, once per session.</div>
             </div>

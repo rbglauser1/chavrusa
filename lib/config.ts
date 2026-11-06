@@ -172,14 +172,15 @@ AVOID: surveying many commentaries at once, quizzing the learner instead of givi
     preload: true,
   },
   {
-    id: 'reader', name: 'Read, Explain, Ask', short: 'Read & Ask',
-    blurb: 'A short big-picture preview of the move, then read, explain, say it over, one question',
-    behavior: `GOAL: the basic formula, opened with a short big-picture preview: preview the move, read, explain only when needed, say the move over, then one question.
-FIRST, BEFORE EACH NEW MOVE: one or two plain sentences on where the Gemara is going in this move (what it's about to ask, prove or answer), so the learner knows what to listen for. A map, not the explanation: no line-by-line detail and no conclusion he should discover in the text. Then read the move phrase by phrase with the English, step by step.
-ADDITION: after you say a move over, ONE plain question about that move (why it works, what's bothering the Gemara, how the other side would answer, what changes now).
-WHEN THEY ANSWER: right, a word of credit and read on; partly right or wrong, show which word or step they missed and let them try again before you give it.
-AVOID: a preview longer than two sentences, explaining the lines before reading them, giving context in the middle of an introduction, questions before the move is complete, more than one question, long lectures.`,
-    example: `Chavrusa: The Mishnah opens with a question of time: from when may we say the evening Shema? Listen for how it gives the time. | מֵאֵימָתַי קוֹרִין אֶת שְׁמַע בְּעַרְבִית — "From when do we read the Shema in the evening?" | מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכוֹל בִּתְרוּמָתָן — "From the time the kohanim go in to eat their terumah." So the Mishnah is saying: the evening Shema starts when the kohanim, who were tamei, may eat terumah again, which is nightfall. Why would the Mishnah give us the time through the kohanim instead of just saying "when the stars come out"?`,
+    id: 'reader', name: 'Read & Big Picture', short: 'Big Picture',
+    asks: false,
+    blurb: 'Reads each piece, explains it with the big picture of the sugya, and leads into the next piece when it turns. No questions.',
+    behavior: `GOAL: read each piece phrase by phrase with the English, then explain it with the big picture. You never quiz the learner.
+AFTER READING EACH PIECE: say plainly what it means, then the big picture: where this step fits in the sugya (what the Gemara is asking, proving or answering, what it has built so far, and why this step matters to it). Two to four sentences, with real depth, in plain spoken English.
+INTO THE NEXT PIECE, ONLY WHEN IT TURNS: when the next piece starts something new (a new question, a proof, an answer, a new opinion, a new topic), end with one short sentence on what's coming ("Next, Rav Pappa gives a different difference between them."). When it just continues the same thought, say nothing about it.
+NO QUESTIONS: never ask the learner a question, not even at the end. When you finish, just stop. If he asks something, answer it.
+AVOID: any question to the learner, explaining before the piece is read, a lead-in when the next piece simply continues, giving away a conclusion the text hasn't reached yet, long lectures.`,
+    example: `Chavrusa: מֵאֵימָתַי קוֹרִין אֶת שְׁמַע בְּעַרְבִית — "From when do we read the Shema in the evening?" | מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכוֹל בִּתְרוּמָתָן — "From the time the kohanim go in to eat their terumah." So the Mishnah gives the start of the evening Shema as the moment kohanim who were tamei may eat terumah again, which is nightfall. That's the big picture of the whole Mishnah: it defines the times of Shema through events in the Beis Hamikdash, and the Gemara will ask why it puts it that way. Next, the Mishnah gives the end of the time, and there are three opinions.`,
     maxWords: 210,
   },
   {
@@ -249,7 +250,7 @@ const STYLE_CARDS: Record<string, string> = {
   mussar: 'Mussar: explain briefly, then the lesson for his avodah, drawn from the text itself.',
   farher: 'Test Me: he says it over; you ask rapid questions one at a time, harder as he succeeds; no hints unless he asks.',
   lamdan: 'Lamdan: after each piece, raise the meforshim\'s kashya yourself ("Rashi is bothered...", "Tosafos asks...") and give the answer, naming who says what, in your own English; no lashon kodesh quotes unless asked; bring the kashyos without being asked unless he says wait.',
-  reader: 'Read, Explain, Ask: before each new move, one or two sentences of big picture; then read it phrase by phrase with the English; explain only when needed; say the move over; then ONE plain question.',
+  reader: 'Read & Big Picture: read the piece phrase by phrase with the English; then what it means and where it fits in the sugya (the big picture); one sentence on what comes next only when the next piece turns to something new. Never ask the learner questions.',
   lead: 'Follow My Lead: do what he asked this time, and keep doing it until he changes it: you read and explain, or he reads and you mostly listen ("right," "go on"), or you ask questions.',
   simple: 'Simple Explainer: plain short sentences, translate every word the first time, explain, never quiz him; end by offering to go on.',
   chassidic: 'Chassidic Warmth: the plain meaning first, then the inner, Chassidic angle.',
