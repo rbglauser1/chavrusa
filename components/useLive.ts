@@ -61,6 +61,7 @@ async function getMic(fresh = false): Promise<MediaStream> {
   sharedMic = await navigator.mediaDevices.getUserMedia({ audio: MIC_OPTS });
   return sharedMic;
 }
+function releaseMicNow() { window.clearTimeout(micRelease); sharedMic?.getTracks().forEach((t) => t.stop()); sharedMic = null; }
 function releaseMicSoon() {
   window.clearTimeout(micRelease);
   micRelease = window.setTimeout(() => { sharedMic?.getTracks().forEach((t) => t.stop()); sharedMic = null; }, 3 * 60_000);
@@ -880,6 +881,7 @@ export function useLive(opts: {
       if (retry === 'silent') q.set('plain', '1');
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
+      if (connectTry.current !== attempt) { try { peer.close(); } catch { /* ignore */ } return; } // ended while connecting
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
       if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; oldOpen.current = data.speech.oldOpen === true; openingNow.current = typeof data.speech.opening === 'string' && data.speech.opening ? { text: data.speech.opening, speaks: data.speech.openingSpeaks === true } : null; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
@@ -949,13 +951,22 @@ export function useLive(opts: {
   }, [send, finish, startWakeWatch]);
 
   // End the call completely.
+  // The learner ends the call: it ends right away, even while it's still connecting (a try still on its way is
+  // dropped), and the microphone is let go at once (it's kept only across the app's own reconnects).
   const stop = useCallback(() => {
     stopWakeWatch();
-    if (stateRef.current === 'paused') { setS('off'); setPauseIn(null); return; }
+    connectTry.current++;
+    if (stateRef.current === 'paused') { setS('off'); setPauseIn(null); releaseMicNow(); return; }
+    if (!pc.current || stateRef.current === 'connecting') {
+      teardown(); releaseMicNow();
+      if (stateRef.current !== 'off') logEnd('ended while connecting');
+      setS('off'); setPauseIn(null);
+      return;
+    }
     closingTo.current = 'off';
     send({ type: 'session.close' });
-    window.setTimeout(() => { if (pc.current) { closingTo.current = null; finish('off'); } }, 400);
-  }, [send, finish, stopWakeWatch]);
+    window.setTimeout(() => { if (pc.current) { closingTo.current = null; finish('off'); } releaseMicNow(); }, 400);
+  }, [send, finish, teardown, stopWakeWatch]);
 
   // The quiet clock: runs only while nobody is talking and nothing is being worked on.
   useEffect(() => {
