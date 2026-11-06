@@ -42,6 +42,29 @@ function chunks(t: string): string[] {
   return out;
 }
 
+
+// ── One microphone for the page ───────────────────────────────────────────────────────────────────────────────────
+// On an iPhone, asking for the microphone again on the same page sometimes gives a microphone that reports itself
+// "live" but sends no sound (the call recorder showed 0 sound packets for 8 seconds), and the voice, hearing nothing,
+// never starts. So the page keeps the microphone from its first call and uses it for every call (and for listening
+// while paused), and lets it go after 3 minutes without a call, or when the page is left.
+const MIC_OPTS: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+let sharedMic: MediaStream | null = null;
+let micRelease: number | undefined;
+function micAlive(s: MediaStream | null) { const t = s?.getAudioTracks()[0]; return !!t && t.readyState === 'live'; }
+async function getMic(fresh = false): Promise<MediaStream> {
+  window.clearTimeout(micRelease);
+  if (!fresh && micAlive(sharedMic)) return sharedMic!;
+  sharedMic?.getTracks().forEach((t) => t.stop());
+  sharedMic = await navigator.mediaDevices.getUserMedia({ audio: MIC_OPTS });
+  return sharedMic;
+}
+function releaseMicSoon() {
+  window.clearTimeout(micRelease);
+  micRelease = window.setTimeout(() => { sharedMic?.getTracks().forEach((t) => t.stop()); sharedMic = null; }, 3 * 60_000);
+}
+if (typeof window !== 'undefined') window.addEventListener('pagehide', () => { sharedMic?.getTracks().forEach((t) => t.stop()); sharedMic = null; });
+
 export function useLive(opts: {
   onRequest: (text: string, delegationId: string) => void; // learner said something: ask the brain
   onError: (msg: string) => void;
@@ -155,6 +178,18 @@ export function useLive(opts: {
       // anything coming back? (Some calls never start; this tells a silent microphone from OpenAI not starting.)
       if (seconds8.current < 8) {
         seconds8.current++;
+        // No sound going out after 2 seconds (an iPhone microphone that's "live" but silent): swap in a fresh one,
+        // without hanging up. Once, and again at 5 seconds if that didn't help.
+        if ((seconds8.current === 2 || seconds8.current === 5) && sent === 0) {
+          logLine('AUDIO', 'no sound is going out to OpenAI: swapping in a fresh microphone');
+          getMic(true).then((fresh) => {
+            if (pc.current !== peer) return;
+            const t = fresh.getAudioTracks()[0];
+            const sender = peer.getSenders().find((x) => x.track?.kind === 'audio' || (!x.track && x.transport));
+            mic.current = fresh;
+            return sender?.replaceTrack(t);
+          }).catch((e) => logLine('ERROR', `could not get a fresh microphone: ${(e as Error).message}`));
+        }
         const t = mic.current?.getAudioTracks()[0];
         logLine('AUDIO', `${seconds8.current} s: sent to OpenAI ${sent < 0 ? '?' : sent} sound packets · received ${got < 0 ? '?' : got} · mic level ${level < 0 ? '?' : level.toFixed(3)} · mic ${t ? `${t.readyState}${t.muted ? ', MUTED' : ''}${t.enabled ? '' : ', off'}` : 'none'}`);
       }
@@ -169,7 +204,7 @@ export function useLive(opts: {
     window.clearInterval(micTimer.current);
     try { dc.current?.close(); } catch { /* ignore */ }
     try { pc.current?.close(); } catch { /* ignore */ }
-    mic.current?.getTracks().forEach((t) => t.stop());
+    releaseMicSoon(); // the page keeps its one microphone a little while (see getMic)
     dc.current = null; pc.current = null; mic.current = null;
     if (audio.current) audio.current.srcObject = null;
     if (speakTimer.current) clearTimeout(speakTimer.current);
@@ -197,8 +232,7 @@ export function useLive(opts: {
     const w = wake.current;
     if (!w) return;
     clearInterval(w.timer);
-    w.stream.getTracks().forEach((t) => t.stop());
-    w.ctx.close().catch(() => {});
+    w.ctx.close().catch(() => {}); // (the microphone itself is the page's one, kept: see getMic)
     wake.current = null;
   }, []);
 
@@ -700,8 +734,8 @@ export function useLive(opts: {
       setS('off');
     }, 15_000);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-      if (connectTry.current !== attempt) { stream.getTracks().forEach((t) => t.stop()); return; }
+      const stream = await getMic();
+      if (connectTry.current !== attempt) return;
       mic.current = stream;
       armLimit();
       const peer = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
@@ -790,7 +824,7 @@ export function useLive(opts: {
   const startWakeWatch = useCallback(async () => {
     if (wake.current) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const stream = await getMic();
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AC();
       await ctx.resume().catch(() => {});
