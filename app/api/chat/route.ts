@@ -14,8 +14,6 @@ import { findCommentary, routeWithoutAI } from '@/lib/router';
 import { currentPlace, forPanel, markFilter, readMark, section, splitRef, textInHand } from '@/lib/place';
 import { fixSay, nextPiece, type Expect, type Section } from '@/lib/sayFix';
 import { forReader, namesForSpeechEn, stripNikud, voiceHe } from '@/lib/hebrew';
-import { pairPhrases } from '@/lib/interlinear';
-import { literalOf } from '@/lib/literal';
 import { nextSection } from '@/lib/refs';
 import { after } from 'next/server';
 import { addSource, SourceData } from '@/lib/db';
@@ -282,13 +280,13 @@ export async function POST(req: NextRequest) {
             const sx = nb === place.base ? sec : await section(nb, sources, approved);
             if (nx && settings.voiceReads !== 'gist' && settings.liveEngine !== 'gemini' && !lamdan && !introFor) {
               // The English as he chose it; phrase by phrase when the line can be cut into phrases.
-              const lit = settings.translate && settings.translate !== 'full';
               const enB = sx?.enB?.[nx.n - 1];
-              const plain = (t: string) => t.replace(/[\u0002\u0003]/g, '').replace(/\s+/g, ' ').trim();
-              const pairs = !nx.part ? pairPhrases(nx.he, enB, nx.en) : null;
-              const body = pairs
-                ? pairs.map((pp) => `${voiceHe(pp.he, settings.heRead)} — ${namesForSpeechEn(lit && pp.en.includes('\u0002') ? (literalOf(pp.en) || plain(pp.en)) : plain(pp.en))}`).join(' | ')
-                : `${voiceHe(nx.he, settings.heRead)}${nx.en ? ` — ${namesForSpeechEn(englishFor(nx.en, enB, settings.translate, !!nx.part, nx.he))}` : ''}`;
+              // The lashon kodesh phrase by phrase, then the English of the whole piece. (Pairing each phrase with its
+              // own English by position put English under the wrong Hebrew where the word order differs; exact
+              // phrase-by-phrase pairs come only from the brain, which pairs by meaning.)
+              const hePh = nx.he.split(/(?<=[,:.?!;׃])\s+/).map((x) => x.trim()).filter(Boolean);
+              const enLine = nx.en ? namesForSpeechEn(englishFor(nx.en, enB, settings.translate, !!nx.part, nx.he)) : '';
+              const body = `${hePh.map((x) => voiceHe(x, settings.heRead)).join(' | ')}${enLine ? ` | ${enLine}` : ''}`;
               early = `${nb !== place.base ? `${nb}. ` : ''}[[say]]${body}[[/say]]`;
               send({ type: 'early', text: early });
               readNext = `\n\n[ALREADY BEING READ: the learner said to go on, and the app has already handed the voice the next piece, ${nb} line ${nx.n}${nx.part ? ` part ${nx.part}` : ''}, which it is reading aloud right now:\n${stripNikud(nx.he)}${nx.en ? `\n    ${nx.en}` : ''}\nDo not read it again and write no [[say]] block. Write only what comes after the reading in your style (the explanation, and a question if your style asks one), starting right in, as if continuing straight after the reading.]`;

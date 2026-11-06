@@ -6,8 +6,6 @@ import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 import { silentWav } from './useVoice';
 import { endHeard, missingHebrew, missingTail } from '@/lib/skipCheck';
-import { pairPhrases } from '@/lib/interlinear';
-import { literalOf } from '@/lib/literal';
 
 let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
@@ -244,7 +242,9 @@ export function useLive(opts: {
   useEffect(() => () => { teardown(); stopWakeWatch(); }, [teardown, stopWakeWatch]);
 
   // Wait until the learner's words have stopped arriving, then hand them to the brain.
+  const lastAskAt = useRef(0); // when the learner last asked the brain something (a new request)
   const handleDelegation = useCallback((delegationId: string) => {
+    lastAskAt.current = Date.now();
     pending.current.add(delegationId);
     setS('thinking');
     const started = Date.now();
@@ -430,11 +430,14 @@ export function useLive(opts: {
     const first = he ? splitPieces(he, en)[0] : null; // a long line: its first piece ("next" goes on)
     // Phrase by phrase (each Hebrew phrase, then its English), as the brain's readings are: given as one block (all
     // the Hebrew, then all the English), the voice read the first phrases and then only the English of the rest.
-    const whole = !!first && first.he.trim() === he.trim(); // the line wasn't cut into pieces: its bold-marked English fits it
-    const pairs = first && first.en && READS === 'all' ? pairPhrases(first.he, whole ? enB : undefined, whole && enB ? enB.replace(/[\u0002\u0003]/g, '') : first.en) : null;
-    const plain = (t: string) => t.replace(/[\u0002\u0003]/g, '').replace(/\s+/g, ' ').trim();
+    // The lashon kodesh phrase by phrase, then the English of the whole piece. (Pairing each phrase with its own
+    // English by position put English under the wrong Hebrew where the word order differs: "why do I need X and Y"
+    // for "X, Y, למה לי". Exact pairs come only from the brain, which pairs by meaning.)
+    const hePhrases = first ? first.he.split(/(?<=[,:.?!;׃])\s+/).map((x) => x.trim()).filter(Boolean) : [];
+    const plainEn = (t: string) => t.replace(/[\u0002\u0003]/g, '').replace(/\s+/g, ' ').trim();
+    void enB; void literal; // (kept for the call signature)
     const exact = !first ? '' : READS === 'english' ? first.en.slice(0, 900) : READS === 'gist' ? ''
-      : pairs ? pairs.map((pp) => `${toSpeech(pp.he)} — ${literal && pp.en.includes('\u0002') ? (literalOf(pp.en) || plain(pp.en)) : plain(pp.en)}`).join(' … ')
+      : hePhrases.length > 1 ? `${hePhrases.map((x) => toSpeech(x)).join(' … ')}${first.en ? ` … ${plainEn(first.en).slice(0, 900)}` : ''}`
       : `${toSpeech(first.he)}${first.en ? ` — ${first.en.slice(0, 900)}` : ''}`;
     const gist = READS === 'gist' && first?.en ? first.en.slice(0, 900) : '';
     answering.current = true;
@@ -513,8 +516,9 @@ export function useLive(opts: {
     if (!e || e.id !== delegationId) { answer(delegationId, text); return; }
     const timer = window.setInterval(() => {
       if (!pending.current.has(delegationId) || !pc.current) { window.clearInterval(timer); early.current = null; return; }
-      // He spoke during the reading (a question, "wait"…): the explanation is no longer wanted.
-      if (lastInputAt.current > e.at) {
+      // He asked something during the reading (a question, "wait"…): the explanation is no longer wanted. ("Mm-hmm",
+      // "okay" and the like are not a request, so they don't count.)
+      if (lastAskAt.current > e.at) {
         window.clearInterval(timer); early.current = null;
         pending.current.delete(delegationId); partial.current.delete(delegationId);
         logLine('CHECK', 'the learner spoke during the reading: the explanation is left out');

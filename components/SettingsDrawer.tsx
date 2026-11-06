@@ -354,8 +354,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               </div>
               <div className="field">
                 <label>How the Hebrew is given to the voice</label>
-                <Seg value={s.heRead === 'he' || s.heRead === 'he-bare' || s.heRead === 'he-key' ? s.heRead : 'other'} options={[['he', 'With nikud'], ['he-bare', 'Without vowels'], ['he-key', 'With a pronunciation key']]} onPick={(v) => onChange({ heRead: v as 'he' | 'he-bare' | 'he-key' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.heRead === 'he-bare'
+                <Seg value={s.heRead === 'he' || s.heRead === 'he-bare' || s.heRead === 'he-key' || s.heRead === 'join-kh' ? s.heRead : 'other'} options={[['he', 'With nikud'], ['he-bare', 'Without vowels'], ['he-key', 'With a key'], ['join-kh', 'Spelled out only']]} onPick={(v) => onChange({ heRead: v as 'he' | 'he-bare' | 'he-key' | 'join-kh' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.heRead === 'join-kh'
+                  ? 'No Hebrew letters at all: every word spelled out the yeshivish Ashkenazi way in English letters (hawishaw nikneis beshawloish derawchim), worked out from the nikud. The voice just says what it sees, so it can\'t slip into Israeli. How it was on Oct 31 – Nov 1.'
+                  : s.heRead === 'he-bare'
                   ? 'The letters only, like a Gemara. The voice has to guess the vowels, and on bare letters it can slip into an Israeli accent.'
                   : s.heRead === 'he-key'
                   ? 'The Hebrew with nikud, plus an Ashkenazi spelling of every word in English letters (stressed syllable in capitals): nothing left to guess.'
