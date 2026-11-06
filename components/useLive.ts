@@ -65,12 +65,32 @@ const MIC_OPTS: MediaTrackConstraints = { echoCancellation: true, noiseSuppressi
 let sharedMic: MediaStream | null = null;
 let micRelease: number | undefined;
 function micAlive(s: MediaStream | null) { const t = s?.getAudioTracks()[0]; return !!t && t.readyState === 'live'; }
+let micGranted = false; // the phone already said yes to the microphone on this page (no question will be asked)
 async function getMic(fresh = false): Promise<MediaStream> {
   window.clearTimeout(micRelease);
   if (!fresh && micAlive(sharedMic)) return sharedMic!;
   sharedMic?.getTracks().forEach((t) => t.stop());
   sharedMic = await navigator.mediaDevices.getUserMedia({ audio: MIC_OPTS });
+  micGranted = true;
   return sharedMic;
+}
+// Starting a call: on an iPhone, asking for the microphone again right after one was let go can hang (no answer at
+// all), which left Talk doing nothing. Once the phone has said yes on this page there is no question to wait for, so
+// after 4 seconds ask once more; after 4 more, give up and say so. (The first time, the phone's question can take
+// as long as the learner needs.)
+async function getMicForCall(log: (what: string) => void): Promise<MediaStream> {
+  if (micAlive(sharedMic) || !micGranted) return getMic();
+  const t0 = Date.now();
+  const late = (ms: number) => new Promise<null>((r) => window.setTimeout(() => r(null), ms));
+  const first = getMic();
+  let got = await Promise.race([first, late(4000)]);
+  if (!got) {
+    log('the microphone didn\'t open in 4 s: asking again');
+    got = await Promise.race([first, navigator.mediaDevices.getUserMedia({ audio: MIC_OPTS }).then((m) => { sharedMic = m; return m; }), late(4000)]);
+  }
+  if (!got) throw new Error('the microphone didn\'t open');
+  log(`microphone open (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
+  return got;
 }
 function releaseMicNow() { window.clearTimeout(micRelease); sharedMic?.getTracks().forEach((t) => t.stop()); sharedMic = null; }
 function releaseMicSoon() {
@@ -828,7 +848,7 @@ export function useLive(opts: {
       setS('off');
     }, 15_000);
     try {
-      const stream = await getMic();
+      const stream = await getMicForCall((w) => logLine('MIC', w));
       if (connectTry.current !== attempt) return;
       mic.current = stream;
       armLimit();
@@ -907,7 +927,9 @@ export function useLive(opts: {
       if (data.sizes) logLine('──', `sent to OpenAI at the start: ${data.sizes}`);
       if (data.notice) { logLine('──', String(data.notice)); optsRef.current.onError(String(data.notice)); }
     } catch (err) {
-      const msg = (err as Error).name === 'NotAllowedError'
+      const msg = /microphone didn't open/.test((err as Error).message)
+        ? 'The microphone didn’t open. Tap Talk again.'
+        : (err as Error).name === 'NotAllowedError'
         ? 'Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.'
         : /quota|billing|insufficient|credit|payment/i.test((err as Error).message)
           ? `Your OpenAI account is out of credit, so the voice can't start. Add credit at platform.openai.com → Settings → Billing, then tap Talk again. (${(err as Error).message})`
