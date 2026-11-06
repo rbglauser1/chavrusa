@@ -137,6 +137,8 @@ export async function POST(req: NextRequest) {
     ? (askMode ? `Read this lashon kodesh aloud now, once, the way you read inside in a call: every word, from the first to the very last, in lashon kodesh. It has no English here: do not translate it, do not explain it, and never switch to English partway. Then stop. ⟪${testLine}⟫` : `Say exactly this now, once, the way you would in a call, then stop: "${testLine}"`)
     : `Say exactly this now, in your natural voice, then stop and wait: "${VOICE_SAMPLE}"`;
   const spell = s.gptSpell ?? 'stressed';
+  // A slow brain (the top model on every turn: Saver off) may say one short word while the voice waits; a quick one, none.
+  const slowBrain = s.tier === 'top' && s.saver === false;
   const myWay = s.gptMyWay ?? [];
   const house = s.houseSay !== false, steady = s.liveSteady === true;
   // Short instructions keep only the learner's own words here (the main standard ones are in the short guide, and the
@@ -146,7 +148,7 @@ export async function POST(req: NextRequest) {
 
   // The instructions for a call (or a test), with a given set of rules (so a failed start can try the standard ones).
   const build = (rl: string[]) => {
-    const base = short ? liveInstructionsShort(s.nusach, pace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rl, s.customRules ?? []) : liveInstructions(s.nusach, pace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal');
+    const base = short ? liveInstructionsShort(s.nusach, pace, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', rl, s.customRules ?? [], slowBrain) : liveInstructions(s.nusach, pace, s.liveAccent ?? false, undefined, steady, heRead, s.voiceReads ?? 'all', s.livePauses ?? 'normal', slowBrain);
     return (preview && !testLine
       ? 'This is a short voice sample. Speak first, as soon as the session starts, without waiting for the user.'
       : preview && askMode === 'he-plain' && askRules === null

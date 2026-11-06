@@ -233,7 +233,14 @@ export async function POST(req: NextRequest) {
               ? '\n\n# Sources in this style\nOn Chumash and Tanach you may bring classic seforim of this style (and Kli Yakar, Ohr HaChaim and the like) without being asked: one at a time, only when it truly adds.'
               : '\n\n# Sources in this style\nThis is Gemara or Mishnah: draw the lesson from the words of the text itself. Do not bring outside seforim; if one would really add, mention it in one line and offer.')
             : '';
-        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid) + styleNote;
+        // Opus (the top model) on a spoken turn (Nov 5): it followed the "write it as said" spelling rule to the letter and
+        // filled its explanations with spelled-out words ("Yoichonon", "koihein", "eiphah"); the voice stumbled on them and
+        // carried the slip into the next piece of Hebrew. Sonnet explains in plain English and the Hebrew stays clean, so
+        // Opus is asked to explain the same way (same depth and intros). To undo: remove plainSpoken.
+        const plainSpoken = spoken && model.id === MODELS[settings.provider].top.id
+          ? '\n\nHOW TO WORD A SPOKEN EXPLANATION (this wins over the transliteration rule above for your explanation; the [[say]] block is unchanged): explain in plain English, with all your depth and your intros. Keep only the everyday learning words a yeshiva bochur says in English anyway (posuk, Gemara, Mishnah, Rashi, Tosfos, braisa, kashya, teretz, machlokes, gezeirah shavah, kal vachomer, halacha, Kohen Gadol, tamei, tahor), and say everything else in English (a small flour offering, not "a tenth of an eiphah"; a kohen, not "koihein"). Write names the usual yeshivish way (Moishe, Aharon, Rabbi Yochanan, Rabbi Chiya), never spelled out sound by sound ("Yoichonon"). Few Hebrew words in a row; never a string of them.'
+          : '';
+        const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid) + styleNote + plainSpoken;
 
         const emit = (e: ToolEvent) => send(e);
         const baseExecute = makeExecutor({
