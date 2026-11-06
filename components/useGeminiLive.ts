@@ -352,6 +352,7 @@ export function useGeminiLive(opts: Opts) {
       let acc: number[] = [];
       // The recorder's AUDIO lines: blocks of the learner's sound sent to Gemini, and the mic level, for the first 8 s.
       let sentBlocks = 0, peak = 0, sec = 0;
+      let voiceAt = 0, loudSince = 0, echoNoted = false, bargeNoted = false;
       const audioWatch = window.setInterval(() => {
         if (mic.current !== stream || ++sec > 8) { window.clearInterval(audioWatch); return; }
         logLine('AUDIO', `${sec} s: sent to Gemini ${sentBlocks} sound blocks · mic level ${peak.toFixed(3)} · mic ${stream.getAudioTracks()[0]?.readyState ?? '?'} · Gemini sound ${gotSound.current ? 'yes' : 'not yet'}`);
@@ -360,9 +361,24 @@ export function useGeminiLive(opts: Opts) {
       let pos = 0; // where the next 16 kHz sample falls in the incoming block (carried across blocks)
       node.port.onmessage = (e: MessageEvent<Float32Array>) => {
         const f = e.data;
-        for (let i = 0; i < f.length; i += 16) { const a = Math.abs(f[i]); if (a > peak) peak = a; }
+        let bp = 0;
+        for (let i = 0; i < f.length; i += 16) { const a = Math.abs(f[i]); if (a > bp) bp = a; }
+        if (bp > peak) peak = bp;
+        // Echo guard (log of Nov 6, 12:25 AM): the phone's mic heard the voice's own words ("Let me check" came back as
+        // the learner), so Gemini kept cutting itself off. Gemini's sound is played through the page, which the phone's
+        // echo cancelling doesn't remove (GPT-Live's comes through WebRTC, which it does). So while the voice is
+        // speaking, and for 0.4 s after, the mic is sent as silence, unless the learner is clearly talking over it
+        // (loud for a quarter of a second): then it goes through, so he can still stop it.
+        const now = Date.now();
+        if (audioBusy.current) voiceAt = now;
+        const guard = now - voiceAt < 400;
+        if (guard && bp >= 0.3) { if (!loudSince) loudSince = now; } else if (bp < 0.3) loudSince = 0;
+        const pass = !guard || (loudSince > 0 && now - loudSince >= 250);
+        if (guard && !pass && bp >= 0.02 && !echoNoted) { echoNoted = true; logLine('AUDIO', `the mic heard sound while the voice was speaking (level ${bp.toFixed(2)}): held back as echo`); }
+        if (guard && pass && !bargeNoted) { bargeNoted = true; logLine('AUDIO', `the learner spoke over the voice (level ${bp.toFixed(2)}): let through`); }
+        if (!guard) bargeNoted = false;
         for (; pos < f.length; pos += ratio) {
-          const v = Math.max(-1, Math.min(1, f[Math.floor(pos)]));
+          const v = pass ? Math.max(-1, Math.min(1, f[Math.floor(pos)])) : 0;
           acc.push(v < 0 ? v * 0x8000 : v * 0x7fff);
         }
         pos -= f.length;

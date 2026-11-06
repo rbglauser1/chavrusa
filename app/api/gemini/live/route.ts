@@ -124,6 +124,8 @@ export async function POST(req: NextRequest) {
           behavior: 'NON_BLOCKING',
         }],
       }],
+      // Less ready to take a sound for the learner starting to speak (with the app's echo guard).
+      realtimeInputConfig: { automaticActivityDetection: { startOfSpeechSensitivity: 'START_SENSITIVITY_LOW', prefixPaddingMs: 120, silenceDurationMs: 700 } },
       inputAudioTranscription: {},
       outputAudioTranscription: {},
       contextWindowCompression: { slidingWindow: {} },
