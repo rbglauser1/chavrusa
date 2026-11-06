@@ -353,6 +353,17 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   : 'After each piece he stops and waits for you to say "go on" (or anything else).'}</div>
               </div>
               <div className="field">
+                <label>How the Hebrew is given to the voice</label>
+                <Seg value={s.heRead === 'he' || s.heRead === 'he-bare' || s.heRead === 'he-key' ? s.heRead : 'other'} options={[['he', 'With nikud'], ['he-bare', 'Without vowels'], ['he-key', 'With a pronunciation key']]} onPick={(v) => onChange({ heRead: v as 'he' | 'he-bare' | 'he-key' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.heRead === 'he-bare'
+                  ? 'The letters only, like a Gemara. The voice has to guess the vowels, and on bare letters it can slip into an Israeli accent.'
+                  : s.heRead === 'he-key'
+                  ? 'The Hebrew with nikud, plus an Ashkenazi spelling of every word in English letters (stressed syllable in capitals): nothing left to guess.'
+                  : s.heRead === 'he'
+                  ? 'The Hebrew with its nikud, as in a sefer: the voice sees every vowel.'
+                  : 'Another way is chosen (in Pronunciation and tests). Pick one here to switch.'} Applies from the next Talk.</div>
+              </div>
+              <div className="field">
                 <label>The English read with the text</label>
                 <Seg value={s.translate ?? 'full'} options={[['full', 'Sefaria’s full English'], ['literal', 'Just the literal words'], ['own', 'The chavrusa’s own']]} onPick={(v) => onChange({ translate: v as 'full' | 'literal' | 'own' })} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{(s.translate ?? 'full') === 'full'
