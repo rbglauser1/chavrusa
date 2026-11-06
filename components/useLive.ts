@@ -180,18 +180,7 @@ export function useLive(opts: {
       // anything coming back? (Some calls never start; this tells a silent microphone from OpenAI not starting.)
       if (seconds8.current < 8) {
         seconds8.current++;
-        // No sound going out after 2 seconds (an iPhone microphone that's "live" but silent): swap in a fresh one,
-        // without hanging up. Once, and again at 5 seconds if that didn't help.
-        if ((seconds8.current === 2 || seconds8.current === 5) && sent === 0) {
-          logLine('AUDIO', 'no sound is going out to OpenAI: swapping in a fresh microphone');
-          getMic(true).then((fresh) => {
-            if (pc.current !== peer) return;
-            const t = fresh.getAudioTracks()[0];
-            const sender = peer.getSenders().find((x) => x.track?.kind === 'audio' || (!x.track && x.transport));
-            mic.current = fresh;
-            return sender?.replaceTrack(t);
-          }).catch((e) => logLine('ERROR', `could not get a fresh microphone: ${(e as Error).message}`));
-        }
+
         const t = mic.current?.getAudioTracks()[0];
         logLine('AUDIO', `${seconds8.current} s: sent to OpenAI ${sent < 0 ? '?' : sent} sound packets · received ${got < 0 ? '?' : got} · mic level ${level < 0 ? '?' : level.toFixed(3)} · mic ${t ? `${t.readyState}${t.muted ? ', MUTED' : ''}${t.enabled ? '' : ', off'}` : 'none'}`);
       }
@@ -613,7 +602,8 @@ export function useLive(opts: {
   // while he has said to stop or wait, until he says to go on again.
   const autoHold = useRef(false);
   const pointOpen = useRef<{ ref: string; n: number; he: string; en: string; enB?: string; literal?: boolean } | null>(null); // a tapped line to open the call with
-  const oldOpen = useRef(false); // "Open calls the Nov 3 way" (a test): no app-brought opening, no silent-start retry
+  const oldOpen = useRef(false);
+  const openingNow = useRef<{ text: string; speaks: boolean } | null>(null); // the voice's opening, given once sound flows // "Open calls the Nov 3 way" (a test): no app-brought opening, no silent-start retry
   const autoStart = useRef(false); // the opening said where we are: go on after it by itself (Keep going by itself)
   function autoNext(force = false) {
     const secs = optsRef.current.autoGo?.() ?? 0;
@@ -725,6 +715,38 @@ export function useLive(opts: {
   // connects, the mic is on, and nothing happens; OpenAI's error at the end says its "context injection" never
   // completed). So: if the voice has said nothing 6 seconds after connecting (counted from when the app's first piece
   // is ready, if the app is bringing one), and the learner hasn't spoken, reconnect once; if it's silent again, say so.
+  // The opening waits for sound: OpenAI is given the voice's opening only once the phone's sound is really going out
+  // to it (a call that began with no sound got stuck loading its opening and never spoke, even after sound came).
+  // No sound after 1.2 s, or 3 s: swap in a fresh microphone (an iPhone microphone can be "live" but send nothing).
+  // After 7 s it goes ahead anyway.
+  function whenSoundFlows(peer: RTCPeerConnection, go: () => void) {
+    const t0 = Date.now();
+    let swaps = 0, done = false;
+    const swap = () => {
+      swaps++;
+      logLine('AUDIO', 'no sound is going out to OpenAI yet: swapping in a fresh microphone');
+      getMic(true).then((fresh) => {
+        if (pc.current !== peer) return;
+        const sender = peer.getSenders().find((x) => x.track?.kind === 'audio');
+        mic.current = fresh;
+        return sender?.replaceTrack(fresh.getAudioTracks()[0]);
+      }).catch((e) => logLine('ERROR', `could not get a fresh microphone: ${(e as Error).message}`));
+    };
+    const t = window.setInterval(async () => {
+      if (done) return;
+      if (pc.current !== peer) { window.clearInterval(t); return; }
+      let sent = 0;
+      try { (await peer.getStats()).forEach((r: { type?: string; kind?: string; packetsSent?: number }) => { if (r.type === 'outbound-rtp' && r.kind === 'audio' && typeof r.packetsSent === 'number') sent = r.packetsSent; }); } catch { /* not available */ }
+      const ms = Date.now() - t0;
+      if (sent >= 5 || ms > 7000) {
+        done = true; window.clearInterval(t);
+        logLine('AUDIO', sent >= 5 ? `sound is going out (${sent} packets after ${(ms / 1000).toFixed(1)} s): now the opening` : 'still no sound going out after 7 s: giving the opening anyway');
+        go();
+        return;
+      }
+      if ((ms > 1200 && swaps === 0) || (ms > 3000 && swaps === 1)) swap();
+    }, 200);
+  }
   function openWatch(peer: RTCPeerConnection) {
     const opened = Date.now();
     let waitFrom = opened;
@@ -801,7 +823,6 @@ export function useLive(opts: {
       channel.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch { /* ignore */ } };
       channel.onopen = () => {
         startedAt.current = Date.now(); bump(); setS('listening'); micWatch(peer);
-        if (!resuming && !oldOpen.current) openWatch(peer);
         // With Keep going by itself the voice is told not to open the call: the app brings the next piece right away
         // (the voice opens with a few words as it reads it).
         const opened = Date.now();
@@ -818,7 +839,16 @@ export function useLive(opts: {
             setS('thinking');
             optsRef.current.onRequest('Yes, go on.', id);
           }, 6000);
-        } else window.setTimeout(() => {
+        } else whenSoundFlows(peer, () => {
+          if (pc.current !== peer) return;
+          const op = openingNow.current; openingNow.current = null;
+          if (op) {
+            // The opening: what the voice was told to do at the start of this call (greet, pick up where we were, wait…).
+            send({ type: 'session.instructions.append', delegation_id: null, content: op.text });
+            if (op.speaks) send({ type: 'session.commentary.append', delegation_id: null, content: '(The call is open and the learner is listening: open it now, as your instructions say.)' });
+          }
+          if (!resuming) openWatch(peer);
+          window.setTimeout(() => {
           if (pc.current === peer && pointOpen.current && !recOut.current && lastInputAt.current <= opened) {
             const p = pointOpen.current; pointOpen.current = null; autoStart.current = false;
             logLine('AUTO', `opening the call with the line you tapped (${p.ref}, line ${p.n})`);
@@ -833,7 +863,8 @@ export function useLive(opts: {
           pending.current.add(id);
           setS('thinking');
           optsRef.current.onRequest('Yes, go on.', id);
-        }, 400);
+          }, 400);
+        });
       };
       peer.onconnectionstatechange = () => {
         if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {
@@ -850,7 +881,7 @@ export function useLive(opts: {
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; oldOpen.current = data.speech.oldOpen === true; }
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; oldOpen.current = data.speech.oldOpen === true; openingNow.current = typeof data.speech.opening === 'string' && data.speech.opening ? { text: data.speech.opening, speaks: data.speech.openingSpeaks === true } : null; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
       if (data.rulesUsed) logLine('──', `in this call: voice ${data.voiceUsed ?? '?'} · Hebrew given as ${data.speech?.heRead ?? '?'} · rules: ${data.rulesUsed}`);
       if (data.sizes) logLine('──', `sent to OpenAI at the start: ${data.sizes}`);

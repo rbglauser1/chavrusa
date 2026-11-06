@@ -162,7 +162,9 @@ export async function POST(req: NextRequest) {
       session: {
         model: LIVE.model,
         instructions,
-        input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }],
+        // The opening is not given here (except to tests and the Nov 3 way): the app gives it once the phone's sound is
+        // really going out. A call that began without sound got stuck loading its opening and never spoke.
+        ...(preview || oldOpen ? { input: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: preview ? greeting : fv(resume ? resumeNote : hello) }] }] } : {}),
         audio: { output: { voice: vf } },
         delegation: { type: 'client' },
       },
@@ -206,5 +208,5 @@ export async function POST(req: NextRequest) {
     : rulesFinal.map(ruleName).join(' + ');
   const answer = data?.transport?.sdp;
   if (!answer) return NextResponse.json({ error: 'Live voice returned no connection details.' }, { status: 502 });
-  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: oldOpen ? auto && !resume && !!(placeName || recap) && !pointed : autoOpen, ...(point && !oldOpen ? { point } : {}), ...(oldOpen ? { oldOpen: true } : {}) }, ...(notice ? { notice } : {}), rulesUsed, sizes, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
+  return NextResponse.json({ sdp: answer, sessionId: data?.session?.id ?? null, speech: { spell, myWay, house, heRead, reads: s.voiceReads ?? 'all', autoStart: oldOpen ? auto && !resume && !!(placeName || recap) && !pointed : autoOpen, ...(!preview && !oldOpen ? { opening, openingSpeaks: !resume && !pointOpen && !autoOpen } : {}), ...(point && !oldOpen ? { point } : {}), ...(oldOpen ? { oldOpen: true } : {}) }, ...(notice ? { notice } : {}), rulesUsed, sizes, voiceUsed: notice && /isn't available/.test(notice) ? 'meridian' : voice, ...(testLine ? { line: testLine } : {}) });
 }
