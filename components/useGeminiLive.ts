@@ -56,6 +56,36 @@ function bytesFromB64(b64: string): Uint8Array {
 
 type Seg = { kind: 'exact' | 'say'; text: string };
 
+// A tiny silent sound, played inside the tap so the phone lets the player speak later.
+function silentWav(): string {
+  const n = 800, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
+  const w = (o: number, x: string) => { for (let i = 0; i < x.length; i++) v.setUint8(o + i, x.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+}
+// Gemini's sound is sent through a WebRTC connection inside the page and played from there, the same way GPT-Live's
+// sound arrives (log of Nov 6, 12:29 AM: played straight from the page it still crackled on the iPhone, and the
+// phone's echo cancelling didn't remove it, so the mic heard the voice). Resolves once the sound is flowing.
+async function loopback(stream: MediaStream, el: HTMLAudioElement): Promise<() => void> {
+  const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+  a.onicecandidate = (e) => { if (e.candidate) b.addIceCandidate(e.candidate).catch(() => {}); };
+  b.onicecandidate = (e) => { if (e.candidate) a.addIceCandidate(e.candidate).catch(() => {}); };
+  stream.getAudioTracks().forEach((t) => a.addTrack(t, stream));
+  const got = new Promise<void>((res) => { b.ontrack = (ev) => { el.removeAttribute('src'); el.srcObject = ev.streams[0]; el.play().catch(() => {}); res(); }; });
+  const offer = await a.createOffer();
+  // Voice-quality Opus, a little higher than the default, mono.
+  offer.sdp = offer.sdp?.replace(/a=fmtp:111 ([^\r\n]*)/, (m, x) => `a=fmtp:111 ${x};maxaveragebitrate=64000;stereo=0`);
+  await a.setLocalDescription(offer);
+  await b.setRemoteDescription(offer);
+  const ans = await b.createAnswer();
+  await b.setLocalDescription(ans);
+  await a.setRemoteDescription(ans);
+  await Promise.race([got, new Promise((_, rej) => setTimeout(() => rej(new Error('loopback timeout')), 4000))]);
+  return () => { try { a.close(); b.close(); } catch { /* ignore */ } el.srcObject = null; };
+}
+
 export function useGeminiLive(opts: Opts) {
   const [state, setState] = useState<LiveState>('off');
   const [heard, setHeard] = useState('');
@@ -76,6 +106,8 @@ export function useGeminiLive(opts: Opts) {
   const mic = useRef<MediaStream | null>(null);
   const capNode = useRef<AudioWorkletNode | null>(null);
   const player = useRef<AudioWorkletNode | null>(null);
+  const outEl = useRef<HTMLAudioElement | null>(null);
+  const loopClose = useRef<(() => void) | null>(null);
   const audioBusy = useRef(false); // the player still has the voice's sound to play
   const pending = useRef<Map<string, Seg[]>>(new Map()); // tool calls waiting for the brain
   const userBuf = useRef('');
@@ -104,7 +136,9 @@ export function useGeminiLive(opts: Opts) {
   // A message from the app (not the learner): what to do now.
   // Gemini's own spelling of lashon kodesh and the learner's "say it my way" list (Settings), applied to all it is given.
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
-  const g = (t: string) => forVoice(t, speech.current.spell, speech.current.myWay, speech.current.house);
+  // Any Hebrew letters (the brain's [[say]] text) are spelled out the yeshivish way first: Gemini given Hebrew letters
+  // read them like an Israeli, or skipped them and said only the English.
+  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => toSpeech(he)), speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });
@@ -164,6 +198,7 @@ export function useGeminiLive(opts: Opts) {
     capNode.current = null;
     try { player.current?.disconnect(); } catch { /* ignore */ }
     player.current = null;
+    loopClose.current?.(); loopClose.current = null;
     mic.current?.getTracks().forEach((t) => t.stop());
     mic.current = null;
     ctx.current?.close().catch(() => {});
@@ -320,6 +355,8 @@ export function useGeminiLive(opts: Opts) {
       const ac = new AC();
       ctx.current = ac;
       void ac.resume().catch(() => {});
+      if (!outEl.current) { const el = document.createElement('audio'); el.autoplay = true; el.setAttribute('playsinline', ''); el.style.display = 'none'; document.body.appendChild(el); outEl.current = el; }
+      outEl.current.srcObject = null; outEl.current.src = silentWav(); outEl.current.play().catch(() => {});
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       mic.current = stream;
       // Never stuck on "Connecting…": 15 seconds after the microphone opens, give up and say so.
@@ -339,8 +376,13 @@ export function useGeminiLive(opts: Opts) {
       const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));
       await ac.audioWorklet.addModule(url);
       URL.revokeObjectURL(url);
-      const pl = new AudioWorkletNode(ac, 'chavrusa-play', { numberOfInputs: 0, outputChannelCount: [ac.destination.channelCount > 1 ? 2 : 1] });
-      pl.connect(ac.destination);
+      const pl = new AudioWorkletNode(ac, 'chavrusa-play', { numberOfInputs: 0, outputChannelCount: [1] });
+      // Played through WebRTC (see loopback); straight from the page only if that can't be set up.
+      const toRtc = ac.createMediaStreamDestination();
+      pl.connect(toRtc);
+      const hush = ac.createGain(); hush.gain.value = 0; pl.connect(hush); hush.connect(ac.destination); // keeps the player running
+      try { loopClose.current = await loopback(toRtc.stream, outEl.current!); logLine('AUDIO', 'the voice plays through WebRTC, like GPT-Live (echo cancelling on)'); }
+      catch (e) { pl.connect(ac.destination); logLine('AUDIO', `WebRTC playback unavailable (${(e as Error).message}): playing straight from the page`); }
       pl.port.onmessage = (e) => { if (e.data === 'idle') { audioBusy.current = false; afterTurn(); } else if (e.data === 'busy') audioBusy.current = true; };
       player.current = pl;
       const node = new AudioWorkletNode(ac, 'chavrusa-cap');

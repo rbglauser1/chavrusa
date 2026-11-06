@@ -6,6 +6,7 @@ import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { currentPlace } from '@/lib/place';
 import { geminiPronunciation, sayNote } from '@/lib/geminiPron';
 import { forVoice } from '@/lib/geminiSpeech';
+import { englishFor } from '@/lib/literal';
 
 export const runtime = 'nodejs';
 
@@ -15,7 +16,7 @@ export const runtime = 'nodejs';
 // to the Chavrusa brain.
 const HANDOFF = `
 # Handing off to the backend (Gemini)
-Whenever the instructions above say to "delegate" (to the backend), call the function ask_backend with the learner's words, exactly as he said them. Say a few words of filler first ("let me look inside"), then wait: the function's result is what to say next. When the result has a part between TEXT and END, that part is the text itself: read it first, the way a chavrusa reads inside, phrase by phrase (the lashon kodesh, then its English), leaving nothing out; then say the rest in your own words. Never make up the text while you wait.
+Whenever the instructions above say to "delegate" (to the backend), call the function ask_backend with the learner's words, exactly as he said them. Say a few words of filler first ("let me look inside"), then wait: the function's result is what to say next. When the result has a part between TEXT and END, that part is the text itself: read it first, the way a chavrusa reads inside, phrase by phrase: the lashon kodesh out loud, every word, exactly as it is spelled in English letters, and then its English, leaving nothing out. Never skip the lashon kodesh and never give only the English; then say the rest in your own words. Never make up the text while you wait.
 Messages that begin with "[APP]" come from the app, not from the learner: do what they say.`;
 
 export async function POST(req: NextRequest) {
@@ -67,8 +68,11 @@ export async function POST(req: NextRequest) {
       if (tapped && (!lastAt || tapped.created_at > lastAt)) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
-        const en = tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '';
-        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. The line reads: ${yeshivishTranslit(namesForSpeech(he), false)}${en ? ` — in English: "${clip(en, 600)}"` : ''}. Say it phrase by phrase (lashon kodesh, then English), every phrase to the end of the line, then stop: ask in a few words how he wants to go on, and wait. Do not go past this line by yourself.`;
+        const en = englishFor(tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '', tapped.data.enB?.[n - 1], s.translate, false, he);
+        // Phrase by phrase, the lashon kodesh spelled out first (log of Nov 6, 12:29 AM: given the whole line and then
+        // a long English, Gemini read only the English, and Sefaria's full English though "just the literal" was chosen).
+        const phrases = he.split(/(?<=[,:.?!;׃])\s+/).map((x) => x.trim()).filter(Boolean).map((x) => yeshivishTranslit(namesForSpeech(x), false));
+        pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. Read it inside, the way a chavrusa does: FIRST the lashon kodesh, every word, out loud, exactly as spelled here, phrase by phrase: ⟪${phrases.join(' … ')}⟫ THEN its English: "${clip(en, 600)}". Never skip the lashon kodesh and never give only the English. Then stop, and wait for him. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
   }
