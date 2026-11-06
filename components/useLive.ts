@@ -314,6 +314,7 @@ export function useLive(opts: {
             recIn.current.text = '';
           }, 1200);
           lastInputAt.current = Date.now();
+          autoArmed.current = false; // he spoke: what comes next is his call (his "go on" brings the next piece)
           bump();
           if (Date.now() - lastHeardPaint.current > 250) { lastHeardPaint.current = Date.now(); setHeard(userBuf.current); }
           if (stateRef.current === 'speaking') setS('listening');
@@ -352,9 +353,12 @@ export function useLive(opts: {
             turns.current++;
             if (REMINDERS && (remindDirty.current || turns.current % 2 === 0)) remindNow(null);
           }
-          const wasAnswer = answering.current;
+          // Keep going by itself stays armed across the voice's stretches of speech (log of Nov 6, 10:03 AM: a reading or
+          // an explanation often comes out in two or three stretches; the first stretch's end armed it, the next
+          // stretch cancelled it, and the last one, no longer "an answer", never armed it again, so it never went on).
+          const wasAnswer = answering.current || autoArmed.current;
           if (!pending.current.size) answering.current = false;
-          if (!pending.current.size && wasAnswer) autoNext();
+          if (!pending.current.size && wasAnswer) { autoArmed.current = true; autoNext(); }
           else if (!pending.current.size && autoStart.current) { autoStart.current = false; autoNext(true); }
           voiceBuf.current = pending.current.size ? '' : voiceBuf.current;
           if (!pending.current.size) checkSkip();
@@ -640,6 +644,7 @@ export function useLive(opts: {
   // (he didn't speak), the app asks for the next piece itself. Not after a question (he should answer it), and not
   // while he has said to stop or wait, until he says to go on again.
   const autoHold = useRef(false);
+  const autoArmed = useRef(false); // a piece was read or answered and nothing has been said since: go on when quiet
   const pointOpen = useRef<{ ref: string; n: number; he: string; en: string; enB?: string; literal?: boolean } | null>(null); // a tapped line to open the call with
   const oldOpen = useRef(false);
   const openingNow = useRef<{ text: string; speaks: boolean } | null>(null); // the voice's opening, given once sound flows // "Open calls the Nov 3 way" (a test): no app-brought opening, no silent-start retry
@@ -648,8 +653,10 @@ export function useLive(opts: {
     const secs = optsRef.current.autoGo?.() ?? 0;
     if (!secs || autoHold.current || (!force && /\?\s*["”']?\s*$/.test(lastUtter.current.text))) return;
     const at = lastUtter.current.at;
+    quietJobs.current = quietJobs.current.filter((j) => j.name !== 'auto'); // a newer stretch of speech replaces the wait
     whenQuiet('auto', () => {
       if (lastUtter.current.at !== at || autoHold.current || pending.current.size || lastInputAt.current > at || !pc.current) return;
+      autoArmed.current = false;
       const id = `app_${Date.now()}`;
       logLine('──', `keep going by itself: ${secs} s quiet after the piece, asking for the next one`);
       pending.current.add(id);

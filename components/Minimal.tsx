@@ -59,9 +59,9 @@ const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={dir === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'} /></svg>
 );
 
-function talkLabel(t: Props['talk'], busy: boolean, status: string): string {
+function talkLabel(t: Props['talk'], busy: boolean, status: string, wakes = true): string {
   if (!t.on) return t.error ? t.error : busy ? (status || 'Thinking…') : '';
-  if (t.state === 'paused') return 'Paused · tap to resume';
+  if (t.state === 'paused') return wakes ? 'Paused · just speak to go on, or tap to end' : 'Paused · tap to resume';
   if (t.state === 'connecting') return 'Connecting…';
   if (t.state === 'thinking') return status || 'Looking inside…';
   if (t.state === 'speaking') return 'Speaking · just talk to interrupt';
@@ -182,9 +182,12 @@ export default function Minimal(p: Props) {
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';
   const caption = lastSaid.replace(/^\s*>.*$/gm, '').replace(/\*\*|__|`|\[\[\/?say\]\]/g, '').replace(/\s+/g, ' ').trim();
   const src = p.current;
-  const label = talkLabel(p.talk, p.busy, p.status);
+  const label = talkLabel(p.talk, p.busy, p.status, p.settings?.liveWake !== false);
   const labelErr = !p.talk.on && !!p.talk.error;
-  const onTalk = () => (p.talk.on && p.talk.state === 'paused' ? p.talk.resume() : p.talk.toggle());
+  // Paused (log of Nov 6, 10:03 AM: Saver paused the call, and tapping to turn it off resumed it instead): when the
+  // call wakes up by itself when he speaks, a tap ends it; only with that off does a tap resume.
+  const wakes = p.settings?.liveWake !== false;
+  const onTalk = () => (p.talk.on && p.talk.state === 'paused' && !wakes ? p.talk.resume() : p.talk.toggle());
   // Next / back: in a call, move to the line (the voice reads it); otherwise ask the chavrusa (free).
   const step = (d: 1 | -1) => {
     if (src && p.talk.on) { const n = Math.min(Math.max((src.focus ?? 1) + d, 1), src.he.length); p.pointAt(src, n); return; }
@@ -207,11 +210,11 @@ export default function Minimal(p: Props) {
       {p.layout === 'quiet' && src && <button className="min-icon" onClick={() => setMenu((v) => !v)} aria-label="More" aria-expanded={menu}><DotsIcon /></button>}
       {mgOpen && src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref) && (
         <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? (Number(src.ref.match(/:(\d+)/)?.[1] ?? 1))} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={(x) => p.onToggle?.(x)} onLearn={p.learnThis}
-          talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
+          talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' && p.settings?.liveWake === false ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
       )}
       {dafOpen && src && amudOf(src.ref) && (
         <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}
-          talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
+          talk={p.talk.supported ? <button className={`min-round ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' && p.settings?.liveWake === false ? 'Resume the call' : 'End the call') : 'Talk'}><MicIcon size={20} /></button> : null} />
       )}
       {menu && <div className="min-menu-scrim" onClick={() => setMenu(false)} onTouchStart={() => setMenu(false)} aria-hidden="true" />}
       {menu && (
@@ -363,7 +366,7 @@ export default function Minimal(p: Props) {
         <div className="min-row-chips" />
         {showText && src && <AutoScroll />}
         {p.talk.supported && (
-          <button className={`min-round small ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' ? 'Resume the call' : 'End the call') : 'Talk'}>
+          <button className={`min-round small ${p.talk.on ? 'live' : ''}`} onClick={onTalk} aria-label={p.talk.on ? (p.talk.state === 'paused' && p.settings?.liveWake === false ? 'Resume the call' : 'End the call') : 'Talk'}>
             <MicIcon size={18} />
           </button>
         )}
