@@ -36,7 +36,7 @@ export function forGemini(text: string, spell: GeminiSpell = 'stressed', list: S
 // so it can't say it two ways. The learner's own "say it my way" list is applied first and wins.
 export const HOUSE_SAY: SayMyWay[] = [
   ...['Tosafos', 'Tosafot', 'Tosfos', 'Tosfot', 'Tosafoth'].map((w) => ({ word: w, say: 'TOSS-fos' })),
-  ...['Gemara', 'Gemarah', 'Gemora', 'Gemoro'].map((w) => ({ word: w, say: "g'MAW-rah" })),
+  ...['Gemara', 'Gemarah', 'Gemora', 'Gemoro'].map((w) => ({ word: w, say: "g'MOR-ah" })),
   ...['Mishnah', 'Mishna'].map((w) => ({ word: w, say: 'MISH-nah' })),
   ...['Mishnayos', 'Mishnayot', 'Mishnaios'].map((w) => ({ word: w, say: 'mish-NAI-yos' })),
   { word: 'Rashi', say: 'RAH-shee' },
