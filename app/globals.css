@@ -1996,5 +1996,5 @@ body[data-dafull]::before { display: none; }
 .ht-sound { margin-top: 8px; border: 0; background: transparent; color: var(--soft); font-family: var(--f-ui); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 /* The commentaries' chosen font (Settings → Look and fonts → Hebrew font for the commentaries). */
-html[data-commfont='chosen'] :is(.rashi, .sefer .rashi, .min .rashi, .min-he.rashi, .sefer .comm .he, .min-comm p, .mg-cols) { font-family: var(--f-comm), var(--f-he); font-size: 1em; }
+html[data-commfont='chosen'] :is(.rashi, .sefer .rashi, .min .rashi, .min-he.rashi, .sefer .comm .he, .min-comm p, .mg-cols) { font-family: var(--f-comm), var(--f-he); } /* (no size here: the commentary size setting decides it) */
 html[data-commfont='same'] :is(.rashi, .sefer .rashi, .min .rashi, .min-he.rashi, .mg-cols) { font-family: var(--f-he); }
