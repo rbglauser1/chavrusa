@@ -553,12 +553,18 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     {introBox(prevIntro)}
                     {prevSrc.he.map((line, i) => {
                       const en = prevSrc.en[i] || (prevSrc.en.length ? undefined : prevSrc.altEn?.[i]);
+                      // Under each phrase here too (Nov 7: the amud before and after the chosen one showed the whole line).
+                      const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, prevSrc.enB?.[i], en) : null;
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
                         {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`pm${k}`} className="move">{m}</div>)}
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(prevSrc, i + 1)); } else onPoint?.(prevSrc, i + 1); }}>
-                          <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
-                          {canTranslate && showAll && en && <div className="en">{prevSrc.enB?.[i] ? <BoldEn text={prevSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
+                          {pairs
+                            ? <Interlinear pairs={pairs} heClass="" show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
+                            : <>
+                              <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                              {canTranslate && showAll && en && <div className="en">{prevSrc.enB?.[i] ? <BoldEn text={prevSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
+                            </>}
                           {tgBox(prevTg, i)}
                         </div>
                         </div>
@@ -705,12 +711,18 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     {introBox(nextIntro)}
                     {nextSrc.he.map((line, i) => {
                       const en = nextSrc.en[i] || (nextSrc.en.length ? undefined : nextSrc.altEn?.[i]);
+                      // Under each phrase here too (Nov 7: the amud before and after the chosen one showed the whole line).
+                      const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, nextSrc.enB?.[i], en) : null;
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
                         {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`nm${k}`} className="move">{m}</div>)}
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(nextSrc, i + 1)); } else onPoint?.(nextSrc, i + 1); }}>
-                          <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
-                          {canTranslate && showAll && en && <div className="en">{nextSrc.enB?.[i] ? <BoldEn text={nextSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
+                          {pairs
+                            ? <Interlinear pairs={pairs} heClass="" show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
+                            : <>
+                              <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                              {canTranslate && showAll && en && <div className="en">{nextSrc.enB?.[i] ? <BoldEn text={nextSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
+                            </>}
                           {tgBox(nextTg, i)}
                         </div>
                         </div>
