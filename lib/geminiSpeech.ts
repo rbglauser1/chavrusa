@@ -57,7 +57,7 @@ export const HOUSE_SAY: SayMyWay[] = [
   { word: 'Rambam', say: 'RAHM-bahm' },
   { word: 'Ramban', say: 'RAHM-bahn' },
   ...['Torah', 'Toirah'].map((w) => ({ word: w, say: 'TOI-rah' })),
-  ...['Moshe', 'Moishe'].map((w) => ({ word: w, say: 'MOI-sheh' })),
+  ...['Moshe', 'Moishe'].map((w) => ({ word: w, say: 'MOI-shuh' })),
   ...['Shabbos', 'Shabbat', 'Shabbath'].map((w) => ({ word: w, say: 'SHAH-bos' })),
   ...['Brachos', 'Berachos', 'Berakhot', 'Brachot'].map((w) => ({ word: w, say: 'BRAW-chos' })),
   ...['Bereishis', 'Bereshit', 'Bereishit'].map((w) => ({ word: w, say: 'be-REI-shis' })),

@@ -137,7 +137,7 @@ export default function Home() {
     checkOn: () => settingsRef.current.liveCheck !== false,
     checkHeOn: () => settingsRef.current.liveCheckHe !== false && (settingsRef.current.voiceReads ?? 'all') === 'all',
     // Keep going by itself: the pause before going on follows the Pauses setting.
-    autoGo: () => (settingsRef.current.autoGo ? ({ few: 2, normal: 4, more: 6, most: 8 } as Record<string, number>)[settingsRef.current.livePauses ?? 'normal'] ?? 4 : 0),
+    autoGo: () => (settingsRef.current.autoGo ? ({ few: 1.5, normal: 2, more: 4, most: 6 } as Record<string, number>)[settingsRef.current.livePauses ?? 'normal'] ?? 2 : 0),
     onEnded: (seconds) => {
       liveQueue.current = [];
       liveDelegation.current = null;

@@ -720,7 +720,7 @@ export function useLive(opts: {
   function checkSkip() {
     if (!check.current || optsRef.current.checkOn?.() === false) return;
     // Judged only once it has really finished: a pause between phrases is not the end.
-    whenQuiet('check', () => { if (check.current) judgeSkip(); }, 4000);
+    whenQuiet('check', () => { if (check.current) judgeSkip(); }, 1500); // (was 4 s: it held keep going by itself back to 5–7 s between pieces; Nov 8)
   }
   function judgeSkip() {
     const c = check.current;
