@@ -5,7 +5,7 @@
 // microphone, plays Gemini's voice, and hands every learning turn to the Chavrusa brain through one tool
 // (ask_backend). The brain's answer goes back as the tool's result, for Gemini to say.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { hasNikud, namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+import { hasNikud, mildCholam, namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { voicePhrases } from '@/lib/interlinear';
 import { splitPieces } from '@/lib/pieces';
 import type { LiveState, useLive } from './useLive';
@@ -57,22 +57,6 @@ function bytesFromB64(b64: string): Uint8Array {
 
 type Seg = { kind: 'exact' | 'say'; text: string };
 
-// The cholam made milder for Gemini (Nov 8: "too much oy"): spelled "oi" only in the stressed syllable, a plain "o"
-// elsewhere (OI-soi → oiso, a-HA-roin → aharon, GAW-doil → gawdol, KOI-hein stays koihein). Takes the app's stressed
-// spelling (syllables with dashes, the stressed one in capitals) and gives back the plain joined spelling.
-function mildCholam(plain: string, stressed: string): string {
-  const pw = plain.split(/\s+/), sw = stressed.split(/\s+/);
-  if (pw.length !== sw.length) return plain;
-  return pw.map((w, k) => {
-    const syl = sw[k].split('-');
-    if (syl.length < 2) return w;
-    // which of the word's "oi"s are in the stressed syllable, in order
-    const keep: boolean[] = [];
-    for (const x of syl) for (let m = x.toLowerCase().indexOf('oi'); m >= 0; m = x.toLowerCase().indexOf('oi', m + 2)) keep.push(/[A-Z]/.test(x));
-    let n = 0;
-    return w.replace(/oi/g, () => (keep[n++] === false ? 'o' : 'oi'));
-  }).join(' ');
-}
 
 
 // A tiny silent sound, played inside the tap so the phone lets the player speak later.
@@ -418,7 +402,10 @@ export function useGeminiLive(opts: Opts) {
     try {
       // The player and microphone start inside the tap (phones only allow sound that a tap began).
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ac = new AC();
+      // At Gemini's own rate (24 kHz), so its sound is played as it comes, with no resampling by the app (Nov 8:
+      // crackling still); the phone converts it to its speaker's rate itself. If the browser refuses, its own rate.
+      let ac: AudioContext;
+      try { ac = new AC({ sampleRate: 24000 }); } catch { ac = new AC(); }
       ctx.current = ac;
       void ac.resume().catch(() => {});
       if (!outEl.current) { const el = document.createElement('audio'); el.autoplay = true; el.setAttribute('playsinline', ''); el.style.display = 'none'; document.body.appendChild(el); outEl.current = el; }

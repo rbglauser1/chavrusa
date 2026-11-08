@@ -83,8 +83,13 @@ export async function POST(req: NextRequest) {
       const lastBot = [...recent].reverse().find((m) => m.role === 'assistant');
       lastSaid = lastBot ? clip(plain(lastBot.content), 600) : '';
       lastAt = recent.length ? recent[recent.length - 1].created_at : null;
+      // Not a tap: the same amud just shown again (opened from the Library or Recent, or put back after Settings) is
+      // no reason to start at its first line (log of Nov 8, 3:06 PM: the call started at 6a line 1, mid-sentence,
+      // though we had learned well into the amud). Only a real tap, or a different place, moves where we start.
+      const herePlace = currentPlace(history, sources);
+      const realTap = (x: { data?: { tappedAt?: number } | null; ref: string }) => !!x.data?.tappedAt || !herePlace || herePlace.base !== x.ref;
       const tapped = [...sources].reverse().find((x) => x.data?.focus);
-      if (tapped && !plainOpen && (!lastAt || tapped.created_at > lastAt)) {
+      if (tapped && realTap(tapped) && !plainOpen && (!lastAt || tapped.created_at > lastAt)) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
         // The English as the learner chose it (Settings → Voice: the literal words, when Sefaria marks them).

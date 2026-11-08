@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GEMINI_LIVE, GEMINI_VOICES, styleById, styleCard } from '@/lib/config';
 import { getSettings, listMemories, listMessages, listSources } from '@/lib/db';
 import { GEMINI_VOICE, liveContext, liveInstructions } from '@/lib/live';
-import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+import { mildCholam, namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { currentPlace } from '@/lib/place';
 import { geminiPronunciation, sayNote } from '@/lib/geminiPron';
 import { forVoice } from '@/lib/geminiSpeech';
@@ -65,14 +65,19 @@ export async function POST(req: NextRequest) {
       const lastBot = [...recent].reverse().find((m) => m.role === 'assistant');
       lastSaid = lastBot ? clip(plain(lastBot.content), 600) : '';
       lastAt = recent.length ? recent[recent.length - 1].created_at : null;
+      // Not a tap: the same amud just shown again (opened from the Library or Recent, or put back after Settings) is
+      // no reason to start at its first line (log of Nov 8, 3:06 PM: the call started at 6a line 1, mid-sentence,
+      // though we had learned well into the amud). Only a real tap, or a different place, moves where we start.
+      const herePlace = currentPlace(history, sources);
+      const realTap = (x: { data?: { tappedAt?: number } | null; ref: string }) => !!x.data?.tappedAt || !herePlace || herePlace.base !== x.ref;
       const tapped = [...sources].reverse().find((x) => x.data?.focus);
-      if (tapped && (!lastAt || tapped.created_at > lastAt)) {
+      if (tapped && realTap(tapped) && (!lastAt || tapped.created_at > lastAt)) {
         const n = tapped.data.focus as number;
         const he = tapped.data.he[n - 1] ?? '';
         const en = englishFor(tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '', tapped.data.enB?.[n - 1], s.translate, false, he);
         // Phrase by phrase, the lashon kodesh spelled out first (log of Nov 6, 12:29 AM: given the whole line and then
         // a long English, Gemini read only the English, and Sefaria's full English though "just the literal" was chosen).
-        const phrases = voicePhrases(he).map((x) => yeshivishTranslit(namesForSpeech(x), false));
+        const phrases = voicePhrases(he).map((x) => mildCholam(yeshivishTranslit(namesForSpeech(x), false), yeshivishTranslit(namesForSpeech(x), true)));
         pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. Read it inside, the way a chavrusa does: FIRST the lashon kodesh, every word, out loud, exactly as spelled here, phrase by phrase: ⟪${phrases.join(' … ')}⟫ THEN its English: "${clip(en, 600)}". Never skip the lashon kodesh and never give only the English. Then stop, and wait for him. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }

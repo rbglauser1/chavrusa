@@ -274,3 +274,20 @@ export function voiceReadsNote(mode: VoiceReads = 'all'): string {
   if (mode === 'gist') return 'WHO READS: the learner reads the text himself. You never read the text aloud, not in lashon kodesh and not in English: give the gist of each piece in your own words, then go on with the learning in your style.';
   return '';
 }
+
+// The cholam made milder for Gemini (Nov 8: "too much oy"): spelled "oi" only in the stressed syllable, a plain "o"
+// elsewhere (OI-soi → oiso, a-HA-roin → aharon, GAW-doil → gawdol, KOI-hein stays koihein). Takes the app's stressed
+// spelling (syllables with dashes, the stressed one in capitals) and gives back the plain joined spelling.
+export function mildCholam(plain: string, stressed: string): string {
+  const pw = plain.split(/\s+/), sw = stressed.split(/\s+/);
+  if (pw.length !== sw.length) return plain;
+  return pw.map((w, k) => {
+    const syl = sw[k].split('-');
+    if (syl.length < 2) return w;
+    // which of the word's "oi"s are in the stressed syllable, in order
+    const keep: boolean[] = [];
+    for (const x of syl) for (let m = x.toLowerCase().indexOf('oi'); m >= 0; m = x.toLowerCase().indexOf('oi', m + 2)) keep.push(/[A-Z]/.test(x));
+    let n = 0;
+    return w.replace(/oi/g, () => (keep[n++] === false ? 'o' : 'oi'));
+  }).join(' ');
+}
