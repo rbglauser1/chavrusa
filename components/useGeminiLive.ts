@@ -6,6 +6,7 @@
 // (ask_backend). The brain's answer goes back as the tool's result, for Gemini to say.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { hasNikud, namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+import { voicePhrases } from '@/lib/interlinear';
 import { splitPieces } from '@/lib/pieces';
 import type { LiveState, useLive } from './useLive';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
@@ -144,9 +145,11 @@ export function useGeminiLive(opts: Opts) {
   // A message from the app (not the learner): what to do now.
   // Gemini's own spelling of lashon kodesh and the learner's "say it my way" list (Settings), applied to all it is given.
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
+  // In short phrases with a break between them (log of Nov 8, 8:44 AM: a two-sentence line as one run, and Gemini read
+  // the first sentence and skipped to the English).
   // Any Hebrew letters (the brain's [[say]] text) are spelled out the yeshivish way first: Gemini given Hebrew letters
   // read them like an Israeli, or skipped them and said only the English.
-  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => (hasNikud(he) ? yeshivishTranslit(namesForSpeech(he), false) || he : he)), speech.current.spell, speech.current.myWay, speech.current.house);
+  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => voicePhrases(he).map((ph) => (hasNikud(ph) ? yeshivishTranslit(namesForSpeech(ph), false) || ph : ph)).join(' … ')), speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });
