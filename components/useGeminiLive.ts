@@ -5,7 +5,7 @@
 // microphone, plays Gemini's voice, and hands every learning turn to the Chavrusa brain through one tool
 // (ask_backend). The brain's answer goes back as the tool's result, for Gemini to say.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
+import { hasNikud, namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
 import type { LiveState, useLive } from './useLive';
 import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
@@ -25,17 +25,17 @@ const WORKLET = `class Cap extends AudioWorkletProcessor { process(inputs) { con
 class Play extends AudioWorkletProcessor {
   constructor() { super(); this.N = 24000 * 180; this.b = new Float32Array(this.N); this.w = 0; this.r = 0; this.step = 24000 / sampleRate; this.on = false; this.busy = false; this.flush = false; this.g = 0; this.last = 0;
     this.port.onmessage = (e) => { const d = e.data;
-      if (d === 'clear') { this.w = 0; this.r = 0; this.on = false; this.flush = false; this.g = 0; this.last = 0; if (this.busy) { this.busy = false; this.port.postMessage('idle'); } return; }
+      if (d === 'clear') { this.gaps = 0; this.w = 0; this.r = 0; this.on = false; this.flush = false; this.g = 0; this.last = 0; if (this.busy) { this.busy = false; this.port.postMessage('idle'); } return; }
       if (d === 'flush') { this.flush = true; if (!this.busy) this.port.postMessage('idle'); return; }
       for (let i = 0; i < d.length; i++) this.b[(this.w + i) % this.N] = d[i];
       this.w += d.length; this.flush = false;
       if (!this.busy) { this.busy = true; this.port.postMessage('busy'); } }; }
   process(inputs, outputs) { const o = outputs[0][0]; if (!o) return true;
-    if (!this.on && this.w - this.r > 0 && (this.w - this.r >= 24000 * 0.18 || this.flush)) this.on = true;
+    if (!this.on && this.w - this.r > 0 && (this.w - this.r >= 24000 * (this.gaps ? 0.35 : 0.25) || this.flush)) this.on = true;
     for (let k = 0; k < o.length; k++) {
       if (this.on && this.w - this.r >= 2) { const i = Math.floor(this.r), f = this.r - i; const a = this.b[i % this.N], c = this.b[(i + 1) % this.N];
         if (this.g < 1) this.g = Math.min(1, this.g + 0.004); this.last = a + (c - a) * f; o[k] = this.last * this.g; this.r += this.step; }
-      else { if (this.on) this.on = false; this.g = Math.max(0, this.g - 0.004); this.last *= 0.995; o[k] = this.last * this.g; }
+      else { if (this.on) { this.on = false; if (!this.flush) { this.gaps = (this.gaps || 0) + 1; this.port.postMessage('gap'); } } this.g = Math.max(0, this.g - 0.004); this.last *= 0.995; o[k] = this.last * this.g; }
     }
     for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(o);
     if (this.busy && !this.on && this.flush && this.w - this.r < 2) { this.busy = false; this.flush = false; this.w = 0; this.r = 0; this.port.postMessage('idle'); }
@@ -108,7 +108,8 @@ export function useGeminiLive(opts: Opts) {
   const player = useRef<AudioWorkletNode | null>(null);
   const outEl = useRef<HTMLAudioElement | null>(null);
   const loopClose = useRef<(() => void) | null>(null);
-  const audioBusy = useRef(false); // the player still has the voice's sound to play
+  const audioBusy = useRef(false);
+  const gaps = useRef(0); // times the voice's sound ran out mid-turn (a likely crackle), logged per turn // the player still has the voice's sound to play
   const pending = useRef<Map<string, Seg[]>>(new Map()); // tool calls waiting for the brain
   const userBuf = useRef('');
   const voiceBuf = useRef('');
@@ -138,7 +139,7 @@ export function useGeminiLive(opts: Opts) {
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
   // Any Hebrew letters (the brain's [[say]] text) are spelled out the yeshivish way first: Gemini given Hebrew letters
   // read them like an Israeli, or skipped them and said only the English.
-  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => toSpeech(he)), speech.current.spell, speech.current.myWay, speech.current.house);
+  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => (hasNikud(he) ? toSpeech(he) || he : he)), speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });
@@ -383,7 +384,7 @@ export function useGeminiLive(opts: Opts) {
       const hush = ac.createGain(); hush.gain.value = 0; pl.connect(hush); hush.connect(ac.destination); // keeps the player running
       try { loopClose.current = await loopback(toRtc.stream, outEl.current!); logLine('AUDIO', 'the voice plays through WebRTC, like GPT-Live (echo cancelling on)'); }
       catch (e) { pl.connect(ac.destination); logLine('AUDIO', `WebRTC playback unavailable (${(e as Error).message}): playing straight from the page`); }
-      pl.port.onmessage = (e) => { if (e.data === 'idle') { audioBusy.current = false; afterTurn(); } else if (e.data === 'busy') audioBusy.current = true; };
+      pl.port.onmessage = (e) => { if (e.data === 'gap') { gaps.current++; return; } if (e.data === 'idle') { if (gaps.current) { logLine('AUDIO', `the voice's sound ran short ${gaps.current} time${gaps.current > 1 ? 's' : ''} this turn (the network was slower than the voice)`); gaps.current = 0; } audioBusy.current = false; afterTurn(); } else if (e.data === 'busy') audioBusy.current = true; };
       player.current = pl;
       const node = new AudioWorkletNode(ac, 'chavrusa-cap');
       capNode.current = node;

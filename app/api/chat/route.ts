@@ -52,6 +52,10 @@ export async function POST(req: NextRequest) {
       try {
         if (!message) throw new Error('Empty message.');
         let settings = await getSettings();
+        // Gemini gets the lashon kodesh spelled out in English letters by the app (useGeminiLive), which needs the
+        // vowels to spell from. "Without vowels" is for GPT-Live; with Gemini the Hebrew keeps its nikud (log of Nov 7,
+        // 11:24 PM: the bare letters came out as nothing, and Gemini read the line from memory, like an Israeli).
+        if (spoken && settings.liveEngine === 'gemini') settings = { ...settings, heRead: 'he' };
 
         // Session
         if (!sessionId || !(await getSession(sessionId))) {
