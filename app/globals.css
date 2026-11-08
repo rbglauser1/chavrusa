@@ -1998,3 +1998,5 @@ body[data-dafull]::before { display: none; }
 /* The commentaries' chosen font (Settings → Look and fonts → Hebrew font for the commentaries). */
 html[data-commfont='chosen'] :is(.rashi, .sefer .rashi, .min .rashi, .min-he.rashi, .sefer .comm .he, .min-comm p, .mg-cols) { font-family: var(--f-comm), var(--f-he); } /* (no size here: the commentary size setting decides it) */
 html[data-commfont='same'] :is(.rashi, .sefer .rashi, .min .rashi, .min-he.rashi, .mg-cols) { font-family: var(--f-he); }
+/* The commentaries in a chosen font, or the text's: a little more room between the words (Nov 7: the words ran together). */
+html:is([data-commfont='chosen'], [data-commfont='same']) :is(.rashi, .sefer .rashi, .min .rashi, .min-he.rashi, .sefer .comm .he, .min-comm p, .mg-cols) { word-spacing: 0.3em; }
