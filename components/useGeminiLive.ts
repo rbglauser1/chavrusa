@@ -146,7 +146,7 @@ export function useGeminiLive(opts: Opts) {
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
   // Any Hebrew letters (the brain's [[say]] text) are spelled out the yeshivish way first: Gemini given Hebrew letters
   // read them like an Israeli, or skipped them and said only the English.
-  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => (hasNikud(he) ? yeshivishTranslit(namesForSpeech(he), false) || he : he)), speech.current.spell, speech.current.myWay, speech.current.house);
+  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => (hasNikud(he) ? yeshivishTranslit(namesForSpeech(he), true) || he : he)), speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });

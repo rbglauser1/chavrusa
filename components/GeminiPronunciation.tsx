@@ -55,10 +55,7 @@ export default function GeminiPronunciation({ s, onChange }: { s: Settings; onCh
     <div className="field gem-pron">
       <label>Gemini pronunciation (Gemini only; GPT-Live isn&apos;t changed)</label>
 
-      <div className="muted" style={{ fontSize: 12, margin: '2px 0 6px' }}>Guide it follows</div>
-      <Seg value={s.geminiPron ?? 'gemini'} options={[['gemini', "Gemini's own"], ['same', 'Same as GPT-Live'], ['plain', 'None']]} onPick={(v) => { onChange({ geminiPron: v }); changed(); }} />
-
-      <div className="muted" style={{ fontSize: 12, margin: '10px 0 6px' }}>How lashon kodesh is spelled out for it</div>
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 6px' }}>How lashon kodesh is spelled out for it</div>
       <Seg value={s.geminiSpell ?? 'stressed'} options={[['stressed', 'be-REI-shis'], ['joined', 'beREIshis'], ['plain', 'bereishis']]} onPick={(v) => { onChange({ geminiSpell: v }); changed(); }} />
 
       <div className="muted" style={{ fontSize: 12, margin: '12px 0 6px' }}>Say it my way (word → how it should sound)</div>

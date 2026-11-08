@@ -3,7 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { GEMINI_LIVE, GEMINI_VOICES } from '@/lib/config';
 import { getSettings } from '@/lib/db';
 import { geminiLine, geminiPronunciation } from '@/lib/geminiPron';
-import { liveInstructions } from '@/lib/live';
+import { GEMINI_VOICE, liveInstructions } from '@/lib/live';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -101,9 +101,9 @@ export async function POST(req: NextRequest) {
   // The pronunciation part of a call's instructions, without the rest of the chavrusa's rules.
   const full = liveInstructions(s.nusach, s.livePace, false, pron);
   const pronPart = full.split('\n').find((l) => l.startsWith('Pronunciation:')) ?? '';
-  const system = `${pronPart}${myWayNote}\nWhen you are given a line to say, say exactly that line aloud, once, naturally, and then stop.`;
+  const system = `${s.nusach !== 'sephardi' ? GEMINI_VOICE : ''}${pronPart}${myWayNote}\nWhen you are given a line to say, say exactly that line aloud, once, naturally, and then stop.`;
   try {
-    const key = ['gemini-say-v1', GEMINI_LIVE.model, voice, line, system];
+    const key = ['gemini-say-v2', GEMINI_LIVE.model, voice, line, system];
     const b64 = await unstable_cache(() => speak(voice, line, system), key, { revalidate: 60 * 60 * 24 * 30 })();
     return new NextResponse(new Uint8Array(Buffer.from(b64, 'base64')), { headers: { 'Content-Type': 'audio/wav', 'X-Spoken-As': encodeURIComponent(line.slice(0, 300)) } });
   } catch (e) {
