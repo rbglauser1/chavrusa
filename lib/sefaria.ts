@@ -2,6 +2,7 @@ import 'server-only';
 import { ALL_WORKS, ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationApproved, translationRank, Verdict } from './approval';
 import { SourceData } from './db';
 import { yeshivishEnglish } from './hebrew';
+import { getMineText, isMineRef } from './mine';
 
 const BASE = 'https://www.sefaria.org';
 const enc = (ref: string) => encodeURIComponent(ref.trim().replace(/ /g, '_')).replace(/%2C/g, ',').replace(/%3A/g, ':');
@@ -111,6 +112,8 @@ function pick(versions: V3Version[], lang: 'he' | 'en'): V3Version | undefined {
 }
 
 export async function getText(ref: string, list: ApprovedEntry[]): Promise<SourceData & { verdict: Verdict }> {
+  // His own texts (My Seforim, lib/mine.ts) open like any sefer.
+  if (isMineRef(ref)) return { ...(await getMineText(ref)), verdict: { allowed: true, reason: 'Your own text', lean: '' } };
   const r = enc(ref);
   // Start the approval check at the same time as the text, instead of after it.
   const earlyVerdict = judgeRef(ref, list).catch(() => null);
@@ -164,6 +167,7 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
 export interface LinkItem { ref: string; category: string; title: string; anchor?: string }
 
 export async function getLinks(ref: string, list: ApprovedEntry[], categories?: string[], max = 80): Promise<{ allowed: LinkItem[]; excluded: string[] }> {
+  if (isMineRef(ref)) return { allowed: [], excluded: [] }; // his own texts have no links on Sefaria
   const data = await getJson(`${BASE}/api/links/${enc(ref)}?with_text=0`);
   const raw: any[] = Array.isArray(data) ? data : [];
   let items: LinkItem[] = raw.map((l) => ({

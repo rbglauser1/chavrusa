@@ -119,6 +119,7 @@ function sefariaName(cand: string, mishnah = false): string {
 }
 
 export async function findRef(message: string, direct = false): Promise<string | null> {
+  if (/^Mine [a-z0-9]{6,} \d+$/i.test(message.trim())) return message.trim(); // one of his own texts (My Seforim)
   if (/daf\s*yomi|today'?s\s+daf/i.test(message)) {
     const items = await todaysLearning();
     return items.find((i) => /daf yomi/i.test(i.title))?.ref ?? null;

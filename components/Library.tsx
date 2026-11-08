@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import MySeforim from './MySeforim';
 
 // Browse Sefaria's library inside the Sefer: category -> sefer -> perek / daf / part. Free (no AI).
 type Item = { kind: 'category' | 'book'; name: string; he: string };
@@ -105,6 +106,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string, foc
       {msg && <div className="goto-msg">{msg}</div>}
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
+      {!book && !path.length && <MySeforim busy={busy} onOpen={(ref) => open(ref)} />}
       {!book && !path.length && recent.length > 0 && (
         <div className="lib-recent">
           <div className="lib-recent-head">

@@ -2004,3 +2004,21 @@ html:is([data-commfont='chosen'], [data-commfont='same']) :is(.rashi, .sefer .ra
 .ptr { position: fixed; top: env(safe-area-inset-top); left: 50%; z-index: 500; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--rule); box-shadow: var(--shadow); color: var(--soft); font-family: var(--f-ui); font-size: 13px; pointer-events: none; }
 .ptr-arrow { display: inline-block; transition: transform .2s; color: var(--accent); }
 .ptr-arrow.ready { transform: rotate(180deg); }
+/* My Seforim (components/MySeforim.tsx) */
+.mine { margin-bottom: 16px; }
+.mine-row { display: flex; align-items: stretch; gap: 4px; }
+.mine-row .lib-item { flex: 1; min-width: 0; }
+.mine-row .lib-item .en { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mine-x { border: 0; background: transparent; color: var(--soft); font-size: 20px; width: 34px; cursor: pointer; }
+.mine-empty { font-size: 13px; padding: 4px 2px 8px; }
+.mine-add { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); }
+.mine-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.mine-tabs button { border: 1px solid var(--rule); background: transparent; color: var(--ink); border-radius: 999px; padding: 5px 12px; font-family: var(--f-ui); font-size: 13px; cursor: pointer; }
+.mine-tabs button.on { background: var(--accent-soft); border-color: var(--accent); }
+.mine-note { font-size: 12px; }
+.mine-line { display: flex; gap: 8px; align-items: center; }
+.mine-line input, .mine-draft input, .mine-add textarea { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+.mine-add textarea { width: 100%; box-sizing: border-box; }
+.mine-draft { display: flex; flex-direction: column; gap: 6px; }
+.mine-preview { max-height: 160px; overflow: auto; padding: 8px 10px; border-left: 2px solid var(--accent); background: var(--bg); font-size: 13px; }
+.mine-preview p { margin: 0 0 6px; }
