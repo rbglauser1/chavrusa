@@ -30,6 +30,10 @@ interface Props {
   embedded?: boolean; // inside Quiet chat: just the text and its tools (the layout has its own header)
 }
 
+// Where the learner was, kept while the Sefer is closed (Nov 7: opening Settings from 5b and coming back put him at the
+// top of 5a): the amud above and below that were showing, and how far down he was. Kept for 10 minutes.
+const kept = new Map<string, { prev: SourceData | null; next: SourceData | null; top: number; at: number }>();
+
 export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
@@ -81,7 +85,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const viewTop = (el: HTMLElement) => (docScroll ? 0 : el.getBoundingClientRect().top);
   const viewH = (el: HTMLElement) => (docScroll ? window.innerHeight : el.clientHeight);
   useEffect(() => {
-    if (!src?.focus) return;
+    if (!src?.focus || restoring.current) return;
     // Land at the start of the line (its Hebrew first), with the step heading above it when Steps are on.
     const t = window.setTimeout(() => {
       let el = bodyRef.current?.querySelector(`[data-line="${src.focus}"]`) as HTMLElement | null;
@@ -221,13 +225,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).
   const prevRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? prevSection(src.ref) : null;
-  const [prevSrc, setPrevSrc] = useState<SourceData | null>(null);
+  const restoring = useRef((() => { const k = src ? kept.get(src.ref) : undefined; return k && Date.now() - k.at < 600_000 && k.top > 40 ? k : null; })());
+  const [prevSrc, setPrevSrc] = useState<SourceData | null>(restoring.current?.prev ?? null);
   const [prevState, setPrevState] = useState<'idle' | 'loading' | 'none'>('idle');
   const prevHeight = useRef<number | null>(null);
   // The amud before and after are fetched quietly as soon as this one opens, so the pull shows them at once.
   const ahead = useRef<Record<string, Promise<SourceData | null>>>({});
   const fetchAhead = (ref: string) => (ahead.current[ref] ??= fetch(`/api/peek?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => (d.source ?? null) as SourceData | null).catch(() => { delete ahead.current[ref]; return null; }));
-  useEffect(() => { setPrevSrc(null); setPrevState('idle'); setInView('main'); }, [src?.ref]);
+  useEffect(() => { if (restoring.current) return; setPrevSrc(null); setPrevState('idle'); setInView('main'); }, [src?.ref]);
   function loadPrev() {
     if (!prevRef || prevSrc || prevState !== 'idle') return;
     setPrevState('loading');
@@ -238,7 +243,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // since the bounce would otherwise snap the page back to the top.
   useEffect(() => {
     const el = sc();
-    if (!el || !prevSrc || prevHeight.current === null) return;
+    if (!el || !prevSrc || prevHeight.current === null || restoring.current) return;
     prevHeight.current = null;
     const place = () => {
       const pv = prevElRef.current;
@@ -267,6 +272,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const el = sc();
     if (!el) return;
     lastTop.current = el.scrollTop;
+    if (src && !restoring.current) kept.set(src.ref, { prev: prevSrc, next: nextSrc, top: el.scrollTop, at: Date.now() });
     const mid = viewTop(el) + viewH(el) / 2;
     const pv = prevElRef.current?.getBoundingClientRect(), nx = endRef.current?.getBoundingClientRect();
     const where = prevSrc && pv && pv.bottom > mid ? 'prev' : nextSrc && nx && nx.top < mid ? 'next' : 'main';
@@ -364,7 +370,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // A new amud opened: start at its top (unless the chavrusa put us on a later line).
   useEffect(() => {
     scrolled.current = false;
-    if (src?.focus && src.focus > 1) return;
+    if (restoring.current || (src?.focus && src.focus > 1)) return;
     const t = window.setTimeout(() => { sc()?.scrollTo({ top: 0 }); }, 30);
     return () => window.clearTimeout(t);
   }, [src?.ref]);
@@ -372,9 +378,21 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // The text keeps going: under the last line, the next amud / perek appears by itself (when you reach the end
   // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
   const nextRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? nextSection(src.ref) : null;
-  const [nextSrc, setNextSrc] = useState<SourceData | null>(null);
+  const [nextSrc, setNextSrc] = useState<SourceData | null>(restoring.current?.next ?? null);
   const [nextState, setNextState] = useState<'idle' | 'loading' | 'none'>('idle');
-  useEffect(() => { setNextSrc(null); setNextState('idle'); }, [src?.ref]);
+  useEffect(() => { if (restoring.current) return; setNextSrc(null); setNextState('idle'); }, [src?.ref]);
+  // Coming back: the same amudim, and the same place on the page (again as the page settles).
+  useEffect(() => {
+    const k = restoring.current;
+    if (!k) return;
+    const put = () => { const el = sc(); if (el) { el.scrollTop = k.top; lastTop.current = k.top; } };
+    requestAnimationFrame(put);
+    const ts = [120, 400, 900].map((ms) => window.setTimeout(put, ms));
+    const done = window.setTimeout(() => { restoring.current = null; }, 1000);
+    return () => { ts.forEach((t) => window.clearTimeout(t)); window.clearTimeout(done); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Remember the place as he reads.
+  useEffect(() => { if (src && !restoring.current) kept.set(src.ref, { prev: prevSrc, next: nextSrc, top: lastTop.current, at: Date.now() }); }, [src?.ref, prevSrc, nextSrc]); // eslint-disable-line react-hooks/exhaustive-deps
   function loadNext() {
     if (!nextRef || nextSrc || nextState !== 'idle') return;
     setNextState('loading');
