@@ -44,6 +44,10 @@ export async function POST(req: NextRequest) {
   const message: string = String(body.message ?? '').trim();
   let sessionId: string | null = body.sessionId ?? null;
   const spoken = body.voice === true;
+  // The next piece was ready in advance and the page already handed it to the voice (lib/nextRead.ts): this turn only
+  // records it and writes what comes after the reading.
+  const handed: { early: string; at: Expect } | null = spoken && typeof body.handed?.early === 'string' && typeof body.handed?.at?.base === 'string' && Number(body.handed?.at?.n) > 0
+    ? { early: String(body.handed.early), at: { base: String(body.handed.at.base), n: Number(body.handed.at.n), ...(body.handed.at.part ? { part: Number(body.handed.at.part) } : {}) } } : null;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -106,7 +110,7 @@ export async function POST(req: NextRequest) {
 
         // Anything the app can do by itself (open a place, turn the page, open Rashi, switch style, repeat, thanks…)
         // is done here with no AI call: free and instant. Only real learning goes to the AI.
-        const routed = await routeWithoutAI({ message, spoken, settings, sessionId: sid, sources, history, memories, approved, pre }).catch(() => null);
+        const routed = handed ? null : await routeWithoutAI({ message, spoken, settings, sessionId: sid, sources, history, memories, approved, pre }).catch(() => null);
         if (routed?.settings) {
           settings = await saveSettings(routed.settings);
           send({ type: 'mode', settings: routed.settings });
@@ -270,7 +274,7 @@ export async function POST(req: NextRequest) {
         // "Yes" / "sure" / "ok" after the chavrusa asked whether to go on ("Ready for more?") is a go on too.
         const askedOn = /(ready|more|go on|continue|next|keep going|move on|shall i|should i|want me to|want to)[^?]*\?\s*(\[\[line:[^\]]*\]\])?\s*$/i.test((lastBot?.content ?? '').trim());
         const yes = /^\s*(yes|yeah|yep|yup|sure|ok|okay|please|go|mm-?hm+|uh-?huh|right|great|good|ready|absolutely|definitely|of course)\b[\s\w',.!]{0,20}$/i.test(message);
-        const goOn = spoken && message.length < 80 && (/\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message) || (yes && askedOn));
+        const goOn = !!handed || spoken && message.length < 80 && (/\b(go ahead|go on|next|continue|keep going|move on|carry on|proceed|onward|let'?s go|what'?s next|and then|keep reading|finish)\b/i.test(message) || (yes && askedOn));
         let readNext = '';
         let nextAt: Expect | null = null; // the piece "go on" brings (its place is kept even when nothing is read aloud)
         // Read at once, explain after (in a GPT-Live call): on "go on" the app hands the voice the next piece right away
@@ -279,7 +283,13 @@ export async function POST(req: NextRequest) {
         let early = '';
         // Only the gist: the learner reads the text himself, so the chavrusa doesn't read it at all.
         const gistNote = spoken && settings.voiceReads === 'gist' ? '\n\n[THE LEARNER READS THE TEXT HIMSELF: do not use a [[say]] block and do not read or quote the text, in Hebrew or English. Give the gist of the piece in a sentence or two, in your own words (its steps), then go on with your style\'s part.]' : '';
-        if (goOn && place && settings.nusach !== 'sephardi' && !/ on /i.test(place.base)) {
+        if (goOn && handed) {
+          // Already handed by the page: the same note the read-at-once path gives, without handing it again.
+          early = handed.early;
+          const said = (handed.early.match(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/i)?.[1] ?? '').split('|').map((x) => x.trim()).filter(Boolean).join('\n');
+          readNext = `\n\n[ALREADY BEING READ: the learner said to go on, and the app has already handed the voice the next piece, ${handed.at.base} line ${handed.at.n}${handed.at.part ? ` part ${handed.at.part}` : ''}, which it is reading aloud right now:\n${stripNikud(said)}\nDo not read it again and write no [[say]] block. Write only what comes after the reading in your style (the explanation, and a question if your style asks one), starting right in, as if continuing straight after the reading.]`;
+          nextAt = handed.at;
+        } else if (goOn && place && settings.nusach !== 'sephardi' && !/ on /i.test(place.base)) {
           try {
             const sec = await section(place.base, sources, approved);
             let nx = sec ? nextPiece({ base: place.base, he: sec.he, en: sec.en }, place) : null;

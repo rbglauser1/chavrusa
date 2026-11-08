@@ -91,6 +91,18 @@ export default function Home() {
   const liveDelegation = useRef<string | null>(null);
   const liveAsked = useRef(''); // the words of the request the brain is working on now
   const earlyHanded = useRef<string | null>(null); // the request whose next piece was already handed to the voice
+  // The next piece, ready in advance (Nov 8; lib/nextRead.ts): fetched after each turn of a GPT-Live call, and handed to
+  // the voice the moment he says "go on", without waiting for the server. Dropped whenever the place may have moved.
+  const nextReady = useRef<{ early: string; at: { base: string; n: number; part?: number }; sid: string } | null>(null);
+  const nextTry = useRef(0);
+  const prefetchNext = () => {
+    const sid = sessionIdRef.current;
+    nextReady.current = null;
+    if (!sid || settingsRef.current.liveEngine === 'gemini') return;
+    const t = ++nextTry.current;
+    fetch('/api/live/next', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid }) })
+      .then((r) => r.json()).then((d) => { if (t === nextTry.current && d?.next?.early) nextReady.current = { ...d.next, sid }; }).catch(() => {});
+  };
   // "Go on" in any words ("yeah, go ahead", "go further", "next"…): a second one while the first is still coming is
   // the same request (he often says it twice while the voice says "one moment"), not a second step forward.
   const GO_WORDS = new Set('yeah yes yep ok okay sure right alright go on ahead further next continue keep going carry please let lets so and um uh the'.split(' '));
@@ -173,6 +185,8 @@ export default function Home() {
   const liveGem = useGeminiLive(liveOpts);
   const live = liveGem.active ? liveGem : liveGpt.active ? liveGpt : settings.liveEngine === 'gemini' ? liveGem : liveGpt;
   liveRef.current = live;
+  // A call starting: the next piece gets ready right away (the opening's "go on" uses it).
+  useEffect(() => { if (live.active) prefetchNext(); else { nextReady.current = null; nextTry.current++; } }, [live.active]); // eslint-disable-line react-hooks/exhaustive-deps
   // The learner gave a new instruction, or changed the style, during a call: the voice is told at its next turn.
   useEffect(() => { if (live.active) live.remind(); }, [requests, settings.style, settings.blend]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -181,6 +195,19 @@ export default function Home() {
     const next = liveQueue.current.shift()!;
     liveDelegation.current = next.id;
     liveAsked.current = next.text;
+    // "Go on" with the next piece already in hand: the voice gets it now; the server only records it and explains.
+    const ready = nextReady.current;
+    nextReady.current = null; nextTry.current++;
+    if (ready && ready.sid === sessionIdRef.current && isGoOn(next.text) && 'readNow' in live && live.active) {
+      const body = ready.early.match(/\[\[say\]\]([\s\S]*?)\[\[\/say\]\]/i)?.[1] ?? '';
+      if (body) {
+        logLine('BRAIN', `next piece handed at once (ready in advance): ${body.slice(0, 300)}`);
+        live.readNow(next.id, body);
+        earlyHanded.current = next.id;
+        send(next.text, { live: true, handed: { early: ready.early, at: ready.at } });
+        return;
+      }
+    }
     send(next.text, { live: true });
   }
 
@@ -396,7 +423,8 @@ export default function Home() {
     if (readingRef.current) { readingRef.current = null; setReadingOn(false); }
     showSource({ ...src, focus: n }); // also the next amud / perek shown under the text: it becomes its own tab
     const sid = sessionIdRef.current;
-    if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src, ...(live.active ? { part: 1 } : {}) }) }).catch(() => {});
+    nextReady.current = null; nextTry.current++;
+    if (sid) fetch('/api/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, ref: src.ref, n, source: src, ...(live.active ? { part: 1 } : {}) }) }).then(() => { if (live.active) prefetchNext(); }).catch(() => {});
     // The English as the learner chose it for the voice (the literal words, when Sefaria marks them).
     if (live.active) live.pointTo(src.ref, n, src.he[n - 1] ?? '', englishFor(src.en[n - 1] ?? src.altEn?.[n - 1] ?? '', src.enB?.[n - 1], settings.translate, false, src.he[n - 1] ?? ''), src.enB?.[n - 1], !!settings.translate && settings.translate !== 'full');
     setItems((it) => [...it, { kind: 'event', text: `📍 Learning from ${src.ref}, line ${n}.` }]);
@@ -483,7 +511,7 @@ export default function Home() {
     } catch (e) { return (e as Error).message; }
   }
 
-  async function send(text: string, opts: { live?: boolean } = {}) {
+  async function send(text: string, opts: { live?: boolean; handed?: { early: string; at: { base: string; n: number; part?: number } } } = {}) {
     const msg = text.trim();
     if (!msg || busyRef.current) return;
     busyRef.current = true;
@@ -502,7 +530,7 @@ export default function Home() {
     if (/\d|daf|parsh|parash|sedra/i.test(msg)) void openRef(msg, false);
 
     try {
-      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId: sessionIdRef.current ?? sessionId, voice: convoRef.current || !!opts.live }) });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, sessionId: sessionIdRef.current ?? sessionId, voice: convoRef.current || !!opts.live, ...(opts.handed ? { handed: opts.handed } : {}) }) });
       if (res.status === 401) { window.location.href = '/login'; return; }
       if (!res.body) throw new Error('No response from server.');
       const reader = res.body.getReader();
@@ -538,6 +566,7 @@ export default function Home() {
       case 'mgfocus': window.dispatchEvent(new CustomEvent('mg-focus', { detail: { perek: e.perek, pasuk: e.pasuk, who: e.who } })); break;
       case 'status': setStatus(e.text); if (liveDelegation.current) logLine('BRAIN', `status: ${e.text}`); break;
       case 'source':
+        nextReady.current = null; nextTry.current++; // the place may have moved: fetched again after the reply
         if (!turnRefs.current.some((r) => r.ref === e.source.ref)) turnRefs.current.push({ ref: e.source.ref, heRef: e.source.heRef, url: e.source.url });
         if (!openUnderLine(e.source)) showSource(e.source);
         break;
@@ -584,6 +613,8 @@ export default function Home() {
       }
       case 'reply': {
         const finalText: string = e.text;
+        // The place is saved by now: get the piece after it ready for his next "go on".
+        if (liveDelegation.current && live.active) window.setTimeout(prefetchNext, 50);
         if (liveDelegation.current) logLine('BRAIN', `answer finished (${finalText.length} chars, model ${e.model ?? '?'}): ${finalText.slice(0, 1500)}`);
         const refs = turnRefs.current.slice();
         const streamed = liveText.current.length > 0;
