@@ -34,7 +34,7 @@ class Play extends AudioWorkletProcessor {
     if (!this.on && this.w - this.r > 0 && (this.w - this.r >= 24000 * (this.gaps ? 0.35 : 0.25) || this.flush)) this.on = true;
     for (let k = 0; k < o.length; k++) {
       if (this.on && this.w - this.r >= 2) { const i = Math.floor(this.r), f = this.r - i; const a = this.b[i % this.N], c = this.b[(i + 1) % this.N];
-        if (this.g < 1) this.g = Math.min(1, this.g + 0.004); this.last = a + (c - a) * f; o[k] = this.last * this.g; this.r += this.step; }
+        if (this.g < 1) this.g = Math.min(1, this.g + 0.004); this.last = a + (c - a) * f; o[k] = this.last * this.g * 0.85; this.r += this.step; }
       else { if (this.on) { this.on = false; if (!this.flush) { this.gaps = (this.gaps || 0) + 1; this.port.postMessage('gap'); } } this.g = Math.max(0, this.g - 0.004); this.last *= 0.995; o[k] = this.last * this.g; }
     }
     for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(o);
@@ -139,7 +139,7 @@ export function useGeminiLive(opts: Opts) {
   const speech = useRef<{ spell: GeminiSpell; myWay: SayMyWay[]; house: boolean }>({ spell: 'stressed', myWay: [], house: true });
   // Any Hebrew letters (the brain's [[say]] text) are spelled out the yeshivish way first: Gemini given Hebrew letters
   // read them like an Israeli, or skipped them and said only the English.
-  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => (hasNikud(he) ? toSpeech(he) || he : he)), speech.current.spell, speech.current.myWay, speech.current.house);
+  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => (hasNikud(he) ? yeshivishTranslit(namesForSpeech(he), true) || he : he)), speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });

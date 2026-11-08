@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         const en = englishFor(tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '', tapped.data.enB?.[n - 1], s.translate, false, he);
         // Phrase by phrase, the lashon kodesh spelled out first (log of Nov 6, 12:29 AM: given the whole line and then
         // a long English, Gemini read only the English, and Sefaria's full English though "just the literal" was chosen).
-        const phrases = voicePhrases(he).map((x) => yeshivishTranslit(namesForSpeech(x), false));
+        const phrases = voicePhrases(he).map((x) => yeshivishTranslit(namesForSpeech(x), true));
         pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. Read it inside, the way a chavrusa does: FIRST the lashon kodesh, every word, out loud, exactly as spelled here, phrase by phrase: ⟪${phrases.join(' … ')}⟫ THEN its English: "${clip(en, 600)}". Never skip the lashon kodesh and never give only the English. Then stop, and wait for him. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
