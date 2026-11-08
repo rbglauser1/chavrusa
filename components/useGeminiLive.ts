@@ -428,13 +428,11 @@ export function useGeminiLive(opts: Opts) {
       if (gone()) { teardown(); return; }
       URL.revokeObjectURL(url);
       const pl = new AudioWorkletNode(ac, 'chavrusa-play', { numberOfInputs: 0, outputChannelCount: [1] });
-      // Played through WebRTC (see loopback); straight from the page only if that can't be set up.
-      const toRtc = ac.createMediaStreamDestination();
-      pl.connect(toRtc);
-      const hush = ac.createGain(); hush.gain.value = 0; pl.connect(hush); hush.connect(ac.destination); // keeps the player running
-      if (gone()) { teardown(); return; }
-      try { loopClose.current = await loopback(toRtc.stream, outEl.current!); logLine('AUDIO', 'the voice plays through WebRTC, like GPT-Live (echo cancelling on)'); }
-      catch (e) { pl.connect(ac.destination); logLine('AUDIO', `WebRTC playback unavailable (${(e as Error).message}): playing straight from the page`); }
+      // Played straight from the page again (Nov 8: through the in-page WebRTC loopback, two calls in a row made no
+      // sound at all on the iPhone, though the voice was speaking; it didn't cure the crackle either). The echo guard
+      // keeps the mic from hearing it.
+      pl.connect(ac.destination);
+      logLine('AUDIO', `the voice plays straight from the page (sound system: ${ac.state}, ${ac.sampleRate} Hz)`);
       if (gone()) { teardown(); return; }
       pl.port.onmessage = (e) => { if (e.data === 'gap') { gaps.current++; return; } if (e.data === 'idle') { if (gaps.current) { logLine('AUDIO', `the voice's sound ran short ${gaps.current} time${gaps.current > 1 ? 's' : ''} this turn (the network was slower than the voice)`); gaps.current = 0; } audioBusy.current = false; afterTurn(); } else if (e.data === 'busy') audioBusy.current = true; };
       player.current = pl;
