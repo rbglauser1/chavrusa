@@ -240,7 +240,7 @@ export function useGeminiLive(opts: Opts) {
     w.ctx.close().catch(() => {});
     wake.current = null;
   }, []);
-  useEffect(() => () => { teardown(); stopWakeWatch(); }, [teardown, stopWakeWatch]);
+  useEffect(() => () => { if (stateRef.current !== 'off') logLine('──', 'the page closed the voice'); connectTry.current++; teardown(); stopWakeWatch(); }, [teardown, stopWakeWatch]);
 
   // Gemini asked the backend (a learning turn): pass the learner's words to the brain.
   const handleCall = useCallback((id: string, request: string) => {

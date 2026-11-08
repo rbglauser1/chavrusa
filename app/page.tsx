@@ -109,6 +109,7 @@ export default function Home() {
   const coachLog = useRef<{ learner: string; said: string }[]>([]);
   const coachBusy = useRef(false);
   const liveRef = useRef<{ note: (t: string) => void } | null>(null);
+  const talkTapAt = useRef(0); // when Talk was last tapped to start a call
   // Why the voice didn't start (or dropped), shown right by the Talk button for a few seconds: on the
   // Mikraos Gedolos page or the daf, the chat with the error message is hidden.
   const [liveErr, setLiveErr] = useState('');
@@ -187,7 +188,13 @@ export default function Home() {
     setLiveErr('');
     if (live.supported) { // the live voice only
       if (convo) setConvoMode(false);
-      if (live.active) live.stop(); else { voice.shutdown(); live.start(); }
+      if (live.active) {
+        // A second tap right after Talk (log of Nov 8, 8:03 AM: Gemini calls ended 1 s in, by themselves) is taken
+        // as the same tap, not as "end the call".
+        if (Date.now() - talkTapAt.current < 1200 && live.state === 'connecting') { logLine('──', 'a second tap while connecting: ignored'); return; }
+        logLine('──', 'Talk tapped: ending the call');
+        live.stop();
+      } else { talkTapAt.current = Date.now(); voice.shutdown(); live.start(); }
     } else {
       if (live.active) live.stop();
       setConvoMode(!convo);
