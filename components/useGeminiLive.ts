@@ -57,6 +57,24 @@ function bytesFromB64(b64: string): Uint8Array {
 
 type Seg = { kind: 'exact' | 'say'; text: string };
 
+// The cholam made milder for Gemini (Nov 8: "too much oy"): spelled "oi" only in the stressed syllable, a plain "o"
+// elsewhere (OI-soi → oiso, a-HA-roin → aharon, GAW-doil → gawdol, KOI-hein stays koihein). Takes the app's stressed
+// spelling (syllables with dashes, the stressed one in capitals) and gives back the plain joined spelling.
+function mildCholam(plain: string, stressed: string): string {
+  const pw = plain.split(/\s+/), sw = stressed.split(/\s+/);
+  if (pw.length !== sw.length) return plain;
+  return pw.map((w, k) => {
+    const syl = sw[k].split('-');
+    if (syl.length < 2) return w;
+    // which of the word's "oi"s are in the stressed syllable, in order
+    const keep: boolean[] = [];
+    for (const x of syl) for (let m = x.toLowerCase().indexOf('oi'); m >= 0; m = x.toLowerCase().indexOf('oi', m + 2)) keep.push(/[A-Z]/.test(x));
+    let n = 0;
+    return w.replace(/oi/g, () => (keep[n++] === false ? 'o' : 'oi'));
+  }).join(' ');
+}
+
+
 // A tiny silent sound, played inside the tap so the phone lets the player speak later.
 function silentWav(): string {
   const n = 800, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
@@ -149,7 +167,7 @@ export function useGeminiLive(opts: Opts) {
   // the first sentence and skipped to the English).
   // Any Hebrew letters (the brain's [[say]] text) are spelled out the yeshivish way first: Gemini given Hebrew letters
   // read them like an Israeli, or skipped them and said only the English.
-  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => voicePhrases(he).map((ph) => (hasNikud(ph) ? yeshivishTranslit(namesForSpeech(ph), false) || ph : ph)).join(' … ')), speech.current.spell, speech.current.myWay, speech.current.house);
+  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => voicePhrases(he).map((ph) => (hasNikud(ph) ? mildCholam(yeshivishTranslit(namesForSpeech(ph), false), yeshivishTranslit(namesForSpeech(ph), true)) || ph : ph)).join(' … ')), speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });
