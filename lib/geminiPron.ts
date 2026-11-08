@@ -5,9 +5,9 @@ import { namesForSpeech, voiceHe, yeshivishTranslit, type HeRead } from './hebre
 
 // Gemini only: the pronunciation part of its instructions (its own guide, GPT-Live's, or none), plus "say it my way".
 export function geminiPronunciation(s: Settings): { pron: string | undefined; myWayNote: string } {
-  // Always Gemini's own guide (Nov 6): GPT-Live's is written for Hebrew letters, but Gemini gets the lashon kodesh
-  // spelled out in English letters, so with GPT-Live's guide ("Same as GPT-Live") its accent wasn't yeshivish.
-  const pron = s.nusach === 'sephardi' ? undefined : GEMINI_PRON;
+  const pron = s.geminiPron === 'same' ? undefined
+    : s.geminiPron === 'plain' ? 'Pronunciation: say Hebrew and Aramaic words as they are spelled, smoothly and naturally.'
+    : GEMINI_PRON;
   const list = (s.geminiMyWay ?? []).filter((x) => x.word?.trim() && x.say?.trim());
   const myWayNote = list.length ? `\n# Say these words exactly this way (the learner's own list; it wins over everything above)\n${list.map((x) => `- ${x.word.trim()} = ${x.say.trim()}`).join('\n')}` : '';
   return { pron, myWayNote };

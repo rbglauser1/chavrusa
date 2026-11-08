@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GEMINI_LIVE, GEMINI_VOICES, styleById, styleCard } from '@/lib/config';
 import { getSettings, listMemories, listMessages, listSources } from '@/lib/db';
-import { GEMINI_VOICE, liveContext, liveInstructions } from '@/lib/live';
+import { liveContext, liveInstructions } from '@/lib/live';
 import { namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { currentPlace } from '@/lib/place';
 import { geminiPronunciation, sayNote } from '@/lib/geminiPron';
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         const en = englishFor(tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '', tapped.data.enB?.[n - 1], s.translate, false, he);
         // Phrase by phrase, the lashon kodesh spelled out first (log of Nov 6, 12:29 AM: given the whole line and then
         // a long English, Gemini read only the English, and Sefaria's full English though "just the literal" was chosen).
-        const phrases = voicePhrases(he).map((x) => yeshivishTranslit(namesForSpeech(x), true));
+        const phrases = voicePhrases(he).map((x) => yeshivishTranslit(namesForSpeech(x), false));
         pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. Read it inside, the way a chavrusa does: FIRST the lashon kodesh, every word, out loud, exactly as spelled here, phrase by phrase: ⟪${phrases.join(' … ')}⟫ THEN its English: "${clip(en, 600)}". Never skip the lashon kodesh and never give only the English. Then stop, and wait for him. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
@@ -96,9 +96,9 @@ export async function POST(req: NextRequest) {
   const myWay = s.geminiMyWay ?? [];
   const house = s.houseSay !== false, steady = s.liveSteady === true;
   void myWayNote;
-  // The yeshivish speaker first, and the yeshivish accent note (not "a normal American accent"), for Ashkenaz.
-  const ashk = s.nusach !== 'sephardi';
-  const instructions = forVoice((ashk ? GEMINI_VOICE : '') + liveInstructions(s.nusach, s.livePace, ashk, pron, steady) + context + HANDOFF, spell, myWay, house) + sayNote(myWay, house);
+  // (Nov 8: back to the instructions from before Nov 6, the learner's call: Gemini sounded better without the
+  // described speaker, the yeshivish accent note and the stress note.)
+  const instructions = forVoice(liveInstructions(s.nusach, s.livePace, false, pron, steady) + context + HANDOFF, spell, myWay, house) + sayNote(myWay, house);
 
   // The short-lived pass: one use, a minute to start the call, half an hour of call.
   const now = Date.now();
