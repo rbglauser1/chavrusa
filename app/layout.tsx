@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { FONTS_EN, FONTS_HE, fontStack } from '@/lib/config';
 import './globals.css';
+import { PullRefresh } from '@/components/PullRefresh';
 
 export const metadata: Metadata = {
   title: 'Chavrusa',
@@ -35,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link rel="stylesheet" href={FONTS} />
       </head>
-      <body>{children}</body>
+      <body>{children}<PullRefresh /></body>
     </html>
   );
 }
