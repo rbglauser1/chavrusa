@@ -109,6 +109,12 @@ export function useGeminiLive(opts: Opts) {
   const outEl = useRef<HTMLAudioElement | null>(null);
   const loopClose = useRef<(() => void) | null>(null);
   const audioBusy = useRef(false);
+  // Keep going by itself (as with GPT-Live): after a piece was read or answered and it's quiet, the app asks for the
+  // next piece itself (log of Nov 8, 8:03 AM: Gemini read, said one sentence and just stopped).
+  const autoArmed = useRef(false);
+  const autoTimer = useRef<number | undefined>(undefined);
+  const lastHeardAt = useRef(0);
+  const saidTail = useRef(''); // the voice's last words (did it end on a question?)
   const connectTry = useRef(0);
   const gaps = useRef(0); // times the voice's sound ran out mid-turn (a likely crackle), logged per turn // the player still has the voice's sound to play
   const pending = useRef<Map<string, Seg[]>>(new Map()); // tool calls waiting for the brain
@@ -168,7 +174,9 @@ export function useGeminiLive(opts: Opts) {
       userBuf.current = ''; voiceBuf.current = ''; setHeard('');
       optsRef.current.onAside?.(learner, said);
     }
+    const wasAnswer = answering.current;
     if (!pending.current.size) answering.current = false;
+    if (!pending.current.size && (wasAnswer || autoArmed.current)) armAuto();
     voiceBuf.current = '';
     const r = reading.current;
     if (r) { reading.current = null; r(true); }
@@ -192,6 +200,7 @@ export function useGeminiLive(opts: Opts) {
   }, [afterTurn]);
 
   const teardown = useCallback(() => {
+    window.clearTimeout(autoTimer.current); autoArmed.current = false;
     ready.current = false;
     try { ws.current?.close(); } catch { /* ignore */ }
     ws.current = null;
@@ -252,7 +261,36 @@ export function useGeminiLive(opts: Opts) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function armAuto() {
+    const secs = optsRef.current.autoGo?.() ?? 0;
+    if (!secs) return;
+    autoArmed.current = true;
+    window.clearTimeout(autoTimer.current);
+    const at = Date.now(), sock = ws.current;
+    const lastWords = saidTail.current.trim();
+    autoTimer.current = window.setTimeout(() => {
+      if (ws.current !== sock || !sock || pending.current.size || audioBusy.current || lastHeardAt.current > at) return;
+      if (stateRef.current !== 'listening' || !autoArmed.current) return;
+      if (/\?\s*["”']?$/.test(lastWords)) { autoArmed.current = false; return; } // it asked him something: his turn
+      autoArmed.current = false;
+      const id = `app_${Date.now()}`;
+      pending.current.set(id, []);
+      setS('thinking');
+      logLine('AUTO', 'going on to the next piece by itself');
+      optsRef.current.onRequest('next', id);
+    }, secs * 1000);
+  }
+
   function respond(id: string, result: string) {
+    if (id.startsWith('app_')) { // the app asked for it itself: there's no request of Gemini's to answer, so hand it over
+      pending.current.delete(id);
+      answering.current = true;
+      voiceBuf.current = '';
+      bump();
+      logLine('APP→VOICE', `next piece [app]: ${g(result)}`);
+      send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] The next piece. Say it now, exactly as the rules for a backend result say (the TEXT part read inside, phrase by phrase, the lashon kodesh and then its English, then what comes after it): ${g(result)}` }] }], turnComplete: true } });
+      return;
+    }
     pending.current.delete(id);
     answering.current = true;
     voiceBuf.current = '';
@@ -306,7 +344,7 @@ export function useGeminiLive(opts: Opts) {
       ready.current = true;
       startedAt.current = Date.now(); bump(); setS('listening');
       const opening = openingRef.current;
-      if (opening) appSay(opening);
+      if (opening) { appSay(opening); autoArmed.current = true; saidTail.current = ''; }
       // A call that opens but never speaks: if Gemini has sent no sound 8 s after the opening and the learner hasn't
       // spoken, ask it once more to begin (the recorder shows a CHECK line).
       const sock = ws.current;
@@ -327,6 +365,7 @@ export function useGeminiLive(opts: Opts) {
     if (!sc) return;
     if (sc.inputTranscription?.text) {
       userBuf.current += sc.inputTranscription.text;
+      if (sc.inputTranscription.text.trim()) { lastHeardAt.current = Date.now(); autoArmed.current = false; window.clearTimeout(autoTimer.current); }
       recIn.current += sc.inputTranscription.text;
       heardAll.current += sc.inputTranscription.text;
       bump();
@@ -334,7 +373,7 @@ export function useGeminiLive(opts: Opts) {
       const r = reading.current; if (r && sc.inputTranscription.text.trim()) { reading.current = null; r(false); }
     }
     if (sc.outputTranscription?.text && !answering.current && !pending.current.size) voiceBuf.current += sc.outputTranscription.text;
-    if (sc.outputTranscription?.text) { saidAll.current += sc.outputTranscription.text; recOut.current += sc.outputTranscription.text; }
+    if (sc.outputTranscription?.text) { saidAll.current += sc.outputTranscription.text; recOut.current += sc.outputTranscription.text; saidTail.current = (saidTail.current + sc.outputTranscription.text).slice(-200); }
     for (const p of sc.modelTurn?.parts ?? []) if (p?.inlineData?.data && String(p.inlineData.mimeType ?? '').startsWith('audio')) playPcm(p.inlineData.data);
     if (sc.interrupted) { logLine('EVENT', 'interrupted (the learner spoke)'); flushOut(' (interrupted)'); stopPlayback(); setS(pending.current.size ? 'thinking' : 'listening'); }
     if (sc.turnComplete) { flushIn(); flushOut(); turnDone.current = true; player.current?.port.postMessage('flush'); afterTurn(); }
