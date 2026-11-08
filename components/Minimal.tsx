@@ -5,7 +5,6 @@
 //   quiet    — the conversation, set like a page in a book, with lines of text appearing in it as quotes.
 //   shtender — the text on top, the conversation below, one bar at the bottom.
 import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement } from 'react';
-import { mfKey } from '@/lib/meforshimFonts';
 import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
@@ -97,7 +96,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
             </button>
             {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}</p>}
             {c && (
-              <div className="min-comm" data-mf={mfKey(c.title)}>
+              <div className="min-comm">
                 <span className="min-comm-title">{c.title === 'Tosafot' ? 'Tosafos' : c.title}</span>
                 {c.he.map((h, k) => <p key={k} className="rashi" dir="rtl">{settings.nikud ? h : stripNikud(h)}</p>)}
               </div>

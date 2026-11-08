@@ -421,7 +421,6 @@ export interface Settings {
   interlinear?: boolean;    // the English phrase by phrase: each short Hebrew phrase with its English right under it
   enMark?: 'plain' | 'soft' | 'light' | 'italic' | 'only'; // English under the Gemara: how Sefaria's translation words stand apart from the added explanation
   rashiScript: boolean;
-  ownFonts?: boolean; // each meforesh in its own lettering (lib/meforshimFonts.ts)
   approveAll: boolean;      // allow every sefer on Sefaria (off: only classic and approved works)     // show Rashi, Tosafos and other commentaries in Rashi script (off: regular letters)    // Sefer: show the translation under each mishnah / pasuk / line       // during a voice conversation, keep the screen blank (purely verbal)          // show the box with the current text at the top of the conversation
   saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
@@ -501,7 +500,6 @@ export const DEFAULT_SETTINGS: Settings = {
   amudIntro: true,
   introVoice: true,
   rashiScript: true,
-  ownFonts: false,
   approveAll: true,
   saver: true,
   customVoices: [],

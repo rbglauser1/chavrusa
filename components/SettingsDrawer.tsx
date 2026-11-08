@@ -225,8 +225,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>Rashi, Tosafos and other commentaries</label>
-              <Seg value={s.ownFonts ? 'own' : s.rashiScript ? 'rashi' : 'regular'} options={[['regular', 'Regular letters'], ['rashi', 'Rashi script'], ['own', 'Each its own']]} onPick={(v) => onChange({ rashiScript: v !== 'regular', ownFonts: v === 'own' })} />
-              {s.ownFonts && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rashi and Tosafos in Rashi script; Ramban, Ibn Ezra, Sforno, Ohr HaChaim, Kli Yakar, Rashbam, Baal HaTurim and the others each in a lettering of its own, so you can tell them apart at a glance.</div>}
+              <Seg value={s.rashiScript ? 'rashi' : 'regular'} options={[['regular', 'Regular letters'], ['rashi', 'Rashi script']]} onPick={(v) => onChange({ rashiScript: v === 'rashi' })} />
             </div>
             </Group>
             <Group id="look-lines" level={2} title="Lines and the English">

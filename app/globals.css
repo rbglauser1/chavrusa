@@ -1994,27 +1994,3 @@ body[data-dafull]::before { display: none; }
 .home-howto { display: block; margin: 14px auto 0; border: 0; background: transparent; color: var(--soft); font-family: var(--f-ui); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .ht *, .ht *::after { animation-duration: .01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; } }
 .ht-sound { margin-top: 8px; border: 0; background: transparent; color: var(--soft); font-family: var(--f-ui); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-
-/* Each meforesh in its own lettering (Settings → Look → Commentaries: "Each its own"; lib/meforshimFonts.ts). */
-html[data-ownfonts='on'] [data-mf='rashi'] :is(.rashi, .he, .il-he, p) { font-family: 'Mekorot Rashi', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='tosafos'] :is(.rashi, .he, .il-he, p) { font-family: 'Noto Rashi Hebrew', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='ramban'] :is(.rashi, .he, .il-he, p) { font-family: 'Frank Ruhl Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='ibnezra'] :is(.rashi, .he, .il-he, p) { font-family: 'David Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='sforno'] :is(.rashi, .he, .il-he, p) { font-family: 'Noto Serif Hebrew', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='ohrhachaim'] :is(.rashi, .he, .il-he, p) { font-family: 'Cardo', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='kliyakar'] :is(.rashi, .he, .il-he, p) { font-family: 'Bellefair', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='rashbam'] :is(.rashi, .he, .il-he, p) { font-family: 'Miriam Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='baalhaturim'] :is(.rashi, .he, .il-he, p) { font-family: 'Tinos', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='chizkuni'] :is(.rashi, .he, .il-he, p) { font-family: 'Noto Rashi Hebrew', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='daas'] :is(.rashi, .he, .il-he, p) { font-family: 'Suez One', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='guraryeh'] :is(.rashi, .he, .il-he, p) { font-family: 'David Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='sifsei'] :is(.rashi, .he, .il-he, p) { font-family: 'Miriam Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='targum'] :is(.rashi, .he, .il-he, p) { font-family: var(--f-he), var(--f-he); }
-html[data-ownfonts='on'] [data-mf='ran'] :is(.rashi, .he, .il-he, p) { font-family: 'Frank Ruhl Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='rosh'] :is(.rashi, .he, .il-he, p) { font-family: 'David Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='rif'] :is(.rashi, .he, .il-he, p) { font-family: 'Noto Serif Hebrew', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='maharsha'] :is(.rashi, .he, .il-he, p) { font-family: 'Cardo', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='rashba'] :is(.rashi, .he, .il-he, p) { font-family: 'Bellefair', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='ritva'] :is(.rashi, .he, .il-he, p) { font-family: 'Miriam Libre', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='other'] :is(.rashi, .he, .il-he, p) { font-family: 'Mekorot Rashi', var(--f-he); }
-html[data-ownfonts='on'] [data-mf='daas'] :is(.rashi, .he, .il-he, p) { font-weight: 400; letter-spacing: .01em; }
