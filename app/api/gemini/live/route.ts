@@ -103,7 +103,12 @@ export async function POST(req: NextRequest) {
   void myWayNote;
   // The yeshivish speaker first, and the yeshivish accent note (not "a normal American accent"), for Ashkenaz.
   const ashk = s.nusach !== 'sephardi';
-  const instructions = forVoice((ashk ? GEMINI_VOICE : '') + liveInstructions(s.nusach, s.livePace, ashk, pron, steady) + context + HANDOFF, spell, myWay, house) + sayNote(myWay, house);
+  // Pauses and stopping (Nov 8, the learner: it runs the phrases together, and stops in the wrong places). The pauses
+  // setting now reaches Gemini too, and it gets a plain rule for both.
+  const pauses = s.livePauses ?? 'normal';
+  const beat = pauses === 'few' ? 'a brief beat' : pauses === 'more' ? 'a full pause of about a second' : pauses === 'most' ? 'a long pause of a second or two' : 'a clear short pause, about half a second';
+  const reading = `\n\nREADING INSIDE, AND WHEN TO STOP: the text comes in phrases separated by "…". Say one phrase, then its English when its English is given with it, then take ${beat} before the next phrase. Never run two phrases together, and never pause in the middle of a phrase. When the English of the whole piece comes after the phrases, read it as one sentence after the last phrase. Then give what comes after the reading, if anything, and stop completely: stay silent until the learner speaks or the app brings the next piece. Never stop in the middle of a phrase or a sentence, and never go past the piece you were given.`;
+  const instructions = forVoice((ashk ? GEMINI_VOICE : '') + liveInstructions(s.nusach, s.livePace, ashk, pron, steady, 'join-kh', s.voiceReads ?? 'all', pauses) + context + HANDOFF + reading, spell, myWay, house) + sayNote(myWay, house);
 
   // The short-lived pass: one use, a minute to start the call, half an hour of call.
   const now = Date.now();
