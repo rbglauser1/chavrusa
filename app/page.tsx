@@ -2,7 +2,7 @@
 import { englishFor } from '@/lib/literal';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { logLine } from '@/lib/callLog';
-import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_COMM, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import Minimal from '@/components/Minimal';
@@ -274,6 +274,11 @@ export default function Home() {
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
     if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
     if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
+    // The commentaries' own font (Nov 7): Rashi script, the text's font, or any Hebrew font.
+    const cf = f.comm || (settings.rashiScript ? 'rashi' : 'same');
+    root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
+    const cs = fontStack(FONTS_COMM, cf);
+    if (cf !== 'rashi' && cf !== 'same' && cs) root.style.setProperty('--f-comm', cs); else root.style.removeProperty('--f-comm');
   }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);

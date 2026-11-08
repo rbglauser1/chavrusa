@@ -337,6 +337,12 @@ export const FONTS_HE: { id: string; name: string; stack: string }[] = [
   { id: 'varela', name: 'Varela Round (rounded)', stack: "'Varela Round', sans-serif" },
   { id: 'secular', name: 'Secular One (bold)', stack: "'Secular One', sans-serif" },
 ];
+// The commentaries' font: Rashi script, or any of the Hebrew fonts (Settings → Look and fonts).
+export const FONTS_COMM: { id: string; name: string; stack: string }[] = [
+  { id: 'rashi', name: 'Rashi script', stack: "'Mekorot Rashi', 'Noto Rashi Hebrew', serif" },
+  { id: 'same', name: 'Same as the text', stack: '' },
+  ...FONTS_HE.filter((f) => f.id),
+];
 export const fontStack = (list: { id: string; stack: string }[], id?: string) => list.find((f) => f.id === id)?.stack ?? '';
 
 // Older saved values from the first version map onto the new looks.
@@ -425,7 +431,7 @@ export interface Settings {
   saver: boolean;           // while talking: everyday turns on the middle model (Sonnet/Sol), chosen depth on "go deeper"; leaner turns; pause after 30s
   customVoices: { id: string; name: string; prompt: string }[]; // Live voices designed from a description
   customStyles: CustomStyle[];   // learning styles the learner wrote himself
-  fonts: Record<string, { en?: string; he?: string }>; // per look: chosen English and Hebrew fonts (ids from FONTS_EN / FONTS_HE)
+  fonts: Record<string, { en?: string; he?: string; comm?: string }>; // comm: the commentaries' Hebrew font ('same' = as the text, 'rashi' = Rashi script, or a FONTS_HE id) // per look: chosen English and Hebrew fonts (ids from FONTS_EN / FONTS_HE)
   autoSpeak: boolean;       // read every reply aloud
   speechRate: number;       // 0.8 – 1.3
 }
