@@ -109,6 +109,7 @@ export function useGeminiLive(opts: Opts) {
   const outEl = useRef<HTMLAudioElement | null>(null);
   const loopClose = useRef<(() => void) | null>(null);
   const audioBusy = useRef(false);
+  const connectTry = useRef(0);
   const gaps = useRef(0); // times the voice's sound ran out mid-turn (a likely crackle), logged per turn // the player still has the voice's sound to play
   const pending = useRef<Map<string, Seg[]>>(new Map()); // tool calls waiting for the brain
   const userBuf = useRef('');
@@ -350,6 +351,10 @@ export function useGeminiLive(opts: Opts) {
     logBegin(`${optsRef.current.logMeta?.() ?? ''} · engine gemini`, resuming);
     gotSound.current = false;
     setS('connecting');
+    const attempt = ++connectTry.current;
+    // Ended while still connecting (log of Nov 8, 8:03 AM: ended at 1 s, and the call opened and spoke anyway):
+    // after each wait, a call that was ended since stops here.
+    const gone = () => connectTry.current !== attempt;
     try {
       // The player and microphone start inside the tap (phones only allow sound that a tap began).
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -359,6 +364,7 @@ export function useGeminiLive(opts: Opts) {
       if (!outEl.current) { const el = document.createElement('audio'); el.autoplay = true; el.setAttribute('playsinline', ''); el.style.display = 'none'; document.body.appendChild(el); outEl.current = el; }
       outEl.current.srcObject = null; outEl.current.src = silentWav(); outEl.current.play().catch(() => {});
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      if (gone()) { stream.getTracks().forEach((t) => t.stop()); void ac.close().catch(() => {}); return; }
       mic.current = stream;
       // Never stuck on "Connecting…": 15 seconds after the microphone opens, give up and say so.
       window.setTimeout(() => { if (mic.current === stream && stateRef.current === 'connecting') { logLine('ERROR', `still connecting after 15 s (${ws.current ? (ready.current ? 'set up' : 'the setup never completed') : 'no connection to Gemini yet'})`); optsRef.current.onError('The voice didn’t connect. Check the internet connection and tap Talk again.'); finish('off'); } }, 15_000);
@@ -368,6 +374,7 @@ export function useGeminiLive(opts: Opts) {
       if (resuming) q.set('resume', '1');
       const res = await fetch(`/api/gemini/live${q.toString() ? `?${q}` : ''}`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
+      if (gone()) { teardown(); return; }
       if (!res.ok || !data.url) throw new Error(data.error ?? `status ${res.status}`);
       openingRef.current = String(data.opening ?? '');
       logLine('──', `in this call: Gemini ${String(data.setup?.model ?? '?').replace('models/', '')} · voice ${data.setup?.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName ?? '?'} · instructions ${String(data.setup?.systemInstruction?.parts?.[0]?.text ?? '').length} chars`);
@@ -376,14 +383,17 @@ export function useGeminiLive(opts: Opts) {
       // Microphone → 16 kHz, 16-bit blocks → Gemini.
       const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));
       await ac.audioWorklet.addModule(url);
+      if (gone()) { teardown(); return; }
       URL.revokeObjectURL(url);
       const pl = new AudioWorkletNode(ac, 'chavrusa-play', { numberOfInputs: 0, outputChannelCount: [1] });
       // Played through WebRTC (see loopback); straight from the page only if that can't be set up.
       const toRtc = ac.createMediaStreamDestination();
       pl.connect(toRtc);
       const hush = ac.createGain(); hush.gain.value = 0; pl.connect(hush); hush.connect(ac.destination); // keeps the player running
+      if (gone()) { teardown(); return; }
       try { loopClose.current = await loopback(toRtc.stream, outEl.current!); logLine('AUDIO', 'the voice plays through WebRTC, like GPT-Live (echo cancelling on)'); }
       catch (e) { pl.connect(ac.destination); logLine('AUDIO', `WebRTC playback unavailable (${(e as Error).message}): playing straight from the page`); }
+      if (gone()) { teardown(); return; }
       pl.port.onmessage = (e) => { if (e.data === 'gap') { gaps.current++; return; } if (e.data === 'idle') { if (gaps.current) { logLine('AUDIO', `the voice's sound ran short ${gaps.current} time${gaps.current > 1 ? 's' : ''} this turn (the network was slower than the voice)`); gaps.current = 0; } audioBusy.current = false; afterTurn(); } else if (e.data === 'busy') audioBusy.current = true; };
       player.current = pl;
       const node = new AudioWorkletNode(ac, 'chavrusa-cap');
@@ -512,11 +522,13 @@ export function useGeminiLive(opts: Opts) {
 
   const stop = useCallback(() => {
     stopWakeWatch();
+    connectTry.current++; // a call still connecting stops at its next step
+    if (stateRef.current === 'connecting' && !ws.current) { teardown(); logEnd('ended while connecting'); setS('off'); return; }
     if (stateRef.current === 'paused') { setS('off'); setPauseIn(null); return; }
     if (!ws.current) { finish('off'); return; }
     closingTo.current = 'off';
     try { ws.current.close(); } catch { finish('off'); }
-  }, [finish, stopWakeWatch]);
+  }, [finish, stopWakeWatch, teardown]);
 
   // Read-through: the voice reads a piece aloud exactly; resolves when done (true) or when the learner talks (false).
   const read = useCallback(async (text: string): Promise<boolean> => {
