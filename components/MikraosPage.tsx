@@ -8,6 +8,7 @@ import type { Settings } from '@/lib/config';
 const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live|Your OpenAI)/.test(t);
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
 import { pairPhrases } from '@/lib/interlinear';
+import { mfKey } from '@/lib/meforshimFonts';
 
 type HeEn = { he: string; en: string };
 type Data = { ref: string; heRef: string; pesukim: string[]; pesukimEn: string[]; onkelos: HeEn[]; meforshim: { id: string; he: string; name: string; title?: string; perPasuk: HeEn[][]; missing?: boolean }[]; onRashi?: Record<string, { title: string; refs: string[] }[]> };
@@ -318,7 +319,7 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
               // (A meforesh with nothing on these pesukim is left off this page.)
               if (!has) return null;
               return (
-                <div key={m.id} className={`mg-comm ${m.id === 'Rashi' ? 'mg-rashi' : ''}`}>
+                <div key={m.id} data-mf={mfKey(m.id)} className={`mg-comm ${m.id === 'Rashi' ? 'mg-rashi' : ''}`}>
                   <div className="mg-label">{m.he}</div>
                   <div className={`mg-cols rashi ${withEn ? 'one' : ''}`}>
                     {range.map((i) => (m.perPasuk[i] ?? []).length ? (withEn

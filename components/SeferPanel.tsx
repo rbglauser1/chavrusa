@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoldEn } from './BoldEn';
 import { Interlinear, pairPhrases } from './Interlinear';
+import { mfKey } from '@/lib/meforshimFonts';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -543,7 +544,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {settings.outline && outline.failed && !outline.loading && !showLib && !isComm && <div className="move-loading">Couldn&apos;t summarize the steps of this {src ? sectionWord(src.ref) : 'page'}. <button className="linklike" onClick={outline.retry}>Try again</button></div>}
       <div className="sefer-body" ref={bodyRef} onClick={dbl ? () => tap(() => {}) : undefined} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
         {/* The text and its page texture scroll as one (the texture is painted on this, not on the scrolling box). */}
-        <div className="sefer-flow">
+        <div className="sefer-flow" data-mf={rashi || isComm ? mfKey(src?.ref) : undefined}>
         {!src && (home
           ? <div className="empty home-empty"><div className="he" style={{ fontSize: 44, fontWeight: 700 }}>שלום</div><p>What shall we learn? Open the <button className="linklike" onClick={() => setShowLib(true)}>📚 Library</button>, tap Talk, or type below (for example “Berachos 2a” or “today's daf”).</p></div>
           : <div className="empty">Sources your chavrusa brings will appear here.</div>)}
@@ -667,7 +668,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).sort(([a], [b]) => commRank(a) - commRank(b)).map(([k, c]) => {
                     const label = k.slice(k.indexOf(':') + 1);
                     return (
-                      <div key={k} className="comm" onClick={(e) => { e.stopPropagation(); if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
+                      <div key={k} className="comm" data-mf={mfKey(c.title ?? label)} onClick={(e) => { e.stopPropagation(); if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
                         <div className="comm-title">
                           {label}
                           {c.refs?.length && onOpenExact ? (
