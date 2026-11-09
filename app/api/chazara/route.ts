@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { costUsd, MODELS } from '@/lib/config';
-import { getSettings, listMessages, listSessions, logCost, type MessageRow, type SessionRow } from '@/lib/db';
+import { costUsd, KEPT_MODEL } from '@/lib/config';
+import { listMessages, listSessions, logCost, type MessageRow, type SessionRow } from '@/lib/db';
 import { runAnthropic } from '@/lib/llm/anthropic';
-import { runOpenAI } from '@/lib/llm/openai';
 import { readJson, writeJson } from '@/lib/store';
 
 export const runtime = 'nodejs';
@@ -29,11 +28,10 @@ async function recapOf(sess: SessionRow): Promise<Recap | null> {
   const kept = await readJson<Recap>(key);
   if (kept) return kept;
   const convo = msgs.map((m) => `${m.role === 'user' ? 'Learner' : 'Chavrusa'}: ${plain(m.content).slice(0, 700)}`).join('\n').slice(-14000);
-  const settings = await getSettings();
-  const model = MODELS[settings.provider].middle;
-  const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
+  const model = KEPT_MODEL; // always Opus (lib/config)
+  const run = runAnthropic;
   const r = await run({ model: model.id, system: PROMPT, history: [{ role: 'user', content: convo }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
-  await logCost({ sessionId: sess.id, kind: 'chazara', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: sess.id, kind: 'chazara', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   try {
     const j = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
     const rec: Recap = {

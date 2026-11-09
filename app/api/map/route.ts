@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import { costUsd, MODELS, type Tier } from '@/lib/config';
-import { approvedList, getSettings, logCost } from '@/lib/db';
+import { costUsd, KEPT_MODEL, MODELS, type Tier } from '@/lib/config';
+import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
-import { runOpenAI } from '@/lib/llm/openai';
 import { keep } from '@/lib/keep';
 
 export const runtime = 'nodejs';
@@ -38,15 +37,16 @@ const STEPS: Record<TextKind, string> = {
   tanakh: 'Begin a new step where the subject, the speaker or the parsha (open or closed section) changes. Explain according to Chazal and Rashi.',
 };
 const promptFor = (k: TextKind) => `You make a study map of a ${UNIT[k]} for a learner, so he sees the whole of it at a glance before and while he learns it.
-Write everything in plain, clear English: no Hebrew or Aramaic words spelled out in English letters, except names of people and books, which you write the usual English way (Rashi, Rav Pappa, Rabbi Akiva, Moses, Isaiah). Call God "Hashem". Explain Orthodox-ly, according to Chazal and the classic meforshim.
+Write in plain, clear English, the way a good chavrusa explains it across the table. For the learning terms a yeshiva learner knows, and for words the text itself quotes or learns from, write the Hebrew or Aramaic in Hebrew letters, as he knows them: גזירה שוה, קל וחומר, היקש, פרישה, the word "צוה", "וכפר". Never put such a term into an English rendering (not "verbal analogy", not "a fortiori") and never spell Hebrew out in English letters. Names of people and books in English as usual (Rashi, Rabbi Yochanan, Rav Pappa, Moses, Aaron). Call God "Hashem". Explain according to Chazal and the classic meforshim.
+Be clear above all: every sentence must make sense to a learner who has not yet learned this amud. Say what is learned from where, and why it matters; spell out what a question is really asking and what the answer means. Never vague words like "linking" or "connecting".
 Give:
 - "overview": 2 to 3 sentences: the big picture of this whole text: what it is about and how it moves.
 - "topics": the text's topics in order (usually 1 to 4). For each topic:
   - "title": a short English name for the topic (at most 7 words).
   - "line": the numbered line where it begins.
   - "intro": 2 to 3 sentences giving the big picture of this topic: what question or subject it deals with, why it comes up here, and (if it began before this text) where it began.
-  - "background": the things a learner must know to follow this topic, if any (0 to 3), each one short line, "term: what it is" (like "Smicha: the owner leaning his hands on his korban before it is offered"). Leave empty when nothing is needed.
-  - "steps": the topic's steps in order. Each step: "line" (the numbered line where it begins), "kind" (exactly one of: ${KINDS[k].join(', ')}), "who" (the speaker or source, like ${WHO[k]}; empty if none), "summary" (one plain English sentence, at most 18 words, telling what happens in this step, as a statement: never a question put to the learner, and not a test of what he knows. Write "The Gemara asks why both could not be dressed at once", not "Why couldn't both be dressed at once?").
+  - "background": the things a learner must know to follow this topic, if any (0 to 3), each one short line, "term: what it is" (like "גזירה שוה: learning a law from one passage to another because the Torah uses the same word in both"). Leave empty when nothing is needed.
+  - "steps": the topic's steps in order. Each step: "line" (the numbered line where it begins), "kind" (exactly one of: ${KINDS[k].join(', ')}), "who" (the speaker or source, like ${WHO[k]}; empty if none), "summary" (one or two clear sentences, at most 35 words, telling what happens in this step, as a statement: never a question put to the learner, and not a test of what he knows. Not "The Gemara suggests linking commanded to the Yom Kippur passage", but "The Gemara asks: why not learn the פרישה from the word "צוה" said about Yom Kippur instead? Then פרישה would be needed only for Yom Kippur, not for the פרה אדומה.").
   The steps are the text's own flow, the way a chavrusa would trace it: who says what, what is asked, how it is answered, what is proven or pushed off.
   - "takeaway": one sentence: where the topic ends up (its conclusion, or that it is left open or continues on the next ${k === 'gemara' ? 'amud' : 'perek'}).
 ${STEPS[k]}
@@ -56,20 +56,20 @@ export type Step = { line: number; kind: string; who: string; summary: string };
 export type Topic = { title: string; line: number; intro: string; background: string[]; steps: Step[]; takeaway: string };
 export type SugyaMapData = { overview: string; topics: Topic[]; steps: Step[]; model?: string; usd?: number };
 
-async function makeMap(ref: string, tier: Tier = 'middle'): Promise<SugyaMapData> {
-  const [settings, approved] = await Promise.all([getSettings(), approvedList()]);
+async function makeMap(ref: string, tier: Tier = 'top'): Promise<SugyaMapData> {
+  const approved = await approvedList();
   const s = await getText(ref, approved);
   if (!s.verdict.allowed || !s.he.length) return { overview: '', topics: [], steps: [] };
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const k = kindOf(s.ref);
-  const model = MODELS[settings.provider][tier];
-  const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
+  const model = tier === 'top' ? KEPT_MODEL : MODELS.anthropic[tier]; // always Opus, except Sonnet on the comparison page
+  const run = runAnthropic;
   const r = await run({
     model: model.id, system: promptFor(k), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
-  await logCost({ sessionId: null, kind: 'map', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'map', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const n = s.he.length;
   const lineOf = (x: unknown) => Math.min(Math.max(1, Math.round(Number(x) || 1)), n);
   const str = (x: unknown, max: number) => String(x ?? '').trim().slice(0, max);
@@ -100,7 +100,7 @@ async function makeMap(ref: string, tier: Tier = 'middle'): Promise<SugyaMapData
 }
 
 // Kept for good (lib/keep): each amud's map is paid for once, ever; the server's month cache sits in front for speed.
-const cached = (ref: string) => unstable_cache(() => keep('sugya-map-v4', ref, () => makeMap(ref)), ['sugya-map-v4', ref], { revalidate: 60 * 60 * 24 * 30 })();
+const cached = (ref: string) => unstable_cache(() => keep('sugya-map-v5-opus', ref, () => makeMap(ref)), ['sugya-map-v5-opus', ref], { revalidate: 60 * 60 * 24 * 30 })();
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
   const cmp = req.nextUrl.searchParams.get('tier');
   if (cmp === 'top' || cmp === 'middle') {
     if (!ref) return NextResponse.json({ overview: '', topics: [], steps: [] });
-    try { return NextResponse.json(await keep(`map-compare-v1-${cmp}`, ref, () => makeMap(ref, cmp))); }
+    try { return NextResponse.json(await keep(`map-compare-v2-${cmp}`, ref, () => makeMap(ref, cmp))); }
     catch (e) { return NextResponse.json({ overview: '', topics: [], steps: [], error: (e as Error).message }); }
   }
   if (!ref || / on /i.test(ref)) return NextResponse.json({ overview: '', topics: [], steps: [] });

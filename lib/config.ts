@@ -30,6 +30,11 @@ export const MODELS: Record<Provider, Record<Tier, ModelInfo>> = {
   },
 };
 
+// Everything the AI makes once and keeps for good (sugya maps, review questions, amud intros and outlines, meforshim
+// summaries, chazara): always Claude Opus 5.5, whatever is chosen in Settings. Each is paid for once, ever, so it
+// should be the best. (A quick translation of a tapped line stays on the basic model.)
+export const KEPT_MODEL = MODELS.anthropic.top;
+
 export const TIER_LABELS: Record<Tier, string> = { basic: 'Basic', middle: 'Standard', top: 'Deep' };
 
 // inputTokens = all input tokens; cachedTokens = the part read from cache; cacheWriteTokens = the part written to cache.
