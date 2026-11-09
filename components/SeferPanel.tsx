@@ -618,10 +618,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
             {settings.sugyaMap && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
-              <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 Sugya map</button>
+              <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>
             )}
             {mapOpen && (
-              <SugyaMap refText={src.ref} here={src.focus} onClose={() => setMapOpen(false)}
+              <SugyaMap refText={src.ref} title={kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'} here={src.focus} onClose={() => setMapOpen(false)}
                 onGo={(n) => { const el = document.querySelector(`.sefer-flow [data-line="${n}"]`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }} />
             )}
             {(() => {

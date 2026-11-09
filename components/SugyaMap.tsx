@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 type Step = { line: number; kind: string; who: string; summary: string };
 
-export default function SugyaMap({ refText, here, onGo, onClose }: { refText: string; here?: number; onGo: (line: number) => void; onClose: () => void }) {
+export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onClose }: { refText: string; title?: string; here?: number; onGo: (line: number) => void; onClose: () => void }) {
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [err, setErr] = useState('');
   const [tick, setTick] = useState(0);
@@ -21,9 +21,9 @@ export default function SugyaMap({ refText, here, onGo, onClose }: { refText: st
   const at = steps && here ? steps.reduce((k, s, i) => (s.line <= here ? i : k), -1) : -1;
   return (
     <div className="smap-back" onClick={onClose}>
-      <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Sugya map">
-        <div className="smap-head"><span>Sugya map · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
-        {!steps && !err && <div className="muted smap-wait">Laying out the sugya…</div>}
+      <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
+        <div className="smap-head"><span>{title} · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
+        {!steps && !err && <div className="muted smap-wait">Laying it out…</div>}
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {steps && (
           <ol className="smap-list">

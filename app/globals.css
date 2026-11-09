@@ -2105,3 +2105,7 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .legal h1 { font-family: var(--f-body); font-weight: 500; }
 .legal h2 { font-family: var(--f-body); font-weight: 500; font-size: 19px; margin-top: 26px; }
 .legal-draft { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--soft); }
+/* Perek map kinds (Mishnah, Tanach) */
+.k-machlokes .smap-kind, .k-tochacha .smap-kind { color: #b0413e; }
+.k-nechama .smap-kind, .k-shira .smap-kind, .k-tefillah .smap-kind, .k-principle .smap-kind { color: #2f7d5b; }
+.k-mitzvah .smap-kind, .k-nevuah .smap-kind, .k-case .smap-kind { color: var(--accent); }

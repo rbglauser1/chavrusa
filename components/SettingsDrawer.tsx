@@ -484,7 +484,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
               {([
                 ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
-                ['sugyaMap', 'Sugya map', 'A “Map” button in the Sefer: the amud laid out step by step (Mishnah, kashya, teirutz, proof…). Tap a step to go there. Made by the AI once per amud and kept.'],
+                ['sugyaMap', 'Sugya map', 'A map button at the top of the Sefer: a Gemara amud laid out step by step (kashya, teirutz, proof…); a perek of Mishnah by its rulings and machloksim; a perek of Chumash or Nach by its story, speeches, mitzvos and nevuos. Tap a step to go there. Made by the AI once per amud or perek and kept.'],
                 ['notes', 'Notes on the line', 'Add a note to any line (tap the line, then ✎), or say “make a note: …” in a call. Lines with notes show ✎; all your notes are in the Library under My Notes.'],
                 ['progress', 'Progress and plans', 'On Home: the amudim and perakim you have learned, your goals (“finish Yoma by …”), daf yomi, and a siyum when you finish.'],
                 ['driveMode', 'Driving mode', 'A 🚗 button on the learning screen: big buttons, the screen kept on, and your headphone or car buttons work (play/pause, next = go on, back = say it again).'],
