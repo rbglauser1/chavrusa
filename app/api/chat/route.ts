@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { outOfCredit } from '@/lib/credits';
 import { costUsd, isQuickReply, MODELS, styleById, wantsDepth } from '@/lib/config';
 import {
   addMessage, approvedList, createSession, getSession, getSettings, listMemories, listMessages, listSources,
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
   const message: string = String(body.message ?? '').trim();
   let sessionId: string | null = body.sessionId ?? null;
   const spoken = body.voice === true;
+  { const out = await outOfCredit(); if (out) return new Response(JSON.stringify({ type: 'error', text: out }) + '\n', { headers: { 'Content-Type': 'application/x-ndjson' } }); } // credits (lib/credits.ts)
   // The next piece was ready in advance and the page already handed it to the voice (lib/nextRead.ts): this turn only
   // records it and writes what comes after the reading.
   const handed: { early: string; at: Expect } | null = spoken && typeof body.handed?.early === 'string' && typeof body.handed?.at?.base === 'string' && Number(body.handed?.at?.n) > 0

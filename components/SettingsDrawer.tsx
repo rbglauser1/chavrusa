@@ -503,6 +503,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
           </Group>
 
+          <Group id="credits" title="Credits (selling the app)" hint={s.billing ? 'on' : 'off'}>
+            <Credits on={!!s.billing} onToggle={(on) => onChange(on ? { billing: true, billingSince: s.billingSince ?? new Date().toISOString() } : { billing: false })} />
+          </Group>
+
           <Group id="memory" title="What your chavrusa remembers" hint={memories ? `${memories.length} saved` : undefined}>
             {memories === null && <div className="muted">Loading…</div>}
             {memories?.length === 0 && <div className="muted" style={{ fontSize: 14 }}>Nothing yet. Tell your chavrusa how you like to learn and it will remember.</div>}
@@ -520,6 +524,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           <Group id="about" title="About and log out">
             <p className="muted" style={{ fontSize: 13 }}>This is an AI learning tool. It can make mistakes. Do not rely on it for accuracy in Torah learning, halacha, or hashkafa. For practical questions, ask your rav.</p>
+            <p className="muted" style={{ fontSize: 13 }}><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a> · <a href="/terms" target="_blank" rel="noreferrer">Terms of use</a></p>
             <button className="btn" onClick={() => { window.location.href = '/api/logout'; }}>Log out</button>
           </Group>
           </>}
@@ -615,6 +620,33 @@ function VoiceDesigner({ onCreated, hasCustom }: { onCreated: (p: Partial<Settin
       <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Describe qualities (age, accent, pace, tone), not a real person. Works with Live only. A new voice with the same name replaces the old one.</div>
       <button className="btn primary" onClick={create} disabled={busy || prompt.trim().length < 20}>{busy ? 'Creating…' : 'Create voice'}</button>
       {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
+    </div>
+  );
+}
+
+// Credits (selling the app): the switch, the balance, and buying credit with Stripe. Off until it's set up.
+function Credits({ on, onToggle }: { on: boolean; onToggle: (on: boolean) => void }) {
+  const [b, setB] = useState<{ bought?: number; used?: number; left?: number; markup?: number; stripe?: boolean; error?: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { fetch('/api/billing/balance').then((r) => r.json()).then(setB).catch(() => setB({ error: 'Couldn’t check.' })); }, [on]);
+  const buy = async (usd: number) => {
+    setBusy(true);
+    const r = await fetch('/api/billing/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usd }) }).then((x) => x.json()).catch(() => ({ error: 'Couldn’t reach the server.' }));
+    setBusy(false);
+    if (r.url) window.location.href = r.url; else setB((x) => ({ ...(x ?? {}), error: r.error }));
+  };
+  return (
+    <div className="field">
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>For when others use the app: they buy credit (through Stripe), and what they use of the AI and voice comes off it. Off: nothing is counted or limited.</div>
+      <Seg value={on ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onToggle(v === 'on')} />
+      {on && b && (
+        <div style={{ marginTop: 10, fontSize: 14 }}>
+          {b.error ? <div className="muted">{b.error}</div> : <div>Balance: <b>${(b.left ?? 0).toFixed(2)}</b> of use left <span className="muted">(bought ${(b.bought ?? 0).toFixed(2)} · used ${(b.used ?? 0).toFixed(2)} · markup ×{b.markup})</span></div>}
+          {b.stripe ? (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>{[5, 10, 25, 50].map((u) => <button key={u} className="btn" disabled={busy} onClick={() => void buy(u)}>Add ${u}</button>)}</div>
+          ) : <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Stripe isn’t connected yet (STRIPE_SECRET_KEY in Vercel).</div>}
+        </div>
+      )}
     </div>
   );
 }

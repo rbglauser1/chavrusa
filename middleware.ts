@@ -16,5 +16,5 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Everything except the login page, the login API, and static files.
-  matcher: ['/((?!login|api/login|mcp|_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|sw.js).*)'],
+  matcher: ['/((?!login|api/login|api/billing/webhook|privacy|terms|mcp|_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|sw.js).*)'],
 };

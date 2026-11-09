@@ -422,6 +422,8 @@ export interface Settings {
   plans?: { id: string; kind: 'book' | 'dafyomi'; book?: string; by?: string; perDay?: number; start: string }[];
   driveMode?: boolean;      // the driving screen and headphone/car buttons
   offline?: boolean;        // download seforim to read without internet
+  billing?: boolean;        // credits: learners pay for what they use (lib/credits.ts); off until Stripe is set up
+  billingSince?: string;    // when credits were switched on (use is counted from then)
   autoRashi?: boolean;      // Rashi (Bartenura on Mishnayos) open under every line, automatically
   autoComms?: boolean;      // show each line's commentary buttons without tapping the line first
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk

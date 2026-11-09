@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { outOfCredit } from '@/lib/credits';
 import { GEMINI_LIVE, GEMINI_VOICES, styleById, styleCard } from '@/lib/config';
 import { getSettings, listMemories, listMessages, listSources } from '@/lib/db';
 import { GEMINI_VOICE, liveContext, liveInstructions } from '@/lib/live';
@@ -23,6 +24,7 @@ Messages that begin with "[APP]" come from the app, not from the learner: do wha
 export async function POST(req: NextRequest) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!key) return NextResponse.json({ error: 'No Gemini key on the server yet. In Vercel, add GEMINI_API_KEY under Settings → Environment Variables, then redeploy.' }, { status: 503 });
+  { const out = await outOfCredit(); if (out) return NextResponse.json({ error: out }, { status: 402 }); } // credits (lib/credits.ts)
   const s = await getSettings();
   const voice = GEMINI_VOICES.some((v) => v.id === s.geminiVoice) ? s.geminiVoice! : GEMINI_VOICES[0].id;
   const preview = false;

@@ -1,5 +1,6 @@
 import { englishFor } from '@/lib/literal';
 import { NextRequest, NextResponse } from 'next/server';
+import { outOfCredit } from '@/lib/credits';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE } from '@/lib/config';
 import { getSettings } from '@/lib/db';
 import { liveContext, liveContextShort, liveInstructions, liveInstructionsShort, RULES } from '@/lib/live';
@@ -18,6 +19,7 @@ export async function POST(req: NextRequest) {
   if (!key) return NextResponse.json({ error: 'OPENAI_API_KEY is not set.' }, { status: 500 });
   const sdp = await req.text();
   if (!sdp.startsWith('v=')) return NextResponse.json({ error: 'Missing WebRTC offer.' }, { status: 400 });
+  if (req.nextUrl.searchParams.get('preview') !== '1') { const out = await outOfCredit(); if (out) return NextResponse.json({ error: out }, { status: 402 }); } // credits (lib/credits.ts)
   const s = await getSettings();
   const askVoice = req.nextUrl.searchParams.get('voice');
   const preview = req.nextUrl.searchParams.get('preview') === '1';
