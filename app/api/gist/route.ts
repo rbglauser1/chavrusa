@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import { keep } from '@/lib/keep';
 import { costUsd, MODELS } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -40,7 +41,8 @@ export async function POST(req: NextRequest) {
   if (!title || !section || !list.length) return NextResponse.json({ gists: {} });
   try {
     const key = ['gist-v1', String(section), String(title), list.slice().sort().join('|')];
-    const gists = await unstable_cache(() => makeGists(String(title), list), key, { revalidate: 60 * 60 * 24 * 30 })();
+    // Kept for good (lib/keep): a meforesh's summaries on an amud are made once, ever.
+    const gists = await keep('gist-v1', key.join('|'), () => unstable_cache(() => makeGists(String(title), list), key, { revalidate: 60 * 60 * 24 * 30 })());
     return NextResponse.json({ gists });
   } catch (e) {
     return NextResponse.json({ gists: {}, error: (e as Error).message });

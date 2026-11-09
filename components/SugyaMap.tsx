@@ -11,6 +11,9 @@ type Links = { halacha: Linked[]; verses: Linked[]; comm: Record<string, Comm[]>
 const NICE: Record<string, string> = { Tosafot: 'Tosafos', 'Tosafot Yom Tov': 'Tosfos Yom Tov', 'Rabbeinu Bahya': 'Rabbeinu Bachya' };
 const FIRST = ['Rashi', 'Tosafot', 'Bartenura', 'Onkelos', 'Ramban', 'Rashbam', 'Ibn Ezra', 'Sforno', 'Tosafot Yom Tov', 'Rashba', 'Ritva', 'Ran', 'Maharsha'];
 const rank = (t: string) => { const k = FIRST.indexOf(t); return k < 0 ? 99 : k; };
+// A step's label reads as the flow of the text: "The Gemara asks", "Rav Pappa answers", "Proof".
+const VERB: Record<string, string> = { Question: 'asks', Answer: 'answers', Proof: 'brings a proof', Rejection: 'pushes it off', Statement: 'says', Opinion: 'holds', Reason: 'explains', Speech: 'speaks', Prayer: 'prays' };
+const labelOf = (s: { kind: string; who: string }) => (s.who && VERB[s.kind] ? `${s.who} ${VERB[s.kind]}` : `${s.kind}${s.who ? ` · ${s.who}` : ''}`);
 
 // A halacha or a pasuk: tap to open its words right here.
 function LinkRow({ x, onOpen }: { x: Linked; onOpen?: (ref: string) => void }) {
@@ -120,7 +123,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                   {t.steps.map((s, i) => (
                     <li key={i} className={`smap-step k-${s.kind.toLowerCase()} ${s === atStep ? 'here' : ''}`}>
                       <button onClick={() => go(s.line)}>
-                        <span className="smap-kind">{s.kind}{s.who ? ` · ${s.who}` : ''}</span>
+                        <span className="smap-kind">{labelOf(s)}</span>
                         <span className="smap-sum">{s.summary}</span>
                         <span className="smap-line">line {s.line}</span>
                       </button>

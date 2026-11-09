@@ -479,12 +479,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
           </Group>
 
-          <Group id="extras" title="Extras" hint={[s.cacheTexts !== false && 'saved texts', s.notes && 'notes', s.sugyaMap && 'sugya map', s.chazara && 'chazara', s.progress && 'progress', s.driveMode && 'driving', s.offline && 'offline'].filter(Boolean).join(' · ') || 'all off'}>
+          <Group id="extras" title="Extras" hint={[s.cacheTexts !== false && 'saved texts', s.notes && 'notes', s.sugyaMap && 'sugya map', s.review && 'review', s.chazara && 'chazara', s.progress && 'progress', s.driveMode && 'driving', s.offline && 'offline'].filter(Boolean).join(' · ') || 'all off'}>
             <div className="field">
               <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
               {([
                 ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
                 ['sugyaMap', 'Sugya map', 'A map button at the top of the Sefer, all in English: the big picture of the amud or perek, then each topic with an intro, what you need to know for it, its steps (question, answer, proof…; for Mishnah its rulings and disputes; for Chumash and Nach its story, speeches, mitzvos and prophecies), and where it ends up. From Sefaria (free): the meforshim on each step, where the halacha is ruled, and the verses quoted. Tap a step to go there. The outline is made by the AI once per amud or perek and kept.'],
+                ['review', 'Review questions', 'A “Review” button at the top of the Sefer: questions on the amud or perek to test yourself, each with its answer hidden until you tap. Made by the AI once per amud or perek and kept for good.'],
                 ['notes', 'Notes on the line', 'Add a note to any line (tap the line, then ✎), or say “make a note: …” in a call. Lines with notes show ✎; all your notes are in the Library under My Notes.'],
                 ['progress', 'Progress and plans', 'On Home: the amudim and perakim you have learned, your goals (“finish Yoma by …”), daf yomi, and a siyum when you finish.'],
                 ['driveMode', 'Driving mode', 'A 🚗 button on the learning screen: big buttons, the screen kept on, and your headphone or car buttons work (play/pause, next = go on, back = say it again).'],

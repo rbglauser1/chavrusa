@@ -6,6 +6,7 @@ import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
+import { keep } from '@/lib/keep';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -45,7 +46,8 @@ Give:
   - "line": the numbered line where it begins.
   - "intro": 2 to 3 sentences giving the big picture of this topic: what question or subject it deals with, why it comes up here, and (if it began before this text) where it began.
   - "background": the things a learner must know to follow this topic, if any (0 to 3), each one short line, "term: what it is" (like "Smicha: the owner leaning his hands on his korban before it is offered"). Leave empty when nothing is needed.
-  - "steps": the topic's steps in order. Each step: "line" (the numbered line where it begins), "kind" (exactly one of: ${KINDS[k].join(', ')}), "who" (the speaker or source, like ${WHO[k]}; empty if none), "summary" (one plain English line, at most 16 words, saying what this step says).
+  - "steps": the topic's steps in order. Each step: "line" (the numbered line where it begins), "kind" (exactly one of: ${KINDS[k].join(', ')}), "who" (the speaker or source, like ${WHO[k]}; empty if none), "summary" (one plain English sentence, at most 18 words, telling what happens in this step, as a statement: never a question put to the learner, and not a test of what he knows. Write "The Gemara asks why both could not be dressed at once", not "Why couldn't both be dressed at once?").
+  The steps are the text's own flow, the way a chavrusa would trace it: who says what, what is asked, how it is answered, what is proven or pushed off.
   - "takeaway": one sentence: where the topic ends up (its conclusion, or that it is left open or continues on the next ${k === 'gemara' ? 'amud' : 'perek'}).
 ${STEPS[k]}
 Reply with JSON only: {"overview": "...", "topics": [{"title": "...", "line": 1, "intro": "...", "background": ["..."], "steps": [{"line": 1, "kind": "${KINDS[k][0]}", "who": "", "summary": "..."}], "takeaway": "..."}]}`;
@@ -97,7 +99,8 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   return { overview, topics, steps };
 }
 
-const cached = (ref: string) => unstable_cache(() => makeMap(ref), ['sugya-map-v3', ref], { revalidate: 60 * 60 * 24 * 30 })();
+// Kept for good (lib/keep): each amud's map is paid for once, ever; the server's month cache sits in front for speed.
+const cached = (ref: string) => unstable_cache(() => keep('sugya-map-v4', ref, () => makeMap(ref)), ['sugya-map-v4', ref], { revalidate: 60 * 60 * 24 * 30 })();
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');

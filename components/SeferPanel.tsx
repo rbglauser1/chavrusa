@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { BoldEn } from './BoldEn';
 import { Interlinear, pairPhrases } from './Interlinear';
 import SugyaMap from './SugyaMap';
+import Review from './Review';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -384,6 +385,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [notes, setNotes] = useState<LineNote[]>([]);
   const [noteFor, setNoteFor] = useState<number | null>(null);
   const [mapOpen, setMapOpen] = useState(false); // the sugya map (Settings → Extras)
+  const [reviewOpen, setReviewOpen] = useState(false); // review questions (Settings → Extras)
   const [noteText, setNoteText] = useState('');
   const loadNotes = () => { if (settings.notes && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
   useEffect(loadNotes, [src?.ref, settings.notes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -617,8 +619,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
-            {settings.sugyaMap && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
-              <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>
+            {(settings.sugyaMap || settings.review) && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
+              <div className="smap-btns">
+                {settings.sugyaMap && <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>}
+                {settings.review && <button className="smap-btn" onClick={() => setReviewOpen(true)}>✓ Review</button>}
+              </div>
+            )}
+            {reviewOpen && (
+              <Review refText={src.ref} onClose={() => setReviewOpen(false)}
+                onGo={(n) => { document.querySelector(`.sefer-flow [data-line="${n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }} />
             )}
             {mapOpen && (
               <SugyaMap refText={src.ref} title={kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'} here={src.focus} onClose={() => setMapOpen(false)}

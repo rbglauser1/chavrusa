@@ -4,6 +4,7 @@ import { getSettings, logCost } from '@/lib/db';
 import { TRANSLATE_PROMPT } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
+import { keep } from '@/lib/keep';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -14,6 +15,8 @@ export async function POST(req: NextRequest) {
   if (!text) return NextResponse.json({ error: 'text required' }, { status: 400 });
   try {
     const settings = await getSettings();
+    // Kept for good (lib/keep): the same line is translated once, ever.
+    const translation = await keep('translate-v1', String(text).slice(0, 6000), async () => {
     const model = MODELS[settings.provider].basic;
     const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
     const r = await run({
@@ -21,6 +24,9 @@ export async function POST(req: NextRequest) {
       tools: [], execute: async () => '', effort: model.effort, thinking: model.thinking, maxSteps: 1,
     });
     await logCost({ sessionId: sessionId ?? null, kind: 'translate', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) });
-    return NextResponse.json({ translation: r.text });
+    if (!r.text.trim()) throw new Error('No translation came back.');
+    return r.text;
+    });
+    return NextResponse.json({ translation });
   } catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }

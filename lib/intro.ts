@@ -1,5 +1,6 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
+import { keep } from './keep';
 import { costUsd, MODELS } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -35,8 +36,8 @@ async function makeIntro(ref: string): Promise<string> {
   return text.slice(0, 1400);
 }
 
-// Kept for a month on the server: the same amud's intro is never paid for twice.
-export const getIntro = (ref: string) => unstable_cache(() => makeIntro(ref), ['intro-v1', ref], { revalidate: 60 * 60 * 24 * 30 })();
+// Kept for good (lib/keep): the same amud's intro is never paid for twice.
+export const getIntro = (ref: string) => keep('intro-v1', ref, () => unstable_cache(() => makeIntro(ref), ['intro-v1', ref], { revalidate: 60 * 60 * 24 * 30 })());
 
 // The intro if it's ready within a few seconds (it keeps being made, and kept, in the background otherwise).
 export async function introSoon(ref: string, ms = 7000): Promise<string> {

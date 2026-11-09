@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import { keep } from '@/lib/keep';
 import { costUsd, MODELS } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -43,8 +44,9 @@ async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }>
   return { moves, usd };
 }
 
-// Kept for a month on the server: the same amud's outline is never paid for twice.
-const cached = (ref: string) => unstable_cache(() => makeOutline(ref), ['outline-v2', ref], { revalidate: 60 * 60 * 24 * 30 })();
+// Kept for good (lib/keep): the same amud's outline is never paid for twice. Inside, the server's month cache, so a
+// copy made before is moved into the store for free.
+const cached = (ref: string) => keep('outline-v2', ref, () => unstable_cache(() => makeOutline(ref), ['outline-v2', ref], { revalidate: 60 * 60 * 24 * 30 })());
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
