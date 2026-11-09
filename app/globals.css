@@ -2175,3 +2175,6 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .line-x .lx-p { margin: 0 0 8px; font-size: 15px; line-height: 1.5; color: var(--ink); }
 .line-x .smap-links { margin: 6px 0 4px; }
 .line-x .smap-link-text .he { font-family: var(--f-he, 'Noto Serif Hebrew', serif); font-size: 17px; }
+/* The AI's explanation (and the English in Sources) follows the English text size in Settings, never smaller than 17px. */
+.line-x .lx-p { font-size: max(17px, var(--en-size, 18px)); line-height: 1.55; }
+.line-x .smap-link-text .en { font-size: max(16px, calc(var(--en-size, 18px) * .95)); line-height: 1.5; color: var(--ink); }
