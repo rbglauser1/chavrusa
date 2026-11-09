@@ -563,6 +563,7 @@ export default function Home() {
       case 'session': setSessionId(e.session.id); break;
       case 'check': logLine('CHECK', e.text); break;
       // The Mikraos Gedolos page (if open) goes to the pasuk / meforesh this turn is about.
+      case 'notes': window.dispatchEvent(new Event('notes-changed')); break;
       case 'mgfocus': window.dispatchEvent(new CustomEvent('mg-focus', { detail: { perek: e.perek, pasuk: e.pasuk, who: e.who } })); break;
       case 'status': setStatus(e.text); if (liveDelegation.current) logLine('BRAIN', `status: ${e.text}`); break;
       case 'source':

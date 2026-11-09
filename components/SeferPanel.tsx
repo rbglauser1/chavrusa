@@ -378,6 +378,21 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // The text keeps going: under the last line, the next amud / perek appears by itself (when you reach the end
   // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
   const nextRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? nextSection(src.ref) : null;
+  // Notes on the line (Settings → Extras): this text's notes, an open editor, and reload when one is added by voice.
+  type LineNote = { id: string; ref: string; n: number; text: string; created: string };
+  const [notes, setNotes] = useState<LineNote[]>([]);
+  const [noteFor, setNoteFor] = useState<number | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const loadNotes = () => { if (settings.notes && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
+  useEffect(loadNotes, [src?.ref, settings.notes]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const f = () => loadNotes(); window.addEventListener('notes-changed', f); return () => window.removeEventListener('notes-changed', f); }); // eslint-disable-line react-hooks/exhaustive-deps
+  const saveNote = async (n: number) => {
+    const text = noteText.trim();
+    if (!text || !src) return;
+    await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: src.ref, n, text }) }).catch(() => {});
+    setNoteFor(null); setNoteText(''); loadNotes();
+  };
+  const dropNote = async (id: string) => { await fetch(`/api/notes?id=${id}`, { method: 'DELETE' }).catch(() => {}); loadNotes(); };
   const [nextSrc, setNextSrc] = useState<SourceData | null>(restoring.current?.next ?? null);
   const [nextState, setNextState] = useState<'idle' | 'loading' | 'none'>('idle');
   useEffect(() => { if (restoring.current) return; setNextSrc(null); setNextState('idle'); }, [src?.ref]);
@@ -632,6 +647,24 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>Summary</span> {ownGists.list[i]}</div>}
+                  {settings.notes && (() => {
+                    const mine = notes.filter((x) => x.n === i + 1);
+                    const showAdd = open.has(i) || picked === i || src.focus === i + 1;
+                    if (!mine.length && !showAdd && noteFor !== i) return null;
+                    return (
+                      <div className="line-notes" onClick={(e) => e.stopPropagation()}>
+                        {mine.map((x) => (
+                          <div key={x.id} className="line-note"><span className="ln-mark">✎</span><span className="ln-text" dir="auto">{x.text}</span><button className="ln-x" aria-label="Delete this note" onClick={() => { if (window.confirm('Delete this note?')) void dropNote(x.id); }}>×</button></div>
+                        ))}
+                        {noteFor === i ? (
+                          <div className="ln-edit">
+                            <textarea autoFocus rows={3} dir="auto" placeholder="Your note on this line" value={noteText} onChange={(e) => setNoteText(e.target.value)} />
+                            <div className="ln-btns"><button className="btn" disabled={!noteText.trim()} onClick={() => void saveNote(i + 1)}>Save</button><button className="btn ghost" onClick={() => { setNoteFor(null); setNoteText(''); }}>Cancel</button></div>
+                          </div>
+                        ) : showAdd ? <button className="ln-add" onClick={() => { setNoteFor(i); setNoteText(''); }}>✎ Add a note</button> : null}
+                      </div>
+                    );
+                  })()}
                   {(() => {
                     if (kind === 'none') return null;
                     if (embedded && !settings.autoComms && picked !== i) return null;

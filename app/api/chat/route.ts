@@ -108,6 +108,30 @@ export async function POST(req: NextRequest) {
         }
         await addMessage(sid, 'user', message);
 
+        // Notes on the line, by voice or typing (Settings → Extras): "make a note: …", "note that …", "make a note of
+        // that" (the chavrusa's last explanation). Saved on the line we're on; free, no AI.
+        const noteAsk = settings.notes ? message.trim().match(/^(?:please\s+)?(?:(?:make|take|save|add|write)\s+(?:a\s+)?note|note)\b\s*(?:(?:of|on)\s+(?:that|this)\b)?\s*[:,-]?\s*(?:that\s+)?([\s\S]*)$/i) : null;
+        if (noteAsk) {
+          const here = currentPlace(history, sources);
+          const lastExpl = [...history].reverse().find((m) => m.role === 'assistant')?.content ?? '';
+          const said = noteAsk[1].trim() || lastExpl.replace(/\[\[say\]\][\s\S]*?\[\[\/say\]\]/gi, ' ').replace(/\[\[[^\]]*\]\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
+          let reply = '';
+          if (!here) reply = 'Open a text first, and I’ll keep the note on the line we’re on.';
+          else if (!said) reply = 'What should the note say?';
+          else {
+            const { addNote } = await import('@/lib/notes');
+            await addNote(here.base, Math.max(1, here.n), said);
+            reply = `Noted on ${here.base}, line ${Math.max(1, here.n)}.`;
+            send({ type: 'notes', ref: here.base });
+          }
+          const usage = { ai: false, reason: 'Saved a note' };
+          await addMessage(sid, 'assistant', reply, { free: true, usage });
+          send({ type: 'reply', text: reply, model: 'No AI needed (free)', usage });
+          await touchSession(sid);
+          send({ type: 'cost', usd: 0, sessionUsd: await sessionCost(sid), inputTokens: 0, outputTokens: 0 });
+          return;
+        }
+
         // Anything the app can do by itself (open a place, turn the page, open Rashi, switch style, repeat, thanks…)
         // is done here with no AI call: free and instant. Only real learning goes to the AI.
         const routed = handed ? null : await routeWithoutAI({ message, spoken, settings, sessionId: sid, sources, history, memories, approved, pre }).catch(() => null);

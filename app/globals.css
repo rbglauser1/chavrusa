@@ -2031,3 +2031,14 @@ html[data-b-he='on'] .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(
    the marks from another font, word by word, and the letters shifted up and down. Noto Serif Hebrew has the full set
    of trop and nikud, so text with trop is set in it, whatever the Hebrew font (the commentaries keep theirs). */
 html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { font-family: 'Noto Serif Hebrew', var(--f-he) !important; }
+/* Notes on the line (SeferPanel) and My Notes (Library) */
+.line-notes { margin: 6px 0 2px; display: flex; flex-direction: column; gap: 6px; font-family: var(--f-ui); }
+.line-note { display: flex; gap: 8px; align-items: flex-start; padding: 7px 10px; border-left: 2px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; font-size: 14px; color: var(--ink); }
+.ln-mark { color: var(--accent); }
+.ln-text { flex: 1; white-space: pre-wrap; }
+.ln-x { border: 0; background: transparent; color: var(--soft); font-size: 18px; cursor: pointer; line-height: 1; }
+.ln-add { align-self: flex-start; border: 0; background: transparent; color: var(--soft); font-family: var(--f-ui); font-size: 13px; cursor: pointer; padding: 2px 0; }
+.ln-edit textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); color: var(--ink); font: 15px var(--f-ui); }
+.ln-btns { display: flex; gap: 8px; margin-top: 6px; }
+.notes-search { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; margin-bottom: 6px; }
+.note-item { flex-direction: column; align-items: flex-start !important; gap: 2px; text-align: left; }
