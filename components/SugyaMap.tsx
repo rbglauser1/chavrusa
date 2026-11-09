@@ -70,6 +70,9 @@ function LinkRow({ x, onOpen }: { x: Linked; onOpen?: (ref: string) => void }) {
   );
 }
 
+type Step = { line: number; kind: string; who: string; summary: string };
+type Topic = { title: string; line: number; intro: string; background: string[]; steps: Step[]; takeaway: string };
+
 export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onClose, onComm, onOpen, tier, inline }: {
   refText: string; title?: string; here?: number; onGo: (line: number) => void; onClose: () => void;
   tier?: 'top' | 'middle'; // the comparison page: this model's map
