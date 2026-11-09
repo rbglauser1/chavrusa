@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoldEn } from './BoldEn';
 import { Interlinear, pairPhrases } from './Interlinear';
+import SugyaMap from './SugyaMap';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -382,6 +383,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   type LineNote = { id: string; ref: string; n: number; text: string; created: string };
   const [notes, setNotes] = useState<LineNote[]>([]);
   const [noteFor, setNoteFor] = useState<number | null>(null);
+  const [mapOpen, setMapOpen] = useState(false); // the sugya map (Settings → Extras)
   const [noteText, setNoteText] = useState('');
   const loadNotes = () => { if (settings.notes && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
   useEffect(loadNotes, [src?.ref, settings.notes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -615,6 +617,13 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
+            {settings.sugyaMap && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
+              <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 Sugya map</button>
+            )}
+            {mapOpen && (
+              <SugyaMap refText={src.ref} here={src.focus} onClose={() => setMapOpen(false)}
+                onGo={(n) => { const el = document.querySelector(`.sefer-flow [data-line="${n}"]`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }} />
+            )}
             {(() => {
               // Turn the page: the previous or next amud / perek / siman, one tap.
               const whole = !isComm && !/:\d+(-\d+)?$/.test(src.ref);
