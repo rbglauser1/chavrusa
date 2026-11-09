@@ -2027,3 +2027,7 @@ html:is([data-commfont='chosen'], [data-commfont='same']) :is(.rashi, .sefer .ra
    only the lines come closer. In bold, a little more. */
 html:is([data-hespace='close'], [data-hespace='closer']) .pointed :is(.line .he, .min-he, .il-he, .il-pair .he) { word-spacing: 0.06em; letter-spacing: 0; }
 html[data-b-he='on'] .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { word-spacing: 0.14em; }
+/* Text with trop: the letters weren't level (Nov 9). Most of the Hebrew fonts have no trop marks, so the phone took
+   the marks from another font, word by word, and the letters shifted up and down. Noto Serif Hebrew has the full set
+   of trop and nikud, so text with trop is set in it, whatever the Hebrew font (the commentaries keep theirs). */
+.pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { font-family: 'Noto Serif Hebrew', var(--f-he); }
