@@ -8,9 +8,12 @@ import { OWNER_ID } from './config';
 // (BILLING_MARKUP, default 3: $10 buys $3.33 of AI and voice).
 export const markup = () => Math.max(1, Number(process.env.BILLING_MARKUP ?? 3) || 3);
 
+let flag: { v: { on: boolean; since: string | null }; at: number } | null = null; // checked at most once a minute (every chat turn asks)
 export async function billingOn(): Promise<{ on: boolean; since: string | null }> {
+  if (flag && Date.now() - flag.at < 60_000) return flag.v;
   const s = await getSettings().catch(() => null);
-  return { on: !!s?.billing, since: s?.billingSince ?? null };
+  flag = { v: { on: !!s?.billing, since: s?.billingSince ?? null }, at: Date.now() };
+  return flag.v;
 }
 
 export async function balance(userId = OWNER_ID): Promise<{ bought: number; used: number; left: number }> {
