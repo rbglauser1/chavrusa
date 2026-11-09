@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import { costUsd, MODELS } from '@/lib/config';
+import { costUsd, MODELS, type Tier } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
@@ -54,16 +54,16 @@ Reply with JSON only: {"overview": "...", "topics": [{"title": "...", "line": 1,
 
 export type Step = { line: number; kind: string; who: string; summary: string };
 export type Topic = { title: string; line: number; intro: string; background: string[]; steps: Step[]; takeaway: string };
-export type SugyaMapData = { overview: string; topics: Topic[]; steps: Step[] };
+export type SugyaMapData = { overview: string; topics: Topic[]; steps: Step[]; model?: string; usd?: number };
 
-async function makeMap(ref: string): Promise<SugyaMapData> {
+async function makeMap(ref: string, tier: Tier = 'middle'): Promise<SugyaMapData> {
   const [settings, approved] = await Promise.all([getSettings(), approvedList()]);
   const s = await getText(ref, approved);
   if (!s.verdict.allowed || !s.he.length) return { overview: '', topics: [], steps: [] };
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const k = kindOf(s.ref);
-  const model = MODELS[settings.provider].middle;
+  const model = MODELS[settings.provider][tier];
   const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
   const r = await run({
     model: model.id, system: promptFor(k), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
@@ -96,7 +96,7 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   } catch { topics = []; }
   const steps = topics.flatMap((t) => t.steps);
   if (!steps.length) throw new Error('The map did not come back in the right form.'); // not kept: tried again next time
-  return { overview, topics, steps };
+  return { overview, topics, steps, model: model.label, usd: costUsd(model, r.inputTokens, r.outputTokens) };
 }
 
 // Kept for good (lib/keep): each amud's map is paid for once, ever; the server's month cache sits in front for speed.
@@ -104,6 +104,13 @@ const cached = (ref: string) => unstable_cache(() => keep('sugya-map-v4', ref, (
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
+  // The comparison page (/lab/map): the same map made by a chosen model, kept apart from the real maps.
+  const cmp = req.nextUrl.searchParams.get('tier');
+  if (cmp === 'top' || cmp === 'middle') {
+    if (!ref) return NextResponse.json({ overview: '', topics: [], steps: [] });
+    try { return NextResponse.json(await keep(`map-compare-v1-${cmp}`, ref, () => makeMap(ref, cmp))); }
+    catch (e) { return NextResponse.json({ overview: '', topics: [], steps: [], error: (e as Error).message }); }
+  }
   if (!ref || / on /i.test(ref)) return NextResponse.json({ overview: '', topics: [], steps: [] });
   try { return NextResponse.json(await cached(ref)); }
   catch (e) { return NextResponse.json({ overview: '', topics: [], steps: [], error: (e as Error).message }); }

@@ -2161,3 +2161,19 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .smap *, .smap *::before, .smap *::after { box-sizing: border-box; }
 .smap-list, .smap-step, .smap-step > button, .smap-tags, .smap-links, .smap-link-text { max-width: 100%; min-width: 0; }
 .smap-sum, .smap-intro, .smap-take, .smap-overview p, .smap-link-name, .smap-link-text { overflow-wrap: anywhere; }
+/* Map lab (/lab/map): Sonnet and Opus side by side; tabs on a phone */
+.smap-page .smap { width: 100%; max-height: none; overflow: visible; border-radius: 14px; border: 1px solid var(--rule); box-shadow: none; }
+.smap-made { font-size: 12.5px; margin: 0 0 10px; }
+.maplab-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.maplab-row input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); color: var(--ink); font: 15px var(--f-ui); }
+.maplab-tabs { display: none; gap: 6px; margin-bottom: 10px; }
+.maplab-tabs button { flex: 1; padding: 8px; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--soft); font: 14px var(--f-ui); }
+.maplab-tabs button.on { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+.maplab-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.maplab-cols h2 { font: 400 17px var(--f-body); margin: 0 0 8px; }
+@media (max-width: 760px) {
+  .maplab-tabs { display: flex; }
+  .maplab-cols { grid-template-columns: 1fr; }
+  .maplab-cols section:not(.on) { display: none; }
+  .maplab-cols h2 { display: none; }
+}
