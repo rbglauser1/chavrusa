@@ -15,57 +15,60 @@ const rank = (t: string) => { const k = FIRST.indexOf(t); return k < 0 ? 99 : k;
 const VERB: Record<string, string> = { Question: 'asks', Answer: 'answers', Proof: 'brings a proof', Rejection: 'pushes it off', Statement: 'says', Opinion: 'holds', Reason: 'explains', Speech: 'speaks', Prayer: 'prays' };
 const labelOf = (s: { kind: string; who: string }) => (s.who && VERB[s.kind] ? `${s.who} ${VERB[s.kind]}` : `${s.kind}${s.who ? ` · ${s.who}` : ''}`);
 
-// A halacha or a pasuk: tap to open its words right here, each piece with its English: Sefaria's when it has one,
-// else a translation by the AI (made once per piece and kept for good, app/api/translate).
+// Words opened right in the map (a halacha, a pasuk, a meforesh), each piece with its English: Sefaria's when it has
+// one, else a translation by the AI (made once per piece and kept for good, app/api/translate).
 const clean = (t: string) => t.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-function LinkRow({ x, onOpen }: { x: Linked; onOpen?: (ref: string) => void }) {
-  const [open, setOpen] = useState(false);
+function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void }) {
   const [text, setText] = useState<{ he: string[]; en: string[] } | null | 'none'>(null);
-  const [ai, setAi] = useState<Record<number, string | 'busy' | 'failed'>>({});
-  const translate = (he: string[], en: string[]) => {
-    he.forEach((h, i) => {
-      if (clean(en[i] ?? '') || !clean(h) || i >= 12) return;
-      setAi((a) => ({ ...a, [i]: 'busy' }));
-      fetch('/api/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: clean(h) }) })
-        .then((r) => r.json()).then((d) => setAi((a) => ({ ...a, [i]: d.translation ? String(d.translation) : 'failed' })))
-        .catch(() => setAi((a) => ({ ...a, [i]: 'failed' })));
-    });
-  };
-  const toggle = () => {
-    setOpen((o) => !o);
-    if (text) return;
-    fetch(`/api/commentary?refs=${encodeURIComponent(x.ref)}`).then((r) => r.json())
+  const [ai, setAi] = useState<Record<number, string>>({});
+  useEffect(() => {
+    let gone = false;
+    fetch(`/api/commentary?refs=${encodeURIComponent(refs.join('|'))}`).then((r) => r.json())
       .then((d) => {
+        if (gone) return;
         if (!d.he?.length) { setText('none'); return; }
-        const t = { he: d.he as string[], en: (d.en ?? []) as string[] };
-        setText(t);
-        translate(t.he, t.en);
-      }).catch(() => setText('none'));
-  };
+        const he = d.he as string[], en = (d.en ?? []) as string[];
+        setText({ he, en });
+        he.forEach((h, i) => {
+          if (clean(en[i] ?? '') || !clean(h) || i >= 16) return;
+          setAi((a) => ({ ...a, [i]: 'busy' }));
+          fetch('/api/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: clean(h) }) })
+            .then((r) => r.json()).then((t) => { if (!gone) setAi((a) => ({ ...a, [i]: t.translation ? String(t.translation) : 'failed' })); })
+            .catch(() => { if (!gone) setAi((a) => ({ ...a, [i]: 'failed' })); });
+        });
+      }).catch(() => { if (!gone) setText('none'); });
+    return () => { gone = true; };
+  }, [refs.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
   const usedAi = Object.values(ai).some((v) => v !== 'busy' && v !== 'failed');
   return (
+    <div className="smap-link-text">
+      {!text ? <div className="muted">Opening…</div>
+        : text === 'none' ? <div className="muted">Couldn’t open it.</div>
+        : text.he.map((h, i) => {
+          const en = clean(text.en[i] ?? ''), mine = ai[i];
+          return (
+            <div key={i}>
+              <div className="he" dir="rtl">{clean(h)}</div>
+              {en ? <div className="en">{en}</div>
+                : mine === 'busy' ? <div className="en muted">Translating…</div>
+                : mine && mine !== 'failed' ? <div className="en">{mine}</div>
+                : null}
+            </div>
+          );
+        })}
+      {usedAi && <div className="muted smap-ai-note">English translated by the AI.</div>}
+      {onOpen && <button className="linklike" onClick={onOpen}>Learn it in the Sefer ↗</button>}
+    </div>
+  );
+}
+
+// A halacha or a pasuk: tap to open its words right here.
+function LinkRow({ x, onOpen }: { x: Linked; onOpen?: (ref: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
     <li className={`smap-link ${open ? 'open' : ''}`}>
-      <button className="smap-link-name" onClick={toggle}>{x.title}<span aria-hidden="true">{open ? '▴' : '▾'}</span></button>
-      {open && (
-        <div className="smap-link-text">
-          {!text ? <div className="muted">Opening…</div>
-            : text === 'none' ? <div className="muted">Couldn’t open it.</div>
-            : text.he.map((h, i) => {
-              const en = clean(text.en[i] ?? ''), mine = ai[i];
-              return (
-                <div key={i}>
-                  <div className="he" dir="rtl">{clean(h)}</div>
-                  {en ? <div className="en">{en}</div>
-                    : mine === 'busy' ? <div className="en muted">Translating…</div>
-                    : mine && mine !== 'failed' ? <div className="en">{mine}</div>
-                    : null}
-                </div>
-              );
-            })}
-          {usedAi && <div className="muted smap-ai-note">English translated by the AI.</div>}
-          {onOpen && <button className="linklike" onClick={() => onOpen(x.ref)}>Learn it in the Sefer ↗</button>}
-        </div>
-      )}
+      <button className="smap-link-name" onClick={() => setOpen((o) => !o)}>{x.title}<span aria-hidden="true">{open ? '▴' : '▾'}</span></button>
+      {open && <RefText refs={[x.ref]} onOpen={onOpen ? () => onOpen(x.ref) : undefined} />}
     </li>
   );
 }
@@ -121,6 +124,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
     return [...got.values()].sort((a, b) => rank(a.c.title) - rank(b.c.title) || a.c.title.localeCompare(b.c.title));
   };
   const [moreFor, setMoreFor] = useState<string | null>(null);
+  const [openComm, setOpenComm] = useState<string | null>(null); // the meforesh opened right in the map
   return (
     <div className={inline ? 'smap-page' : 'smap-back'} onClick={inline ? undefined : onClose}>
       <div className="smap" onClick={(e) => e.stopPropagation()} role={inline ? undefined : 'dialog'} aria-label={title}>
@@ -161,14 +165,26 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                         const nextStep = t.steps[i + 1] ?? data.topics[ti + 1]?.steps[0];
                         if (nextStep && nextStep.line === s.line) return null;
                         const cs = commsOn(s.line, endOf(s.line));
-                        if (!cs.length || !onComm) return null;
+                        if (!cs.length || !onComm) return null; // onComm unset: the meforshim are switched off for the map
                         const key = `${ti}-${i}`, all2 = moreFor === key, shown = all2 ? cs : cs.slice(0, 4);
+                        const opened = cs.find(({ c }) => openComm === `${key}|${c.title}`);
                         return (
-                          <div className="smap-tags">
-                            <span className="smap-tags-label">Meforshim:</span>
-                            {shown.map(({ line, c }) => <button key={c.title} onClick={() => { onComm(line, c); onClose(); }}>{NICE[c.title] ?? c.title}</button>)}
-                            {cs.length > 4 && <button className="more" onClick={() => setMoreFor(all2 ? null : key)}>{all2 ? 'Less' : `+${cs.length - 4}`}</button>}
-                          </div>
+                          <>
+                            <div className="smap-tags">
+                              <span className="smap-tags-label">Meforshim:</span>
+                              {shown.map(({ c }) => {
+                                const k2 = `${key}|${c.title}`;
+                                return <button key={c.title} className={openComm === k2 ? 'on' : ''} onClick={() => setOpenComm(openComm === k2 ? null : k2)}>{NICE[c.title] ?? c.title}</button>;
+                              })}
+                              {cs.length > 4 && <button className="more" onClick={() => setMoreFor(all2 ? null : key)}>{all2 ? 'Less' : `+${cs.length - 4}`}</button>}
+                            </div>
+                            {opened && (
+                              <div className="smap-comm">
+                                <div className="smap-comm-head"><span>{NICE[opened.c.title] ?? opened.c.title}</span><button aria-label="Close" onClick={() => setOpenComm(null)}>×</button></div>
+                                <RefText refs={opened.c.refs} />
+                              </div>
+                            )}
+                          </>
                         );
                       })()}
                     </li>

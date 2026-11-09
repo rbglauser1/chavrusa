@@ -2178,3 +2178,9 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
   .maplab-cols > section > h2 { display: none; }
 }
 .smap-ai-note { font-size: 12px; margin: 0 0 8px; }
+/* A meforesh opened right in the sugya map */
+.smap-step .smap-tags button.on { border-color: var(--accent); background: var(--accent-soft); }
+.smap-comm { margin: 0 10px 10px; border: 1px solid var(--rule); border-radius: 12px; padding: 8px 10px 4px; background: var(--surface); }
+.smap-comm-head { display: flex; justify-content: space-between; align-items: center; font: 13px var(--f-ui); color: var(--accent); margin-bottom: 6px; }
+.smap-comm-head button { border: 0; background: transparent; color: var(--soft); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.smap-comm .smap-link-text .he { font-family: var(--f-he, 'Noto Serif Hebrew', serif); }
