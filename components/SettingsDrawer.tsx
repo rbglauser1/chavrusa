@@ -482,6 +482,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           <Group id="extras" title="Extras" hint={[s.cacheTexts !== false && 'saved texts', s.notes && 'notes', s.sugyaMap && 'sugya map', s.review && 'review', s.chazara && 'chazara', s.progress && 'progress', s.driveMode && 'driving', s.offline && 'offline'].filter(Boolean).join(' · ') || 'all off'}>
             <div className="field">
               <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
+              <a className="btn ghost" href="/lab/map" style={{ display: 'inline-block', margin: '0 0 14px', textDecoration: 'none' }}>Compare sugya maps: Sonnet or Opus ›</a>
               {([
                 ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
                 ['sugyaMap', 'Sugya map', 'A map button at the top of the Sefer, all in English: the big picture of the amud or perek, then each topic with an intro, what you need to know for it, its steps (question, answer, proof…; for Mishnah its rulings and disputes; for Chumash and Nach its story, speeches, mitzvos and prophecies), and where it ends up. From Sefaria (free): the meforshim on each step, where the halacha is ruled, and the verses quoted. Tap a step to go there. The outline is made by the AI once per amud or perek and kept.'],
