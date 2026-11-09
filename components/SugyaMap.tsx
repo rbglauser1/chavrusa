@@ -125,11 +125,15 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                         <span className="smap-line">line {s.line}</span>
                       </button>
                       {(() => {
+                        // Once per line: on the last step that begins on it (a question and its answer on one line share them).
+                        const nextStep = t.steps[i + 1] ?? data.topics[ti + 1]?.steps[0];
+                        if (nextStep && nextStep.line === s.line) return null;
                         const cs = commsOn(s.line, endOf(s.line));
                         if (!cs.length || !onComm) return null;
                         const key = `${ti}-${i}`, all2 = moreFor === key, shown = all2 ? cs : cs.slice(0, 4);
                         return (
                           <div className="smap-tags">
+                            <span className="smap-tags-label">Meforshim:</span>
                             {shown.map(({ line, c }) => <button key={c.title} onClick={() => { onComm(line, c); onClose(); }}>{NICE[c.title] ?? c.title}</button>)}
                             {cs.length > 4 && <button className="more" onClick={() => setMoreFor(all2 ? null : key)}>{all2 ? 'Less' : `+${cs.length - 4}`}</button>}
                           </div>
