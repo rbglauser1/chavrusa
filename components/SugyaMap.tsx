@@ -15,16 +15,34 @@ const rank = (t: string) => { const k = FIRST.indexOf(t); return k < 0 ? 99 : k;
 const VERB: Record<string, string> = { Question: 'asks', Answer: 'answers', Proof: 'brings a proof', Rejection: 'pushes it off', Statement: 'says', Opinion: 'holds', Reason: 'explains', Speech: 'speaks', Prayer: 'prays' };
 const labelOf = (s: { kind: string; who: string }) => (s.who && VERB[s.kind] ? `${s.who} ${VERB[s.kind]}` : `${s.kind}${s.who ? ` · ${s.who}` : ''}`);
 
-// A halacha or a pasuk: tap to open its words right here.
+// A halacha or a pasuk: tap to open its words right here, each piece with its English: Sefaria's when it has one,
+// else a translation by the AI (made once per piece and kept for good, app/api/translate).
+const clean = (t: string) => t.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
 function LinkRow({ x, onOpen }: { x: Linked; onOpen?: (ref: string) => void }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState<{ he: string[]; en: string[] } | null | 'none'>(null);
+  const [ai, setAi] = useState<Record<number, string | 'busy' | 'failed'>>({});
+  const translate = (he: string[], en: string[]) => {
+    he.forEach((h, i) => {
+      if (clean(en[i] ?? '') || !clean(h) || i >= 12) return;
+      setAi((a) => ({ ...a, [i]: 'busy' }));
+      fetch('/api/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: clean(h) }) })
+        .then((r) => r.json()).then((d) => setAi((a) => ({ ...a, [i]: d.translation ? String(d.translation) : 'failed' })))
+        .catch(() => setAi((a) => ({ ...a, [i]: 'failed' })));
+    });
+  };
   const toggle = () => {
     setOpen((o) => !o);
     if (text) return;
     fetch(`/api/commentary?refs=${encodeURIComponent(x.ref)}`).then((r) => r.json())
-      .then((d) => setText(d.he?.length ? { he: d.he, en: d.en ?? [] } : 'none')).catch(() => setText('none'));
+      .then((d) => {
+        if (!d.he?.length) { setText('none'); return; }
+        const t = { he: d.he as string[], en: (d.en ?? []) as string[] };
+        setText(t);
+        translate(t.he, t.en);
+      }).catch(() => setText('none'));
   };
+  const usedAi = Object.values(ai).some((v) => v !== 'busy' && v !== 'failed');
   return (
     <li className={`smap-link ${open ? 'open' : ''}`}>
       <button className="smap-link-name" onClick={toggle}>{x.title}<span aria-hidden="true">{open ? '▴' : '▾'}</span></button>
@@ -32,21 +50,25 @@ function LinkRow({ x, onOpen }: { x: Linked; onOpen?: (ref: string) => void }) {
         <div className="smap-link-text">
           {!text ? <div className="muted">Opening…</div>
             : text === 'none' ? <div className="muted">Couldn’t open it.</div>
-            : text.he.map((h, i) => (
-              <div key={i}>
-                <div className="he" dir="rtl">{h.replace(/<[^>]+>/g, '')}</div>
-                {text.en[i] && <div className="en">{text.en[i].replace(/<[^>]+>/g, '')}</div>}
-              </div>
-            ))}
+            : text.he.map((h, i) => {
+              const en = clean(text.en[i] ?? ''), mine = ai[i];
+              return (
+                <div key={i}>
+                  <div className="he" dir="rtl">{clean(h)}</div>
+                  {en ? <div className="en">{en}</div>
+                    : mine === 'busy' ? <div className="en muted">Translating…</div>
+                    : mine && mine !== 'failed' ? <div className="en">{mine}</div>
+                    : null}
+                </div>
+              );
+            })}
+          {usedAi && <div className="muted smap-ai-note">English translated by the AI.</div>}
           {onOpen && <button className="linklike" onClick={() => onOpen(x.ref)}>Learn it in the Sefer ↗</button>}
         </div>
       )}
     </li>
   );
 }
-
-type Step = { line: number; kind: string; who: string; summary: string };
-type Topic = { title: string; line: number; intro: string; background: string[]; steps: Step[]; takeaway: string };
 
 export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onClose, onComm, onOpen, tier, inline }: {
   refText: string; title?: string; here?: number; onGo: (line: number) => void; onClose: () => void;

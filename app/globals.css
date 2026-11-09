@@ -2177,3 +2177,4 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
   .maplab-cols > section:not(.on) { display: none; }
   .maplab-cols > section > h2 { display: none; }
 }
+.smap-ai-note { font-size: 12px; margin: 0 0 8px; }
