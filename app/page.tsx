@@ -10,6 +10,7 @@ import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { Home as HomeScreen, HomePage, RecentList, type ContinueInfo } from '@/components/Home';
 import HomeExtras from '@/components/HomeExtras';
+import { useBackLayer } from '@/lib/back';
 import DriveMode from '@/components/DriveMode';
 import { getOfflineText } from '@/lib/offlineStore';
 import { Disclaimer, Help } from '@/components/Modals';
@@ -339,7 +340,7 @@ export default function Home() {
     let gone = false;
     fetch(`/api/sessions/${id}`).then((r) => r.json()).then((d) => {
       if (gone || d?.error) return;
-      const pl = d.place as { ref: string; heRef: string; line: number } | null;
+      const pl = (seenFor(id, d) ?? d.place) as { ref: string; heRef: string; line: number } | null;
       if (pl) { setContInfo({ id, title: row?.title, heRef: pl.heRef, ref: pl.ref, line: pl.line }); return; }
       const main = Array.isArray(d.sources) ? [...(d.sources as SourceData[])].reverse().find((x) => !/ on /i.test(x.ref)) : null;
       setContInfo(main ? { id, title: row?.title, heRef: main.heRef, ref: main.ref, line: main.focus } : { id, title: row?.title ?? d.session?.title, when: row?.updated_at });
@@ -364,6 +365,30 @@ export default function Home() {
     fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
   }, []);
 
+  // The place he last scrolled to in the Sefer, per session (on this phone). It wins over the session's own place when
+  // it is newer than anything said or tapped since: Recent and "pick up where you left off" open there.
+  type Seen = { ref: string; heRef: string; line: number; at: number };
+  const SEEN_KEY = 'chavrusa_seen';
+  const readSeen = (): Record<string, Seen> => { try { return JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}'); } catch { return {}; } };
+  function noteSeen(ref: string, heRef: string, line: number) {
+    const id = sessionIdRef.current;
+    if (!id) return;
+    try {
+      const all = readSeen();
+      all[id] = { ref, heRef, line, at: Date.now() };
+      const keep = Object.entries(all).sort((a, b) => b[1].at - a[1].at).slice(0, 40);
+      localStorage.setItem(SEEN_KEY, JSON.stringify(Object.fromEntries(keep)));
+    } catch { /* optional */ }
+  }
+  /** The scrolled-to place for this session, if newer than its last message or tapped line. */
+  function seenFor(id: string, d: { messages?: { created_at?: string }[]; sources?: SourceData[] }): Seen | null {
+    const s = readSeen()[id];
+    if (!s) return null;
+    const lastMsg = Math.max(0, ...(d.messages ?? []).map((m) => Date.parse(m.created_at ?? '') || 0));
+    const lastTap = Math.max(0, ...(d.sources ?? []).map((x) => x.tappedAt ?? 0));
+    return s.at > Math.max(lastMsg, lastTap) ? s : null;
+  }
+
   async function openSession(id: string) {
     setDrawer(null);
     const res = await fetch(`/api/sessions/${id}`);
@@ -371,8 +396,9 @@ export default function Home() {
     if (d.error) return;
     setSessionId(id);
     setItems(d.messages.map((m: { role: 'user' | 'assistant'; content: string; meta?: { usage?: Usage } | null }) => ({ kind: m.role, text: m.content, usage: m.meta?.usage })));
-    // Land on where we were: the place's amud / perek, at its line.
-    const pl = d.place as { ref: string; line: number } | null;
+    // Land on where we were: the place's amud / perek, at its line (or where he last scrolled to, if that is newer).
+    const seen = seenFor(id, d);
+    const pl = (seen ?? d.place) as { ref: string; line: number } | null;
     const at = pl ? (d.sources as SourceData[]).findIndex((x) => x.ref === pl.ref) : -1;
     setSources(at >= 0 ? (d.sources as SourceData[]).map((x, k) => (k === at ? { ...x, focus: pl!.line } : x)) : d.sources);
     setSelected(at >= 0 ? at : Math.max(0, d.sources.length - 1));
@@ -381,6 +407,8 @@ export default function Home() {
     setRequests(Array.isArray(d.requests) ? d.requests : []);
     setSeferOpen(isWide && d.sources.length > 0);
     warned.current = false;
+    // Scrolled on to an amud this session never opened (the next or previous one): open it there.
+    if (seen && at < 0) await openExact(seen.ref, seen.line);
   }
 
   // Read straight through, piece by piece, until the learner talks or it reaches the end.
@@ -710,6 +738,13 @@ export default function Home() {
   }, [mainKey, lineKey, live.active, live.state]); // eslint-disable-line react-hooks/exhaustive-deps
   const look: Look = settings.theme;
   const showPin = settings.pinBar !== false && settings.display !== 'off' && !!current && !(isWide && showSefer);
+  // Back (the phone's or browser's) steps back inside the app (lib/back): away from Home → Home; Settings opened from
+  // learning → back to learning; and it closes Help, the driving screen and the side drawers.
+  useBackLayer(view !== 'home', () => setView('home'));
+  useBackLayer(view === 'settings' && settingsFrom === 'learn', () => setView('learn'));
+  useBackLayer(help, () => setHelp(false));
+  useBackLayer(driving, () => setDriving(false));
+  useBackLayer(drawer !== null, () => setDrawer(null));
   const newUI = true; // one main screen for everyone: it opens first, and learning happens in Classic or Quiet chat
   // The new main screen always learns in Quiet chat. Otherwise: Quiet chat, or the classic screen, which is now
   // just the Sefer (Library, Talk, the text) with no separate conversation screen.
@@ -828,7 +863,7 @@ export default function Home() {
                 embedded
                 sources={sources} selected={selected} onSelect={setSelected}
                 onClose={() => {}}
-                settings={settings} onSettings={updateSettings} sessionId={sessionId}
+                settings={settings} onSettings={updateSettings} sessionId={sessionId} onSeen={noteSeen}
                 libraryRequest={libReq}
                 onPoint={pointAt}
                 onOpenRef={(q) => openRef(q, true)}
@@ -1102,7 +1137,7 @@ export default function Home() {
         <SeferPanel
           sources={sources} selected={selected} onSelect={setSelected}
           onClose={() => { setSeferOpen(false); setLibReq(0); }}
-          settings={settings} onSettings={updateSettings} sessionId={sessionId}
+          settings={settings} onSettings={updateSettings} sessionId={sessionId} onSeen={noteSeen}
           libraryRequest={libReq}
           onPoint={pointAt}
           talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}

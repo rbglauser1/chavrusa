@@ -2,6 +2,7 @@
 // The new main screen (Settings → Main screen → New): one home that always opens first.
 // A card to pick up where you left off, four circles (Library, Recent, Themes, Settings), and a Talk button
 // that starts a fresh call and waits for the learner to say what he wants to learn.
+import { useBackLayer } from '@/lib/back';
 import { useEffect, useState, type ReactNode } from 'react';
 import { HowTo, howToSeen, unlockNarration } from '@/components/HowTo';
 
@@ -53,6 +54,7 @@ export function Home(p: {
   // The how-to movie: one tap away, and it opens by itself the first time the app is opened on this device.
   const [howTo, setHowTo] = useState(false);
   useEffect(() => { if (!howToSeen()) setHowTo(true); }, []);
+  useBackLayer(howTo, () => setHowTo(false)); // back closes the how-to movie
   const rows: [keyof typeof ICONS, string, string, () => void][] = [
     ['library', 'Library', 'Gemara, Chumash and every sefer', p.onLibrary],
     ['recent', 'Recent', 'Your sessions, newest first', p.onRecent],
@@ -127,10 +129,10 @@ export function RecentList({ sessions, currentId, onOpen, onDelete, onClearAll, 
   sessions: SessionRow[]; currentId: string | null;
   onOpen: (id: string) => void; onDelete: (id: string) => void; onClearAll: () => void; clearArmed: boolean;
 }) {
-  // The 4 newest; the rest stay one tap away.
+  // The 8 newest; the rest stay one tap away.
   const [all, setAll] = useState(false);
   if (!sessions.length) return <div className="recent-empty">Nothing here yet. Tap Talk on the main screen, or open the Library, to begin.</div>;
-  const shown = all ? sessions : sessions.slice(0, 4);
+  const shown = all ? sessions : sessions.slice(0, 8);
   return (
     <>
       <ul className="recent-list">
@@ -144,7 +146,7 @@ export function RecentList({ sessions, currentId, onOpen, onDelete, onClearAll, 
           </li>
         ))}
       </ul>
-      {sessions.length > 4 && <button className="recent-clear" onClick={() => setAll(!all)}>{all ? 'Show fewer' : `Show all ${sessions.length}`}</button>}
+      {sessions.length > 8 && <button className="recent-clear" onClick={() => setAll(!all)}>{all ? 'Show fewer' : `Show all ${sessions.length}`}</button>}
       <button className={`recent-clear ${clearArmed ? 'armed' : ''}`} onClick={onClearAll}>
         {clearArmed ? `Tap again to clear all ${sessions.length}` : 'Clear all'}
       </button>

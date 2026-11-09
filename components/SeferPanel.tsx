@@ -5,6 +5,7 @@ import { BoldEn } from './BoldEn';
 import { Interlinear, pairPhrases } from './Interlinear';
 import SugyaMap from './SugyaMap';
 import Review from './Review';
+import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -28,6 +29,7 @@ interface Props {
   inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
   home?: { onMenu: () => void; onSettings: () => void } | null; // Sefer only: the Sefer is the whole app (sessions and settings in its header, no close)
   onDoubleTap?: () => void;
+  onSeen?: (ref: string, heRef: string, line: number) => void; // the line at the top of the view (amud before / this / next), after scrolling settles
   docScroll?: boolean; // Quiet chat full screen: the whole page scrolls (so Safari lets the text slide up under its top edge) // Quiet chat: a double tap on the text goes full screen (or back)
   embedded?: boolean; // inside Quiet chat: just the text and its tools (the layout has its own header)
 }
@@ -36,7 +38,7 @@ interface Props {
 // top of 5a): the amud above and below that were showing, and how far down he was. Kept for 10 minutes.
 const kept = new Map<string, { prev: SourceData | null; next: SourceData | null; top: number; at: number }>();
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -61,6 +63,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
   const [libUsed, setLibUsed] = useState(false); // load the library only once it's first opened
   useEffect(() => { if (showLib) setLibUsed(true); }, [showLib]);
+  useBackLayer(showLib, () => setShowLib(false)); // back closes the Library
   useEffect(() => { if (libraryRequest) setShowLib(true); }, [libraryRequest]);
   // Approve a translation Sefaria has (e.g. Rabbi Aryeh Kaplan's), then reload this text with it.
   const [approving, setApproving] = useState(false);
@@ -279,7 +282,25 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const pv = prevElRef.current?.getBoundingClientRect(), nx = endRef.current?.getBoundingClientRect();
     const where = prevSrc && pv && pv.bottom > mid ? 'prev' : nextSrc && nx && nx.top < mid ? 'next' : 'main';
     if (where !== inView) setInView(where);
+    // Where he is reading: the first line at the top of the view, once the scrolling settles (Recent and "pick up
+    // where you left off" open there).
+    if (onSeen && !restoring.current) {
+      if (seenTimer.current) window.clearTimeout(seenTimer.current);
+      seenTimer.current = window.setTimeout(() => {
+        const box = sc();
+        if (!box || !src) return;
+        const top = viewTop(box) + 8;
+        const els = Array.from(bodyRef.current?.querySelectorAll<HTMLElement>('.sefer-flow [data-line]') ?? []);
+        const el = els.find((e) => e.getBoundingClientRect().bottom > top);
+        if (!el) return;
+        const d = el.dataset.line ?? '';
+        const s2 = d.startsWith('p') ? prevSrc : d.startsWith('n') ? nextSrc : src;
+        const n = Number(d.replace(/^[pn]/, ''));
+        if (s2 && n && !/ on /i.test(s2.ref) && !/:\d+(-\d+)?$/.test(s2.ref)) onSeen(s2.ref, s2.heRef, n);
+      }, 800);
+    }
   }
+  const seenTimer = useRef<number | null>(null);
 
   // The bumper: at the very top or bottom of an amud the page stops. A gentle extra push (pulling a little further
   // with your finger, or scrolling a little further with a mouse) brings in the previous / next amud.
@@ -386,6 +407,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [noteFor, setNoteFor] = useState<number | null>(null);
   const [mapOpen, setMapOpen] = useState(false); // the sugya map (Settings → Extras)
   const [reviewOpen, setReviewOpen] = useState(false); // review questions (Settings → Extras)
+  // Back (the phone's or browser's) closes the map, the review questions, or the Library (lib/back).
+  useBackLayer(mapOpen, () => setMapOpen(false));
+  useBackLayer(reviewOpen, () => setReviewOpen(false));
   const [noteText, setNoteText] = useState('');
   const loadNotes = () => { if (settings.notes && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
   useEffect(loadNotes, [src?.ref, settings.notes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -524,7 +548,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {/* (The "Go to" box was removed: open places from the Library, or just tell the chavrusa.) */}
 
       {/* The library stays where you left it (hidden, not closed), so you can go back up a level later. */}
-      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library onOpen={onOpenExact ?? onOpenRef} onClose={() => setShowLib(false)} /></div>}
+      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library shown={showLib} onOpen={onOpenExact ?? onOpenRef} onClose={() => setShowLib(false)} /></div>}
 
       {!showLib && sources.length > 0 && (
         <div className="sefer-tabs">

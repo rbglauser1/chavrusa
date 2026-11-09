@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useBackLayer } from '@/lib/back';
 import MySeforim from './MySeforim';
 import MyNotes from './MyNotes';
 import { getBook, listBooks, offlineOn, putBook, putText, removeBook, type OfflineBook } from '@/lib/offlineStore';
@@ -81,7 +82,7 @@ function OfflineShelf({ onPick }: { onPick: (title: string) => void }) {
   );
 }
 
-export default function Library({ onOpen, onClose }: { onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void }) {
+export default function Library({ onOpen, onClose, shown = true }: { onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void; shown?: boolean }) {
   const [openParsha, setOpenParsha] = useState<number | null>(null);
   const [path, setPathState] = useState<string[]>(memory.path);
   const setPath = (p: string[]) => { memory.path = p; setPathState(p); };
@@ -146,6 +147,14 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string, foc
     if (book && i === path.length + 1) { setBook({ title: book.title }); return; }
     if (book && i > path.length + 1) setBook({ title: book.title, part: partPath.slice(0, i - path.length - 1).join('|') });
   }
+  // Back (the phone's or browser's) goes up one level in the Library, the same as tapping the crumb before (lib/back).
+  const depth = crumbs.length - 1;
+  useBackLayer(shown && depth >= 1, () => goCrumb(0));
+  useBackLayer(shown && depth >= 2, () => goCrumb(1));
+  useBackLayer(shown && depth >= 3, () => goCrumb(2));
+  useBackLayer(shown && depth >= 4, () => goCrumb(3));
+  useBackLayer(shown && depth >= 5, () => goCrumb(4));
+  useBackLayer(shown && depth >= 6, () => goCrumb(5));
 
   return (
     <div className="lib">
@@ -167,7 +176,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string, foc
             <span className="muted lib-hint">Recent</span>
             <button className="clear-all" onClick={() => { try { localStorage.removeItem('lib-recent'); } catch { /* optional */ } setRecent([]); }}>Clear</button>
           </div>
-          {recent.slice(0, 4).map((r) => (
+          {recent.slice(0, 5).map((r) => (
             <button key={r.ref} className="lib-item book" disabled={busy} onClick={() => open(r.ref)}>
               <span className="en">{r.ref}</span>
               <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{r.trail.slice(0, -1).join(' › ')}</span>
