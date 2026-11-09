@@ -543,7 +543,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {settings.outline && outline.failed && !outline.loading && !showLib && !isComm && <div className="move-loading">Couldn&apos;t summarize the steps of this {src ? sectionWord(src.ref) : 'page'}. <button className="linklike" onClick={outline.retry}>Try again</button></div>}
       <div className="sefer-body" ref={bodyRef} onClick={dbl ? () => tap(() => {}) : undefined} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
         {/* The text and its page texture scroll as one (the texture is painted on this, not on the scrolling box). */}
-        <div className="sefer-flow">
+        <div className={`sefer-flow${src && /[\u0591-\u05AF]/.test(src.he.slice(0, 4).join(' ')) ? ' pointed' : ''}`}>
         {!src && (home
           ? <div className="empty home-empty"><div className="he" style={{ fontSize: 44, fontWeight: 700 }}>שלום</div><p>What shall we learn? Open the <button className="linklike" onClick={() => setShowLib(true)}>📚 Library</button>, tap Talk, or type below (for example “Berachos 2a” or “today's daf”).</p></div>
           : <div className="empty">Sources your chavrusa brings will appear here.</div>)}

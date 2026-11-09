@@ -2022,3 +2022,8 @@ html:is([data-commfont='chosen'], [data-commfont='same']) :is(.rashi, .sefer .ra
 .mine-draft { display: flex; flex-direction: column; gap: 6px; }
 .mine-preview { max-height: 160px; overflow: auto; padding: 8px 10px; border-left: 2px solid var(--accent); background: var(--bg); font-size: 13px; }
 .mine-preview p { margin: 0 0 6px; }
+/* Text with trop (Chumash, Tanach): the "close" and "closer" Hebrew spacing pulled the words into each other, the marks
+   above and below running together (Nov 9: "why does the Hebrew look off"). With trop the words keep a little room;
+   only the lines come closer. In bold, a little more. */
+html:is([data-hespace='close'], [data-hespace='closer']) .pointed :is(.line .he, .min-he, .il-he, .il-pair .he) { word-spacing: 0.06em; letter-spacing: 0; }
+html[data-b-he='on'] .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { word-spacing: 0.14em; }

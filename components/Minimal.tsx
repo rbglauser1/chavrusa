@@ -82,7 +82,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
   const showEn = settings.display !== 'off';
   const outline = useOutline(src.ref, !!settings.outline);
   return (
-    <div className="min-text" ref={box}>
+    <div className={`min-text${/[\u0591-\u05AF]/.test(src.he.slice(0, 4).join(' ')) ? ' pointed' : ''}`} ref={box}>
       {src.he.map((line, i) => {
         const n = i + 1, on = n === focus;
         const en = src.en[i] || (src.en.length ? '' : src.altEn?.[i] ?? '');
