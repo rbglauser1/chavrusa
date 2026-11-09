@@ -423,6 +423,8 @@ export interface Settings {
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
   mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
+  explainLine?: boolean;    // an Explain button by each line's meforshim (AI, app/api/explain); default on
+  lineSources?: boolean;    // a Sources button by each line's meforshim (Sefaria's links, app/api/related); default on
   review?: boolean;         // review questions to test himself on an amud or perek (app/api/review)
   chazara?: boolean;        // review of what was learned, on Home (app/api/chazara)
   progress?: boolean;       // amudim learned, goals and plans, siyum (lib/progress.ts)

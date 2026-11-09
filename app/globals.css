@@ -2184,3 +2184,10 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .smap-comm-head { display: flex; justify-content: space-between; align-items: center; font: 13px var(--f-ui); color: var(--accent); margin-bottom: 6px; }
 .smap-comm-head button { border: 0; background: transparent; color: var(--soft); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; }
 .smap-comm .smap-link-text .he { font-family: var(--f-he, 'Noto Serif Hebrew', serif); }
+/* Explain and Sources under a line (components/LineExtras.tsx) */
+.comm-btn.ai { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--rule)); }
+.comm-btn.ai.on { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.line-x { font-family: var(--f-body); }
+.line-x .lx-p { margin: 0 0 8px; font-size: 15px; line-height: 1.5; color: var(--ink); }
+.line-x .smap-links { margin: 6px 0 4px; }
+.line-x .smap-link-text .he { font-family: var(--f-he, 'Noto Serif Hebrew', serif); font-size: 17px; }
