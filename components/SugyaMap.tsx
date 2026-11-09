@@ -19,10 +19,8 @@ const labelOf = (s: { kind: string; who: string }) => (s.who && VERB[s.kind] ? `
 type Step = { line: number; kind: string; who: string; summary: string };
 type Topic = { title: string; line: number; intro: string; background: string[]; steps: Step[]; takeaway: string };
 
-export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onClose, onComm, onOpen, tier, inline }: {
+export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onClose, onComm, onOpen }: {
   refText: string; title?: string; here?: number; onGo: (line: number) => void; onClose: () => void;
-  tier?: 'top' | 'middle'; // the comparison page: this model's map
-  inline?: boolean;         // shown on a page, not as a sheet
   onComm?: (line: number, c: Comm) => void; // open a meforesh under its line
   onOpen?: (ref: string) => void;           // open a halacha or a pasuk in the Sefer
 }) {
@@ -39,13 +37,13 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
   useEffect(() => {
     let gone = false;
     setData(null); setErr('');
-    fetch(`/api/map?ref=${encodeURIComponent(refText)}${tier ? `&tier=${tier}` : ''}`).then((r) => r.json()).then((d) => {
+    fetch(`/api/map?ref=${encodeURIComponent(refText)}`).then((r) => r.json()).then((d) => {
       if (gone) return;
       const topics: Topic[] = d.topics?.length ? d.topics : d.steps?.length ? [{ title: '', line: d.steps[0].line, intro: '', background: [], steps: d.steps, takeaway: '' }] : [];
       if (topics.length) setData({ overview: d.overview ?? '', topics, model: d.model, usd: d.usd }); else setErr(d.error ? 'The map couldn’t be made just now.' : 'No map for this text.');
     }).catch(() => { if (!gone) setErr('The map couldn’t be made just now.'); });
     return () => { gone = true; };
-  }, [refText, tick, tier]);
+  }, [refText, tick]);
   // The step we're in: the last one starting at or before the line we're on.
   const all = data ? data.topics.flatMap((t) => t.steps) : [];
   const atStep = here ? all.reduce<Step | null>((k, s) => (s.line <= here ? s : k), null) : null;
@@ -69,11 +67,9 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
   const [moreFor, setMoreFor] = useState<string | null>(null);
   const [openComm, setOpenComm] = useState<string | null>(null); // the meforesh opened right in the map
   return (
-    <div className={inline ? 'smap-page' : 'smap-back'} onClick={inline ? undefined : onClose}>
-      <div className="smap" onClick={(e) => e.stopPropagation()} role={inline ? undefined : 'dialog'} aria-label={title}>
-        {inline
-          ? data?.model && <div className="muted smap-made">Made by {data.model}{typeof data.usd === 'number' ? ` · cost ${data.usd < 0.01 ? 'under 1¢' : `${(data.usd * 100).toFixed(1)}¢`} (once)` : ''}</div>
-          : <div className="smap-head"><span>{title} · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>}
+    <div className="smap-back" onClick={onClose}>
+      <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
+        <div className="smap-head"><span>{title} · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
         {!data && !err && <div className="muted smap-wait">Laying it out…</div>}
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {data && (
