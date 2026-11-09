@@ -10,6 +10,7 @@ import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { Home as HomeScreen, HomePage, RecentList, type ContinueInfo } from '@/components/Home';
 import HomeExtras from '@/components/HomeExtras';
+import DriveMode from '@/components/DriveMode';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
@@ -123,6 +124,7 @@ export default function Home() {
   const coachBusy = useRef(false);
   const liveRef = useRef<{ note: (t: string) => void } | null>(null);
   const talkTapAt = useRef(0); // when Talk was last tapped to start a call
+  const [driving, setDriving] = useState(false); // driving mode (Settings → Extras)
   // Why the voice didn't start (or dropped), shown right by the Talk button for a few seconds: on the
   // Mikraos Gedolos page or the daf, the chat with the error message is hidden.
   const [liveErr, setLiveErr] = useState('');
@@ -781,6 +783,8 @@ export default function Home() {
 
   return (
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
+      {settings.driveMode && view === 'learn' && !driving && <button className="drive-fab" onClick={() => setDriving(true)} aria-label="Driving mode">🚗</button>}
+      {driving && <DriveMode live={live} place={sources[selected]?.ref ?? ''} onExit={() => setDriving(false)} />}
       {seferHome ? null : minimal ? (
         <div className="main">
           <Minimal

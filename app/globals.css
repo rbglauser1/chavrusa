@@ -2083,3 +2083,19 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .hx-bar i { display: block; height: 100%; background: var(--accent); }
 .hx-siyum { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); font-size: 14.5px; }
 .hx-add input { padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+/* Driving mode (components/DriveMode.tsx) */
+.drive-fab { position: fixed; left: 14px; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 60; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--rule); background: var(--surface); box-shadow: var(--shadow); font-size: 22px; cursor: pointer; }
+.drive { position: fixed; inset: 0; z-index: 450; background: #0f1113; color: #f2efe8; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: max(18px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom)); font-family: var(--f-ui); }
+.drive-top { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.drive-place { font-size: 20px; opacity: .85; }
+.drive-exit { border: 1px solid #555; background: transparent; color: #f2efe8; border-radius: 999px; padding: 8px 16px; font-size: 16px; }
+.drive-state { font-size: 30px; letter-spacing: .02em; }
+.drive-state.s-speaking { color: #8fd3a8; } .drive-state.s-listening { color: #9cc3ff; } .drive-state.s-paused { color: #e8c37a; }
+.drive-big { width: min(62vw, 260px); height: min(62vw, 260px); border-radius: 50%; border: 0; background: #2b6cb0; color: #fff; font-size: 72px; }
+.drive-big.on { background: #8a3b2f; }
+.drive-row { width: 100%; display: flex; gap: 14px; }
+.drive-btn { flex: 1; height: 110px; border-radius: 22px; border: 0; background: #23272b; color: #f2efe8; font-size: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.drive-btn span { font-size: 17px; }
+.drive-btn:disabled { opacity: .35; }
+.drive-end { border: 0; background: transparent; color: #e88; font-size: 18px; padding: 8px; }
+.drive-hint { font-size: 13px; opacity: .6; text-align: center; max-width: 34ch; }

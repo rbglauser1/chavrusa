@@ -1048,5 +1048,22 @@ export function useLive(opts: {
     if (!text.trim()) return;
     send({ type: 'session.instructions.append', delegation_id: null, content: `COACH NOTE from the app (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` });
   }, [send]);
-  return { readNow, explainAfter, dismiss, freshStart, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
+  // Driving mode's buttons (and the headphone / car buttons): go on now, say that again, pause the call.
+  const goOn = () => {
+    if (!pc.current || pending.current.size || stateRef.current === 'connecting') return;
+    const id = `app_${Date.now()}`;
+    logLine('──', 'go on (button)');
+    pending.current.add(id);
+    setS('thinking');
+    optsRef.current.onRequest('next', id);
+  };
+  const again = () => {
+    if (!pc.current) return;
+    logLine('──', 'say that again (button)');
+    setS('speaking');
+    send({ type: 'session.instructions.append', delegation_id: null, content: 'The learner asked you to say that again: repeat what you just said, the same way, now. Then stop.' });
+    send({ type: 'session.commentary.append', delegation_id: null, content: 'Say it again now.' });
+  };
+  const hold = () => { if (pc.current && stateRef.current !== 'paused') pause(); };
+  return { goOn, again, hold, readNow, explainAfter, dismiss, freshStart, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText, pauseIn, keepAwake: bump, active: state !== 'off' };
 }
