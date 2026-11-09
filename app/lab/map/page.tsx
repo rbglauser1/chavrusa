@@ -12,6 +12,7 @@ export default function MapLab() {
   const go = () => { const r = ref.trim(); if (r) setShown(r); };
   return (
     <div className="lab maplab">
+      <a href="/" className="muted" style={{ fontSize: 14, textDecoration: 'none' }}>‹ Back to the app</a>
       <h1 style={{ fontFamily: 'var(--f-body)', fontWeight: 400, margin: '6px 0 4px' }}>Sonnet or Opus: the sugya map</h1>
       <p className="muted" style={{ margin: '0 0 12px', fontSize: 14 }}>The same amud, mapped by each. Each is made once (a few cents) and kept.</p>
       <div className="maplab-row">
