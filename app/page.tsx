@@ -11,6 +11,7 @@ import SettingsDrawer from '@/components/SettingsDrawer';
 import { Home as HomeScreen, HomePage, RecentList, type ContinueInfo } from '@/components/Home';
 import HomeExtras from '@/components/HomeExtras';
 import DriveMode from '@/components/DriveMode';
+import { getOfflineText } from '@/lib/offlineStore';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
@@ -125,6 +126,14 @@ export default function Home() {
   const liveRef = useRef<{ note: (t: string) => void } | null>(null);
   const talkTapAt = useRef(0); // when Talk was last tapped to start a call
   const [driving, setDriving] = useState(false); // driving mode (Settings → Extras)
+  // Offline reading (Settings → Extras): the Library reads the switch from the phone; the app itself is kept on the
+  // phone by a service worker (public/sw.js), registered only while it's on.
+  useEffect(() => {
+    try { localStorage.setItem('chavrusa-offline', settings.offline ? '1' : '0'); } catch { /* optional */ }
+    if (!('serviceWorker' in navigator)) return;
+    if (settings.offline) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    else navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => { if (r.active?.scriptURL.endsWith('/sw.js')) void r.unregister(); })).catch(() => {});
+  }, [settings.offline]);
   // Why the voice didn't start (or dropped), shown right by the Talk button for a few seconds: on the
   // Mikraos Gedolos page or the daf, the chat with the error message is hidden.
   const [liveErr, setLiveErr] = useState('');
@@ -511,7 +520,12 @@ export default function Home() {
         return null;
       }
       return d.approvable ? { message: d.message ?? 'Not on the approved list.', approvable: d.approvable } : (d.message ?? `Couldn't open ${ref}.`);
-    } catch (e) { return (e as Error).message; }
+    } catch (e) {
+      // No internet: a text downloaded for offline reading opens from the phone.
+      const off = await getOfflineText(ref).catch(() => undefined);
+      if (off) { showSource(focus && focus > 1 ? { ...off, focus } : off); return null; }
+      return (e as Error).message;
+    }
   }
 
   async function send(text: string, opts: { live?: boolean; handed?: { early: string; at: { base: string; n: number; part?: number } } } = {}) {

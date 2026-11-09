@@ -2,6 +2,41 @@
 import { useEffect, useState } from 'react';
 import MySeforim from './MySeforim';
 import MyNotes from './MyNotes';
+import { getBook, listBooks, offlineOn, putBook, putText, removeBook, type OfflineBook } from '@/lib/offlineStore';
+
+// Offline reading (Settings → Extras): download a whole masechta or sefer to the phone.
+function Download({ shape }: { shape: Shape }) {
+  const refs = shape.kind === 'talmud'
+    ? Array.from({ length: Math.max(0, (shape.lastDaf ?? 0) - 1) }, (_, i) => i + 2).flatMap((d) => [`${shape.title} ${d}a`, `${shape.title} ${d}b`])
+    : shape.kind === 'chapters' ? Array.from({ length: shape.count ?? 0 }, (_, i) => `${shape.title} ${i + 1}`) : [];
+  const [have, setHave] = useState<OfflineBook | null | undefined>(undefined);
+  const [prog, setProg] = useState<string>('');
+  useEffect(() => { void getBook(shape.title).then((b) => setHave(b ?? null)); }, [shape.title]);
+  if (!refs.length || have === undefined) return null;
+  const go = async () => {
+    let done = 0, kept: string[] = [], next = 0;
+    const each = async () => {
+      while (next < refs.length) {
+        const r = refs[next++];
+        try { const d = await fetch(`/api/offline?ref=${encodeURIComponent(r)}`).then((x) => x.json()); if (d.source) { await putText(r, d.source); kept.push(r); } } catch { /* skipped */ }
+        setProg(`Downloading ${++done} of ${refs.length}…`);
+      }
+    };
+    await Promise.all([each(), each(), each()]);
+    kept = refs.filter((r) => kept.includes(r));
+    const b: OfflineBook = { title: shape.title, he: shape.he, kind: shape.kind, shape, refs: kept, savedAt: new Date().toISOString() };
+    await putBook(b); setHave(b); setProg(kept.length < refs.length ? `Downloaded ${kept.length} of ${refs.length} (some were unavailable).` : '');
+  };
+  return (
+    <div className="lib-offline">
+      {have ? (
+        <><span className="muted">✓ On this phone for offline reading ({have.refs.length})</span><button className="linklike" onClick={() => { void removeBook(shape.title).then(() => setHave(null)); }}>Remove</button></>
+      ) : prog ? <span className="muted">{prog}</span> : (
+        <button className="btn ghost" onClick={() => void go()}>⬇ Download for offline ({refs.length} {shape.kind === 'talmud' ? 'amudim' : 'parts'})</button>
+      )}
+    </div>
+  );
+}
 
 // Browse Sefaria's library inside the Sefer: category -> sefer -> perek / daf / part. Free (no AI).
 type Item = { kind: 'category' | 'book'; name: string; he: string };
@@ -32,6 +67,18 @@ type Recent = { ref: string; trail: string[] };
 function loadRecent(): Recent[] { try { return JSON.parse(localStorage.getItem('lib-recent') ?? '[]'); } catch { return []; } }
 function saveRecent(r: Recent) {
   try { localStorage.setItem('lib-recent', JSON.stringify([r, ...loadRecent().filter((x) => x.ref !== r.ref)].slice(0, 8))); } catch { /* optional */ }
+}
+
+function OfflineShelf({ onPick }: { onPick: (title: string) => void }) {
+  const [books, setBooks] = useState<OfflineBook[]>([]);
+  useEffect(() => { void listBooks().then(setBooks); }, []);
+  if (!books.length) return null;
+  return (
+    <div className="mine">
+      <div className="lib-recent-head"><span className="muted lib-hint">On this phone (offline)</span></div>
+      {books.map((b) => <button key={b.title} className="lib-item book" onClick={() => onPick(b.title)}><span className="en">{b.title}</span><span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{b.refs.length}</span></button>)}
+    </div>
+  );
 }
 
 export default function Library({ onOpen, onClose }: { onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void }) {
@@ -67,7 +114,11 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string, foc
     setShape(null); setMsg('');
     const q = new URLSearchParams({ book: book.title, ...(book.part ? { part: book.part } : {}) });
     fetch(`/api/library?${q}`).then((r) => r.json()).then((d) => { if (d.error) setMsg(d.error); else setShape(d); })
-      .catch(() => setMsg("Couldn't load this sefer."));
+      .catch(async () => {
+        // No internet: a sefer downloaded for offline still opens.
+        const b = await getBook(book.title);
+        if (b) setShape(b.shape as Shape); else setMsg("Couldn't load this sefer.");
+      });
   }, [book]);
 
   async function open(ref: string, focus?: number) {
@@ -109,6 +160,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string, foc
 
       {!book && !path.length && <MySeforim busy={busy} onOpen={(ref) => open(ref)} />}
       {!book && !path.length && <MyNotes onOpen={(ref) => open(ref)} />}
+      {!book && !path.length && offlineOn() && <OfflineShelf onPick={(t) => setBook({ title: t })} />}
       {!book && !path.length && recent.length > 0 && (
         <div className="lib-recent">
           <div className="lib-recent-head">
@@ -142,6 +194,7 @@ export default function Library({ onOpen, onClose }: { onOpen: (ref: string, foc
         <div className="lib-book">
           {!shape && !msg && <div className="muted">Opening…</div>}
           {shape && <div className="lib-title"><span>{shape.title}</span>{shape.he && <span className="he" dir="rtl">{shape.he}</span>}</div>}
+          {shape && offlineOn() && <Download shape={shape} />}
           {shape?.parshiyos && shape.parshiyos.length > 0 && (
             <>
               <div className="muted lib-hint">Parsha</div>
