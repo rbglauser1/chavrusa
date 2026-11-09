@@ -2126,3 +2126,16 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .k-dispute .smap-kind, .k-rebuke .smap-kind { color: #b0413e; }
 .k-comfort .smap-kind, .k-song .smap-kind, .k-prayer .smap-kind { color: #2f7d5b; }
 .k-prophecy .smap-kind, .k-teaching .smap-kind, .k-ruling .smap-kind { color: var(--accent); }
+/* Sugya map: meforshim on each step, and the halacha and verses under each topic (straight from Sefaria) */
+.smap-tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 10px 6px; }
+.smap-tags button { border: 1px solid var(--rule); background: transparent; color: var(--ink); border-radius: 999px; padding: 2px 9px; font: 12px var(--f-ui); cursor: pointer; }
+.smap-tags button.more { color: var(--soft); }
+.smap-links { margin: 10px 0 0; }
+.smap-links ul { list-style: none; margin: 0; padding: 0; }
+.smap-link { border-top: 1px solid var(--rule); }
+.smap-link:last-child { border-bottom: 1px solid var(--rule); }
+.smap-link-name { width: 100%; display: flex; justify-content: space-between; gap: 8px; border: 0; background: transparent; color: var(--ink); padding: 7px 2px; font: 14px var(--f-ui); text-align: left; cursor: pointer; }
+.smap-link-name span { color: var(--soft); }
+.smap-link-text { padding: 2px 2px 10px; font-size: 14px; line-height: 1.45; }
+.smap-link-text .he { font-family: var(--f-he, 'Noto Serif Hebrew', serif); font-size: 17px; margin-bottom: 4px; }
+.smap-link-text .en { color: var(--soft); margin-bottom: 8px; }
