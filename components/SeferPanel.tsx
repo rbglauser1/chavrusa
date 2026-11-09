@@ -632,7 +632,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             {mapOpen && (
               <SugyaMap refText={src.ref} title={kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'} here={src.focus} onClose={() => setMapOpen(false)}
                 onGo={(n) => { const el = document.querySelector(`.sefer-flow [data-line="${n}"]`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}
-                onComm={(n, x) => {
+                onComm={settings.mapComms === false ? undefined : (n, x) => {
                   const i = n - 1;
                   if (embedded) setPicked(i);
                   if (!comm[`${i}:${nice(x.title)}`]) void openLinked(i, x);

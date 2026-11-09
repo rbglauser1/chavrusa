@@ -417,6 +417,7 @@ export interface Settings {
   cacheTexts?: boolean;     // keep a copy of each Sefaria text opened (lib/textCache.ts), refreshed monthly
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
+  mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
   review?: boolean;         // review questions to test himself on an amud or perek (app/api/review)
   chazara?: boolean;        // review of what was learned, on Home (app/api/chazara)
   progress?: boolean;       // amudim learned, goals and plans, siyum (lib/progress.ts)

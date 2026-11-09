@@ -485,6 +485,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               {([
                 ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
                 ['sugyaMap', 'Sugya map', 'A map button at the top of the Sefer, all in English: the big picture of the amud or perek, then each topic with an intro, what you need to know for it, its steps (question, answer, proof…; for Mishnah its rulings and disputes; for Chumash and Nach its story, speeches, mitzvos and prophecies), and where it ends up. From Sefaria (free): the meforshim on each step, where the halacha is ruled, and the verses quoted. Tap a step to go there. The outline is made by the AI once per amud or perek and kept.'],
+                ['mapComms', 'Meforshim in the sugya map', 'Under each step of the map, the meforshim on it (Rashi, Tosafos, Ritva…). Tap one and it opens under its line in the Sefer, even when “Commentaries on the page” is set to show only when you tap a line.'],
                 ['review', 'Review questions', 'A “Review” button at the top of the Sefer: questions on the amud or perek to test yourself, each with its answer hidden until you tap. Made by the AI once per amud or perek and kept for good.'],
                 ['notes', 'Notes on the line', 'Add a note to any line (tap the line, then ✎), or say “make a note: …” in a call. Lines with notes show ✎; all your notes are in the Library under My Notes.'],
                 ['progress', 'Progress and plans', 'On Home: the amudim and perakim you have learned, your goals (“finish Yoma by …”), daf yomi, and a siyum when you finish.'],
@@ -492,7 +493,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 ['offline', 'Offline reading', 'A “Download” button on a masechta or sefer in the Library: read it with no internet (the chavrusa itself still needs internet).'],
                 ['cacheTexts', 'Saved texts', 'Keep a copy of each text you open, so it still opens when Sefaria is slow or down. Free storage; refreshed monthly.'],
               ] as [keyof Settings, string, string][]).map(([k, label, about]) => {
-                const on = k === 'cacheTexts' ? s.cacheTexts !== false : !!s[k];
+                const on = k === 'cacheTexts' || k === 'mapComms' ? s[k] !== false : !!s[k];
                 return (
                   <div key={k} style={{ marginBottom: 12 }}>
                     <label>{label}</label>
