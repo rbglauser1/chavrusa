@@ -2109,3 +2109,20 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .k-machlokes .smap-kind, .k-tochacha .smap-kind { color: #b0413e; }
 .k-nechama .smap-kind, .k-shira .smap-kind, .k-tefillah .smap-kind, .k-principle .smap-kind { color: #2f7d5b; }
 .k-mitzvah .smap-kind, .k-nevuah .smap-kind, .k-case .smap-kind { color: var(--accent); }
+/* Sugya map: the big picture and topics */
+.smap-label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); margin-bottom: 4px; }
+.smap-overview { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin: 0 0 14px; }
+.smap-overview p { margin: 0; font-size: 15px; line-height: 1.45; }
+.smap-topic { margin: 0 0 18px; }
+.smap-topic + .smap-topic { border-top: 1px solid var(--rule); padding-top: 14px; }
+.smap-topic-head { width: 100%; display: flex; align-items: baseline; gap: 8px; border: 0; background: transparent; color: var(--ink); padding: 0; margin: 0 0 6px; cursor: pointer; text-align: left; font: inherit; }
+.smap-topic-n { font-size: 13px; color: var(--accent); min-width: 0; }
+.smap-topic-title { flex: 1; font-family: var(--f-body); font-size: 17px; }
+.smap-intro { margin: 0 0 10px; font-size: 14.5px; line-height: 1.45; }
+.smap-bg { margin: 0 0 10px; }
+.smap-bg ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.4; }
+.smap-bg li { margin-bottom: 3px; }
+.smap-take { margin: 6px 0 0; font-size: 14px; line-height: 1.4; }
+.k-dispute .smap-kind, .k-rebuke .smap-kind { color: #b0413e; }
+.k-comfort .smap-kind, .k-song .smap-kind, .k-prayer .smap-kind { color: #2f7d5b; }
+.k-prophecy .smap-kind, .k-teaching .smap-kind, .k-ruling .smap-kind { color: var(--accent); }
