@@ -1,7 +1,7 @@
 'use client';
 // Pull down to refresh, for the app saved to the home screen (it has no browser bar, so no reload button and no
-// built-in pull-to-refresh). Pull down from the top of whatever is scrolled (the page, the Sefer, the chat) past the
-// mark, and let go: the app reloads. Not while pinching or zooming, nor in the full-screen daf.
+// built-in pull-to-refresh). Pull down from the top of whatever is scrolled (the page, the chat) past the mark, and
+// let go: the app reloads. Not in the Sefer, where pulling down at the top brings in the amud before. Not while pinching or zooming, nor in the full-screen daf.
 import { useEffect, useRef, useState } from 'react';
 
 const NEED = 90; // how far to pull (px) before letting go reloads
@@ -24,7 +24,8 @@ export function PullRefresh() {
       start.current = null;
       if (e.touches.length !== 1 || document.body.dataset.dafull || document.querySelector('.ht, .daf-full')) return;
       const t = e.target as Element;
-      if (t.closest('input, textarea, select, [contenteditable], .no-pull')) return;
+      // Not in the Sefer: pulling down at the top there brings in the amud before.
+      if (t.closest('input, textarea, select, [contenteditable], .no-pull, .sefer-body, .min-text, .smap')) return;
       const sc = scrollerAt(t);
       if ((sc && sc.scrollTop > 0) || window.scrollY > 0) return;
       start.current = { y: e.touches[0].clientY, x: e.touches[0].clientX };
