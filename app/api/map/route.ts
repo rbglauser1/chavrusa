@@ -9,7 +9,7 @@ import { runOpenAI } from '@/lib/llm/openai';
 import { keep } from '@/lib/keep';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120; // Opus can take a while on a long amud
 
 // The sugya map (Settings → Extras): the amud or perek at a glance, all in plain English. On top, the big picture of the
 // whole text; then its topics, each with an intro (what is being discussed and why), the background a learner needs

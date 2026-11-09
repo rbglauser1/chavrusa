@@ -2170,10 +2170,10 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .maplab-tabs button { flex: 1; padding: 8px; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--soft); font: 14px var(--f-ui); }
 .maplab-tabs button.on { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
 .maplab-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-.maplab-cols h2 { font: 400 17px var(--f-body); margin: 0 0 8px; }
+.maplab-cols > section > h2 { font: 400 17px var(--f-body); margin: 0 0 8px; }
 @media (max-width: 760px) {
   .maplab-tabs { display: flex; }
   .maplab-cols { grid-template-columns: 1fr; }
-  .maplab-cols section:not(.on) { display: none; }
-  .maplab-cols h2 { display: none; }
+  .maplab-cols > section:not(.on) { display: none; }
+  .maplab-cols > section > h2 { display: none; }
 }
