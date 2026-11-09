@@ -479,6 +479,30 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
           </Group>
 
+          <Group id="extras" title="Extras" hint={[s.cacheTexts !== false && 'saved texts', s.notes && 'notes', s.sugyaMap && 'sugya map', s.chazara && 'chazara', s.progress && 'progress', s.driveMode && 'driving', s.offline && 'offline'].filter(Boolean).join(' · ') || 'all off'}>
+            <div className="field">
+              <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
+              {([
+                ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
+                ['sugyaMap', 'Sugya map', 'A “Map” button in the Sefer: the amud laid out step by step (Mishnah, kashya, teirutz, proof…). Tap a step to go there. Made by the AI once per amud and kept.'],
+                ['notes', 'Notes on the line', 'Add a note to any line (tap the line, then ✎), or say “make a note: …” in a call. Lines with notes show ✎; all your notes are in the Library under My Notes.'],
+                ['progress', 'Progress and plans', 'On Home: the amudim and perakim you have learned, your goals (“finish Yoma by …”), daf yomi, and a siyum when you finish.'],
+                ['driveMode', 'Driving mode', 'A 🚗 button on the learning screen: big buttons, the screen kept on, and your headphone or car buttons work (play/pause, next = go on, back = say it again).'],
+                ['offline', 'Offline reading', 'A “Download” button on a masechta or sefer in the Library: read it with no internet (the chavrusa itself still needs internet).'],
+                ['cacheTexts', 'Saved texts', 'Keep a copy of each text you open, so it still opens when Sefaria is slow or down. Free storage; refreshed monthly.'],
+              ] as [keyof Settings, string, string][]).map(([k, label, about]) => {
+                const on = k === 'cacheTexts' ? s.cacheTexts !== false : !!s[k];
+                return (
+                  <div key={k} style={{ marginBottom: 12 }}>
+                    <label>{label}</label>
+                    <Seg value={on ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ [k]: v === 'on' } as Partial<Settings>)} />
+                    <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{about}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </Group>
+
           <Group id="memory" title="What your chavrusa remembers" hint={memories ? `${memories.length} saved` : undefined}>
             {memories === null && <div className="muted">Loading…</div>}
             {memories?.length === 0 && <div className="muted" style={{ fontSize: 14 }}>Nothing yet. Tell your chavrusa how you like to learn and it will remember.</div>}

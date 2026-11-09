@@ -413,6 +413,15 @@ export interface Settings {
   mgOnkelos?: boolean;      // Mikraos Gedolos page: Onkelos beside the pesukim (on by default)
   mgEnglish?: boolean;      // Mikraos Gedolos page: English right below the pesukim, Onkelos and each comment
   autoTosfos?: boolean;     // Tosafos open under every line of Gemara, automatically
+  // Extras (Settings → Extras), each optional (Nov 9)
+  cacheTexts?: boolean;     // keep a copy of each Sefaria text opened (lib/textCache.ts), refreshed monthly
+  notes?: boolean;          // notes on the line (lib/notes.ts)
+  sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
+  chazara?: boolean;        // review of what was learned, on Home (app/api/chazara)
+  progress?: boolean;       // amudim learned, goals and plans, siyum (lib/progress.ts)
+  plans?: { id: string; kind: 'book' | 'dafyomi'; book?: string; by?: string; perDay?: number; start: string }[];
+  driveMode?: boolean;      // the driving screen and headphone/car buttons
+  offline?: boolean;        // download seforim to read without internet
   autoRashi?: boolean;      // Rashi (Bartenura on Mishnayos) open under every line, automatically
   autoComms?: boolean;      // show each line's commentary buttons without tapping the line first
   onkelos?: boolean;        // Chumash: Onkelos (and its English) under each pasuk
@@ -496,6 +505,14 @@ export const DEFAULT_SETTINGS: Settings = {
   autoComms: false,
   autoRashi: false,
   autoTosfos: false,
+  cacheTexts: true,
+  notes: false,
+  sugyaMap: false,
+  chazara: false,
+  progress: false,
+  plans: [],
+  driveMode: false,
+  offline: false,
   // Every setting needs a default here, or the settings API won't save it (it only takes known keys).
   livePauses: 'normal',
   mgMeforshim: ['Rashi', 'Ramban', 'Ibn Ezra', 'Sforno', 'Or HaChaim'],

@@ -3,13 +3,14 @@ import { ALL_WORKS, ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, t
 import { SourceData } from './db';
 import { yeshivishEnglish } from './hebrew';
 import { getMineText, isMineRef } from './mine';
+import { saveCopy, savable, savedCopy } from './textCache';
 
 const BASE = 'https://www.sefaria.org';
 const enc = (ref: string) => encodeURIComponent(ref.trim().replace(/ /g, '_')).replace(/%2C/g, ',').replace(/%3A/g, ':');
 
 async function getJson(url: string, init?: RequestInit, timeoutMs = 12_000): Promise<any> {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const t = setTimeout(() => ctrl.abort(), savable(url) ? Math.min(timeoutMs, 8000) : timeoutMs); // a saved copy waits behind a slow Sefaria
   try {
     // Texts and book information rarely change, so plain lookups are kept in Vercel's shared cache for a week.
     const isGet = !init?.method || init.method === 'GET';
@@ -20,7 +21,16 @@ async function getJson(url: string, init?: RequestInit, timeoutMs = 12_000): Pro
       ...(isGet ? { next: { revalidate: url.includes('/api/calendars') ? 3600 : 604800 } } : { cache: 'no-store' as const }),
     } as RequestInit);
     if (!res.ok) throw new Error(`Sefaria returned ${res.status} for ${url.replace(BASE, '')}`);
-    return await res.json();
+    const data = await res.json();
+    if (isGet && savable(url)) void saveCopy(url, data).catch(() => {}); // Saved texts (lib/textCache.ts)
+    return data;
+  } catch (e) {
+    // Sefaria slow or down: the saved copy, if there is one.
+    if ((!init?.method || init.method === 'GET') && savable(url)) {
+      const saved = await savedCopy(url).catch(() => null);
+      if (saved) return saved;
+    }
+    throw e;
   } finally {
     clearTimeout(t);
   }
