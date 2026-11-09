@@ -47,6 +47,7 @@ export function Home(p: {
   onTalk: () => void;
   talkSupported: boolean;
   talkOn: boolean;
+  extras?: ReactNode; // the optional cards (Settings → Extras): chazara, progress
 }) {
   const c = p.cont;
   // The how-to movie: one tap away, and it opens by itself the first time the app is opened on this device.
@@ -101,6 +102,7 @@ export function Home(p: {
           {!p.talkOn && <div className="home-talk-hint">Tell your chavrusa what you’d like to learn</div>}
         </div>
       )}
+      {p.extras}
       <button className="home-howto" onClick={() => { unlockNarration(); setHowTo(true); }}>How to use the app</button>
       {howTo && <HowTo onClose={() => setHowTo(false)} />}
     </div>

@@ -9,6 +9,7 @@ import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { Home as HomeScreen, HomePage, RecentList, type ContinueInfo } from '@/components/Home';
+import HomeExtras from '@/components/HomeExtras';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
@@ -739,6 +740,7 @@ export default function Home() {
             onTalk={homeTalk}
             talkSupported={voice.supported}
             talkOn={talking}
+            extras={<HomeExtras settings={settings} onSettings={updateSettings} onOpen={(ref) => { goLearn(); void openExact(ref); }} />}
           />
         )}
         {view === 'recent' && (

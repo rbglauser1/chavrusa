@@ -2061,3 +2061,25 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .k-mishnah .smap-kind, .k-braisa .smap-kind, .k-halacha .smap-kind { color: var(--accent); }
 .smap-sum { font-size: 15px; line-height: 1.35; }
 .smap-line { font-size: 11px; color: var(--soft); }
+/* Home extras: Chazara and Progress (components/HomeExtras.tsx, Progress.tsx) */
+.hx { display: flex; flex-direction: column; gap: 12px; margin: 14px 0 4px; }
+.hx-card { border: 1px solid var(--rule); border-radius: 14px; background: var(--surface); padding: 12px 14px; font-family: var(--f-ui); color: var(--ink); }
+.hx-head { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; background: transparent; color: var(--ink); padding: 0; font: 16px var(--f-body); cursor: pointer; }
+.hx-head.static { cursor: default; }
+.hx-head .muted { font: 13px var(--f-ui); }
+.hx-wait { font-size: 13px; padding: 8px 0 2px; }
+.hx-recap { margin-top: 10px; }
+.hx-sub { font-size: 12px; letter-spacing: .04em; color: var(--soft); margin-bottom: 4px; }
+.hx-points { margin: 4px 0 8px; padding-left: 18px; font-size: 14.5px; line-height: 1.45; }
+.hx-q { padding: 6px 0; border-top: 1px dashed var(--rule); font-size: 14px; }
+.hx-qq { font-weight: 600; }
+.hx-qa { margin-top: 3px; color: var(--soft); }
+.hx-hear { margin-top: 6px; }
+.hx-plan, .hx-book, .hx-add { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.hx-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.hx-row.between { justify-content: space-between; }
+.hx-small { font-size: 12px; }
+.hx-bar { height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.hx-bar i { display: block; height: 100%; background: var(--accent); }
+.hx-siyum { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); font-size: 14.5px; }
+.hx-add input { padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
