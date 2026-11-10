@@ -153,7 +153,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const lineButtons = (settings.myButtons ?? []).filter((b) => !b.off && b.where === 'line');
   const amudButtons = (settings.myButtons ?? []).filter((b) => !b.off && b.where === 'amud');
   const flipIn = (set: (f: (s: Set<number>) => Set<number>) => void, i: number) => set((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; });
-  const lineX = (kind === 'gemara' || kind === 'mishnah' || kind === 'tanakh') && !!src && !/^Mine /.test(src.ref);
+  // Explain, Sources, Ideas and the learner's own buttons: on every sefer in the Library (Gemara, Mishnah, Tanach, the
+  // Rambam, Shulchan Aruch, Midrash, mussar…), not on a meforesh opened as its own text, nor on his own uploads.
+  const lineX = kind !== 'none' && !!src && !/^Mine /.test(src.ref);
   const [rel, setRel] = useState<{ ref: string; lines: Record<string, Groups>; tanakh: boolean } | null>(null);
   useEffect(() => {
     if (!lineX || !src || settings.lineSources === false) return;

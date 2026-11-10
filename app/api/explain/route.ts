@@ -18,7 +18,7 @@ export const maxDuration = 180; // it may read several sources first
 // source it used as ⟦reference⟧ so the app can make it tappable. Made once per line, ever, and kept (lib/keep), by
 // Opus or Sonnet (Settings → Made once and kept).
 const PROMPT = `You explain one line of a sefer to a learner who is learning it now, like a good chavrusa leaning over to help.
-You get the whole amud / perek with numbered lines; the line to explain is marked >>> <<<, followed by the main meforesh on it.
+You get the whole amud / perek with numbered lines; the line to explain is marked >>> <<<, followed by the main meforesh on it when there is one. It may be Gemara, Mishnah, Tanach, or any other sefer (the Rambam, the Shulchan Aruch, a Midrash, a sefer of mussar or machshava): explain it the way a chavrusa explains that kind of sefer.
 You also have the whole library: "links" shows what is linked to the line (meforshim, where the halacha is ruled, parallels), "read" opens any of them, "search" and "find" look further. Before writing, read what matters for this line: Tosafos on it when there is one, and another Rishon, the parallel sugya or the Rambam / Shulchan Aruch only when they really help explain it. A few reads are enough; do not read for the sake of reading.
 Then write 4 to 8 sentences, in two or three short paragraphs:
 1. What this line says, clearly, as he would say it over in his own words.
@@ -28,7 +28,10 @@ Name every source you draw on, and write its exact reference right after it insi
 Write in plain, clear English, the way a good chavrusa explains it across the table. For the learning terms a yeshiva learner knows, and for words the text itself quotes or learns from, write the Hebrew or Aramaic in Hebrew letters, as he knows them: גזירה שוה, קל וחומר, היקש, פרישה, the word "צוה". Never put such a term into an English rendering (not "verbal analogy") and never spell Hebrew out in English letters. Names of people and books in English as usual (Rashi, Tosafos, Rabbi Yochanan, Moses). Call God "Hashem". Explain according to Chazal and the classic meforshim; do not invent sources or opinions. On halacha: say what the sefer rules; this is learning, not a ruling for practice.
 Be clear above all: every sentence must make sense to someone who has not yet learned this amud. No headings, no lists, no markdown: just the paragraphs.`;
 
+// The main meforesh read with the line: Bartenura on Mishnah, Rashi on Gemara and Tanach; other seforim have none.
 const MAIN_COMM = (base: string) => (/^Mishnah /.test(base) ? 'Bartenura' : 'Rashi');
+const HAS_MAIN = (base: string) => /^Mishnah /.test(base) || /\d+[ab]$/.test(base) || TANAKH.test(base);
+const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles) /;
 
 async function makeExplain(base: string, n: number): Promise<{ text: string; sources: string[] }> {
   await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
@@ -45,7 +48,7 @@ async function makeExplain(base: string, n: number): Promise<{ text: string; sou
   }).join('\n');
   const used = new Set<string>();
   let comm = '';
-  try {
+  if (HAS_MAIN(base)) try {
     const c = await getText(`${MAIN_COMM(base)} on ${base}:${n}`, approved);
     if (c.verdict.allowed && c.he.length) { comm = `\n\n${MAIN_COMM(base)} on line ${n} (${c.ref}):\n${clip(c.he.map(stripNikud).join(' '), 2500)}`; used.add(c.ref); }
   } catch { /* optional */ }
