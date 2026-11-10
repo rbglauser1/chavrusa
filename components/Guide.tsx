@@ -56,7 +56,151 @@ const Panel = ({ top, h, title, children }: { top: number; h: number; title: str
   <Box r={[top, 5, 90, h]} c="gd-panel"><div className="gd-panel-title"><span>{title}</span><span>✕</span></div>{children}</Box>
 );
 
+// ---------------------------------------------------------------- the settings pages
+// Every setting, drawn as it looks in Settings, one step each. A row is a label with its choices (the chosen one
+// marked), a value, or a short list. To change what a setting's step says, edit its `text` here.
+type SetRow = { label: string; opts?: string[]; on?: number; value?: string; list?: string[]; text: ReactNode; title?: string };
+type SetPage = { id: string; chapter: string; title: string; rows: SetRow[] };
+const GROUPS: [string, string][] = [
+  ['Learning style', 'Read & Big Picture · Ashkenaz'],
+  ['Depth, AI and cost', 'Claude Sonnet · Saver'],
+  ['Look and text', 'Look, fonts, colors, sizes'],
+  ['What’s shown', 'The text, translation, AI extras'],
+  ['Voice', 'Meridian · normal speed'],
+  ['Extras', 'notes · sugya map · explain'],
+  ['Messages', 'What people sent you'],
+  ['Credits (selling the app)', 'off'],
+  ['What your chavrusa remembers', '3 saved'],
+  ['About and log out', 'Privacy · Terms'],
+];
+const ON_OFF = ['On', 'Off'];
+export const SET_PAGES: SetPage[] = [
+  { id: 'set-style', chapter: 'Learning style', title: 'Learning style', rows: [
+    { label: 'Learning style', list: ['Read & Big Picture', 'Chumash Reader', 'Patient Teacher', 'Sharp Challenger', '…and 9 more'], text: <>How your chavrusa learns with you. <b>Read & Big Picture</b> reads inside and gives the big picture; <b>Chumash Reader</b> for pesukim and Rashi; <b>Patient Teacher</b>, <b>Simple Explainer</b>, <b>Sharp Challenger</b>, <b>Logic / Sevara</b>, <b>Lomdus / Iyun</b>, <b>Quick Review (Bekius)</b>, <b>Test Me (Farher)</b>, <b>Lamdan (prepared)</b>, <b>Follow My Lead</b>, <b>Mussar</b> and <b>Chassidic Warmth</b>. You can also just say “be gentler” or “quiz me.”</> },
+    { label: '+ Create your own style', value: 'Name · description · how to learn', text: 'Write your own way of learning in plain words (“read it all first, then one big question”). It appears in the list with Edit and Delete.' },
+    { label: 'Who explains first', opts: ['I do', 'Chavrusa does'], on: 1, text: '“I do”: you try to explain each piece first and the chavrusa checks you. “Chavrusa does”: it explains and you follow.' },
+    { label: 'Nusach and pronunciation', opts: ['Ashkenaz', 'Sephardi'], on: 0, text: 'How the Hebrew and Aramaic are said: yeshivish Ashkenaz (kamatz “aw,” ת without a dagesh “s”) or Sephardi (Israeli).' },
+  ] },
+  { id: 'set-ai', chapter: 'AI and cost', title: 'Depth, AI and cost', rows: [
+    { label: 'Company', opts: ['Claude', 'OpenAI'], on: 0, text: 'Whose AI is the brain that plans and explains: Claude (Anthropic) or OpenAI.' },
+    { label: 'Depth', opts: ['Basic', 'Standard', 'Deep'], on: 1, text: 'How strong the brain is. Deeper thinks harder and costs more; the price per million words is shown under it.' },
+    { label: 'Made once and kept', opts: ['Claude Opus', 'Claude Sonnet'], on: 1, text: 'Which AI makes the things that are kept for good: sugya maps, explanations, ideas, review questions, summaries, intros, chazara and your own buttons. Each is made once, then free. Opus goes deeper; Sonnet costs about half.' },
+    { label: 'Saver (typing and talking)', opts: ['Saver', 'Full depth every turn'], on: 0, text: 'Saver uses the quicker AI for everyday turns. Say “go deeper” and the deep one takes over for the next few turns. Calls also pause after 15 quiet seconds.' },
+    { label: 'Quick replies (“OK,” “thanks”)', opts: ['Use the cheaper model', 'Always my depth'], on: 0, text: 'Short replies like “OK” or “got it” can go to the cheaper AI.' },
+    { label: 'Warn me when a session costs more than', value: '$ 1.00', text: 'A warning when one session passes this amount. Leave it blank for no warning.' },
+    { label: 'Cost, last 30 days', value: '$4.12 ›', text: 'What each AI cost you in the last 30 days, and how many exchanges.' },
+  ] },
+  { id: 'set-look', chapter: 'Look', title: 'Look and fonts', rows: [
+    { label: 'Look', list: ['Sharp (new)', 'The Daf', 'Shtender (white oak)', 'Techelet', '…Midnight, Stone, Leather, Vilna, Ink'], text: 'The colors and feel of the whole app. Sharp is paper white with black lines and square corners; the others are warmer or darker. Each look keeps its own fonts.' },
+    { label: 'English font for this look', value: 'Inter ▾', text: 'The font for the English and the app’s words, shown in its own letters. Kept per look.' },
+    { label: 'Hebrew font for this look', value: 'Frank Ruhl (classic sefer) ▾', text: 'The font for the Gemara, pesukim and Mishnah.' },
+    { label: 'Hebrew font for the commentaries', value: 'Rashi script ▾', text: 'The font for Rashi, Tosafos and the other meforshim.' },
+    { label: 'Colors and bold', opts: ['Gemara', 'English', 'Meforshim', 'Intro'], on: -1, text: 'A color for each part of the page (the text, its English, the meforshim, the amud intro), and a B to make any of them bold.' },
+  ] },
+  { id: 'set-sizes', chapter: 'Look', title: 'Text sizes and commentaries', rows: [
+    { label: 'Hebrew text size', value: '–   24   +', text: 'How big the Gemara and pesukim are.' },
+    { label: 'Hebrew spacing', opts: ['Normal', 'Close', 'Closer'], on: 0, text: 'How close the Hebrew lines sit, for a page that looks more like a sefer.' },
+    { label: 'Commentary text size', value: '–   20   +', text: 'How big Rashi, Tosafos and the meforshim are.' },
+    { label: 'English text size', value: '–   18   +', text: 'How big the English is, here and in what the AI writes.' },
+    { label: 'Show commentaries', opts: ['When I tap a line', 'Under every line'], on: 0, text: 'Meforshim buttons only on the line you tap, or under every line.' },
+    { label: 'Rashi open on every line', opts: ['Off', 'On'], on: 0, text: 'Rashi already open under each line, without tapping.' },
+    { label: 'Tosafos open on every line', opts: ['Off', 'On'], on: 0, text: 'The same for Tosafos.' },
+    { label: 'Rashi, Tosafos and other commentaries', opts: ['Regular letters', 'Rashi script'], on: 1, text: 'Show the meforshim in Rashi script, as in a printed Gemara, or in regular letters.' },
+  ] },
+  { id: 'set-lines', chapter: 'Look', title: 'Lines and the English', rows: [
+    { label: 'Lines between lines', opts: ['Off', 'On'], on: 0, text: 'A thin rule between the lines of the text.' },
+    { label: 'English layout', opts: ['Under the line', 'Phrase by phrase'], on: 0, text: 'The English under the whole line, or under each Hebrew phrase so you can match them word by word.' },
+    { label: 'Phrase by phrase shows', opts: ['Sefaria’s full English', 'Only the translation'], on: 0, text: 'With phrase by phrase: the full English, or only the word-for-word part.' },
+    { label: 'Word-for-word translation in bold', opts: ['Bold', 'Not bold'], on: 0, text: 'Sefaria marks the literal translation; this shows it in bold so it stands out from the added explanation.' },
+    { label: 'Translation and added explanation', opts: ['Plain', 'Softer', 'Lighter', 'Italics', 'Only'], on: 0, text: 'How the explanation Sefaria adds looks next to the translation: the same, softer, lighter, in italics, or hidden.' },
+  ] },
+  { id: 'set-shown', chapter: 'What’s shown', title: 'What’s shown', rows: [
+    { label: 'Source text', opts: ['With translation', 'Original only', 'Off (verbal)'], on: 0, text: 'The text with its English, the Hebrew alone, or no text at all (learning by ear).' },
+    { label: 'English translation under the Gemara', opts: ON_OFF, on: 0, text: 'The English under each line of the Sefer.' },
+    { label: 'Onkelos (Chumash)', opts: ['Off', 'On'], on: 0, text: 'Targum Onkelos under each pasuk.' },
+    { label: 'Nikud', opts: ON_OFF, on: 0, text: 'The vowels in the Hebrew, where Sefaria has them.' },
+    { label: 'Seforim from Sefaria', opts: ['Allow all', 'Classic and approved only'], on: 1, text: 'Only classic, approved seforim in the Library and the commentaries, or everything Sefaria has.' },
+    { label: 'Screen during voice conversations', opts: ['Show the conversation', 'Blank (voice only)'], on: 0, text: 'During a call, the written conversation, or a blank screen.' },
+  ] },
+  { id: 'set-shown2', chapter: 'What’s shown', title: 'Extras written by the AI', rows: [
+    { label: 'Amud intro', opts: ON_OFF, on: 0, text: 'A short paragraph at the top of each amud on what is coming. Written by the AI once and kept.' },
+    { label: 'Voice says the intro', opts: ON_OFF, on: 0, text: 'With Read & Big Picture, the chavrusa says the intro out loud before reading.' },
+    { label: 'Steps', opts: ['Off', 'On'], on: 0, text: 'A one-line summary above each move of the Gemara (question, answer, proof).' },
+    { label: 'Commentary summaries', opts: ['Off', 'On'], on: 0, text: 'Rashi, Tosafos, Bartenura and others in short English, under the commentary.' },
+  ] },
+  { id: 'set-voice', chapter: 'Voice', title: 'Voice', rows: [
+    { label: 'Which voice', value: 'Meridian ▶   ·   Design a voice', text: 'The voice of your chavrusa. Tap ▶ to hear one (about 1¢). “Design a voice” makes a new one from a description. Male voices only. Applies from the next Talk.' },
+    { label: 'Speaking speed', opts: ['Slow', 'Relaxed', 'Normal', 'Brisk'], on: 2, text: 'How fast the chavrusa talks.' },
+    { label: 'Pauses', opts: ['Few', 'Normal', 'More', 'Most'], on: 1, text: 'How long it waits between pieces and after a question.' },
+    { label: 'In a call, who reads the text', opts: ['He reads it all', 'English only', 'Just the gist'], on: 0, text: 'He reads the Hebrew and English inside, only the English, or just tells you what it says.' },
+    { label: 'After each piece', opts: ['Wait for me', 'Keep going by itself'], on: 1, text: '“Wait for me”: he stops after each piece until you say go on. “Keep going”: he waits a few seconds and goes on. Say “stop” or “wait” to hold him.' },
+    { label: 'How the Hebrew is given to the voice', opts: ['With nikud', 'Without vowels', 'With a key', 'Spelled out'], on: 1, text: 'What the voice sees when it reads: the Hebrew with vowels, bare letters like a Gemara, the Hebrew with a spelled-out key, or only English letters.' },
+    { label: 'The English read with the text', opts: ['Full', 'Literal', 'His own'], on: 1, text: 'Sefaria’s full English, just the literal words, or a short translation in the chavrusa’s own words, the way a rebbi translates inside.' },
+  ] },
+  { id: 'set-voice2', chapter: 'Voice', title: 'Pronunciation and steadiness', rows: [
+    { label: 'Vowel key', opts: ['A', 'B', 'C', 'D'], on: 3, text: 'Which set of pronunciation rules the voice learns with. D is A with a clearer shva. Each is explained under it in Settings.' },
+    { label: 'Standard pronunciations', opts: ON_OFF, on: 0, text: 'A list of common words and names said the standard yeshivish way.' },
+    { label: 'Instructions to the voice', opts: ['Short', 'Full'], on: 0, text: 'Short instructions keep the voice quick and steady; full ones say more.' },
+    { label: 'Fresh start at each new section', opts: ON_OFF, on: 0, text: 'The voice starts clean at each new section, so its rules don’t fade.' },
+    { label: 'Catch skipped words', opts: ON_OFF, on: 0, text: 'If the voice skips English words, it is caught and corrected.' },
+    { label: 'Catch skipped Hebrew', opts: ON_OFF, on: 0, text: 'The same for the Hebrew.' },
+    { label: 'Steady mode', opts: ON_OFF, on: 1, text: 'On: every turn goes through the brain first, in your style (1–3 seconds slower). Off: the voice answers quick turns itself.' },
+  ] },
+  { id: 'set-voice3', chapter: 'Voice', title: 'Saving, recorder, engine', rows: [
+    { label: 'Coach notes', opts: ON_OFF, on: 1, text: 'When Steady mode is off: a quick check after each exchange, and a short note to the voice if it drifted from your style.' },
+    { label: 'Open calls the Nov 3 way (a test)', opts: ['Off', 'On'], on: 0, text: 'An older way of starting a call, kept for testing.' },
+    { label: 'Pause the call when it’s quiet for', value: '15 seconds ▾', text: 'After this much quiet the call pauses, so you don’t pay for silence. (With Saver on, 15 seconds.)' },
+    { label: 'When paused', opts: ['Start talking to resume', 'Tap Resume'], on: 0, text: 'Pick up just by talking, or with a tap.' },
+    { label: 'Call recorder', value: 'Send me a call’s log ›', text: 'Each call’s log, to send so a problem can be looked at.' },
+    { label: 'Live voice for calls', opts: ['GPT-Live', 'Gemini Live (test)'], on: 0, text: 'GPT-Live (OpenAI, about 5¢ a minute) or Gemini Live (Google, about 1–2¢ a minute, a test). Applies from the next Talk.' },
+    { label: 'Gemini voice and pronunciation', value: 'Charon ▶ ›', text: 'With Gemini Live: its voice and its own pronunciation settings.' },
+  ] },
+  { id: 'set-extras', chapter: 'Extras', title: 'Extras', rows: [
+    { label: 'Chazara (review)', opts: ON_OFF, on: 0, text: 'On Home: a short recap of last time, and a few questions on an older sugya.' },
+    { label: 'Sugya map', opts: ON_OFF, on: 0, text: 'A map button at the top of the Sefer: the big picture, each topic and the Gemara’s steps.' },
+    { label: 'Explain button on each line', opts: ON_OFF, on: 0, text: '✦ Explain next to Rashi and Tosafos: what the line says and where it stands in the sugya.' },
+    { label: 'Sources button on each line', opts: ON_OFF, on: 0, text: 'Sources next to Rashi and Tosafos: what Sefaria links to the line. With it, ✦ Ideas drawn from those sources.' },
+    { label: 'Meforshim in the sugya map', opts: ON_OFF, on: 0, text: 'Under each step of the map, the meforshim on it, opening right there.' },
+    { label: 'Review questions', opts: ON_OFF, on: 1, text: 'A Review button at the top of the Sefer: questions on the amud, answers hidden until you tap.' },
+  ] },
+  { id: 'set-extras2', chapter: 'Extras', title: 'Extras (more)', rows: [
+    { label: 'Notes on the line', opts: ON_OFF, on: 0, text: 'Add a note to any line, or say “make a note” in a call. All notes go to your Notebook.' },
+    { label: 'Progress and plans', opts: ON_OFF, on: 1, text: 'On Home: what you’ve learned, your goals, daf yomi, and a siyum when you finish.' },
+    { label: 'Dark call screen', opts: ON_OFF, on: 1, text: 'When a call starts, the screen goes dark: the words being read, large, with Again, Pause and Go on.' },
+    { label: 'Driving mode', opts: ON_OFF, on: 1, text: 'A 🚗 button: big buttons, the screen kept on, and your headphone or car buttons work.' },
+    { label: 'Offline reading', opts: ON_OFF, on: 1, text: 'A Download button on a masechta, to read with no internet.' },
+    { label: 'Saved texts', opts: ON_OFF, on: 0, text: 'A copy of each text you open, so it still opens when Sefaria is slow or down.' },
+    { label: 'My buttons', value: '+ Make a button', text: 'Your own AI buttons, with your own words (“Explain it simply,” “The mussar here,” “Shiur outline”). Choose whether each sits on every line or on the whole amud.' },
+  ] },
+  { id: 'set-more', chapter: 'More', title: 'Messages, credits, memory', rows: [
+    { label: 'Messages', value: 'Inbox ›', text: 'What people sent you through Contact us.' },
+    { label: 'Credits (selling the app)', opts: ['On', 'Off'], on: 1, text: 'For when the app is sold: when on, learning uses up credits that people buy. Off while it is just for you.' },
+    { label: 'What your chavrusa remembers', list: ['Don’t translate Rashi', 'I learn in the morning', '+ Add an instruction'], text: 'What it remembers about how you like to learn. × forgets one; you can add your own.' },
+    { label: 'About and log out', value: 'Privacy · Terms · Credits and licenses · Log out', text: 'The reminder that AI makes mistakes, the privacy page, terms, the licenses of the texts, and Log out.' },
+  ] },
+];
+// The rows' places on the screen, in % (one row: a label and its choices).
+const rowH = (r: SetRow) => (r.list ? 4.6 + r.list.length * 3.6 : 8.4);
+function rowTops(p: SetPage) { const t: number[] = []; let y = 12.5; for (const r of p.rows) { t.push(y); y += rowH(r) + 1.6; } return t; }
+const SET_SCREENS: Record<string, () => ReactNode> = Object.fromEntries(SET_PAGES.map((p) => [p.id, () => {
+  const tops = rowTops(p);
+  return (<>
+    <Box r={[2, 5, 90, 3.4]} c="gd-row gd-soft">‹ Settings</Box>
+    <Box r={[6, 5, 90, 4.6]} c="gd-row gd-settitle">{p.title}</Box>
+    {p.rows.map((r, k) => (
+      <Box key={r.label} r={[tops[k], 5, 90, rowH(r)]} c="gd-setrow">
+        <b>{r.label}</b>
+        {r.opts && <span className="gd-seg">{r.opts.map((o, j) => <span key={o} className={j === r.on ? 'on' : ''}>{o}</span>)}</span>}
+        {r.value && <span className="gd-val">{r.value}</span>}
+        {r.list && <span className="gd-setlist">{r.list.map((o, j) => <span key={o} className={j === 0 ? 'on' : ''}>{o}</span>)}</span>}
+      </Box>
+    ))}
+  </>);
+}]));
+const SET_STEPS = () => SET_PAGES.flatMap((p) => { const tops = rowTops(p); return p.rows.map((r, k) => ({ chapter: p.chapter, screen: p.id, spot: [tops[k], 5, 90, rowH(r)] as Rect, title: r.title ?? r.label, text: <><span className="gd-where">Settings › {p.title}</span>{r.text}</> })); });
+
 const SCREENS: Record<string, () => ReactNode> = {
+  ...SET_SCREENS,
   disclaimer: () => (<>
     <Box r={[8, 0, 100, 6]} c="gd-brand"><He>חברותא</He></Box>
     <Box r={[18, 6, 88, 58]} c="gd-panel gd-warn">
@@ -170,6 +314,18 @@ const SCREENS: Record<string, () => ReactNode> = {
     <Box r={[68, 8, 84, 12]} c="gd-says"><span>“Wait.”</span><span>“Say that again.”</span><span>“What does Rashi say?”</span><span>“Go on.”</span></Box>
     <BottomBar talking />
   </>),
+  callx: () => (<>
+    <Box r={[0, 0, 100, 100]} c="gd-drive" />
+    <Box r={[2.5, 6, 60, 4]} c="gd-row gd-light"><He>יומא ו׳ א</He>&nbsp;<span className="gd-tiny" style={{ opacity: .6 }}>LINE 08</span></Box>
+    <Box r={[2.5, 74, 20, 4]} c="gd-row gd-right gd-light gd-tiny">TEXT</Box>
+    <Box r={[24, 6, 88, 3]} c="gd-row gd-light gd-tiny" s={{ letterSpacing: '.14em', opacity: .7 }}>■&nbsp;READING INSIDE</Box>
+    <Box r={[29, 6, 88, 10]} c="gd-right gd-light" s={{ fontSize: 'calc(var(--u) * 7.5)' }}><He>אֲפִילּוּ תֵּימְרוּ רַבָּנַן</He></Box>
+    <Box r={[41, 6, 88, 8]} c="gd-light" s={{ fontSize: 'calc(var(--u) * 4.4)' }}>Even if you say it is the Rabbis,</Box>
+    <Box r={[51, 6, 88, 6]} c="gd-right" s={{ color: '#7f858f', fontSize: 'calc(var(--u) * 4.6)' }}><He>עַד כָּאן לָא פְּלִיגִי רַבָּנַן</He></Box>
+    <Box r={[83, 5, 28, 8]} c="gd-drivebtn gd-sq">↺<small>Again</small></Box>
+    <Box r={[83, 36, 28, 8]} c="gd-drivebtn gd-sq" s={{ background: '#f4f3ee', color: '#0e1013' }}>❚❚</Box>
+    <Box r={[83, 67, 28, 8]} c="gd-drivebtn gd-sq">⏭<small>Go on</small></Box>
+  </>),
   drive: () => (<>
     <Box r={[0, 0, 100, 100]} c="gd-drive" />
     <Box r={[3, 6, 60, 4]} c="gd-row gd-light">Yoma 6a</Box>
@@ -182,31 +338,7 @@ const SCREENS: Record<string, () => ReactNode> = {
   </>),
   settings: () => (<>
     <Box r={[2, 5, 60, 3.4]} c="gd-row"><span>‹</span>&nbsp;<b>Settings</b></Box>
-    {[
-      ['Learning style', 'Read & Big Picture · it explains first'],
-      ['Depth, AI and cost', 'Claude Sonnet 5.5 · Saver'],
-      ['Voice', 'Meridian · natural speed'],
-      ['Look and fonts', 'Shtender · Spectral'],
-      ['Display', 'Hebrew spacing, English under each phrase'],
-      ['Extras', 'saved texts · notes · sugya map'],
-      ['Messages', 'What people sent through Contact us'],
-      ['Credits (selling the app)', 'off'],
-    ].map(([t, h], i) => <Box key={t} r={[8 + i * 9, 5, 90, 8]} c="gd-group"><b>{t}</b><small>{h}</small><span>›</span></Box>)}
-    <Box r={[82, 0, 100, 3]} c="gd-center gd-soft gd-tiny gd-u">Privacy · Terms of use · Contact us</Box>
-  </>),
-  extras: () => (<>
-    <Box r={[2, 5, 60, 3.4]} c="gd-row"><span>‹</span>&nbsp;<b>Extras</b></Box>
-    {[
-      ['Chazara (review)', 'On Home: a recap of last time, and questions'],
-      ['Sugya map', 'A map button at the top of the Sefer'],
-      ['Explain button on each line', 'Next to Rashi and Tosafos'],
-      ['Sources button on each line', 'And ✦ Ideas from those sources'],
-      ['Review questions', 'A Review button at the top of the Sefer'],
-      ['Notes on the line', 'Tap a line, then ✎'],
-      ['Progress and plans', 'Goals, daf yomi, a siyum'],
-      ['Driving mode', 'A 🚗 button: big buttons, car controls'],
-      ['Offline reading', 'Download a masechta to the phone'],
-    ].map(([t, h], i) => <Box key={t} r={[8 + i * 9.6, 5, 90, 8.6]} c="gd-group"><b>{t}</b><small>{h}</small><span className="gd-switch">On</span></Box>)}
+    {GROUPS.map(([t, h], i) => <Box key={t} r={[7.5 + i * 8.4, 5, 90, 7.6]} c="gd-group"><b>{t}</b><small>{h}</small><span>›</span></Box>)}
   </>),
   contact: () => (<>
     <Box r={[3, 6, 60, 3]} c="gd-row gd-soft">‹ Back to the app</Box>
@@ -252,15 +384,13 @@ export const STEPS: Step[] = [
   { chapter: 'Learning out loud', screen: 'sefer', spot: [89.4, 80, 15, 7.2], round: true, title: 'Talk with your chavrusa', text: 'Tap to start a call. It reads inside, phrase by phrase, explains, and keeps going at your pace. Tap again to pause or end.' },
   { chapter: 'Learning out loud', screen: 'call', spot: [68, 8, 84, 12], title: 'Just say it', text: 'Talk the way you would across the table: “Wait.” “Say that again.” “What does Rashi say?” “Go deeper.” “Go on.” Any words work.' },
   { chapter: 'Learning out loud', screen: 'call', spot: [8, 6, 88, 32], title: 'Everything is written here too', text: 'What you said and what it answered. The reminder under it stays: AI makes mistakes.' },
+  { chapter: 'Learning out loud', screen: 'callx', spot: [24, 6, 88, 34], title: 'Dark call screen', text: 'With Dark call screen on (Extras): when a call starts the screen goes dark and shows only the words being read, large, and what comes next. Again, Pause and Go on at the bottom; “Text” goes back to the page.' },
   { chapter: 'Learning out loud', screen: 'sefer', spot: [82, 3, 11, 5.2], round: true, title: 'Driving mode', text: 'With Driving mode on (Extras): a 🚗 button opens big buttons and keeps the screen on.' },
   { chapter: 'Learning out loud', screen: 'drive', spot: [62, 8, 84, 11], title: 'Big buttons, car buttons', text: 'Pause, say it again, go on. Your headphone or car buttons do the same: play/pause, next = go on, back = say it again.' },
-  // Settings
-  { chapter: 'Settings', screen: 'settings', spot: [8, 5, 90, 8], title: 'Learning style', text: 'How your chavrusa learns with you: Read & Big Picture, Chumash Reader, Patient Teacher, Sharp Challenger, Iyun, Test Me, and more. Or just tell it: “be gentler,” “quiz me.”' },
-  { chapter: 'Settings', screen: 'settings', spot: [17, 5, 90, 8], title: 'Depth, AI and cost', text: 'Which AI thinks for you (deeper costs more), and Saver, which uses the quicker one for everyday turns. Your costs are shown here.' },
-  { chapter: 'Settings', screen: 'settings', spot: [26, 5, 90, 8], title: 'Voice', text: 'The voice, its speed and pauses, who reads the text, Ashkenaz or Sephardi pronunciation, and whether it keeps going by itself.' },
-  { chapter: 'Settings', screen: 'settings', spot: [35, 5, 90, 17], title: 'Look and display', text: 'Colors, fonts and sizes for the text, the English and the meforshim; English under each phrase; Hebrew spacing.' },
-  { chapter: 'Settings', screen: 'extras', spot: [8, 5, 90, 86], title: 'Extras', text: 'Turn on what you want: chazara, the sugya map, Explain, Sources and Ideas, review questions, notes, progress, driving mode, offline reading. At the bottom, My buttons: make your own AI buttons (“Explain it simply,” “The mussar here,” “Shiur outline”…), shown next to Explain.' },
-  { chapter: 'Settings', screen: 'contact', spot: [8, 6, 88, 62], title: 'Contact us', text: 'A question, a problem or an idea: write to us from Home, Settings, or the Privacy page.' },
+  // Settings: an overview, then every setting
+  { chapter: 'Settings', screen: 'settings', spot: [7.5, 5, 90, 83.6], title: 'Settings', text: 'Everything you can change, in groups. The next steps go through every setting, one by one. Tap a chapter at the top to jump to a group.' },
+  ...SET_STEPS(),
+  { chapter: 'More', screen: 'contact', spot: [8, 6, 88, 62], title: 'Contact us', text: 'A question, a problem or an idea: write to us from Home, Settings, or the Privacy page.' },
   { chapter: 'Done', screen: 'home', spot: [59.5, 39, 22, 10.7], round: true, title: 'That’s it', text: <>Tap Talk and say what you’d like to learn. And remember: <b>AI makes mistakes</b>, it is not rabbinically approved, and it never replaces a real chavrusa.</> },
 ];
 const CHAPTERS = [...new Set(STEPS.map((s) => s.chapter))];
@@ -269,18 +399,20 @@ export const GUIDE_SEEN_KEY = 'chavrusa-guide-seen';
 export function guideSeen(): boolean { try { return localStorage.getItem(GUIDE_SEEN_KEY) === '1'; } catch { return true; } }
 
 // ---------------------------------------------------------------- the tour
+// The screen is drawn as wide as the space allows, and a "camera" moves and zooms onto the part being explained,
+// so the words on the drawn screen are as large as the real ones (or larger). Everything else is dimmed.
 export default function Guide({ onClose, start = 0 }: { onClose: () => void; start?: number }) {
   const [i, setI] = useState(start);
   const step = STEPS[i];
   const Screen = SCREENS[step.screen];
-  const frame = useRef<HTMLDivElement>(null);
-  const [w, setW] = useState(300);
+  const view = useRef<HTMLDivElement>(null);
+  const [vw, setVw] = useState(340), [vh, setVh] = useState(420);
   useEffect(() => { try { localStorage.setItem(GUIDE_SEEN_KEY, '1'); } catch { /* optional */ } }, []);
   useEffect(() => {
-    const el = frame.current;
+    const el = view.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setW(el.clientWidth));
-    ro.observe(el); setW(el.clientWidth);
+    const ro = new ResizeObserver(() => { setVw(el.clientWidth); setVh(el.clientHeight); });
+    ro.observe(el); setVw(el.clientWidth); setVh(el.clientHeight);
     return () => ro.disconnect();
   }, []);
   const go = (n: number) => setI(Math.max(0, Math.min(STEPS.length - 1, n)));
@@ -291,25 +423,17 @@ export default function Guide({ onClose, start = 0 }: { onClose: () => void; sta
   });
   const touch = useRef<number | null>(null);
 
-  // The spotlight, the magnifier and the arrow, in px within the screen.
-  const h = w * 2.05;
-  const sp = step.spot;
-  const spot = sp ? { x: (sp[1] / 100) * w, y: (sp[0] / 100) * h, w: (sp[2] / 100) * w, h: (sp[3] / 100) * h } : null;
-  const al = step.also;
-  const also = al ? { x: (al[1] / 100) * w, y: (al[0] / 100) * h, w: (al[2] / 100) * w, h: (al[3] / 100) * h } : null;
-  const small = spot && spot.w < w * 0.6 && spot.h < h * 0.2; // only small parts get a magnifier (a big one is clear as it is)
-  const D = w * 0.46, Z = 1.9;
-  const cx = spot ? spot.x + spot.w / 2 : 0, cy = spot ? spot.y + spot.h / 2 : 0;
-  const mag = small && spot ? { x: Math.max(D / 2 + 6, Math.min(w - D / 2 - 6, cx < w / 2 ? w * 0.68 : w * 0.32)), y: (cy < h * 0.5 && !(also && also.y > cy)) ? Math.min(h - D / 2 - 6, spot.y + spot.h + D * 0.75) : Math.max(D / 2 + 6, spot.y - D * 0.75) } : null; // never over what the part opens
-  // The arrow: from the magnifier's edge to the spot's edge.
-  let arrow: { x1: number; y1: number; x2: number; y2: number } | null = null;
-  if (mag && spot) {
-    const dx = cx - mag.x, dy = cy - mag.y, len = Math.hypot(dx, dy) || 1;
-    const x1 = mag.x + (dx / len) * (D / 2 + 3), y1 = mag.y + (dy / len) * (D / 2 + 3);
-    const tx = Math.min(1, (spot.w / 2 + 4) / Math.abs(dx || 1)), ty = Math.min(1, (spot.h / 2 + 4) / Math.abs(dy || 1));
-    const t = Math.min(tx, ty);
-    arrow = { x1, y1, x2: cx - dx * t, y2: cy - dy * t };
-  }
+  // The drawn screen: a phone's shape, as wide as the view (at most 440 px).
+  const w = Math.min(vw, 440), h = w * 2.05;
+  const px = (r: Rect) => ({ x: (r[1] / 100) * w, y: (r[0] / 100) * h, w: (r[2] / 100) * w, h: (r[3] / 100) * h });
+  const spot = step.spot ? px(step.spot) : null;
+  const also = step.also ? px(step.also) : null;
+  // What the camera frames: the part, and what it opens.
+  const f = spot ? (also ? { x: Math.min(spot.x, also.x), y: Math.min(spot.y, also.y), x2: Math.max(spot.x + spot.w, also.x + also.w), y2: Math.max(spot.y + spot.h, also.y + also.h) } : { x: spot.x, y: spot.y, x2: spot.x + spot.w, y2: spot.y + spot.h }) : { x: 0, y: 0, x2: w, y2: h };
+  const fitZ = Math.min(vw / w, vh / h);
+  const z = Math.max(fitZ, Math.min(2.2, (vw * 0.94) / (f.x2 - f.x + 24), (vh * 0.86) / (f.y2 - f.y + 24)));
+  const place = (view: number, size: number, c: number) => (size <= view ? (view - size) / 2 : Math.min(0, Math.max(view - size, view / 2 - c)));
+  const tx = place(vw, w * z, ((f.x + f.x2) / 2) * z), ty = place(vh, h * z, ((f.y + f.y2) / 2) * z);
 
   return (
     <div className="gd" role="dialog" aria-modal="true" aria-label="How to use the app"
@@ -319,43 +443,32 @@ export default function Guide({ onClose, start = 0 }: { onClose: () => void; sta
         <div className="gd-chapters">{CHAPTERS.map((c) => <button key={c} className={c === step.chapter ? 'on' : ''} onClick={() => go(STEPS.findIndex((s) => s.chapter === c))}>{c}</button>)}</div>
         <button className="gd-x" onClick={onClose} aria-label="Close">×</button>
       </div>
-      <div className="gd-stage">
-        <div className="gd-phone" ref={frame} style={{ '--u': `${w / 100}px` } as CSSProperties}>
+      <div className="gd-view" ref={view}>
+        <div className="gd-cam" style={{ width: w, height: h, transform: `translate(${tx}px, ${ty}px) scale(${z})`, '--u': `${w / 100}px` } as CSSProperties}>
           <div className="gd-screen" key={step.screen}><Screen /></div>
           {spot && (
             // The dimming, with a hole for the part explained (and for what it opens, when there is one).
-            <svg className="gd-dimmer" width={w} height={h} key={`d${i}`}>
+            <svg className="gd-dimmer" width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
               <defs><mask id="gd-holes"><rect width={w} height={h} fill="#fff" />
-                {step.round ? <ellipse cx={cx} cy={cy} rx={spot.w / 2 + 4} ry={spot.h / 2 + 4} fill="#000" /> : <rect x={spot.x - 4} y={spot.y - 4} width={spot.w + 8} height={spot.h + 8} rx={8} fill="#000" />}
-                {also && <rect x={also.x - 3} y={also.y - 3} width={also.w + 6} height={also.h + 6} rx={8} fill="#000" />}
+                {step.round ? <ellipse cx={spot.x + spot.w / 2} cy={spot.y + spot.h / 2} rx={spot.w / 2 + 4} ry={spot.h / 2 + 4} fill="#000" /> : <rect x={spot.x - 4} y={spot.y - 4} width={spot.w + 8} height={spot.h + 8} rx={6} fill="#000" />}
+                {also && <rect x={also.x - 3} y={also.y - 3} width={also.w + 6} height={also.h + 6} rx={6} fill="#000" />}
               </mask></defs>
-              <rect width={w} height={h} fill="rgba(0,0,0,.52)" mask="url(#gd-holes)" />
+              <rect width={w} height={h} fill="rgba(0,0,0,.55)" mask="url(#gd-holes)" />
             </svg>
           )}
           {spot && <div className={`gd-spot ${step.round ? 'round' : ''}`} style={{ left: spot.x - 4, top: spot.y - 4, width: spot.w + 8, height: spot.h + 8 }} />}
           {also && <div className="gd-spot gd-also" style={{ left: also.x - 3, top: also.y - 3, width: also.w + 6, height: also.h + 6 }} />}
-          {arrow && (
-            <svg className="gd-arrow" width={w} height={h} key={`a${i}`}>
-              <defs><marker id="gd-head" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" /></marker></defs>
-              <line x1={arrow.x1} y1={arrow.y1} x2={arrow.x2} y2={arrow.y2} markerEnd="url(#gd-head)" />
-            </svg>
-          )}
-          {mag && spot && (
-            <div className="gd-mag" key={`m${i}`} style={{ left: mag.x - D / 2, top: mag.y - D / 2, width: D, height: D }}>
-              <div className="gd-mag-in" style={{ width: w, height: h, transform: `translate(${D / 2 - cx * Z}px, ${D / 2 - cy * Z}px) scale(${Z})`, '--u': `${w / 100}px` } as CSSProperties}><Screen /></div>
-            </div>
-          )}
         </div>
       </div>
       <div className="gd-card" key={`c${i}`}>
-        <div className="gd-count">{i + 1} of {STEPS.length} · {step.chapter}</div>
+        <div className="gd-count"><b>{i + 1}</b> of {STEPS.length} · {step.chapter}</div>
         <h2>{step.title}</h2>
-        <p>{step.text}</p>
+        <div className="gd-text">{step.text}</div>
         <div className="gd-nav">
           <button className="btn ghost" onClick={() => go(i - 1)} disabled={i === 0}>‹ Back</button>
           {i < STEPS.length - 1
-            ? <button className="btn" onClick={() => go(i + 1)}>Next ›</button>
-            : <button className="btn" onClick={onClose}>Start learning</button>}
+            ? <button className="btn primary" onClick={() => go(i + 1)}>Next ›</button>
+            : <button className="btn primary" onClick={onClose}>Start learning</button>}
         </div>
       </div>
     </div>

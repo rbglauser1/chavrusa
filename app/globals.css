@@ -2515,3 +2515,28 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .mini.sharp .m-src { background: #111418; border: 0; border-radius: 0; }
 .mini.sharp .m-line { background: #111418; opacity: 0.45; border-radius: 0; }
 [data-look='sharp'] .home-talk-btn:not(.live) + .home-talk-label::after { content: ' with your chavrusa'; white-space: pre; }
+
+/* The guide, larger (components/Guide.tsx): the drawn screen fills the space and a camera zooms onto each part. */
+.gd-view { position: relative; flex: 1; min-height: 0; overflow: hidden; margin: 8px 0; border-radius: 14px; background: color-mix(in srgb, var(--ink) 6%, var(--bg)); }
+.gd-cam { position: absolute; left: 0; top: 0; transform-origin: 0 0; transition: transform .55s cubic-bezier(.2,.8,.2,1); background: var(--surface); box-shadow: 0 0 0 1px var(--rule); }
+.gd-cam .gd-screen { position: absolute; inset: 0; }
+.gd > .gd-card { padding: 14px 18px 14px; flex: none; max-height: 44dvh; overflow-y: auto; }
+.gd > .gd-card h2 { font: 600 21px/1.25 var(--f-ui); margin: 4px 0 8px; }
+.gd-text { font: 17px/1.55 var(--f-body); margin: 0 0 14px; color: var(--ink); }
+.gd-count { font-size: 13px; }
+.gd-nav .btn { min-height: 46px; padding: 0 20px; font-size: 16px; }
+.gd-chapters button { font-size: 14px; padding: 7px 13px; }
+.gd-where { display: block; font: 600 12px var(--f-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.gd-settitle { font: 600 calc(var(--u) * 6.2) var(--f-ui); }
+.gd-setrow { display: flex; flex-direction: column; justify-content: center; gap: calc(var(--u) * 1.4); border-bottom: 1px solid var(--rule); font-size: calc(var(--u) * 4.2); }
+.gd-setrow > b { font-weight: 600; }
+.gd-seg { display: flex; border: 1px solid var(--rule); border-radius: calc(var(--u) * 1.6); overflow: hidden; }
+.gd-seg span { flex: 1; text-align: center; padding: calc(var(--u) * 1.1) calc(var(--u) * .6); font-size: calc(var(--u) * 3.5); color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-seg span + span { border-left: 1px solid var(--rule); }
+.gd-seg span.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.gd-val { align-self: flex-start; border: 1px solid var(--rule); border-radius: calc(var(--u) * 1.6); padding: calc(var(--u) * 1) calc(var(--u) * 2.4); font-size: calc(var(--u) * 3.6); color: var(--ink); }
+.gd-setlist { display: flex; flex-direction: column; gap: calc(var(--u) * .6); }
+.gd-setlist span { border: 1px solid var(--rule); border-radius: calc(var(--u) * 1.6); padding: calc(var(--u) * .5) calc(var(--u) * 2.4); font-size: calc(var(--u) * 3.4); }
+.gd-setlist span.on { border-color: var(--accent); background: var(--accent-soft); }
+.gd-drivebtn.gd-sq { border-radius: 0; font-size: calc(var(--u) * 5); }
+@media (prefers-reduced-motion: reduce) { .gd-cam { transition: none; } }
