@@ -4,7 +4,8 @@
 // that starts a fresh call and waits for the learner to say what he wants to learn.
 import { useBackLayer } from '@/lib/back';
 import { useEffect, useState, type ReactNode } from 'react';
-import { HowTo, howToSeen, unlockNarration } from '@/components/HowTo';
+import { HowTo, unlockNarration } from '@/components/HowTo';
+import Guide, { guideSeen } from '@/components/Guide';
 
 type SessionRow = { id: string; title: string; updated_at: string };
 
@@ -51,10 +52,18 @@ export function Home(p: {
   extras?: ReactNode; // the optional cards (Settings → Extras): chazara, progress
 }) {
   const c = p.cont;
-  // The how-to movie: one tap away, and it opens by itself the first time the app is opened on this device.
+  // The guide (components/Guide.tsx): one tap away, and it opens by itself the first time, once the disclaimer has
+  // been accepted (the page sends "chavrusa-guide" then). The short film is still there, from the guide's last step.
+  const [guide, setGuide] = useState(false);
   const [howTo, setHowTo] = useState(false);
-  useEffect(() => { if (!howToSeen()) setHowTo(true); }, []);
-  useBackLayer(howTo, () => setHowTo(false)); // back closes the how-to movie
+  useEffect(() => {
+    const open = () => setGuide(true);
+    window.addEventListener('chavrusa-guide', open);
+    try { if (!guideSeen() && localStorage.getItem('chavrusa_disclaimer2') === '1') setGuide(true); } catch { /* optional */ }
+    return () => window.removeEventListener('chavrusa-guide', open);
+  }, []);
+  useBackLayer(guide, () => setGuide(false)); // back closes the guide
+  useBackLayer(howTo, () => setHowTo(false)); // back closes the short film
   const rows: [keyof typeof ICONS, string, string, () => void][] = [
     ['library', 'Library', 'Gemara, Chumash and every sefer', p.onLibrary],
     ['recent', 'Recent', 'Your sessions, newest first', p.onRecent],
@@ -106,8 +115,10 @@ export function Home(p: {
         </div>
       )}
       {p.extras}
-      <button className="home-howto" onClick={() => { unlockNarration(); setHowTo(true); }}>How to use the app</button>
+      <button className="home-howto" onClick={() => setGuide(true)}>How to use the app</button>
+      <button className="home-howto" onClick={() => { unlockNarration(); setHowTo(true); }}>Watch the short film</button>
       <a className="home-howto" href="/contact">Contact us</a>
+      {guide && <Guide onClose={() => setGuide(false)} />}
       {howTo && <HowTo onClose={() => setHowTo(false)} />}
     </div>
   );

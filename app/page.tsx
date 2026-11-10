@@ -268,6 +268,12 @@ export default function Home() {
   const setContInfo = (c: (ContinueInfo & { id?: string }) | null) => { setContInfoState(c); try { if (c) localStorage.setItem('chavrusa_cont', JSON.stringify(c)); } catch { /* optional */ } };
   useEffect(() => { try { const k = localStorage.getItem('chavrusa_cont'); if (k) setContInfoState(JSON.parse(k)); } catch { /* optional */ } }, []);
   const [help, setHelp] = useState(false);
+  // "How to use the app" from Settings: back to Home, where the guide opens.
+  useEffect(() => {
+    const go = () => { setDrawer(null); setView('home'); window.setTimeout(() => window.dispatchEvent(new Event('chavrusa-guide')), 200); };
+    window.addEventListener('chavrusa-guide-go', go);
+    return () => window.removeEventListener('chavrusa-guide-go', go);
+  }, []);
   // Back from Stripe (buying credit): open Settings, where Credits shows the new balance, and tidy the address.
   useEffect(() => {
     try {
@@ -834,7 +840,7 @@ export default function Home() {
             onAccept={() => {
               setSeenDisclaimer(true);
               try { localStorage.setItem('chavrusa_disclaimer2', '1'); } catch { /* storage unavailable */ }
-              updateSettings({ disclaimerAccepted: true, disclaimer2: true });
+              updateSettings({ disclaimerAccepted: true, disclaimer2: true }); try { if (!localStorage.getItem('chavrusa-guide-seen')) window.setTimeout(() => window.dispatchEvent(new Event('chavrusa-guide')), 300); } catch { /* optional */ }
             }}
           />
         )}
@@ -1196,7 +1202,7 @@ export default function Home() {
           onAccept={() => {
             setSeenDisclaimer(true);
             try { localStorage.setItem('chavrusa_disclaimer2', '1'); } catch { /* storage unavailable */ }
-            updateSettings({ disclaimerAccepted: true, disclaimer2: true });
+            updateSettings({ disclaimerAccepted: true, disclaimer2: true }); try { if (!localStorage.getItem('chavrusa-guide-seen')) window.setTimeout(() => window.dispatchEvent(new Event('chavrusa-guide')), 300); } catch { /* optional */ }
           }}
         />
       )}
