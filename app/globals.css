@@ -2186,3 +2186,6 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .lx-refs { padding: 0; display: flex; flex-wrap: wrap; gap: 5px; }
 .lx-refs button { border: 1px solid var(--rule); background: transparent; color: var(--ink); border-radius: 999px; padding: 2px 10px; font: 12.5px/1.5 var(--f-ui); cursor: pointer; }
 .lx-refs button.on { border-color: var(--accent); background: var(--accent-soft); }
+/* The buttons under a line (meforshim, Explain, Sources, Ideas): a little larger and easier to tap. */
+.sefer .comm-btns .comm-btn, .sefer.embedded.tools .comm-btns .comm-btn, .sefer .comm-list .comm-btn { font-size: 15px; padding: 7px 15px; min-height: 36px; }
+.sefer .comm-btns { gap: 8px; }
