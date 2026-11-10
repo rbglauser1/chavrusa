@@ -5,7 +5,7 @@ import { BoldEn } from './BoldEn';
 import { Interlinear, pairPhrases } from './Interlinear';
 import SugyaMap from './SugyaMap';
 import Review from './Review';
-import { ExplainBox, SourcesBox, sourcesCount, type Groups } from './LineExtras';
+import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
@@ -83,7 +83,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Quiet chat: a line's commentary buttons show only after you tap that line.
   const [picked, setPicked] = useState<number | null>(null);
-  useEffect(() => { setOpen(new Set()); setComm({}); setPicked(null); setXOpen(new Set()); setSOpen(new Set()); }, [selected, src?.ref]);
+  useEffect(() => { setOpen(new Set()); setComm({}); setPicked(null); setXOpen(new Set()); setSOpen(new Set()); setIOpen(new Set()); }, [selected, src?.ref]);
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
   // What scrolls: the Sefer's own body, or (full screen in Quiet chat) the whole page.
@@ -135,6 +135,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // what Sefaria links to each line of this amud / perek (fetched once per amud / perek; free).
   const [xOpen, setXOpen] = useState<Set<number>>(new Set());
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
+  const [iOpen, setIOpen] = useState<Set<number>>(new Set());
   const flipIn = (set: (f: (s: Set<number>) => Set<number>) => void, i: number) => set((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; });
   const lineX = (kind === 'gemara' || kind === 'mishnah' || kind === 'tanakh') && !!src && !/^Mine /.test(src.ref);
   const [rel, setRel] = useState<{ ref: string; lines: Record<string, Groups>; tanakh: boolean } | null>(null);
@@ -750,6 +751,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
                           <button className={`comm-btn ${sOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setSOpen, i)}>Sources ({sourcesCount(rel.lines[partNum(i)])})</button>
                         )}
+                        {lineX && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
+                          <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Ideas</button>
+                        )}
                         {conns === null && !fallback.length && i === 0 && connState === 'loading' && <span className="muted comm-note">Finding commentaries…</span>}
                         {conns === null && i === 0 && connState === 'failed' && (
                           <button className="comm-btn more" onClick={() => setConnTry((n) => n + 1)}>Couldn't load commentaries · try again</button>
@@ -770,8 +774,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     </div>
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
+                  {iOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
+                    <IdeasBox groups={rel.lines[partNum(i)]} lineRef={partRef(i)} onClose={() => flipIn(setIOpen, i)} />
+                  )}
                   {sOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
-                    <SourcesBox groups={rel.lines[partNum(i)]} tanakh={rel.tanakh} lineRef={partRef(i)} onClose={() => flipIn(setSOpen, i)}
+                    <SourcesBox groups={rel.lines[partNum(i)]} tanakh={rel.tanakh} onClose={() => flipIn(setSOpen, i)}
                       onOpen={onOpenExact ? (r) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined} />
                   )}
                   {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).sort(([a], [b]) => commRank(a) - commRank(b)).map(([k, c]) => {

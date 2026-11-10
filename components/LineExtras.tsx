@@ -64,10 +64,21 @@ function Ideas({ lineRef, titles }: { lineRef: string; titles: Record<string, st
   );
 }
 
-export function SourcesBox({ groups, tanakh, lineRef, onOpen, onClose }: { groups: Groups; tanakh: boolean; lineRef: string; onOpen?: (ref: string) => void; onClose: () => void }) {
-  const [ideas, setIdeas] = useState(false);
-  const canIdeas = groups.halacha.length + groups.thought.length + groups.midrash.length + groups.parallels.length > 0;
+/** Whether a line has seforim the AI can draw ideas from (halacha, Midrash, machshava, the same in Shas). */
+export const hasIdeas = (g?: Groups) => !!g && g.halacha.length + g.thought.length + g.midrash.length + g.parallels.length > 0;
+
+// The Ideas box under a line (its own button, next to Explain and Sources).
+export function IdeasBox({ groups, lineRef, onClose }: { groups: Groups; lineRef: string; onClose: () => void }) {
   const titles = Object.fromEntries(Object.values(groups).flat().map((x) => [x.ref, x.title]));
+  return (
+    <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
+      <div className="comm-title">✦ Ideas from the sources<button className="comm-x" aria-label="Close the ideas" onClick={onClose}>✕</button></div>
+      <Ideas lineRef={lineRef} titles={titles} />
+    </div>
+  );
+}
+
+export function SourcesBox({ groups, tanakh, onOpen, onClose }: { groups: Groups; tanakh: boolean; onOpen?: (ref: string) => void; onClose: () => void }) {
   const parts: [keyof Groups, string][] = [
     ['halacha', 'Halacha'],
     ['parallels', tanakh ? 'Gemara and Mishnah on this pasuk' : 'The same in Shas'],
@@ -78,8 +89,6 @@ export function SourcesBox({ groups, tanakh, lineRef, onOpen, onClose }: { group
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
       <div className="comm-title">Sources<button className="comm-x" aria-label="Close the sources" onClick={onClose}>✕</button></div>
-      {canIdeas && <button className={`comm-btn ai lx-ideas-btn ${ideas ? 'on' : ''}`} onClick={() => setIdeas((v) => !v)}>✦ Ideas from these sources</button>}
-      {ideas && <Ideas lineRef={lineRef} titles={titles} />}
       {parts.filter(([k]) => groups[k].length).map(([k, label]) => (
         <div key={k} className="smap-links">
           <span className="smap-label">{label}</span>
