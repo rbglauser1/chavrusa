@@ -22,9 +22,9 @@ export default function Privacy() {
         <li><b>Stripe</b> (payments, if you buy credit): Stripe takes your card details; the app never sees or stores them.</li>
       </ul>
       <h2>Your choices</h2>
-      <p>You can delete sessions, notes, uploaded texts and saved memories in the app. To have everything deleted, contact the owner.</p>
+      <p>You can delete sessions, notes, uploaded texts and saved memories in the app. To have everything deleted, <a href="/contact">contact us</a>.</p>
       <h2>Contact</h2>
-      <p>Questions about privacy: contact the app’s owner.</p>
+      <p>Questions about privacy: <a href="/contact">contact us</a>.</p>
     </main>
   );
 }

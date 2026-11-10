@@ -507,6 +507,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
           </Group>
 
+          <Group id="inbox" title="Messages" hint="What people sent through Contact us">
+            <Inbox />
+          </Group>
+
           <Group id="credits" title="Credits (selling the app)" hint={s.billing ? 'on' : 'off'}>
             <Credits on={!!s.billing} onToggle={(on) => onChange(on ? { billing: true, billingSince: s.billingSince ?? new Date().toISOString() } : { billing: false })} />
           </Group>
@@ -528,7 +532,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           <Group id="about" title="About and log out">
             <p className="muted" style={{ fontSize: 13 }}>This is an AI learning tool. It can make mistakes. Do not rely on it for accuracy in Torah learning, halacha, or hashkafa. For practical questions, ask your rav.</p>
-            <p className="muted" style={{ fontSize: 13 }}><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a> · <a href="/terms" target="_blank" rel="noreferrer">Terms of use</a></p>
+            <p className="muted" style={{ fontSize: 13 }}><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a> · <a href="/terms" target="_blank" rel="noreferrer">Terms of use</a> · <a href="/contact">Contact us</a></p>
             <button className="btn" onClick={() => { window.location.href = '/api/logout'; }}>Log out</button>
           </Group>
           </>}
@@ -624,6 +628,27 @@ function VoiceDesigner({ onCreated, hasCustom }: { onCreated: (p: Partial<Settin
       <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Describe qualities (age, accent, pace, tone), not a real person. Works with Live only. A new voice with the same name replaces the old one.</div>
       <button className="btn primary" onClick={create} disabled={busy || prompt.trim().length < 20}>{busy ? 'Creating…' : 'Create voice'}</button>
       {msg && <div className="goto-msg" style={{ padding: '6px 0 0' }}>{msg}</div>}
+    </div>
+  );
+}
+
+// Messages sent through Contact us (app/contact), newest first: tap one to mark it read; × deletes it.
+function Inbox() {
+  type M = { id: string; at: string; name: string; email: string; topic: string; text: string; read?: boolean };
+  const [list, setList] = useState<M[] | null>(null);
+  useEffect(() => { fetch('/api/contact').then((r) => r.json()).then((d) => setList(d.messages ?? [])).catch(() => setList([])); }, []);
+  const read = (id: string) => { setList((l) => l?.map((x) => (x.id === id ? { ...x, read: true } : x)) ?? null); void fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); };
+  const drop = (id: string) => { setList((l) => l?.filter((x) => x.id !== id) ?? null); void fetch(`/api/contact?id=${encodeURIComponent(id)}`, { method: 'DELETE' }); };
+  return (
+    <div className="field">
+      <div className="muted" style={{ fontSize: 12, margin: '2px 0 8px' }}>The Contact us page is at <a href="/contact">/contact</a> (open to anyone, no sign-in). Messages land here.</div>
+      {!list ? <div className="muted">Loading…</div> : !list.length ? <div className="muted">No messages yet.</div> : list.map((m) => (
+        <div key={m.id} className={`inbox-item ${m.read ? '' : 'new'}`} onClick={() => !m.read && read(m.id)}>
+          <div className="inbox-head"><b>{m.topic}{m.name ? ` · ${m.name}` : ''}</b><button className="linklike" aria-label="Delete this message" onClick={(e) => { e.stopPropagation(); drop(m.id); }}>×</button></div>
+          <div className="muted" style={{ fontSize: 12 }}>{new Date(m.at).toLocaleString()}{m.email ? <> · <a href={`mailto:${m.email}`}>{m.email}</a></> : ' · no email left'}</div>
+          <div className="inbox-text" dir="auto">{m.text}</div>
+        </div>
+      ))}
     </div>
   );
 }

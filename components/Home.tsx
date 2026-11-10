@@ -106,6 +106,7 @@ export function Home(p: {
       )}
       {p.extras}
       <button className="home-howto" onClick={() => { unlockNarration(); setHowTo(true); }}>How to use the app</button>
+      <a className="home-howto" href="/contact">Contact us</a>
       {howTo && <HowTo onClose={() => setHowTo(false)} />}
     </div>
   );

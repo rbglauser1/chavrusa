@@ -13,7 +13,7 @@ export default function Terms() {
       <h2>Credit and payments</h2>
       <ul>
         <li>Credit pays for the AI and voice you use. It is used up as you learn, and does not expire.</li>
-        <li>Payments are handled by Stripe. Refunds of unused credit: contact the owner.</li>
+        <li>Payments are handled by Stripe. Refunds of unused credit: <a href="/contact">contact us</a>.</li>
         <li>Prices and what credit buys may change; changes don’t affect credit already bought.</li>
       </ul>
       <h2>Fair use</h2>
