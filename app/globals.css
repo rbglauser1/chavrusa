@@ -2363,3 +2363,6 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .nb-topics .nb-tag.on { background: var(--accent); color: #fff; }
 .nb-actions { display: flex; gap: 14px; margin-top: 6px; font-size: 13px; }
 .nb-empty { line-height: 1.5; margin-top: 20px; }
+/* A source named in an explanation: tap to open it right there */
+.lx-src { display: inline; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--rule)); background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 0 8px; margin: 0 2px; font: 0.8em var(--f-ui); cursor: pointer; vertical-align: 1px; }
+.lx-src.on { background: var(--accent); color: #fff; }

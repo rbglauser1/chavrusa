@@ -10,25 +10,52 @@ import NoteAdd from './NoteAdd';
 // "Yoma 6a:3" → ["Yoma 6a", 3]
 const split = (lineRef: string): [string, number] => { const m = lineRef.match(/^(.*?):(\d+)$/); return m ? [m[1], Number(m[2])] : [lineRef, 1]; };
 
+// A paragraph with its sources: each ⟦reference⟧ the AI read becomes a small tappable chip that opens the source right
+// there (Hebrew and English). A reference it didn't really open is shown as plain words.
+export function WithSources({ text, sources, pClass = 'lx-p' }: { text: string; sources: string[]; pClass?: string }) {
+  const [openRef, setOpenRef] = useState<string | null>(null);
+  const short = (r: string) => r.replace(/^Mishneh Torah, /, 'Rambam, ').replace(/^Shulchan Arukh/, 'Shulchan Aruch').replace(/^Tosafot on /, 'Tosafos on ');
+  return (
+    <>
+      {text.split(/\n\s*\n/).map((para, i) => {
+        const bits = para.replace(/\(\s*(⟦[^⟧]+⟧)\s*\)/g, '$1').split(/(⟦[^⟧]+⟧)/); // "Tosafos (⟦…⟧) asks" → "Tosafos [chip] asks"
+        const here = bits.filter((b) => b.startsWith('⟦')).map((b) => b.slice(1, -1).trim()).filter((r) => sources.includes(r));
+        return (
+          <div key={i}>
+            <p className={pClass}>{bits.map((b, k) => {
+              if (!b.startsWith('⟦')) return <span key={k}>{b}</span>;
+              const r = b.slice(1, -1).trim();
+              if (!sources.includes(r)) return null;
+              return <button key={k} className={`lx-src ${openRef === r ? 'on' : ''}`} onClick={() => setOpenRef(openRef === r ? null : r)}>{short(r)}</button>;
+            })}</p>
+            {openRef && here.includes(openRef) && <RefText refs={[openRef]} />}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () => void }) {
-  const [text, setText] = useState<string | null>(null);
+  const [data, setData] = useState<{ text: string; sources: string[] } | null>(null);
   const [err, setErr] = useState('');
   const [tick, setTick] = useState(0);
   useEffect(() => {
     let gone = false;
-    setText(null); setErr('');
+    setData(null); setErr('');
     fetch(`/api/explain?ref=${encodeURIComponent(lineRef)}`).then((r) => r.json())
-      .then((d) => { if (!gone) { if (d.text) setText(d.text); else setErr('The explanation couldn’t be made just now.'); } })
+      .then((d) => { if (!gone) { if (d.text) setData({ text: d.text, sources: Array.isArray(d.sources) ? d.sources : [] }); else setErr('The explanation couldn’t be made just now.'); } })
       .catch(() => { if (!gone) setErr('The explanation couldn’t be made just now.'); });
     return () => { gone = true; };
   }, [lineRef, tick]);
+  const text = data?.text;
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
-      <div className="comm-title">✦ Explanation{text && <NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the explanation" quote={text.slice(0, 140)} label="✎" />}<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
-      {text && <div className="ai-note left">Written by AI · may contain mistakes</div>}
-      {text ? text.split(/\n\s*\n/).map((p, i) => <p key={i} className="lx-p">{p}</p>)
+      <div className="comm-title">✦ Explanation{text && <NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the explanation" quote={text.replace(/⟦[^⟧]+⟧/g, '').slice(0, 140)} label="✎" />}<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
+      {text && <div className="ai-note left">Written by AI · may contain mistakes{data.sources.length ? ' · tap a source to check it inside' : ''}</div>}
+      {data ? <WithSources text={data.text} sources={data.sources} />
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
-        : <div className="muted">Explaining…</div>}
+        : <div className="muted">Reading the sources and explaining… (the first time takes a little while)</div>}
     </div>
   );
 }
