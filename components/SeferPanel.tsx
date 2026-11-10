@@ -83,7 +83,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Quiet chat: a line's commentary buttons show only after you tap that line.
   const [picked, setPicked] = useState<number | null>(null);
-  useEffect(() => { setOpen(new Set()); setComm({}); setPicked(null); setXOpen(new Set()); setSOpen(new Set()); setIOpen(new Set()); }, [selected, src?.ref]);
+  // A line tapped in the amud before or after becomes the main text (its own tab): its buttons show at once, the same
+  // as a tap on a line of this amud (before, it took a second tap).
+  const pickAfter = useRef<{ ref: string; i: number } | null>(null);
+  useEffect(() => {
+    setOpen(new Set()); setComm({}); setXOpen(new Set()); setSOpen(new Set()); setIOpen(new Set());
+    const want = pickAfter.current;
+    if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
+  }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
   // What scrolls: the Sefer's own body, or (full screen in Quiet chat) the whole page.
@@ -637,7 +644,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
                         {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`pm${k}`} className="move">{m}</div>)}
-                        <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(prevSrc, i + 1)); } else onPoint?.(prevSrc, i + 1); }}>
+                        <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); }); } else { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
                             : <>
@@ -851,7 +858,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
                         {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`nm${k}`} className="move">{m}</div>)}
-                        <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => onPoint?.(nextSrc, i + 1)); } else onPoint?.(nextSrc, i + 1); }}>
+                        <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); }); } else { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
                             : <>
