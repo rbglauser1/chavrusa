@@ -2325,3 +2325,6 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 @keyframes gd-ring { 0%, 100% { outline-color: #ffd54a; } 50% { outline-color: #fff3c4; } }
 @keyframes gd-pulse { 0%, 100% { box-shadow: 0 0 0 calc(var(--u) * 2) var(--accent-soft); } 50% { box-shadow: 0 0 0 calc(var(--u) * 4) var(--accent-soft); } }
 @keyframes gd-wave { 0%, 100% { height: 30%; } 50% { height: 100%; } }
+/* Under every text: its source and license (components/TextCredit.tsx) */
+.text-credit { font: 11.5px/1.5 var(--f-ui); color: var(--soft); margin: 14px 0 18px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent); }
+.text-credit a { color: inherit; }

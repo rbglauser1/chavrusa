@@ -6,6 +6,7 @@ import { Interlinear, pairPhrases } from './Interlinear';
 import SugyaMap from './SugyaMap';
 import Review from './Review';
 import { Dibbur } from './Dibbur';
+import TextCredit from './TextCredit';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
@@ -846,6 +847,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 </div>
               );
             })}
+            <TextCredit src={src} />
             {nextRef && (
               <div ref={endRef} className="next-sec">
                 {nextSrc ? (

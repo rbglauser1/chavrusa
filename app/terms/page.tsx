@@ -7,9 +7,9 @@ export default function Terms() {
       <p className="legal-draft">Draft · to be reviewed before the app is offered publicly</p>
       <h1>Terms of use</h1>
       <h2>An AI learning tool</h2>
-      <p>The chavrusa is an AI. It can make mistakes in reading, translating and explaining. Do not rely on it for accuracy in Torah learning, halacha or hashkafa; for practical questions, ask your rav.</p>
+      <p>The chavrusa is an AI. The app is not rabbinically approved. AI makes mistakes in reading, translating and explaining: do not rely on it for the correct understanding of the material, and never for halachic rulings; for practical questions, ask your rav. It is never meant to take the place of a real chavrusa.</p>
       <h2>Texts</h2>
-      <p>Texts come from Sefaria under their own licenses. Texts you upload must be ones you have the right to use; they are kept for your own learning and are not shared with others.</p>
+      <p>Texts come from Sefaria under their own licenses (see <a href="/credits">Credits and licenses</a>). Texts you upload must be ones you have the right to use; they are kept for your own learning and are not shared with others.</p>
       <h2>Credit and payments</h2>
       <ul>
         <li>Credit pays for the AI and voice you use. It is used up as you learn, and does not expire.</li>

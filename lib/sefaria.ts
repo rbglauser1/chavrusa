@@ -113,7 +113,9 @@ export async function judgeRef(ref: string, list: ApprovedEntry[], indexTitle?: 
 }
 
 // ---------- Texts ----------
-interface V3Version { text: unknown; language?: string; actualLanguage?: string; versionTitle?: string; direction?: string }
+interface V3Version { text: unknown; language?: string; actualLanguage?: string; versionTitle?: string; direction?: string; license?: string; versionSource?: string }
+// The credit for a version (shown under the text: each text on Sefaria has its own source and license).
+const creditOf = (v?: V3Version) => (v?.versionTitle ? { title: v.versionTitle, ...(v.versionSource ? { source: String(v.versionSource) } : {}), ...(v.license ? { license: String(v.license) } : {}) } : undefined);
 
 function pick(versions: V3Version[], lang: 'he' | 'en'): V3Version | undefined {
   return versions.find((v) => (lang === 'he'
@@ -165,6 +167,7 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
       return hasBold(b) ? { enB: b } : {};
     })(),
     translation: enV?.versionTitle ?? null,
+    credit: { he: creditOf(heV), en: creditOf(enV ?? defaultEn) },
     ...(!enV && defaultEn?.versionTitle && nonEmpty(flatten(defaultEn.text)).length
       ? { altEn: nonEmpty(flatten(defaultEn.text).map(stripHtml).map(yeshivishEnglish)), altTitle: defaultEn.versionTitle } : {}),
     archaic: enV ? isArchaic(flatten(enV.text).slice(0, 40).join(' ')) : false,

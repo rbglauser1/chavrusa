@@ -84,9 +84,13 @@ export async function updateMemory(id: string, content: string, userId = OWNER_I
 export interface SessionRow { id: string; title: string; created_at: string; updated_at: string }
 export interface MessageRow { id: string; role: 'user' | 'assistant'; content: string; meta: Record<string, unknown> | null; created_at: string }
 export interface SourceRow { id: string; ref: string; he_ref: string | null; data: SourceData; created_at: string }
+/** A text version's credit, as Sefaria gives it: its title, its source, and its license. */
+export interface Credit { title: string; source?: string; license?: string }
+
 export interface SourceData {
   ref: string; heRef: string; he: string[]; en: string[];
   translation: string | null;   // approved translation version title, or null
+  credit?: { he?: Credit; en?: Credit }; // where each version of the text comes from and its license (shown under the text)
   archaic?: boolean;             // the translation uses old-fashioned English (thou, hath…)
   url: string;
   focus?: number;                // Sefer panel: the line to scroll to and highlight

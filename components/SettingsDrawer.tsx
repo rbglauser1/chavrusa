@@ -532,7 +532,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           <Group id="about" title="About and log out">
             <p className="muted" style={{ fontSize: 13 }}>This is an AI learning tool. It can make mistakes. Do not rely on it for accuracy in Torah learning, halacha, or hashkafa. For practical questions, ask your rav.</p>
-            <p className="muted" style={{ fontSize: 13 }}><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a> · <a href="/terms" target="_blank" rel="noreferrer">Terms of use</a> · <a href="/contact">Contact us</a> · <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('chavrusa-guide-go')); }}>How to use the app</a></p>
+            <p className="muted" style={{ fontSize: 13 }}><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a> · <a href="/terms" target="_blank" rel="noreferrer">Terms of use</a> · <a href="/credits">Credits and licenses</a> · <a href="/contact">Contact us</a> · <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('chavrusa-guide-go')); }}>How to use the app</a></p>
             <button className="btn" onClick={() => { window.location.href = '/api/logout'; }}>Log out</button>
           </Group>
           </>}
