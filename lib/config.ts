@@ -286,7 +286,7 @@ export function styleById(id: string | undefined, custom?: CustomStyle[] | null)
   return allStyles(custom).find((s) => s.id === id) ?? STYLES[0];
 }
 
-export type Look = 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink';
+export type Look = 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink' | 'sharp';
 
 // Colors of the different things on the page (Settings → Look → Colors). "ink" = the same as the text.
 export type ColorPart = 'he' | 'en' | 'comm' | 'intro';
@@ -302,6 +302,7 @@ export const COLOR_DEFAULTS: Record<ColorPart, ColorId> = { he: 'ink', en: 'ink'
 export const colorOf = (s: { colors?: Partial<Record<ColorPart, ColorId>> }, p: ColorPart): ColorId => s.colors?.[p] ?? COLOR_DEFAULTS[p];
 
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
+  { id: 'sharp', name: 'Sharp (new)', blurb: 'Crisp paper white and black hairlines, square corners, one deep blue. Numbered lines, like a well-set page' },
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
   { id: 'shtender', name: 'Shtender (white oak)', blurb: 'Pale white oak, like a shtender in the beis medrash' },
   { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
@@ -353,7 +354,7 @@ export const fontStack = (list: { id: string; stack: string }[], id?: string) =>
 
 // Older saved values from the first version map onto the new looks.
 export function normalizeLook(v: unknown): Look {
-  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink') return v;
+  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink' || v === 'sharp') return v;
   if (v === 'dark') return 'shtender';
   if (v === 'light') return 'techelet';
   return 'daf';
@@ -434,6 +435,7 @@ export interface Settings {
   chazara?: boolean;        // review of what was learned, on Home (app/api/chazara)
   progress?: boolean;       // amudim learned, goals and plans, siyum (lib/progress.ts)
   plans?: { id: string; kind: 'book' | 'dafyomi'; book?: string; by?: string; perDay?: number; start: string }[];
+  darkCall?: boolean;       // a dark, quiet screen during a call: the words being read, large, and three buttons
   driveMode?: boolean;      // the driving screen and headphone/car buttons
   offline?: boolean;        // download seforim to read without internet
   billing?: boolean;        // credits: learners pay for what they use (lib/credits.ts); off until Stripe is set up
@@ -568,7 +570,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn'] as const;
+export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall'] as const;
 
 export const OWNER_ID = 'owner';
 

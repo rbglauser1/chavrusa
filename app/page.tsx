@@ -12,6 +12,7 @@ import { Home as HomeScreen, HomePage, RecentList, type ContinueInfo } from '@/c
 import HomeExtras from '@/components/HomeExtras';
 import { useBackLayer } from '@/lib/back';
 import DriveMode from '@/components/DriveMode';
+import CallScreen from '@/components/CallScreen';
 import { getOfflineText } from '@/lib/offlineStore';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
@@ -771,6 +772,10 @@ export default function Home() {
   useBackLayer(view === 'settings' && settingsFrom === 'learn', () => setView('learn'));
   useBackLayer(help, () => setHelp(false));
   useBackLayer(driving, () => setDriving(false));
+  // The dark call screen (Settings → Extras): it opens when a call starts and closes when the call ends; "Text" or back closes it.
+  const [callX, setCallX] = useState(false);
+  useEffect(() => { setCallX(!!settings.darkCall && live.active); }, [live.active, settings.darkCall]);
+  useBackLayer(callX, () => setCallX(false));
   useBackLayer(drawer !== null, () => setDrawer(null));
   const newUI = true; // one main screen for everyone: it opens first, and learning happens in Classic or Quiet chat
   // The new main screen always learns in Quiet chat. Otherwise: Quiet chat, or the classic screen, which is now
@@ -862,6 +867,7 @@ export default function Home() {
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
       {settings.driveMode && view === 'learn' && !driving && <button className="drive-fab" onClick={() => setDriving(true)} aria-label="Driving mode">🚗</button>}
       {driving && <DriveMode live={live} place={sources[selected]?.ref ?? ''} onExit={() => setDriving(false)} />}
+      {callX && !driving && live.active && <CallScreen live={live} src={sources[selected] ?? null} nikud={!!settings.nikud} onText={() => setCallX(false)} />}
       {seferHome ? null : minimal ? (
         <div className="main">
           <Minimal

@@ -17,6 +17,7 @@ export const ICONS = {
   recent: <><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12l3 2" /></>,
   themes: <><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6h1.9a4.4 4.4 0 0 0 4.4-4.4C20.5 6.7 16.7 3.5 12 3.5z" /><circle cx="7.6" cy="11.2" r="1" /><circle cx="10.4" cy="7.6" r="1" /><circle cx="14.8" cy="7.8" r="1" /></>,
   settings: <><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></>,
+  notebook: <><path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6zM6 3v18M10 8h5M10 12h5" /></>,
   mic: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>,
   back: <path d="M15 5l-7 7 7 7" />,
   chevron: <path d="M9 5l7 7-7 7" />,
@@ -67,6 +68,7 @@ export function Home(p: {
   const rows: [keyof typeof ICONS, string, string, () => void][] = [
     ['library', 'Library', 'Gemara, Chumash and every sefer', p.onLibrary],
     ['recent', 'Recent', 'Your sessions, newest first', p.onRecent],
+    ['notebook', 'Notebook', 'Your notes, by sefer and topic', () => window.dispatchEvent(new Event('chavrusa-notebook'))], // shown in the Sharp look only
     ['settings', 'Settings', 'Look, learning style, voice, display', p.onSettings],
   ];
   return (
@@ -96,7 +98,7 @@ export function Home(p: {
 
       <nav className="home-list" aria-label="Main">
         {rows.map(([k, label, sub, go]) => (
-          <button key={k} className="home-row" onClick={go}>
+          <button key={k} className={`home-row r-${k}`} onClick={go}>
             <span className="home-row-icon"><Icon d={ICONS[k]} size={20} /></span>
             <span className="home-row-text"><span className="home-row-title">{label}</span><span className="home-row-sub">{sub}</span></span>
             <span className="home-row-chev"><Icon d={ICONS.chevron} size={16} /></span>
