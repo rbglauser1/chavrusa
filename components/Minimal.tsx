@@ -16,6 +16,7 @@ import AutoScroll from './AutoScroll';
 import DafPage from './DafPage';
 import MikraosPage from './MikraosPage';
 import { amudOf } from '@/lib/daf';
+import { Dibbur } from './Dibbur';
 
 export type Layout = 'page' | 'quiet' | 'shtender' | 'dock';
 type Msg = { kind: string; text: string };
@@ -98,7 +99,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
             {c && (
               <div className="min-comm">
                 <span className="min-comm-title">{c.title === 'Tosafot' ? 'Tosafos' : c.title}</span>
-                {c.he.map((h, k) => <p key={k} className="rashi" dir="rtl">{settings.nikud ? h : stripNikud(h)}</p>)}
+                {c.he.map((h, k) => <p key={k} className="rashi" dir="rtl"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></p>)}
               </div>
             )}
           </div>

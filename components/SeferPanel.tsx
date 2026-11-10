@@ -5,6 +5,7 @@ import { BoldEn } from './BoldEn';
 import { Interlinear, pairPhrases } from './Interlinear';
 import SugyaMap from './SugyaMap';
 import Review from './Review';
+import { Dibbur } from './Dibbur';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
@@ -806,7 +807,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             const gk = src ? `${src.ref}|${c.title}` : '';
                             return (
                               <div key={k2} className="comm-line">
-                                {pt.he.map((h, k3) => <div key={k3} className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>)}
+                                {pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}
                                 {settings.commSummary && c.title && (gists[pt.ref] ? <div className="gist"><span>Summary</span> {gists[pt.ref]}</div>
                                   : gistState[gk] === 'loading' ? <div className="gist muted">Summarizing…</div>
                                   : gistState[gk] === 'failed' ? <div className="gist muted">Couldn&apos;t summarize this. <button className="linklike" onClick={() => { setGistState((g) => { const n = { ...g }; delete n[gk]; return n; }); wantGists(c.title!); }}>Try again</button></div>
@@ -822,7 +823,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           })
                           : (c.he ?? []).map((h, k2) => (
                             <div key={k2} className="comm-line">
-                              <div className="he rashi">{settings.nikud ? h : stripNikud(h)}</div>
+                              <div className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>
                               {c.en?.[k2] && <div className="en">{yeshivishEnglish(c.en[k2])}</div>}
                             </div>
                           ))}

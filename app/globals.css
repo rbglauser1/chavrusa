@@ -2189,3 +2189,4 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 /* The buttons under a line (meforshim, Explain, Sources, Ideas): a little larger and easier to tap. */
 .sefer .comm-btns .comm-btn, .sefer.embedded.tools .comm-btns .comm-btn, .sefer .comm-list .comm-btn { font-size: 15px; padding: 7px 15px; min-height: 36px; }
 .sefer .comm-btns { gap: 8px; }
+.dibbur { font-weight: 700; }

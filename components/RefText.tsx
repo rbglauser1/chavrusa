@@ -3,6 +3,7 @@
 // Midrash. Each piece in Hebrew with its English: Sefaria's when it has one, else a translation by the AI (made once
 // per piece and kept for good, app/api/translate).
 import { useEffect, useState } from 'react';
+import { Dibbur } from './Dibbur';
 
 export type Linked = { title: string; ref: string; line?: number };
 
@@ -37,7 +38,7 @@ export function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void 
           const en = clean(text.en[i] ?? ''), mine = ai[i];
           return (
             <div key={i}>
-              <div className="he" dir="rtl">{clean(h)}</div>
+              <div className="he" dir="rtl"><Dibbur text={clean(h)} /></div>
               {en ? <div className="en">{en}</div>
                 : mine === 'busy' ? <div className="en muted">Translating…</div>
                 : mine && mine !== 'failed' ? <div className="en">{mine}</div>
