@@ -8,6 +8,7 @@ import Review from './Review';
 import { Dibbur } from './Dibbur';
 import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
+import MyButtonBox from './MyButtonBox';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
@@ -90,7 +91,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // as a tap on a line of this amud (before, it took a second tap).
   const pickAfter = useRef<{ ref: string; i: number } | null>(null);
   useEffect(() => {
-    setOpen(new Set()); setComm({}); setXOpen(new Set()); setSOpen(new Set()); setIOpen(new Set());
+    setOpen(new Set()); setComm({}); setXOpen(new Set()); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
     const want = pickAfter.current;
     if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -146,6 +147,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [xOpen, setXOpen] = useState<Set<number>>(new Set());
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
   const [iOpen, setIOpen] = useState<Set<number>>(new Set());
+  // The learner's own buttons (Settings → Extras → My buttons): which is open on which line ("line|id"), and at the top.
+  const [bOpen, setBOpen] = useState<string | null>(null);
+  const [topOpen, setTopOpen] = useState<string | null>(null);
+  const lineButtons = (settings.myButtons ?? []).filter((b) => !b.off && b.where === 'line');
+  const amudButtons = (settings.myButtons ?? []).filter((b) => !b.off && b.where === 'amud');
   const flipIn = (set: (f: (s: Set<number>) => Set<number>) => void, i: number) => set((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; });
   const lineX = (kind === 'gemara' || kind === 'mishnah' || kind === 'tanakh') && !!src && !/^Mine /.test(src.ref);
   const [rel, setRel] = useState<{ ref: string; lines: Record<string, Groups>; tanakh: boolean } | null>(null);
@@ -671,12 +677,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
-            {(settings.sugyaMap || settings.review) && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
+            {(settings.sugyaMap || settings.review || amudButtons.length > 0) && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
               <div className="smap-btns">
                 {settings.sugyaMap && <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>}
                 {settings.review && <button className="smap-btn" onClick={() => setReviewOpen(true)}>✓ Review</button>}
+                {amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}>✦ {b.name}</button>)}
               </div>
             )}
+            {topOpen && src && (() => { const b = amudButtons.find((x) => x.id === topOpen); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={src.ref.replace(/:\d+(-\d+)?$/, '')} onClose={() => setTopOpen(null)} /> : null; })()}
             {reviewOpen && (
               <Review refText={src.ref} onClose={() => setReviewOpen(false)}
                 onGo={(n) => { document.querySelector(`.sefer-flow [data-line="${n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }} />
@@ -764,6 +772,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
                           <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Ideas</button>
                         )}
+                        {lineX && lineButtons.map((b) => (
+                          <button key={b.id} className={`comm-btn ai ${bOpen === `${i}|${b.id}` ? 'on' : ''}`} onClick={() => setBOpen(bOpen === `${i}|${b.id}` ? null : `${i}|${b.id}`)}>✦ {b.name}</button>
+                        ))}
                         {conns === null && !fallback.length && i === 0 && connState === 'loading' && <span className="muted comm-note">Finding commentaries…</span>}
                         {conns === null && i === 0 && connState === 'failed' && (
                           <button className="comm-btn more" onClick={() => setConnTry((n) => n + 1)}>Couldn't load commentaries · try again</button>
@@ -784,6 +795,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     </div>
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
+                  {bOpen?.startsWith(`${i}|`) && (() => { const b = lineButtons.find((x) => x.id === bOpen.slice(bOpen.indexOf('|') + 1)); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={partRef(i)} onClose={() => setBOpen(null)} /> : null; })()}
                   {iOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
                     <IdeasBox groups={rel.lines[partNum(i)]} lineRef={partRef(i)} onClose={() => flipIn(setIOpen, i)} />
                   )}

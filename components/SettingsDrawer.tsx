@@ -10,6 +10,7 @@ import CallLogs from './CallLogs';
 import HebrewLab from './HebrewLab';
 import GptPronunciation from './GptPronunciation';
 import { Group, GroupList } from './SettingsGroup';
+import MyButtons from './MyButtons';
 
 interface Props {
   settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
@@ -512,6 +513,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 );
               })}
             </div>
+            <MyButtons list={s.myButtons ?? []} onChange={(l) => onChange({ myButtons: l })} />
           </Group>
 
           <Group id="inbox" title="Messages" hint="What people sent through Contact us">

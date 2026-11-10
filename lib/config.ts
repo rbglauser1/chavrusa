@@ -378,10 +378,10 @@ export interface Settings {
   commSize: number;         // px: Rashi, Tosafos and other commentaries
   costWarnUsd: number | null;
   disclaimerAccepted: boolean;
-  disclaimer2?: boolean;
+  disclaimer2?: boolean;   // the Nov 9 wording (not rabbinically approved; AI makes mistakes; not a replacement for a chavrusa) was accepted
   keptModel?: 'opus' | 'sonnet'; // the AI for everything made once and kept (maps, explanations…); unset = Opus
   notebookPins?: string[];        // topics pinned at the top of the Notebook
-  myButtons?: MyButton[];         // the learner's own AI buttons (Settings → Extras → My buttons)   // the Nov 9 wording (not rabbinically approved; AI makes mistakes; not a replacement for a chavrusa) was accepted
+  myButtons?: MyButton[];         // the learner's own AI buttons (Settings → Extras → My buttons)
   voice: string;            // voice for Basic talk mode (OpenAI text-to-speech)
   talkMode: 'live' | 'basic'; // live = natural speech-to-speech (GPT-Live); basic = cheaper step-by-step voice
   liveVoice: string;        // voice for Live mode

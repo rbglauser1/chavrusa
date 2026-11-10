@@ -2366,3 +2366,17 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 /* A source named in an explanation: tap to open it right there */
 .lx-src { display: inline; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--rule)); background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 0 8px; margin: 0 2px; font: 0.8em var(--f-ui); cursor: pointer; vertical-align: 1px; }
 .lx-src.on { background: var(--accent); color: #fff; }
+/* My buttons (components/MyButtons.tsx) */
+.mb-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--rule); padding: 8px 0; }
+.mb-row.off { opacity: .55; }
+.mb-name { display: flex; flex-direction: column; }
+.mb-name small { font-size: 12px; }
+.mb-acts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; font-size: 13px; }
+.mb-add { display: flex; gap: 14px; align-items: center; margin: 10px 0; }
+.mb-edit { border: 1px solid var(--rule); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
+.mb-edit label { display: block; font-size: 13px; color: var(--soft); margin-bottom: 10px; }
+.mb-edit input, .mb-edit textarea, .mb-edit select { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); color: var(--ink); font: 15px var(--f-ui); }
+.mb-ex { display: flex; flex-direction: column; gap: 6px; }
+.mb-ex-item { display: flex; flex-direction: column; gap: 2px; text-align: left; border: 1px dashed var(--rule); border-radius: 10px; padding: 8px 10px; background: transparent; color: var(--ink); font: 14px var(--f-ui); cursor: pointer; }
+.mb-ex-item span { font-size: 12.5px; }
+.smap-btn.on { background: var(--accent-soft); border-color: var(--accent); }
