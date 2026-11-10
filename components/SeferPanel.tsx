@@ -771,7 +771,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
                   {sOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
-                    <SourcesBox groups={rel.lines[partNum(i)]} tanakh={rel.tanakh} onClose={() => flipIn(setSOpen, i)}
+                    <SourcesBox groups={rel.lines[partNum(i)]} tanakh={rel.tanakh} lineRef={partRef(i)} onClose={() => flipIn(setSOpen, i)}
                       onOpen={onOpenExact ? (r) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined} />
                   )}
                   {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).sort(([a], [b]) => commRank(a) - commRank(b)).map(([k, c]) => {

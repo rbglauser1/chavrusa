@@ -2178,3 +2178,11 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 /* The AI's explanation (and the English in Sources) follows the English text size in Settings, never smaller than 17px. */
 .line-x .lx-p { font-size: max(17px, var(--en-size, 18px)); line-height: 1.55; }
 .line-x .smap-link-text .en { font-size: max(16px, calc(var(--en-size, 18px) * .95)); line-height: 1.5; color: var(--ink); }
+/* Ideas from these sources (components/LineExtras.tsx) */
+.lx-ideas-btn { margin: 2px 0 8px; }
+.lx-ideas { margin: 0 0 10px; padding: 8px 0 2px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.lx-idea { margin-bottom: 10px; }
+.lx-idea .lx-p { margin-bottom: 4px; }
+.lx-refs { padding: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.lx-refs button { border: 1px solid var(--rule); background: transparent; color: var(--ink); border-radius: 999px; padding: 2px 10px; font: 12.5px/1.5 var(--f-ui); cursor: pointer; }
+.lx-refs button.on { border-color: var(--accent); background: var(--accent-soft); }
