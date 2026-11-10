@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { unstable_cache } from 'next/cache';
 import { costUsd, KEPT_MODEL } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -48,7 +47,7 @@ async function makeReview(ref: string): Promise<{ questions: Question[] }> {
   return { questions };
 }
 
-const cached = (ref: string) => unstable_cache(() => keep('review-v2-opus', ref, () => makeReview(ref)), ['review-v2-opus', ref], { revalidate: 60 * 60 * 24 * 30 })();
+const cached = (ref: string) => keep('review-v2-opus', ref, () => makeReview(ref), (r) => !r.questions.length);
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');

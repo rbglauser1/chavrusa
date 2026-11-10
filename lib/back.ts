@@ -7,44 +7,52 @@
 // matches what is open.
 import { useEffect, useRef } from 'react';
 
-type Layer = { id: number; onBack: () => void };
+type Layer = { id: number; onBack: () => void; pushed: boolean };
 const stack: Layer[] = [];
 let seq = 0;
-let skip = 0;            // our own history.go() calls still to come back as popstate events
-const waiting: number[] = []; // layers opened while one of our history.go() calls is still on its way
+let moving = 0;          // our own history.go() calls still on their way
 let ready = false;
+
+// Add the history steps of layers that were opened while one of our own steps back was still on its way (a step
+// pushed in that moment would be the one taken back).
+function flush() {
+  moving = 0;
+  for (const l of stack) if (!l.pushed) { l.pushed = true; history.pushState({ layer: l.id }, ''); }
+}
+let flushTimer: number | null = null;
 
 function init() {
   if (ready || typeof window === 'undefined') return;
   ready = true;
-  window.addEventListener('popstate', () => {
-    if (skip > 0) {
-      skip--;
-      if (!skip) while (waiting.length) history.pushState({ layer: waiting.shift() }, '');
-      return;
-    }
-    const top = stack.pop();
-    top?.onBack();
+  window.addEventListener('popstate', (e) => {
+    // Where the history landed: the layer whose step it is (0: beneath them all). Every open layer above it closes.
+    // A layer the app closed itself is already off the stack, so its own step back closes nothing; and going
+    // forward lands on a step of a layer that is gone, which closes nothing either.
+    const landed = Number((e.state as { layer?: number } | null)?.layer ?? 0);
+    while (stack.length && stack[stack.length - 1].pushed && stack[stack.length - 1].id > landed) stack.pop()!.onBack();
+    if (moving > 0 && --moving === 0) { if (flushTimer) window.clearTimeout(flushTimer); flush(); }
   });
 }
 
 function openLayer(onBack: () => void): number {
   init();
   const id = ++seq;
-  stack.push({ id, onBack });
-  if (skip > 0) waiting.push(id); // wait until our own step back has landed, or it would undo this one
-  else history.pushState({ layer: id }, '');
+  const pushed = moving === 0;
+  stack.push({ id, onBack, pushed });
+  if (pushed) history.pushState({ layer: id }, '');
   return id;
 }
 
 function closeLayer(id: number) {
   const i = stack.findIndex((l) => l.id === id);
   if (i < 0) return; // already closed by back
-  const removed = stack.splice(i);
-  // Steps not pushed yet are just forgotten; the pushed ones are taken back.
-  let pushed = 0;
-  for (const l of removed) { const w = waiting.indexOf(l.id); if (w >= 0) waiting.splice(w, 1); else pushed++; }
-  if (pushed > 0) { skip++; history.go(-pushed); }
+  const steps = stack.splice(i).filter((l) => l.pushed).length; // it, and anything opened above it
+  if (!steps) return;
+  moving++;
+  history.go(-steps);
+  // Should the browser never report that step (some merge several into one), carry on after a moment.
+  if (flushTimer) window.clearTimeout(flushTimer);
+  flushTimer = window.setTimeout(flush, 500);
 }
 
 /** While `open`, the phone's / browser's back calls `onBack` (which should close it) instead of leaving the app. */

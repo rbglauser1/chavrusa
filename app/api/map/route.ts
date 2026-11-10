@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { unstable_cache } from 'next/cache';
 import { costUsd, KEPT_MODEL } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -101,8 +100,8 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   return { overview, topics, steps, model: model.label, usd: costUsd(model, r.inputTokens, r.outputTokens) };
 }
 
-// Kept for good (lib/keep): each amud's map is paid for once, ever; the server's month cache sits in front for speed.
-const cached = (ref: string) => unstable_cache(() => keep('sugya-map-v5-opus', ref, () => makeMap(ref)), ['sugya-map-v5-opus', ref], { revalidate: 60 * 60 * 24 * 30 })();
+// Kept for good (lib/keep): each amud's map is paid for once, ever. An empty one (the text couldn't be read) isn't kept.
+const cached = (ref: string) => keep('sugya-map-v5-opus', ref, () => makeMap(ref), (m) => !m.steps.length);
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');

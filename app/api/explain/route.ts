@@ -56,6 +56,6 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   const m = ref.match(/^(.*?):(\d+)$/);
   if (!m || / on /i.test(ref) || /^Mine /.test(ref)) return NextResponse.json({ text: '' });
-  try { return NextResponse.json(await keep('explain-v1', ref, () => makeExplain(m[1], Number(m[2])))); }
+  try { return NextResponse.json(await keep('explain-v1', ref, () => makeExplain(m[1], Number(m[2])), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ text: '', error: (e as Error).message }); }
 }

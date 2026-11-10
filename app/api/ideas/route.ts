@@ -20,7 +20,7 @@ Use ONLY what is written in the seforim given. Do not add sources, opinions or i
 Write in plain, clear English. For the learning terms a yeshiva learner knows, and for words the text quotes, write the Hebrew or Aramaic in Hebrew letters (גזירה שוה, נדה, טהרות); never spell Hebrew out in English letters. Names of people and books in English as usual. Call God "Hashem". On halacha: say what the sefer rules; this is learning, not a ruling for practice.
 Reply with JSON only: [{"text": "...", "refs": ["exact reference(s) from the list"]}]`;
 
-async function makeIdeas(base: string, n: number): Promise<{ points: { text: string; refs: string[] }[] }> {
+async function makeIdeas(base: string, n: number): Promise<{ points: { text: string; refs: string[] }[]; none?: boolean }> {
   await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const g = (await relatedLines(base))[String(n)];
@@ -50,13 +50,17 @@ async function makeIdeas(base: string, n: number): Promise<{ points: { text: str
   await logCost({ sessionId: null, kind: 'ideas', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const known = new Set(pick.map((x) => x.ref));
   let points: { text: string; refs: string[] }[] = [];
+  let answered = false; // a proper answer came back, even if it was "nothing to add"
   try {
-    const arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]');
+    const arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? 'x');
+    answered = Array.isArray(arr);
     points = (Array.isArray(arr) ? arr : []).filter((p) => p && typeof p.text === 'string').map((p) => ({
       text: String(p.text).trim().slice(0, 700),
       refs: (Array.isArray(p.refs) ? p.refs : []).map(String).filter((x: string) => known.has(x)).slice(0, 3),
     })).filter((p) => p.text && p.refs.length).slice(0, 4);
   } catch { points = []; }
+  // The AI read the sources and found nothing to add: kept as such, so it isn't paid for again on every tap.
+  if (!points.length && answered) return { points: [], none: true };
   if (!points.length) throw new Error('The ideas did not come back in the right form.'); // not kept: tried again next time
   return { points };
 }
@@ -66,6 +70,6 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   const m = ref.match(/^(.*?):(\d+)$/);
   if (!m || / on /i.test(ref) || /^Mine /.test(ref)) return NextResponse.json({ points: [] });
-  try { return NextResponse.json(await keep('ideas-v1', ref, () => makeIdeas(m[1], Number(m[2])))); }
+  try { return NextResponse.json(await keep('ideas-v1', ref, () => makeIdeas(m[1], Number(m[2])), (x) => !x.points.length && !x.none)); }
   catch (e) { return NextResponse.json({ points: [], error: (e as Error).message }); }
 }
