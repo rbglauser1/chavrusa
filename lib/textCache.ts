@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'crypto';
 import { getSettings } from './db';
-import { readJson, writeJson } from './store';
+import { readJson, writeJson, writtenAt } from './store';
 
 // Saved texts (Settings → Extras, on by default): every text and list of links fetched from Sefaria is also kept in
 // the app's own storage. Sefaria is still asked first (through Vercel's week-long shared cache, as before), so a
@@ -26,8 +26,10 @@ export async function saveCopy(url: string, data: unknown): Promise<void> {
   if (last && Date.now() - last < MONTH) return;
   if (!(await cacheOn())) return;
   savedHere.set(url, Date.now());
-  const old = await readJson<{ at: number }>(keyOf(url));
-  if (old && Date.now() - old.at < MONTH) return;
+  // Is there a recent copy already? Ask for the file's date only: downloading the whole copy just to read its date
+  // used up the storage plan's monthly transfer for nothing.
+  const at = await writtenAt(keyOf(url));
+  if (at && Date.now() - at < MONTH) return;
   await writeJson(keyOf(url), { at: Date.now(), url, data }).catch(() => { savedHere.delete(url); });
 }
 

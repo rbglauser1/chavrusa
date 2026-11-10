@@ -210,7 +210,7 @@ export async function approvedList(): Promise<ApprovedRow[]> {
       // A thousand at a time (Supabase's limit per request), so a long list is never cut short.
       const all: ApprovedRow[] = [];
       for (let from = 0; from < 20_000; from += 1000) {
-        const page = check(await db().from('approved_sources').select('kind, name, status, lean').order('name').range(from, from + 999)) as ApprovedRow[];
+        const page = check(await db().from('approved_sources').select('kind, name, status, lean').order('name').order('kind').range(from, from + 999)) as ApprovedRow[];
         all.push(...page);
         if (page.length < 1000) break;
       }

@@ -15,7 +15,8 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then((r) => { if (r.ok && !r.redirected) caches.open(SHELL).then((c) => c.put('/', r.clone())); return r; })
+    // Only the app's own main page is kept as the offline copy (not the login page, the guide or a lab page).
+    e.respondWith(fetch(req).then((r) => { if (r.ok && !r.redirected && url.pathname === '/') { const copy = r.clone(); caches.open(SHELL).then((c) => c.put('/', copy)); } return r; })
       .catch(() => caches.open(SHELL).then((c) => c.match('/')).then((r) => r || new Response('Offline', { status: 503 }))));
   }
 });

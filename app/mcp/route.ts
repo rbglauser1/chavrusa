@@ -74,6 +74,8 @@ const ALIAS: [RegExp, string][] = [
 const clip = (t: string, max: number) => (t.length > max ? t.slice(0, max).replace(/\s+\S*$/, '') + ' …' : t);
 
 async function lines(ref: string, from = 1, count = 6): Promise<string> {
+  // This endpoint is open to the outside: the learner's own uploaded texts ("Mine …") are never served here.
+  if (/^\s*Mine\b/i.test(ref)) return `No text found for "${ref}". Try find_place first.`;
   const approved = await approvedList();
   let s: Awaited<ReturnType<typeof getText>>;
   try { s = await getText(ref, approved); }

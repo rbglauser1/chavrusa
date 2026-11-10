@@ -21,6 +21,16 @@ export async function readJson<T>(path: string): Promise<T | null> {
     return JSON.parse(await data.text()) as T;
   } catch { return null; }
 }
+/** When a file was last written (ms), or null if it isn't there. Looks only at the file's listing, without downloading it. */
+export async function writtenAt(path: string): Promise<number | null> {
+  try {
+    const i = path.lastIndexOf('/');
+    const { data, error } = await db().storage.from(BUCKET).list(i < 0 ? '' : path.slice(0, i), { search: path.slice(i + 1), limit: 5 });
+    if (error || !data) return null;
+    const f = data.find((x) => x.name === path.slice(i + 1));
+    return f ? Date.parse(f.updated_at ?? f.created_at ?? '') || Date.now() : null;
+  } catch { return null; }
+}
 export async function writeJson(path: string, v: unknown): Promise<void> {
   await ensure();
   const { error } = await db().storage.from(BUCKET).upload(path, Buffer.from(JSON.stringify(v)), { contentType: 'application/json', upsert: true });

@@ -43,6 +43,7 @@ export interface BookShape {
   // chapters: perek/chapter numbers 1..count; talmud: dapim 2..lastDaf (a/b); parts: named sections
   kind: 'chapters' | 'talmud' | 'parts' | 'open';
   count?: number; lastDaf?: number; unit?: string;
+  endsOnA?: boolean; // talmud: the masechta ends on amud a of its last daf (there is no amud b)
   parts?: { name: string; he: string }[];
 }
 
@@ -91,7 +92,7 @@ function shapeOf(title: string, he: string, node: any, counted: any): BookShape 
   const count = sectionCount(node, counted);
   if (types[0] === 'Talmud') {
     // Sections are counted in amudim from 1a; the Gemara starts at 2a.
-    return { title, he, kind: 'talmud', lastDaf: count ? Math.ceil(count / 2) : 0, unit: 'Daf' };
+    return { title, he, kind: 'talmud', lastDaf: count ? Math.ceil(count / 2) : 0, endsOnA: count % 2 === 1, unit: 'Daf' };
   }
   if (count && (node?.depth ?? 2) > 1) return { title, he, kind: 'chapters', count, unit: unitName };
   return { title, he, kind: 'open' };

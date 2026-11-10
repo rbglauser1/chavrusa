@@ -8,39 +8,54 @@ import { readJson, writeJson } from './store';
 // when the learning reached its last lines, or went on past it into the next one. Worked out again only when a session
 // has changed since, and kept.
 export interface BookProgress { book: string; unit: 'amud' | 'perek'; learned: string[]; total: number | null; lastAt: string }
-type Kept = { sig: string; books: BookProgress[] };
+// Kept per session, so only a session that changed since is read again (reading every session's texts each time
+// was slow and heavy on the database).
+type PerSession = { at: string; done: string[]; touched: string[] }; // done: sections finished; touched: books learned in
+type Kept = { v: 2; per: Record<string, PerSession>; sig: string; books: BookProgress[] };
 
 const sectionOf = (ref: string) => ref.replace(/:\d+(-\d+)?$/, '');
 const bookOf = (base: string) => base.replace(/ \d+[ab]?$/, '');
 
+async function readSession(id: string): Promise<{ done: string[]; touched: string[] }> {
+  const [msgs, srcs] = await Promise.all([listMessages(id, 400), listSources(id)]);
+  const lines = new Map<string, number>(); // base -> lines in it
+  for (const x of srcs) if (x.data?.he?.length && !/ on /i.test(x.ref)) lines.set(sectionOf(x.ref), x.data.he.length);
+  const reached = new Map<string, number>(); // base -> furthest line
+  for (const m of msgs) {
+    if (m.role !== 'assistant' || !m.meta) continue;
+    const meta = m.meta as { pos?: { base?: string; n?: number }; line?: { ref?: string }; opened?: string };
+    const at = meta.pos?.base ? { base: meta.pos.base, n: meta.pos.n ?? 1 }
+      : meta.line?.ref ? { base: sectionOf(meta.line.ref), n: Number(meta.line.ref.match(/:(\d+)/)?.[1] ?? 1) } : null;
+    if (!at || / on /i.test(at.base) || /^Mine /.test(at.base)) continue;
+    reached.set(at.base, Math.max(reached.get(at.base) ?? 0, at.n));
+  }
+  const done: string[] = [], touched = new Set<string>();
+  for (const [base, n] of reached) {
+    touched.add(bookOf(base));
+    const len = lines.get(base);
+    const next = nextSection(base);
+    if ((len && n >= len - 1) || (next && reached.has(next))) done.push(base);
+  }
+  return { done, touched: [...touched] };
+}
+
 export async function progress(): Promise<BookProgress[]> {
-  const sessions = await listSessions();
-  const sig = sessions.slice(0, 100).map((s) => `${s.id}:${s.updated_at}`).join('|');
-  const kept = await readJson<Kept>('progress/summary.json');
+  const sessions = (await listSessions()).slice(0, 100);
+  const sig = sessions.map((s) => `${s.id}:${s.updated_at}`).join('|');
+  const had = await readJson<Kept>('progress/summary.json');
+  const kept = had?.v === 2 ? had : null;
   if (kept && kept.sig === sig) return kept.books;
 
+  const per: Record<string, PerSession> = {};
   const learned = new Map<string, Set<string>>(); // book -> bases
   const lastAt = new Map<string, string>();
-  for (const s of sessions.slice(0, 100)) {
-    const [msgs, srcs] = await Promise.all([listMessages(s.id, 400), listSources(s.id)]);
-    const lines = new Map<string, number>(); // base -> lines in it
-    for (const x of srcs) if (x.data?.he?.length && !/ on /i.test(x.ref)) lines.set(sectionOf(x.ref), x.data.he.length);
-    const reached = new Map<string, number>(); // base -> furthest line
-    for (const m of msgs) {
-      if (m.role !== 'assistant' || !m.meta) continue;
-      const meta = m.meta as { pos?: { base?: string; n?: number }; line?: { ref?: string }; opened?: string };
-      const at = meta.pos?.base ? { base: meta.pos.base, n: meta.pos.n ?? 1 }
-        : meta.line?.ref ? { base: sectionOf(meta.line.ref), n: Number(meta.line.ref.match(/:(\d+)/)?.[1] ?? 1) } : null;
-      if (!at || / on /i.test(at.base) || /^Mine /.test(at.base)) continue;
-      reached.set(at.base, Math.max(reached.get(at.base) ?? 0, at.n));
-    }
-    for (const [base, n] of reached) {
-      const len = lines.get(base);
-      const next = nextSection(base);
-      const done = (len && n >= len - 1) || (next && reached.has(next));
+  for (const s of sessions) {
+    const old = kept?.per[s.id];
+    const cur: PerSession = old && old.at === s.updated_at ? old : { at: s.updated_at, ...(await readSession(s.id).catch(() => ({ done: [], touched: [] }))) };
+    per[s.id] = cur;
+    for (const book of cur.touched) if (!lastAt.has(book) || lastAt.get(book)! < s.updated_at) lastAt.set(book, s.updated_at);
+    for (const base of cur.done) {
       const book = bookOf(base);
-      if (!lastAt.has(book) || lastAt.get(book)! < s.updated_at) lastAt.set(book, s.updated_at);
-      if (!done) continue;
       if (!learned.has(book)) learned.set(book, new Set());
       learned.get(book)!.add(base);
     }
@@ -51,12 +66,12 @@ export async function progress(): Promise<BookProgress[]> {
     let total: number | null = null;
     try {
       const sh = await bookShape(book);
-      total = sh.kind === 'talmud' && sh.lastDaf ? (sh.lastDaf - 1) * 2 : sh.kind === 'chapters' && sh.count ? sh.count : null;
+      total = sh.kind === 'talmud' && sh.lastDaf ? (sh.lastDaf - 1) * 2 - (sh.endsOnA ? 1 : 0) : sh.kind === 'chapters' && sh.count ? sh.count : null;
     } catch { /* unknown size */ }
     books.push({ book, unit: talmud ? 'amud' : 'perek', learned: [...set], total, lastAt: lastAt.get(book) ?? '' });
   }
   books.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
-  await writeJson('progress/summary.json', { sig, books }).catch(() => {});
+  await writeJson('progress/summary.json', { v: 2, per, sig, books } satisfies Kept).catch(() => {});
   return books;
 }
 

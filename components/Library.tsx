@@ -8,7 +8,7 @@ import { getBook, listBooks, offlineOn, putBook, putText, removeBook, type Offli
 // Offline reading (Settings → Extras): download a whole masechta or sefer to the phone.
 function Download({ shape }: { shape: Shape }) {
   const refs = shape.kind === 'talmud'
-    ? Array.from({ length: Math.max(0, (shape.lastDaf ?? 0) - 1) }, (_, i) => i + 2).flatMap((d) => [`${shape.title} ${d}a`, `${shape.title} ${d}b`])
+    ? Array.from({ length: Math.max(0, (shape.lastDaf ?? 0) - 1) }, (_, i) => i + 2).flatMap((d) => (shape.endsOnA && d === shape.lastDaf ? [`${shape.title} ${d}a`] : [`${shape.title} ${d}a`, `${shape.title} ${d}b`]))
     : shape.kind === 'chapters' ? Array.from({ length: shape.count ?? 0 }, (_, i) => `${shape.title} ${i + 1}`) : [];
   const [have, setHave] = useState<OfflineBook | null | undefined>(undefined);
   const [prog, setProg] = useState<string>('');
@@ -43,7 +43,7 @@ function Download({ shape }: { shape: Shape }) {
 type Item = { kind: 'category' | 'book'; name: string; he: string };
 type Parsha = { name: string; he: string; start: string; aliyos: string[] };
 const ALIYOS = ['Rishon', 'Sheni', 'Shlishi', "Revi'i", 'Chamishi', 'Shishi', "Shevi'i", 'Maftir'];
-type Shape = { parshiyos?: Parsha[]; title: string; he: string; kind: 'chapters' | 'talmud' | 'parts' | 'open'; count?: number; lastDaf?: number; unit?: string; parts?: { name: string; he: string }[]; error?: string };
+type Shape = { parshiyos?: Parsha[]; title: string; he: string; kind: 'chapters' | 'talmud' | 'parts' | 'open'; count?: number; lastDaf?: number; endsOnA?: boolean; unit?: string; parts?: { name: string; he: string }[]; error?: string };
 
 const UNIT_LABEL: Record<string, string> = { Chapter: 'Perek', Perek: 'Perek', Siman: 'Siman', Daf: 'Daf', Parasha: 'Parsha' };
 
@@ -251,7 +251,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
                   <span key={d} className="daf-cell">
                     <b>{d}</b>
                     <button disabled={busy} onClick={() => open(`${shape.title} ${d}a`)}>a</button>
-                    <button disabled={busy} onClick={() => open(`${shape.title} ${d}b`)}>b</button>
+                    {!(shape.endsOnA && d === shape.lastDaf) && <button disabled={busy} onClick={() => open(`${shape.title} ${d}b`)}>b</button>}
                   </span>
                 ))}
               </div>
