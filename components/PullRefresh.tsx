@@ -16,6 +16,7 @@ function scrollerAt(el: Element | null): Element | null {
 
 export function PullRefresh() {
   const [pull, setPull] = useState(0);
+  const [going, setGoing] = useState(false);
   const start = useRef<{ y: number; x: number } | null>(null);
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
@@ -36,10 +37,24 @@ export function PullRefresh() {
       if (dy <= 0 || dx > dy) { setPull(0); return; }
       setPull(Math.min(dy * 0.6, NEED * 1.4));
     };
-    const up = () => {
-      if (start.current && pullRef.current >= NEED) { setPull(NEED); window.location.reload(); return; }
-      start.current = null; setPull(0);
+    const reset = () => { start.current = null; setPull(0); setGoing(false); };
+    const up = (e: TouchEvent) => {
+      // Only a real let-go reloads (a cancelled touch, e.g. iOS taking over the scroll, just resets).
+      if (e.type === 'touchend' && start.current && pullRef.current >= NEED) {
+        start.current = null;
+        setGoing(true);
+        try { window.location.reload(); } catch { /* fall through */ }
+        // If the reload didn't happen (iOS sometimes ignores it in a home-screen app), go to the page fresh instead,
+        // and never leave the sign hanging.
+        window.setTimeout(() => { try { window.location.replace(window.location.pathname + window.location.search); } catch { /* ignore */ } }, 1500);
+        window.setTimeout(reset, 4000);
+        return;
+      }
+      reset();
     };
+    const back = () => reset(); // coming back to the app (or from the page cache): no leftover sign
+    window.addEventListener('pageshow', back);
+    document.addEventListener('visibilitychange', back);
     document.addEventListener('touchstart', down, { passive: true });
     document.addEventListener('touchmove', move, { passive: true });
     document.addEventListener('touchend', up);
@@ -47,6 +62,7 @@ export function PullRefresh() {
     return () => {
       document.removeEventListener('touchstart', down); document.removeEventListener('touchmove', move);
       document.removeEventListener('touchend', up); document.removeEventListener('touchcancel', up);
+      window.removeEventListener('pageshow', back); document.removeEventListener('visibilitychange', back);
     };
   }, []);
   const pullRef = useRef(0);
@@ -56,7 +72,7 @@ export function PullRefresh() {
   return (
     <div className="ptr" style={{ transform: `translate(-50%, ${Math.min(pull, NEED) - 44}px)`, opacity: Math.min(1, pull / NEED) }} aria-hidden="true">
       <span className={`ptr-arrow ${ready ? 'ready' : ''}`}>↓</span>
-      <span>{ready ? 'Let go to refresh' : 'Pull to refresh'}</span>
+      <span>{going ? 'Refreshing…' : ready ? 'Let go to refresh' : 'Pull to refresh'}</span>
     </div>
   );
 }
