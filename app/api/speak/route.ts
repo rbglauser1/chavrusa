@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { VOICE, VOICES } from '@/lib/config';
 import { getSettings, logCost } from '@/lib/db';
 import { prepareForSpeech, speechInstructions } from '@/lib/pronounce';
+import { outOfCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
   if (!key) return NextResponse.json({ error: 'OPENAI_API_KEY is not set.' }, { status: 500 });
   const { text, sessionId, voice } = await req.json().catch(() => ({}));
   if (!text) return NextResponse.json({ error: 'text required' }, { status: 400 });
+  { const out = await outOfCredit(); if (out) return NextResponse.json({ error: out }, { status: 402 }); } // credits (lib/credits.ts)
   const s = await getSettings();
   const input = prepareForSpeech(String(text), s.nusach);
 

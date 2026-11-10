@@ -5,6 +5,7 @@ import { TRANSLATE_PROMPT } from '@/lib/instructions';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
 import { keep } from '@/lib/keep';
+import { needCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
     const settings = await getSettings();
     // Kept for good (lib/keep): the same line is translated once, ever.
     const translation = await keep('translate-v1', String(text).slice(0, 6000), async () => {
+    await needCredit();
     const model = MODELS[settings.provider].basic;
     const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
     const r = await run({

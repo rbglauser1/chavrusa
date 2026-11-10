@@ -6,6 +6,7 @@ import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
+import { needCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -19,6 +20,7 @@ Reply with JSON only, no other words: [{"line": 1, "summary": "..."}, ...] in or
 type Move = { line: number; summary: string };
 
 async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }> {
+  await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(ref, approved);
   if (!s.verdict.allowed || !s.he.length) return { moves: [], usd: 0 };

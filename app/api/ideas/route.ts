@@ -6,6 +6,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { relatedLines, type Item } from '@/lib/related';
+import { needCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -20,6 +21,7 @@ Write in plain, clear English. For the learning terms a yeshiva learner knows, a
 Reply with JSON only: [{"text": "...", "refs": ["exact reference(s) from the list"]}]`;
 
 async function makeIdeas(base: string, n: number): Promise<{ points: { text: string; refs: string[] }[] }> {
+  await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const g = (await relatedLines(base))[String(n)];
   if (!g) return { points: [] };

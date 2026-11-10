@@ -6,6 +6,7 @@ import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
+import { needCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // Opus can take a while on a long amud
@@ -57,6 +58,7 @@ export type Topic = { title: string; line: number; intro: string; background: st
 export type SugyaMapData = { overview: string; topics: Topic[]; steps: Step[]; model?: string; usd?: number };
 
 async function makeMap(ref: string): Promise<SugyaMapData> {
+  await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(ref, approved);
   if (!s.verdict.allowed || !s.he.length) return { overview: '', topics: [], steps: [] };

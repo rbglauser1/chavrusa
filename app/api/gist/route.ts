@@ -6,6 +6,7 @@ import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
+import { needCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -16,6 +17,7 @@ const PROMPT = `You summarize the comments of a classic commentator for a learne
 Reply with JSON only: an array of strings, one per numbered comment, in the same order, the same count.`;
 
 async function makeGists(title: string, refs: string[]): Promise<Record<string, string>> {
+  await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const got = await Promise.all(refs.map((r) => getText(r, approved).catch(() => null)));
   const items = refs.map((r, i) => ({ ref: r, he: got[i] && got[i]!.verdict.allowed ? got[i]!.he.map(stripNikud).join(' ') : '' })).filter((x) => x.he);

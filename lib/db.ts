@@ -168,8 +168,14 @@ export async function sessionCost(sessionId: string): Promise<number> {
 
 export async function costSummary(userId = OWNER_ID) {
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
-  const rows = check(await db().from('cost_log').select('model, kind, input_tokens, output_tokens, cost_usd, created_at')
-    .eq('user_id', userId).gte('created_at', since)) as { model: string; kind: string; input_tokens: number; output_tokens: number; cost_usd: number | string }[];
+  // A thousand at a time: Supabase returns at most 1,000 rows per request, and a busy month has more.
+  const rows: { model: string; kind: string; input_tokens: number; output_tokens: number; cost_usd: number | string }[] = [];
+  for (let from = 0; from < 50_000; from += 1000) {
+    const page = check(await db().from('cost_log').select('model, kind, input_tokens, output_tokens, cost_usd, created_at')
+      .eq('user_id', userId).gte('created_at', since).order('created_at').range(from, from + 999)) as typeof rows;
+    rows.push(...page);
+    if (page.length < 1000) break;
+  }
   const byModel: Record<string, { exchanges: number; inputTokens: number; outputTokens: number; usd: number }> = {};
   let total = 0;
   for (const r of rows) {
@@ -200,7 +206,16 @@ let approvedCache: { at: number; rows: ApprovedRow[] } | null = null;
 export async function approvedList(): Promise<ApprovedRow[]> {
   if (approvedCache && Date.now() - approvedCache.at < 60_000) return approvedCache.rows;
   const [rows, s] = await Promise.all([
-    db().from('approved_sources').select('kind, name, status, lean').then((r) => check(r) as ApprovedRow[]),
+    (async () => {
+      // A thousand at a time (Supabase's limit per request), so a long list is never cut short.
+      const all: ApprovedRow[] = [];
+      for (let from = 0; from < 20_000; from += 1000) {
+        const page = check(await db().from('approved_sources').select('kind, name, status, lean').order('name').range(from, from + 999)) as ApprovedRow[];
+        all.push(...page);
+        if (page.length < 1000) break;
+      }
+      return all;
+    })(),
     getSettings().catch(() => null),
   ]);
   // "Allow all seforim" (Settings): blocked entries still win; everything else is allowed.

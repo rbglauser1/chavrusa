@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSettings, logCost } from '@/lib/db';
 import { costUsd, MODELS } from '@/lib/config';
+import { outOfCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -15,6 +16,7 @@ export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => ({}));
   const m = String(b.image ?? '').match(/^data:(image\/(?:jpeg|png|webp|gif));base64,(.+)$/);
   if (!m) return NextResponse.json({ error: 'No page image.' }, { status: 400 });
+  { const out = await outOfCredit(); if (out) return NextResponse.json({ error: out }, { status: 402 }); } // credits (lib/credits.ts)
   if (m[2].length > 7_000_000) return NextResponse.json({ error: 'That page image is too large.' }, { status: 400 });
   const s = await getSettings().catch(() => null);
   const model = MODELS.anthropic.middle;

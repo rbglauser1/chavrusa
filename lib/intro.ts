@@ -6,6 +6,7 @@ import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
+import { needCredit } from './credits';
 
 // The amud intro: one paragraph telling the learner what's coming on this amud (or perek / siman), shown at its top
 // and, in Read, Explain, Ask, said by the voice when the amud begins. Made once per amud by the AI, then kept.
@@ -17,6 +18,7 @@ Write ONE paragraph of about 90 to 140 words, in plain, warm, modern English, as
 It is a map of the amud, not the explanation: no line-by-line detail. Do not quote Hebrew or Aramaic, no lists, no headings, no markdown. Use yeshivish Ashkenazi transliteration for names and terms (Shabbos, Rav Yehudah, Tosafos, the Gemara), say Hashem for G-d's Name, and add nothing that is not in the text.`;
 
 async function makeIntro(ref: string): Promise<string> {
+  await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(ref, approved);
   if (!s.verdict.allowed || !s.he.length) return '';

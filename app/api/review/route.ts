@@ -6,6 +6,7 @@ import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
+import { needCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -22,6 +23,7 @@ Reply with JSON only: [{"q": "...", "a": "...", "line": 1}, ...]`;
 export type Question = { q: string; a: string; line: number };
 
 async function makeReview(ref: string): Promise<{ questions: Question[] }> {
+  await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(ref, approved);
   if (!s.verdict.allowed || !s.he.length) return { questions: [] };

@@ -5,6 +5,7 @@ import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
+import { needCredit } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -22,6 +23,7 @@ Be clear above all: every sentence must make sense to someone who has not yet le
 const MAIN_COMM = (base: string) => (/^Mishnah /.test(base) ? 'Bartenura' : 'Rashi');
 
 async function makeExplain(base: string, n: number): Promise<{ text: string }> {
+  await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(base, approved);
   if (!s.verdict.allowed || !s.he.length || n > s.he.length) return { text: '' };

@@ -549,6 +549,10 @@ export const DEFAULT_SETTINGS: Settings = {
 export const CLASSIC_CUTOFF_YEAR = 1900;
 
 // For now there is one learner. Later this becomes the logged-in user's ID.
+// Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
+// this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
+export const OPTIONAL_SETTING_KEYS = ['billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn'] as const;
+
 export const OWNER_ID = 'owner';
 
 // ---------- Voice (phase 1: OpenAI). Later another provider such as ElevenLabs can be added here. ----------
