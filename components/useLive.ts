@@ -9,6 +9,7 @@ import { silentWav } from './useVoice';
 import { endHeard, missingHebrew, missingTail } from '@/lib/skipCheck';
 
 let READS: 'all' | 'english' | 'gist' = 'all'; // who reads the text in this call (Settings → Voice)
+let SEPH = false; // Sephardi chosen: the voice reads lashon kodesh with Israeli Sephardi pronunciation
 let HE_MODE: HeRead = 'join-kh'; // how the voice gets the lashon kodesh (from the call's settings)
 const toSpeech = (he: string) => voiceHe(he, HE_MODE);
 
@@ -467,7 +468,7 @@ export function useLive(opts: {
     const gist = READS === 'gist' && first?.en ? first.en.slice(0, 900) : '';
     answering.current = true;
     handed.current = { text: exact, at: Date.now() };
-    for (const c of chunks(g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: in your American yeshivish accent (never Israeli) and your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`))) send({ type: 'session.instructions.append', delegation_id: null, content: c });
+    for (const c of chunks(g(`STOP what you are saying right now. The learner tapped ${ref}, line ${n} in the Sefer: that is where we are now, and it overrides wherever you were. ${gist ? `He reads it himself. In English it says: "${gist}". In a sentence or two, give the gist of it in your own words (do not read it), then stop and wait for the learner.` : exact ? `Read it now, the way a chavrusa reads inside: ${SEPH ? 'with Israeli Sephardi pronunciation for the lashon kodesh' : 'in your American yeshivish accent (never Israeli)'} and your lively voice, at the speed and with the pauses set in your instructions, with feeling, ${READS === 'english' ? 'the English only (he reads the lashon kodesh himself)' : 'phrase by phrase, the lashon kodesh and then its English'}, leaving nothing out: ${exact}. Then stop and wait for the learner.` : 'Say in a few words that we are there now, and wait for the learner.'} Do not go back to what you were saying before, and do not go past this line by yourself.`))) send({ type: 'session.instructions.append', delegation_id: null, content: c });
     if (exact) { toCheck(`⟪${exact}⟫`); for (const c of textChunks(exact)) send({ type: 'session.commentary.append', delegation_id: null, content: g(c) }); }
   }, [send]);
   pointToRef.current = pointTo;
@@ -542,7 +543,7 @@ export function useLive(opts: {
     toCheck(`⟪${ex}⟫`);
     early.current = { id: delegationId, text: ex, at: Date.now(), from: voiceAll.current.length };
     logLine('AUTO', 'reading the next piece at once; the explanation follows when it has been read');
-    send({ type: 'session.instructions.append', delegation_id: delegationId, content: 'For this result: the text between ⟪ and ⟫ is the next piece of the text itself. Read it now, the way a chavrusa reads inside, in your American yeshivish accent (never Israeli): every phrase in order to the end, each lashon kodesh phrase and then its English. Then stop: what comes after the reading follows in a moment.' });
+    send({ type: 'session.instructions.append', delegation_id: delegationId, content: `For this result: the text between ⟪ and ⟫ is the next piece of the text itself. Read it now, the way a chavrusa reads inside, ${SEPH ? 'with Israeli Sephardi pronunciation for the lashon kodesh' : 'in your American yeshivish accent (never Israeli)'}: every phrase in order to the end, each lashon kodesh phrase and then its English. Then stop: what comes after the reading follows in a moment.` });
     for (const c of textChunks(ex)) send({ type: 'session.commentary.append', delegation_id: delegationId, content: g(c) });
   }, [send]);
   const explainAfter = useCallback((delegationId: string, text: string) => {
@@ -938,7 +939,7 @@ export function useLive(opts: {
       const data = await res.json().catch(() => ({}));
       if (connectTry.current !== attempt) { try { peer.close(); } catch { /* ignore */ } return; } // ended while connecting
       if (!res.ok || !data.sdp) throw new Error(data.error ?? `status ${res.status}`);
-      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; oldOpen.current = data.speech.oldOpen === true; openingNow.current = typeof data.speech.opening === 'string' && data.speech.opening ? { text: data.speech.opening, speaks: data.speech.openingSpeaks === true } : null; }
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; if (data.speech.heRead) HE_MODE = data.speech.heRead; if (data.speech.reads) READS = data.speech.reads; SEPH = data.speech.nusach === 'sephardi'; autoStart.current = data.speech.autoStart === true; pointOpen.current = data.speech.point && typeof data.speech.point.ref === 'string' ? data.speech.point : null; oldOpen.current = data.speech.oldOpen === true; openingNow.current = typeof data.speech.opening === 'string' && data.speech.opening ? { text: data.speech.opening, speaks: data.speech.openingSpeaks === true } : null; }
       await peer.setRemoteDescription({ type: 'answer', sdp: data.sdp });
       if (data.rulesUsed) logLine('──', `in this call: voice ${data.voiceUsed ?? '?'} · Hebrew given as ${data.speech?.heRead ?? '?'} · rules: ${data.rulesUsed}`);
       if (data.sizes) logLine('──', `sent to OpenAI at the start: ${data.sizes}`);

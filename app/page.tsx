@@ -303,7 +303,7 @@ export default function Home() {
       setLoaded(true);
     }).catch((e) => { window.clearTimeout(fallback); setReady(true); setItems([{ kind: 'error', text: `Could not load settings: ${String(e)}` }]); setLoaded(true); });
     refreshSessions();
-    try { if (localStorage.getItem('chavrusa_disclaimer') === '1') setSeenDisclaimer(true); } catch { /* storage unavailable */ }
+    try { if (localStorage.getItem('chavrusa_disclaimer2') === '1') setSeenDisclaimer(true); } catch { /* storage unavailable */ }
     const mq = window.matchMedia('(min-width: 1000px)');
     const on = () => setIsWide(mq.matches);
     on(); mq.addEventListener('change', on);
@@ -827,14 +827,14 @@ export default function Home() {
           </HomePage>
         )}
         {help && <Help onClose={() => setHelp(false)} />}
-        {loaded && !settings.disclaimerAccepted && !seenDisclaimer && (
+        {loaded && !settings.disclaimer2 && !seenDisclaimer && (
           <Disclaimer
             look={settings.theme}
             onLook={(l) => updateSettings({ theme: l })}
             onAccept={() => {
               setSeenDisclaimer(true);
-              try { localStorage.setItem('chavrusa_disclaimer', '1'); } catch { /* storage unavailable */ }
-              updateSettings({ disclaimerAccepted: true });
+              try { localStorage.setItem('chavrusa_disclaimer2', '1'); } catch { /* storage unavailable */ }
+              updateSettings({ disclaimerAccepted: true, disclaimer2: true });
             }}
           />
         )}
@@ -1189,14 +1189,14 @@ export default function Home() {
 
       {drawer === 'settings' && <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setDrawer(null)} onHelp={() => setHelp(true)} liveActive={live.active} />}
       {help && <Help onClose={() => setHelp(false)} />}
-      {loaded && !settings.disclaimerAccepted && !seenDisclaimer && (
+      {loaded && !settings.disclaimer2 && !seenDisclaimer && (
         <Disclaimer
           look={settings.theme}
           onLook={(l) => updateSettings({ theme: l })}
           onAccept={() => {
             setSeenDisclaimer(true);
-            try { localStorage.setItem('chavrusa_disclaimer', '1'); } catch { /* storage unavailable */ }
-            updateSettings({ disclaimerAccepted: true });
+            try { localStorage.setItem('chavrusa_disclaimer2', '1'); } catch { /* storage unavailable */ }
+            updateSettings({ disclaimerAccepted: true, disclaimer2: true });
           }}
         />
       )}

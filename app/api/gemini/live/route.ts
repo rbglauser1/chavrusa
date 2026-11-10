@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { outOfCredit } from '@/lib/credits';
-import { GEMINI_LIVE, GEMINI_VOICES, styleById, styleCard } from '@/lib/config';
+import { GEMINI_LIVE, GEMINI_VOICES, styleById, styleCard, forNusach } from '@/lib/config';
 import { getSettings, listMemories, listMessages, listSources } from '@/lib/db';
 import { GEMINI_VOICE, liveContext, liveInstructions } from '@/lib/live';
 import { mildCholam, namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!key) return NextResponse.json({ error: 'No Gemini key on the server yet. In Vercel, add GEMINI_API_KEY under Settings → Environment Variables, then redeploy.' }, { status: 503 });
   { const out = await outOfCredit(); if (out) return NextResponse.json({ error: out }, { status: 402 }); } // credits (lib/credits.ts)
-  const s = await getSettings();
+  const s = forNusach(await getSettings()); // Sephardi: no yeshivish respellings (lib/config)
   const voice = GEMINI_VOICES.some((v) => v.id === s.geminiVoice) ? s.geminiVoice! : GEMINI_VOICES[0].id;
   const preview = false;
   let context = '';
@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
         const en = englishFor(tapped.data.en[n - 1] ?? tapped.data.altEn?.[n - 1] ?? '', tapped.data.enB?.[n - 1], s.translate, false, he);
         // Phrase by phrase, the lashon kodesh spelled out first (log of Nov 6, 12:29 AM: given the whole line and then
         // a long English, Gemini read only the English, and Sefaria's full English though "just the literal" was chosen).
-        const phrases = voicePhrases(he).map((x) => mildCholam(yeshivishTranslit(namesForSpeech(x), false), yeshivishTranslit(namesForSpeech(x), true)));
+        // Sephardi: the Hebrew letters themselves (Gemini reads them with Israeli Sephardi pronunciation); Ashkenaz: spelled out the yeshivish way.
+        const phrases = voicePhrases(he).map((x) => (s.nusach === 'sephardi' ? namesForSpeech(x) : mildCholam(yeshivishTranslit(namesForSpeech(x), false), yeshivishTranslit(namesForSpeech(x), true))));
         pointed = `The learner has chosen where to learn: ${tapped.ref}, line ${n}. Start right there. Read it inside, the way a chavrusa does: FIRST the lashon kodesh, every word, out loud, exactly as spelled here, phrase by phrase: ⟪${phrases.join(' … ')}⟫ THEN its English: "${clip(en, 600)}". Never skip the lashon kodesh and never give only the English. Then stop, and wait for him. Do not go past this line by yourself.`;
       }
     } catch { /* the call still works without it */ }
@@ -148,6 +149,6 @@ export async function POST(req: NextRequest) {
       contextWindowCompression: { slidingWindow: {} },
     },
     opening: resume ? resumeNote : hello, // the phone applies Gemini's spelling and list to it
-    speech: { spell, myWay, house },
+    speech: { spell, myWay, house, nusach: s.nusach },
   });
 }

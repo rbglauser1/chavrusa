@@ -74,6 +74,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {data && (
           <>
+            <div className="ai-note left">Made by AI · may contain mistakes · check it inside</div>
             {data.overview && <div className="smap-overview"><span className="smap-label">The big picture</span><p>{data.overview}</p></div>}
             {data.topics.map((t, ti) => (
               <section key={ti} className="smap-topic">

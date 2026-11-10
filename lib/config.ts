@@ -377,6 +377,7 @@ export interface Settings {
   commSize: number;         // px: Rashi, Tosafos and other commentaries
   costWarnUsd: number | null;
   disclaimerAccepted: boolean;
+  disclaimer2?: boolean;   // the Nov 9 wording (not rabbinically approved; AI makes mistakes; not a replacement for a chavrusa) was accepted
   voice: string;            // voice for Basic talk mode (OpenAI text-to-speech)
   talkMode: 'live' | 'basic'; // live = natural speech-to-speech (GPT-Live); basic = cheaper step-by-step voice
   liveVoice: string;        // voice for Live mode
@@ -549,9 +550,18 @@ export const DEFAULT_SETTINGS: Settings = {
 export const CLASSIC_CUTOFF_YEAR = 1900;
 
 // For now there is one learner. Later this becomes the logged-in user's ID.
+/** The settings as the voice should use them. With Sephardi chosen, the yeshivish Ashkenazi tools are set aside: the
+ *  lashon kodesh goes to the voice in Hebrew letters (the transliterations spell it the Ashkenazi way: Shabbos,
+ *  bAW-ruch), the standard sound-out list (TOSS-fos, g'MOR-ah…) is off, and so is the yeshivish English accent.
+ *  The learner's own "say it my way" words stay. */
+export function forNusach<T extends { nusach?: string; heRead?: string; houseSay?: boolean; liveAccent?: boolean; gptRules?: unknown }>(s: T): T {
+  if (s.nusach !== 'sephardi') return s;
+  return { ...s, heRead: s.heRead === 'he' || s.heRead === 'he-bare' ? s.heRead : 'he', houseSay: false, liveAccent: false } as T;
+}
+
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn'] as const;
+export const OPTIONAL_SETTING_KEYS = ['disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn'] as const;
 
 export const OWNER_ID = 'owner';
 

@@ -118,6 +118,7 @@ function Thread({ items, busy, status, endRef }: { items: Msg[]; busy: boolean; 
           ? <div key={i} className="min-them"><Formatted text={it.text} /></div>
           : <div key={i} className={it.kind === 'error' ? 'min-error' : 'min-event'}>{it.text}</div>)}
       {busy && <div className="min-event">{status || 'Thinking…'}</div>}
+      {items.some((it) => it.kind === 'assistant') && <div className="ai-note">AI makes mistakes. Check the text inside; for halacha, ask your rav.</div>}
       <div ref={endRef} />
     </div>
   );

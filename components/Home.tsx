@@ -102,6 +102,7 @@ export function Home(p: {
           </button>
           <div className="home-talk-label">{p.talkOn ? 'In a call · tap to return' : 'Talk'}</div>
           {!p.talkOn && <div className="home-talk-hint">Tell your chavrusa what you’d like to learn</div>}
+          <div className="ai-note">AI makes mistakes · not rabbinically approved · ask your rav</div>
         </div>
       )}
       {p.extras}

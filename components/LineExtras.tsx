@@ -21,6 +21,7 @@ export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () 
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
       <div className="comm-title">✦ Explanation<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
+      {text && <div className="ai-note left">Written by AI · may contain mistakes</div>}
       {text ? text.split(/\n\s*\n/).map((p, i) => <p key={i} className="lx-p">{p}</p>)
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
         : <div className="muted">Explaining…</div>}
@@ -59,7 +60,7 @@ function Ideas({ lineRef, titles }: { lineRef: string; titles: Record<string, st
           {openRef?.startsWith(`${i}|`) && <RefText refs={[openRef.slice(openRef.indexOf('|') + 1)]} />}
         </div>
       ))}
-      <div className="muted smap-ai-note">Drawn by the AI only from the sources linked to this line.</div>
+      <div className="muted smap-ai-note">Drawn by the AI only from the sources linked to this line · AI makes mistakes: check them inside.</div>
     </div>
   );
 }

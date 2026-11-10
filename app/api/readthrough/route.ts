@@ -3,6 +3,7 @@ import { nextSection } from '@/lib/refs';
 import { addMessage, approvedList, getSession, getSettings, touchSession } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { namesForSpeech, namesForSpeechEn, voiceHe } from '@/lib/hebrew';
+import { forNusach } from '@/lib/config';
 
 // Keep the vowels (nikud) but drop the trop marks, which only confuse the voice.
 const noTrop = (s: string) => s.replace(/[\u0591-\u05AF\u05BD\u05C0]/g, '').replace(/\s+/g, ' ').trim();
@@ -27,7 +28,8 @@ export async function GET(req: NextRequest) {
   const mode = (['he-en', 'shnayim', 'he'].includes(String(p.get('mode'))) ? p.get('mode') : 'he-en') as ReadMode;
   const count = Math.min(6, Math.max(1, Number(p.get('count') ?? (mode === 'shnayim' ? 1 : 2)) || 2));
   const sid = p.get('session');
-  const heRead = (await getSettings().catch(() => null))?.heRead ?? 'join-kh'; // how the voice gets the lashon kodesh
+  const st = await getSettings().catch(() => null);
+  const heRead = (st ? forNusach(st).heRead : undefined) ?? 'join-kh'; // how the voice gets the lashon kodesh
   if (!base) return NextResponse.json({ error: 'Nothing to read yet. Open a place first.' }, { status: 400 });
 
   try {

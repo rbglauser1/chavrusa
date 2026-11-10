@@ -13,7 +13,8 @@ import { forVoice, type GeminiSpell, type SayMyWay } from '@/lib/geminiSpeech';
 import { logBegin, logEnd, logLine } from '@/lib/callLog';
 
 type Opts = Parameters<typeof useLive>[0];
-const toSpeech = (he: string) => yeshivishTranslit(namesForSpeech(he), false);
+let SEPH = false; // Sephardi chosen: Gemini gets the Hebrew letters (read with Israeli Sephardi pronunciation), not a yeshivish spelling
+const toSpeech = (he: string) => (SEPH ? namesForSpeech(he) : yeshivishTranslit(namesForSpeech(he), false));
 function forSpeech(text: string): string {
   return text.replace(/\[\[\/?say\]\]/gi, '').replace(/\*\*|__|`/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*>\s?/gm, '').replace(/\[(\d+)\]/g, '').replace(/\n{2,}/g, '\n').trim();
 }
@@ -151,7 +152,7 @@ export function useGeminiLive(opts: Opts) {
   // the first sentence and skipped to the English).
   // Any Hebrew letters (the brain's [[say]] text) are spelled out the yeshivish way first: Gemini given Hebrew letters
   // read them like an Israeli, or skipped them and said only the English.
-  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => voicePhrases(he).map((ph) => (hasNikud(ph) ? mildCholam(yeshivishTranslit(namesForSpeech(ph), false), yeshivishTranslit(namesForSpeech(ph), true)) || ph : ph)).join(' … ')), speech.current.spell, speech.current.myWay, speech.current.house);
+  const g = (t: string) => forVoice(t.replace(/[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*(?:[\s,:.?!;׃]+[\u05D0-\u05EA][\u0590-\u05FF"׳״־]*)*/g, (he) => voicePhrases(he).map((ph) => (SEPH ? namesForSpeech(ph) : hasNikud(ph) ? mildCholam(yeshivishTranslit(namesForSpeech(ph), false), yeshivishTranslit(namesForSpeech(ph), true)) || ph : ph)).join(' … ')), speech.current.spell, speech.current.myWay, speech.current.house);
   const appSay = useCallback((text: string) => {
     logLine('APP→VOICE', g(text));
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] ${g(text)}` }] }], turnComplete: true } });
@@ -425,7 +426,7 @@ export function useGeminiLive(opts: Opts) {
       if (!res.ok || !data.url) throw new Error(data.error ?? `status ${res.status}`);
       openingRef.current = String(data.opening ?? '');
       logLine('──', `in this call: Gemini ${String(data.setup?.model ?? '?').replace('models/', '')} · voice ${data.setup?.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName ?? '?'} · instructions ${String(data.setup?.systemInstruction?.parts?.[0]?.text ?? '').length} chars`);
-      if (data.speech) speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false };
+      if (data.speech) { speech.current = { spell: data.speech.spell ?? 'stressed', myWay: Array.isArray(data.speech.myWay) ? data.speech.myWay : [], house: data.speech.house !== false }; SEPH = data.speech.nusach === 'sephardi'; }
 
       // Microphone → 16 kHz, 16-bit blocks → Gemini.
       const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));

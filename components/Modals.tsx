@@ -26,13 +26,16 @@ export function Disclaimer({ look, onLook, onAccept }: { look: Look; onLook: (l:
     <div className="modal">
       <div className="modal-card">
         <h2>Before we learn</h2>
-        <p>Your chavrusa is an AI learning partner. It brings sources, asks questions, and helps you think through a sugya.</p>
-        <p><b>It can make mistakes.</b> Do not rely on it for accuracy in Torah learning, halacha, or hashkafa. Always check the sources yourself, and for any practical halachic question, ask your rav.</p>
-        <p className="muted" style={{ fontSize: 14 }}>It quotes only sources it actually looked up, shows them to you, and learns only from an approved list of Orthodox sources.</p>
+        <div className="disclaimer-box">
+          <p><b>This app is not rabbinically approved.</b></p>
+          <p><b>AI makes mistakes.</b> Do not rely on it for the correct understanding of the Gemara, the meforshim or any other material, and never for halachic rulings. For any practical question, ask your rav.</p>
+          <p><b>It is never meant to take the place of a real chavrusa</b>, a rebbi, or learning in the beis medrash. It is a tool to help you learn, not a replacement for learning with people.</p>
+        </div>
+        <p className="muted" style={{ fontSize: 14 }}>It reads the real text from Sefaria and shows you its sources, so you can always check them inside.</p>
         <h3 style={{ margin: '20px 0 10px', fontSize: 16 }}>Choose how it looks</h3>
         <LookPicker value={look} onPick={onLook} />
         <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>You can change this anytime in Settings.</p>
-        <button className="btn primary" style={{ width: '100%', marginTop: 8 }} onClick={onAccept}>I understand, let’s learn</button>
+        <button className="btn primary" style={{ width: '100%', marginTop: 8 }} onClick={onAccept}>I understand</button>
       </div>
     </div>
   );

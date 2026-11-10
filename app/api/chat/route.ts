@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { outOfCredit } from '@/lib/credits';
-import { costUsd, isQuickReply, MODELS, styleById, wantsDepth } from '@/lib/config';
+import { costUsd, isQuickReply, MODELS, styleById, wantsDepth, forNusach } from '@/lib/config';
 import {
   addMessage, approvedList, createSession, getSession, getSettings, listMemories, listMessages, listSources,
   logCost, saveSettings, sessionCost, touchSession,
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
       try {
         if (!message) throw new Error('Empty message.');
-        let settings = await getSettings();
+        let settings = forNusach(await getSettings()); // Sephardi: Hebrew letters to the voice, no yeshivish respellings
         // Gemini gets the lashon kodesh spelled out in English letters by the app (useGeminiLive), which needs the
         // vowels to spell from. "Without vowels" is for GPT-Live; with Gemini the Hebrew keeps its nikud (log of Nov 7,
         // 11:24 PM: the bare letters came out as nothing, and Gemini read the line from memory, like an Israeli).
@@ -273,7 +273,9 @@ export async function POST(req: NextRequest) {
         // carried the slip into the next piece of Hebrew. Sonnet explains in plain English and the Hebrew stays clean, so
         // Opus is asked to explain the same way (same depth and intros). To undo: remove plainSpoken.
         const plainSpoken = spoken && model.id === MODELS[settings.provider].top.id
-          ? '\n\nHOW TO WORD A SPOKEN EXPLANATION (this wins over the transliteration rule above for your explanation; the [[say]] block is unchanged): explain in plain English, with all your depth and your intros. Keep only the everyday learning words a yeshiva bochur says in English anyway (posuk, Gemara, Mishnah, Rashi, Tosfos, braisa, kashya, teretz, machlokes, gezeirah shavah, kal vachomer, halacha, Kohen Gadol, tamei, tahor), and say everything else in English (a small flour offering, not "a tenth of an eiphah"; a kohen, not "koihein"). Write names the usual yeshivish way (Moishe, Aharon, Rabbi Yochanan, Rabbi Chiya), never spelled out sound by sound ("Yoichonon"). Few Hebrew words in a row; never a string of them.'
+          ? settings.nusach === 'sephardi'
+            ? '\n\nHOW TO WORD A SPOKEN EXPLANATION (the [[say]] block is unchanged): explain in plain English, with all your depth and your intros. Keep only the everyday learning words (pasuk, Gemara, Mishnah, Rashi, Tosafot, baraita, kushya, terutz, machloket, gezera shava, kal vachomer, halacha, Kohen Gadol, tamei, tahor), in Sephardi transliteration, and say everything else in English. Write names the usual Sephardi way (Moshe, Aharon, Yaakov).'
+            : '\n\nHOW TO WORD A SPOKEN EXPLANATION (this wins over the transliteration rule above for your explanation; the [[say]] block is unchanged): explain in plain English, with all your depth and your intros. Keep only the everyday learning words a yeshiva bochur says in English anyway (posuk, Gemara, Mishnah, Rashi, Tosfos, braisa, kashya, teretz, machlokes, gezeirah shavah, kal vachomer, halacha, Kohen Gadol, tamei, tahor), and say everything else in English (a small flour offering, not "a tenth of an eiphah"; a kohen, not "koihein"). Write names the usual yeshivish way (Moishe, Aharon, Rabbi Yochanan, Rabbi Chiya), never spelled out sound by sound ("Yoichonon"). Few Hebrew words in a row; never a string of them.'
           : '';
         const system = buildSystemPrompt(settings, memories, [...new Set(sources.map((s) => s.ref))], today, spoken, sid) + styleNote + plainSpoken;
 
