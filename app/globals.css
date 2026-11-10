@@ -2328,3 +2328,8 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 /* Under every text: its source and license (components/TextCredit.tsx) */
 .text-credit { font: 11.5px/1.5 var(--f-ui); color: var(--soft); margin: 14px 0 18px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent); }
 .text-credit a { color: inherit; }
+/* Sugya map and Review: the reading text follows the English size in Settings (never below 17px), like Explain. */
+.smap-overview p, .smap-intro, .smap-sum, .smap-take, .rv-ask, .rv-a { font-size: max(17px, var(--en-size, 18px)); line-height: 1.5; }
+.smap-topic-title { font-size: max(19px, calc(var(--en-size, 18px) * 1.12)); }
+.smap-bg ul, .smap-link-text .en { font-size: max(16px, calc(var(--en-size, 18px) * .95)); line-height: 1.45; }
+.smap-kind, .smap-label { font-size: 12.5px; }
