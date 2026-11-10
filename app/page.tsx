@@ -18,6 +18,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
 import { useLive } from '@/components/useLive';
 import { useGeminiLive } from '@/components/useGeminiLive';
+import Notebook from '@/components/Notebook';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -268,6 +269,14 @@ export default function Home() {
   const setContInfo = (c: (ContinueInfo & { id?: string }) | null) => { setContInfoState(c); try { if (c) localStorage.setItem('chavrusa_cont', JSON.stringify(c)); } catch { /* optional */ } };
   useEffect(() => { try { const k = localStorage.getItem('chavrusa_cont'); if (k) setContInfoState(JSON.parse(k)); } catch { /* optional */ } }, []);
   const [help, setHelp] = useState(false);
+  // The Notebook (components/Notebook.tsx): opened from Home, the Library, or anywhere ("chavrusa-notebook").
+  const [notebook, setNotebook] = useState(false);
+  useEffect(() => {
+    const open = () => setNotebook(true);
+    window.addEventListener('chavrusa-notebook', open);
+    return () => window.removeEventListener('chavrusa-notebook', open);
+  }, []);
+  useBackLayer(notebook, () => setNotebook(false));
   // "How to use the app" from Settings: back to Home, where the guide opens.
   useEffect(() => {
     const go = () => { setDrawer(null); setView('home'); window.setTimeout(() => window.dispatchEvent(new Event('chavrusa-guide')), 200); };
@@ -833,7 +842,8 @@ export default function Home() {
           </HomePage>
         )}
         {help && <Help onClose={() => setHelp(false)} />}
-        {loaded && !settings.disclaimer2 && !seenDisclaimer && (
+        {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
+      {loaded && !settings.disclaimer2 && !seenDisclaimer && (
           <Disclaimer
             look={settings.theme}
             onLook={(l) => updateSettings({ theme: l })}
@@ -1195,6 +1205,7 @@ export default function Home() {
 
       {drawer === 'settings' && <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setDrawer(null)} onHelp={() => setHelp(true)} liveActive={live.active} />}
       {help && <Help onClose={() => setHelp(false)} />}
+      {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
       {loaded && !settings.disclaimer2 && !seenDisclaimer && (
         <Disclaimer
           look={settings.theme}

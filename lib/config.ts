@@ -30,10 +30,11 @@ export const MODELS: Record<Provider, Record<Tier, ModelInfo>> = {
   },
 };
 
-// Everything the AI makes once and keeps for good (sugya maps, review questions, amud intros and outlines, meforshim
-// summaries, chazara): always Claude Opus 5.5, whatever is chosen in Settings. Each is paid for once, ever, so it
-// should be the best. (A quick translation of a tapped line stays on the basic model.)
-export const KEPT_MODEL = MODELS.anthropic.top;
+// Everything the AI makes once and keeps for good (sugya maps, review questions, explanations, ideas, amud intros and
+// outlines, meforshim summaries, chazara, the learner's own buttons): Claude Opus 5.5 or Claude Sonnet 5.5, by the
+// setting "Made once and kept" (keptModel; Opus unless chosen). Each is paid for once, ever. (A quick translation of
+// a tapped line stays on the basic model.)
+export const keptModelOf = (s: { keptModel?: 'opus' | 'sonnet' }) => (s.keptModel === 'sonnet' ? MODELS.anthropic.middle : MODELS.anthropic.top);
 
 export const TIER_LABELS: Record<Tier, string> = { basic: 'Basic', middle: 'Standard', top: 'Deep' };
 
@@ -377,7 +378,10 @@ export interface Settings {
   commSize: number;         // px: Rashi, Tosafos and other commentaries
   costWarnUsd: number | null;
   disclaimerAccepted: boolean;
-  disclaimer2?: boolean;   // the Nov 9 wording (not rabbinically approved; AI makes mistakes; not a replacement for a chavrusa) was accepted
+  disclaimer2?: boolean;
+  keptModel?: 'opus' | 'sonnet'; // the AI for everything made once and kept (maps, explanations…); unset = Opus
+  notebookPins?: string[];        // topics pinned at the top of the Notebook
+  myButtons?: MyButton[];         // the learner's own AI buttons (Settings → Extras → My buttons)   // the Nov 9 wording (not rabbinically approved; AI makes mistakes; not a replacement for a chavrusa) was accepted
   voice: string;            // voice for Basic talk mode (OpenAI text-to-speech)
   talkMode: 'live' | 'basic'; // live = natural speech-to-speech (GPT-Live); basic = cheaper step-by-step voice
   liveVoice: string;        // voice for Live mode
@@ -518,7 +522,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoRashi: false,
   autoTosfos: false,
   cacheTexts: true,
-  notes: false,
+  notes: true,
   sugyaMap: false,
   review: false,
   chazara: false,
@@ -554,6 +558,9 @@ export const CLASSIC_CUTOFF_YEAR = 1900;
  *  lashon kodesh goes to the voice in Hebrew letters (the transliterations spell it the Ashkenazi way: Shabbos,
  *  bAW-ruch), the standard sound-out list (TOSS-fos, g'MOR-ah…) is off, and so is the yeshivish English accent.
  *  The learner's own "say it my way" words stay. */
+/** One of the learner's own AI buttons: a name, what it should do (in his words), where it shows, what it may read. */
+export interface MyButton { id: string; name: string; prompt: string; where: 'line' | 'amud'; reach: 'line' | 'amud' | 'library'; off?: boolean }
+
 export function forNusach<T extends { nusach?: string; heRead?: string; houseSay?: boolean; liveAccent?: boolean; gptRules?: unknown }>(s: T): T {
   if (s.nusach !== 'sephardi') return s;
   return { ...s, heRead: s.heRead === 'he' || s.heRead === 'he-bare' ? s.heRead : 'he', houseSay: false, liveAccent: false } as T;
@@ -561,7 +568,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn'] as const;
+export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn'] as const;
 
 export const OWNER_ID = 'owner';
 

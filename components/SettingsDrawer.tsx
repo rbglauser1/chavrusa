@@ -119,6 +119,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               </div>
             </div>
             <div className="field">
+              <label>Made once and kept</label>
+              <Seg value={s.keptModel === 'sonnet' ? 'sonnet' : 'opus'} options={[['opus', 'Claude Opus'], ['sonnet', 'Claude Sonnet']]} onPick={(v) => onChange({ keptModel: v as 'opus' | 'sonnet' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                Sugya maps, explanations, ideas, review questions, summaries, intros, chazara and your own buttons. Each is made once, the first time it’s opened, then kept and free. {s.keptModel === 'sonnet' ? 'Sonnet costs about half as much; Opus goes deeper.' : 'Opus goes deeper; Sonnet costs about half as much.'} What each one made is kept apart, so switching never mixes them.
+              </div>
+            </div>
+            <div className="field">
               <label>Saver (typing and talking)</label>
               <Seg value={s.saver !== false ? 'saver' : 'full'} options={[['saver', 'Saver'], ['full', 'Full depth every turn']]} onPick={(v) => onChange({ saver: v === 'saver' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>

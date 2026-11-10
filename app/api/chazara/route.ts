@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { costUsd, KEPT_MODEL } from '@/lib/config';
+import { costUsd } from '@/lib/config';
 import { listMessages, listSessions, logCost, type MessageRow, type SessionRow } from '@/lib/db';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { readJson, writeJson } from '@/lib/store';
 import { needCredit } from '@/lib/credits';
+import { keptModel } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -30,7 +31,7 @@ async function recapOf(sess: SessionRow): Promise<Recap | null> {
   if (kept) return kept;
   const convo = msgs.map((m) => `${m.role === 'user' ? 'Learner' : 'Chavrusa'}: ${plain(m.content).slice(0, 700)}`).join('\n').slice(-14000);
   await needCredit();
-  const model = KEPT_MODEL; // always Opus (lib/config)
+  const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runAnthropic;
   const r = await run({ model: model.id, system: PROMPT, history: [{ role: 'user', content: convo }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: sess.id, kind: 'chazara', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { costUsd, KEPT_MODEL } from '@/lib/config';
+import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
+import { keptModel } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -40,7 +41,7 @@ async function makeExplain(base: string, n: number): Promise<{ text: string }> {
     const c = await getText(`${MAIN_COMM(base)} on ${base}:${n}`, approved);
     if (c.verdict.allowed && c.he.length) comm = `\n\n${MAIN_COMM(base)} on line ${n}:\n${clip(c.he.map(stripNikud).join(' '), 2500)}`;
   } catch { /* optional */ }
-  const model = KEPT_MODEL;
+  const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const r = await runAnthropic({
     model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lines.slice(0, 26000)}${comm}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,

@@ -1,5 +1,5 @@
 'use client';
-// Home's optional cards (Settings → Extras): Chazara (review) and Progress and plans.
+// Home's optional cards (Settings → Extras): the Notebook, Chazara (review) and Progress and plans.
 import { useEffect, useState } from 'react';
 import type { Settings } from '@/lib/config';
 import Progress from './Progress';
@@ -57,9 +57,15 @@ function Chazara() {
 }
 
 export default function HomeExtras({ settings, onOpen, onSettings }: { settings: Settings; onOpen: (ref: string) => void; onSettings: (patch: Partial<Settings>) => void }) {
-  if (!settings.chazara && !settings.progress) return null;
+  const notes = settings.notes !== false;
+  if (!settings.chazara && !settings.progress && !notes) return null;
   return (
     <div className="hx">
+      {notes && (
+        <button className="hx-card hx-nb" onClick={() => window.dispatchEvent(new Event('chavrusa-notebook'))}>
+          <b>Notebook</b><span className="muted">All your notes, by sefer and topic</span>
+        </button>
+      )}
       {settings.chazara && <Chazara />}
       {settings.progress && <Progress settings={settings} onOpen={onOpen} onSettings={onSettings} />}
     </div>

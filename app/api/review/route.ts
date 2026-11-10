@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { costUsd, KEPT_MODEL } from '@/lib/config';
+import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
+import { keptModel } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -28,7 +29,7 @@ async function makeReview(ref: string): Promise<{ questions: Question[] }> {
   if (!s.verdict.allowed || !s.he.length) return { questions: [] };
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
-  const model = KEPT_MODEL; // always Opus (lib/config)
+  const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runAnthropic;
   const r = await run({
     model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],

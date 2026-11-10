@@ -1,12 +1,13 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
 import { keep } from './keep';
-import { costUsd, KEPT_MODEL } from '@/lib/config';
+import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from './credits';
+import { keptModel } from './keptModel';
 
 // The amud intro: one paragraph telling the learner what's coming on this amud (or perek / siman), shown at its top
 // and, in Read, Explain, Ask, said by the voice when the amud begins. Made once per amud by the AI, then kept.
@@ -24,7 +25,7 @@ async function makeIntro(ref: string): Promise<string> {
   if (!s.verdict.allowed || !s.he.length) return '';
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
-  const model = KEPT_MODEL; // always Opus (lib/config)
+  const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runAnthropic;
   const r = await run({
     model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],

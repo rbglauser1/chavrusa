@@ -7,6 +7,7 @@ import SugyaMap from './SugyaMap';
 import Review from './Review';
 import { Dibbur } from './Dibbur';
 import TextCredit from './TextCredit';
+import NoteAdd from './NoteAdd';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
@@ -429,7 +430,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
   const nextRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? nextSection(src.ref) : null;
   // Notes on the line (Settings → Extras): this text's notes, an open editor, and reload when one is added by voice.
-  type LineNote = { id: string; ref: string; n: number; text: string; created: string };
+  type LineNote = { id: string; ref: string; n: number; text: string; created: string; on?: string; quote?: string };
   const [notes, setNotes] = useState<LineNote[]>([]);
   const [noteFor, setNoteFor] = useState<number | null>(null);
   const [mapOpen, setMapOpen] = useState(false); // the sugya map (Settings → Extras)
@@ -438,9 +439,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useBackLayer(mapOpen, () => setMapOpen(false));
   useBackLayer(reviewOpen, () => setReviewOpen(false));
   const [noteText, setNoteText] = useState('');
-  const loadNotes = () => { if (settings.notes && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
+  const loadNotes = () => { if (settings.notes !== false && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
   useEffect(loadNotes, [src?.ref, settings.notes]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { const f = () => loadNotes(); window.addEventListener('notes-changed', f); return () => window.removeEventListener('notes-changed', f); }); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const f = () => loadNotes(); window.addEventListener('notes-changed', f); window.addEventListener('chavrusa-notes', f); return () => { window.removeEventListener('notes-changed', f); window.removeEventListener('chavrusa-notes', f); }; }); // eslint-disable-line react-hooks/exhaustive-deps
   const saveNote = async (n: number) => {
     const text = noteText.trim();
     if (!text || !src) return;
@@ -723,14 +724,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>Summary</span> {ownGists.list[i]}</div>}
-                  {settings.notes && (() => {
+                  {settings.notes !== false && (() => {
                     const mine = notes.filter((x) => x.n === i + 1);
                     const showAdd = open.has(i) || picked === i || src.focus === i + 1;
                     if (!mine.length && !showAdd && noteFor !== i) return null;
                     return (
                       <div className="line-notes" onClick={(e) => e.stopPropagation()}>
                         {mine.map((x) => (
-                          <div key={x.id} className="line-note"><span className="ln-mark">✎</span><span className="ln-text" dir="auto">{x.text}</span><button className="ln-x" aria-label="Delete this note" onClick={() => { if (window.confirm('Delete this note?')) void dropNote(x.id); }}>×</button></div>
+                          <div key={x.id} className="line-note"><span className="ln-mark">✎</span><span className="ln-text" dir="auto">{x.on && <b className="ln-on">On {x.on}: </b>}{x.text}</span><button className="ln-x" aria-label="Delete this note" onClick={() => { if (window.confirm('Delete this note?')) void dropNote(x.id); }}>×</button></div>
                         ))}
                         {noteFor === i ? (
                           <div className="ln-edit">
@@ -799,6 +800,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           {c.refs?.length && onOpenExact ? (
                             <button className="comm-learn" onClick={() => void onOpenExact(c.refs![0].replace(/:\d+(-\d+)?$/, '') || c.refs![0])}>Learn it in the Sefer ↗</button>
                           ) : null}
+                          {settings.notes !== false && <NoteAdd refText={src.ref} n={Number(k.split(':')[0]) + 1} on={label} quote={stripNikud(c.he?.[0] ?? '').slice(0, 120)} label="✎" />}
                           <button className="comm-x" aria-label={`Close ${label}`} onClick={() => setComm((m) => { const n = { ...m }; delete n[k]; return n; })}>✕</button>
                         </div>
                         {c.loading ? <div className="muted">Opening…</div>

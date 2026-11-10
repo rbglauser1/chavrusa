@@ -5,6 +5,7 @@
 // and under each topic where the halacha is ruled and the pesukim it quotes (tap one: its words open right here).
 import { useEffect, useState } from 'react';
 import { LinkRow, RefText } from './RefText';
+import NoteAdd from './NoteAdd';
 
 type Linked = { line: number; title: string; ref: string };
 type Comm = { title: string; refs: string[] };
@@ -100,6 +101,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                         <span className="smap-sum">{s.summary}</span>
                         <span className="smap-line">line {s.line}</span>
                       </button>
+                      <div className="smap-note"><NoteAdd refText={refText} n={s.line} on="the sugya map" quote={s.summary} /></div>
                       {(() => {
                         // Once per line: on the last step that begins on it (a question and its answer on one line share them).
                         const nextStep = t.steps[i + 1] ?? data.topics[ti + 1]?.steps[0];

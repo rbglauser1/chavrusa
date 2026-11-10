@@ -5,6 +5,10 @@
 //            in Hebrew and English. No AI.
 import { useEffect, useState } from 'react';
 import { LinkRow, RefText, type Linked } from './RefText';
+import NoteAdd from './NoteAdd';
+
+// "Yoma 6a:3" → ["Yoma 6a", 3]
+const split = (lineRef: string): [string, number] => { const m = lineRef.match(/^(.*?):(\d+)$/); return m ? [m[1], Number(m[2])] : [lineRef, 1]; };
 
 export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () => void }) {
   const [text, setText] = useState<string | null>(null);
@@ -20,7 +24,7 @@ export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () 
   }, [lineRef, tick]);
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
-      <div className="comm-title">✦ Explanation<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
+      <div className="comm-title">✦ Explanation{text && <NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the explanation" quote={text.slice(0, 140)} label="✎" />}<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
       {text && <div className="ai-note left">Written by AI · may contain mistakes</div>}
       {text ? text.split(/\n\s*\n/).map((p, i) => <p key={i} className="lx-p">{p}</p>)
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
@@ -73,7 +77,7 @@ export function IdeasBox({ groups, lineRef, onClose }: { groups: Groups; lineRef
   const titles = Object.fromEntries(Object.values(groups).flat().map((x) => [x.ref, x.title]));
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
-      <div className="comm-title">✦ Ideas from the sources<button className="comm-x" aria-label="Close the ideas" onClick={onClose}>✕</button></div>
+      <div className="comm-title">✦ Ideas from the sources<NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the ideas" label="✎" /><button className="comm-x" aria-label="Close the ideas" onClick={onClose}>✕</button></div>
       <Ideas lineRef={lineRef} titles={titles} />
     </div>
   );

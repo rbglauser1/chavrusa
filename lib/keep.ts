@@ -1,5 +1,6 @@
 import 'server-only';
 import { readJson, safeKey, writeJson } from './store';
+import { getSettings } from './db';
 
 // Everything the AI makes that is the same each time (a sugya map, an amud's intro and outline, the summaries of a
 // meforesh, a translation of a line, review questions) is kept for good in Supabase Storage (bucket "app", folder
@@ -12,7 +13,9 @@ const pathOf = (kind: string, key: string) => `ai/${safeKey(kind)}/${safeKey(key
 /** The kept copy if there is one; else make it (paying once), keep it, and return it. A failed make is not kept,
  *  nor an empty one (`empty` says so): a text that couldn't be read just then is tried again next time. */
 export async function keep<T>(kind: string, key: string, make: () => Promise<T>, empty?: (v: T) => boolean): Promise<T> {
-  const path = pathOf(kind, key);
+  // Made by Sonnet (Settings → Made once and kept): kept apart from Opus's (translations are the same either way).
+  const sonnet = !kind.startsWith('translate') && (await getSettings().catch(() => null))?.keptModel === 'sonnet';
+  const path = pathOf(sonnet ? `${kind}-sonnet` : kind, key);
   const had = await readJson<{ v: T }>(path);
   if (had && had.v !== undefined) return had.v;
   const v = await make();

@@ -168,7 +168,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
       {!book && !path.length && <MySeforim busy={busy} onOpen={(ref) => open(ref)} />}
-      {!book && !path.length && <MyNotes onOpen={(ref) => open(ref)} />}
+      {!book && !path.length && <MyNotes />}
       {!book && !path.length && offlineOn() && <OfflineShelf onPick={(t) => setBook({ title: t })} />}
       {!book && !path.length && recent.length > 0 && (
         <div className="lib-recent">

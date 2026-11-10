@@ -2333,3 +2333,33 @@ html body .pointed :is(.line .he, .min-he, .il-he, .il-pair .he):not(.rashi) { f
 .smap-topic-title { font-size: max(19px, calc(var(--en-size, 18px) * 1.12)); }
 .smap-bg ul, .smap-link-text .en { font-size: max(16px, calc(var(--en-size, 18px) * .95)); line-height: 1.45; }
 .smap-kind, .smap-label { font-size: 12.5px; }
+/* Notes everywhere (components/NoteAdd.tsx) and the Notebook (components/Notebook.tsx) */
+.note-add { border: 0; background: transparent; color: var(--soft); font: 13px var(--f-ui); cursor: pointer; padding: 2px 6px; margin-left: auto; }
+.comm-title .note-add { margin-left: auto; margin-right: 6px; font-size: 15px; }
+.note-add-edit { margin: 6px 0 8px; }
+.smap-note { padding: 0 10px 4px; }
+.smap-note .note-add { margin: 0; padding: 0; font-size: 12px; }
+.ln-on { font-weight: 600; color: var(--soft); }
+.hx-card.hx-nb { display: flex; justify-content: space-between; align-items: center; width: 100%; border: 1px solid var(--rule); border-radius: 16px; background: var(--surface); padding: 14px 16px; font: inherit; color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 10px; }
+.nb { position: fixed; inset: 0; z-index: 400; background: var(--bg); color: var(--ink); overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 16px 40px; box-sizing: border-box; }
+.nb > * { max-width: 680px; margin-left: auto; margin-right: auto; }
+.nb-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.nb-head h1 { font: 400 26px var(--f-body); margin: 6px 0; }
+.nb-tabs { display: flex; gap: 6px; margin: 6px auto 10px; }
+.nb-tabs button { flex: 1; border: 1px solid var(--rule); background: transparent; color: var(--soft); border-radius: 999px; padding: 7px; font: 14px var(--f-ui); cursor: pointer; }
+.nb-tabs button.on { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+.nb .notes-search { display: block; width: 100%; box-sizing: border-box; }
+.nb-bar { display: flex; gap: 14px; align-items: center; margin: 10px auto; }
+.nb-bar .btn { margin-right: auto; }
+.nb-book { border-top: 1px solid var(--rule); }
+.nb-book-head { display: flex; justify-content: space-between; width: 100%; padding: 12px 2px; border: 0; background: transparent; color: var(--ink); font: 17px var(--f-body); cursor: pointer; }
+.nb-sec-head { font: 13px var(--f-ui); color: var(--accent); margin: 4px 0 6px; }
+.nb-note { border: 1px solid var(--rule); border-radius: 12px; padding: 10px 12px; margin: 0 0 10px; background: var(--surface); }
+.nb-where { display: flex; justify-content: space-between; gap: 8px; font: 12px var(--f-ui); color: var(--soft); margin-bottom: 4px; }
+.nb-quote { font-style: italic; color: var(--soft); font-size: 14px; margin-bottom: 4px; }
+.nb-text { white-space: pre-wrap; font-size: max(16px, calc(var(--en-size, 18px) * .95)); line-height: 1.5; }
+.nb-tag { border: 0; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 0 5px; font: inherit; cursor: pointer; }
+.nb-topics .nb-tag { margin: 0 6px 8px 0; padding: 4px 10px; border-radius: 999px; font-size: 14px; }
+.nb-topics .nb-tag.on { background: var(--accent); color: #fff; }
+.nb-actions { display: flex; gap: 14px; margin-top: 6px; font-size: 13px; }
+.nb-empty { line-height: 1.5; margin-top: 20px; }

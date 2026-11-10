@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { costUsd, KEPT_MODEL } from '@/lib/config';
+import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
@@ -7,6 +7,7 @@ import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { relatedLines, type Item } from '@/lib/related';
 import { needCredit } from '@/lib/credits';
+import { keptModel } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -41,7 +42,7 @@ async function makeIdeas(base: string, n: number): Promise<{ points: { text: str
     return `### ${x.ref}\n${body}`;
   }).filter(Boolean);
   if (!srcs.length) return { points: [] };
-  const model = KEPT_MODEL;
+  const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const r = await runAnthropic({
     model: model.id, system: PROMPT,
     history: [{ role: 'user', content: `The line: ${base}, line ${n}\n${he}\n${en}\n\nThe linked seforim:\n\n${srcs.join('\n\n')}` }],
