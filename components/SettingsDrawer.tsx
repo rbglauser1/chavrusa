@@ -632,7 +632,13 @@ function VoiceDesigner({ onCreated, hasCustom }: { onCreated: (p: Partial<Settin
 function Credits({ on, onToggle }: { on: boolean; onToggle: (on: boolean) => void }) {
   const [b, setB] = useState<{ bought?: number; used?: number; left?: number; markup?: number; stripe?: boolean; error?: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { fetch('/api/billing/balance').then((r) => r.json()).then(setB).catch(() => setB({ error: 'Couldn’t check.' })); }, [on]);
+  useEffect(() => {
+    const load = () => fetch('/api/billing/balance').then((r) => r.json()).then(setB).catch(() => setB({ error: 'Couldn’t check.' }));
+    void load();
+    // Stripe's word that a payment went through can arrive a few seconds after coming back: look again shortly.
+    const t = window.setTimeout(() => void load(), 5000);
+    return () => window.clearTimeout(t);
+  }, [on]);
   const buy = async (usd: number) => {
     setBusy(true);
     const r = await fetch('/api/billing/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usd }) }).then((x) => x.json()).catch(() => ({ error: 'Couldn’t reach the server.' }));

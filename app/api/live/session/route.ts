@@ -19,7 +19,9 @@ export async function POST(req: NextRequest) {
   if (!key) return NextResponse.json({ error: 'OPENAI_API_KEY is not set.' }, { status: 500 });
   const sdp = await req.text();
   if (!sdp.startsWith('v=')) return NextResponse.json({ error: 'Missing WebRTC offer.' }, { status: 400 });
-  if (req.nextUrl.searchParams.get('preview') !== '1') { const out = await outOfCredit(); if (out) return NextResponse.json({ error: out }, { status: 402 }); } // credits (lib/credits.ts)
+  // Credits (lib/credits.ts). Voice samples and tests count too: they are real voice sessions, and leaving them out
+  // would let a learner with no credit talk for free.
+  { const out = await outOfCredit(); if (out) return NextResponse.json({ error: out }, { status: 402 }); }
   const s = await getSettings();
   const askVoice = req.nextUrl.searchParams.get('voice');
   const preview = req.nextUrl.searchParams.get('preview') === '1';

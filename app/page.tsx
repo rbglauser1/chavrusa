@@ -268,6 +268,15 @@ export default function Home() {
   const setContInfo = (c: (ContinueInfo & { id?: string }) | null) => { setContInfoState(c); try { if (c) localStorage.setItem('chavrusa_cont', JSON.stringify(c)); } catch { /* optional */ } };
   useEffect(() => { try { const k = localStorage.getItem('chavrusa_cont'); if (k) setContInfoState(JSON.parse(k)); } catch { /* optional */ } }, []);
   const [help, setHelp] = useState(false);
+  // Back from Stripe (buying credit): open Settings, where Credits shows the new balance, and tidy the address.
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      if (!q.has('credit')) return;
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+      setSettingsFrom('home'); setView('settings');
+    } catch { /* optional */ }
+  }, []);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -358,11 +367,14 @@ export default function Home() {
     try { localStorage.setItem('chavrusa_settings', JSON.stringify(settings)); } catch { /* optional */ }
   }, [settings, loaded]);
 
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
   const updateSettings = useCallback((patch: Partial<Settings>) => {
     if (patch.ui === 'home') { setDrawer(null); setView('home'); }
     else if (patch.ui === 'classic') setView('learn');
     setSettings((s) => ({ ...s, ...patch }));
-    fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
+    // One save at a time, in order: two changes made in quick succession used to race on the server, and the
+    // second could write back the settings as they were before the first.
+    saveChain.current = saveChain.current.then(() => fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }).then(() => undefined, () => undefined));
   }, []);
 
   // The place he last scrolled to in the Sefer, per session (on this phone). It wins over the session's own place when
