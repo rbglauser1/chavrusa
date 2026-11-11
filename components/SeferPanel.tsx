@@ -104,8 +104,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const sc = (): HTMLElement | null => (docScroll && typeof document !== 'undefined' ? (document.scrollingElement as HTMLElement) : bodyRef.current);
   const viewTop = (el: HTMLElement) => (docScroll ? 0 : el.getBoundingClientRect().top);
   const viewH = (el: HTMLElement) => (docScroll ? window.innerHeight : el.clientHeight);
+  // A line he tapped himself is already in front of him: don't scroll it back to its start (Nov 10).
+  const tappedLine = useRef<{ ref: string; n: number; at: number } | null>(null);
   useEffect(() => {
     if (!src?.focus || restoring.current) return;
+    const tl = tappedLine.current;
+    if (tl && tl.ref === src.ref && tl.n === src.focus && Date.now() - tl.at < 4000) return;
     // Land at the start of the line (its Hebrew first), with the step heading above it when Steps are on.
     const t = window.setTimeout(() => {
       let el = bodyRef.current?.querySelector(`[data-line="${src.focus}"]`) as HTMLElement | null;
@@ -551,6 +555,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const dbl = embedded && !!onDoubleTap;
   function toggleLine(i: number) {
     if (embedded) { setPicked((p) => (p === i ? null : i)); if (listOpen === i) setListOpen(null); }
+    if (src) tappedLine.current = { ref: src.ref, n: i + 1, at: Date.now() };
     if (src && onPoint && !/ on /i.test(src.ref)) onPoint(src, i + 1);
     if (!canTranslate || showAll) return;
     setOpen((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
