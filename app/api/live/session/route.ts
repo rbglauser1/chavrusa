@@ -117,11 +117,13 @@ export async function POST(req: NextRequest) {
   // The hello (Nov 10): after a while away (3 hours or more), a short friendly hello, a different one each call; just
   // back from a few minutes away, none; in between, a few natural words.
   const FLAVORS = ['that it is good to be learning together again', 'a warm "good to have you back" in your own words', 'a quick, friendly "let\'s get back into it"', 'a word of real enjoyment at sitting down to learn', 'a short, warm word that he came back to learn (no flattery)', 'a light, friendly line about picking the sugya back up', 'a cheerful "ready to go" in your own words', 'a brief, warm word about the learning waiting for us'];
+  const BACK = ['a light "okay, back to it"', 'a quick "alright, where were we"', 'a friendly "good, let\'s keep going"', 'a short word that he is back', 'a relaxed "so, we were right in the middle"', 'a quick, upbeat "let\'s pick it up"'];
   const away = mins === null ? 'a while' : mins < 24 * 60 ? 'earlier today' : mins < 48 * 60 ? 'yesterday' : `${Math.round(mins / 1440)} days ago`;
   const greet = mins !== null && mins < 20
     ? 'no greeting; we were just learning'
     : mins !== null && mins < 180
-    ? 'a few natural words, no formal greeting'
+    // (Nov 10: "a few natural words" was so loose the voice usually said nothing; now a real line, kept light.)
+    ? `one short, casual line first, the way a chavrusa does coming back after a little break, for example ${BACK[Math.floor(Math.random() * BACK.length)]}. Say it in your own words, different from any other time, one short sentence, no question that waits for an answer`
     : `we last learned ${away}: start with one short, friendly hello the way a real chavrusa does when you sit down to learn again, for example ${FLAVORS[Math.floor(Math.random() * FLAVORS.length)]}. Say it in your own words, different from any other time, one sentence, no question that waits for an answer`;
   // Keep going by itself (Settings): the opening doesn't ask whether to go on; the app goes on after it by itself.
   const auto = s.autoGo === true && !preview;
