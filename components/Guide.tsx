@@ -167,7 +167,7 @@ export const SET_PAGES: SetPage[] = [
   { id: 'set-extras2', chapter: 'Extras', title: 'Extras: on the amud', rows: [
     { label: 'Sugya map', opts: ON_OFF, on: 0, text: 'A map button at the top of the Sefer: the big picture, each topic and the Gemara’s steps.' },
     { label: 'Meforshim in the sugya map', opts: ON_OFF, on: 0, text: 'Under each step of the map, the meforshim on it, opening right there.' },
-    { label: 'Review questions', opts: ON_OFF, on: 1, text: 'A Review button at the top of the Sefer: questions on the amud, answers hidden until you tap.' },
+    { label: 'Review questions', opts: ON_OFF, on: 1, text: 'A “Review questions” button at the top of the Sefer: questions on the amud, answers hidden until you tap.' },
     { label: 'Listen to the daf', opts: ON_OFF, on: 0, text: '🎧 Listen at the top of the Sefer: a spoken overview of the amud, eight to ten minutes, for the car. Made once (about 20¢), then kept and free to replay.' },
     { label: 'My buttons', value: '+ Make a button', text: 'Your own AI buttons, with your own words (“Explain it simply,” “The mussar here,” “Shiur outline”). Choose whether each sits on every line or on the whole amud.' },
   ] },
@@ -383,7 +383,7 @@ export const STEPS: Step[] = [
   { chapter: 'The Sefer', screen: 'ideas', spot: [44, 34, 20, 3.6], also: [49.5, 5, 90, 31], title: '✦ Ideas', text: 'A few points the AI draws only from those linked seforim, each naming its source. Tap a source to read it inside.' },
   { chapter: 'The Sefer', screen: 'sefer', spot: [44, 56, 38, 3.6], title: 'All the commentaries', text: 'Every meforesh Sefaria has on this line (only approved seforim).' },
   { chapter: 'The Sefer', screen: 'sefer', spot: [36.2, 6, 30, 2.6], title: 'Add a note', text: 'Write your own note on the line (or say “make a note: …” in a call). There is a ✎ on every Rashi, explanation and step of the map too. Every note goes into your Notebook (on Home and in the Library), filed by sefer and by #topic.' },
-  { chapter: 'The Sefer', screen: 'sefer', spot: [6.4, 22, 57, 3.4], title: 'Sugya map and Review', text: 'At the top of every amud or perek (turn them on in Extras).' },
+  { chapter: 'The Sefer', screen: 'sefer', spot: [6.4, 22, 70, 3.4], title: 'Sugya map and Review questions', text: 'At the top of every amud or perek (turn them on in Extras).' },
   { chapter: 'The Sefer', screen: 'map', spot: [18, 0, 100, 82], title: 'The sugya map', text: 'The big picture of the amud, then each topic with an intro, what you need to know, the Gemara’s steps, and where it ends up. Tap a step to go to its line; meforshim, halacha and verses open right in the map.' },
   { chapter: 'The Sefer', screen: 'review', spot: [30, 0, 100, 70], title: 'Review questions', text: 'Test yourself on the amud. Each answer stays hidden until you tap.' },
   { chapter: 'The Sefer', screen: 'sefer', spot: [90, 14, 42, 5.2], title: 'Where you are', text: '‹ and › go to the amud before and after. You can also just scroll: pull down at the top for the amud before, keep going at the bottom for the next.' },
