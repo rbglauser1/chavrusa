@@ -77,12 +77,29 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
     try { if (navigator.share) { await navigator.share({ title: titleOfShown, text }); return; } } catch { return; }
     try { await navigator.clipboard.writeText(text); window.alert('Copied. Paste it wherever you like.'); } catch { /* ignore */ }
   };
+  // The notes as a page: for Print, and for Download as a Word file (it opens in Word, Pages and Google Docs, Hebrew
+  // right to left). Notes are kept in the order shown, grouped by sefer with a heading for each.
+  const esc = (t: string) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
+  const pageOf = (title: string, list: Note[]) => {
+    const groups = new Map<string, Note[]>();
+    for (const x of list) { const b = x.ref ? bookOf(x.ref) : 'Pages of my own'; groups.set(b, [...(groups.get(b) ?? []), x]); }
+    const body = [...groups].map(([b, xs]) => `<h2>${esc(b)}</h2>${xs.map((x) => `<p class="w">${esc(where(x))} · ${new Date(x.updated ?? x.created).toLocaleDateString()}</p>${x.quote ? `<p class="q" dir="auto">“${esc(x.quote)}”</p>` : ''}<p class="n" dir="auto">${esc(x.text).replace(/\n/g, '<br>')}</p>`).join('')}`).join('');
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font:12pt/1.5 Georgia,serif;max-width:680px;margin:32px auto;padding:0 16px}h1{font-weight:400}h2{font:600 14pt Georgia,serif;margin:24px 0 8px;border-bottom:1px solid #ccc}.w{color:#777;font:10pt Arial,sans-serif;margin:14px 0 2px}.q{font-style:italic;color:#555;margin:0 0 2px}.n{margin:0 0 12px}</style></head><body><h1>${esc(title)}</h1><p class="w">${list.length} notes · ${new Date().toLocaleDateString()}</p>${body}</body></html>`;
+  };
   const print = () => {
     const w = window.open('', '_blank');
     if (!w) return;
-    const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
-    w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(titleOfShown)}</title><style>body{font:16px/1.5 Georgia,serif;max-width:680px;margin:32px auto;padding:0 16px}h1{font-weight:400}.w{color:#777;font:13px sans-serif}.q{font-style:italic;color:#555}.n{margin:0 0 22px;white-space:pre-wrap}</style><h1>${esc(titleOfShown)}</h1>${shown.map((x) => `<div class="w">${esc(where(x))}</div>${x.quote ? `<div class="q">“${esc(x.quote)}”</div>` : ''}<div class="n" dir="auto">${esc(x.text)}</div>`).join('')}`);
+    w.document.write(pageOf(titleOfShown, shown));
     w.document.close(); w.focus(); w.print();
+  };
+  const download = (all: boolean) => {
+    const list = all ? (notes ?? []) : shown, title = all ? 'My Notebook' : titleOfShown;
+    const blob = new Blob(['\ufeff', pageOf(title, list)], { type: 'application/msword' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${title.replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'Notebook'} ${new Date().toISOString().slice(0, 10)}.doc`;
+    document.body.appendChild(a); a.click(); a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   };
 
   const Card = ({ x }: { x: Note }) => (
@@ -116,7 +133,8 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
       <input className="notes-search" placeholder="Search all your notes" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="nb-bar">
         {newPage === null ? <button className="btn ghost" onClick={() => setNewPage('')}>+ New page</button> : null}
-        {shown.length > 0 && <><button className="linklike" onClick={() => void share()}>Share</button><button className="linklike" onClick={print}>Print</button></>}
+        {shown.length > 0 && <><button className="linklike" onClick={() => void share()}>Share</button><button className="linklike" onClick={print}>Print</button><button className="linklike" onClick={() => download(false)}>{notes && shown.length < notes.length ? 'Download these' : 'Download'}</button></>}
+        {notes && notes.length > 0 && shown.length < notes.length && <button className="linklike" onClick={() => download(true)}>Download all</button>}
       </div>
       {newPage !== null && (
         <div className="ln-edit">
