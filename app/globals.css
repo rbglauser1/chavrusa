@@ -2542,3 +2542,21 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .gd-setlist span.on { border-color: var(--accent); background: var(--accent-soft); }
 .gd-drivebtn.gd-sq { border-radius: 0; font-size: calc(var(--u) * 5); }
 @media (prefers-reduced-motion: reduce) { .gd-cam { transition: none; } }
+
+/* The chat on a line (components/LineChat.tsx) */
+.lchat .comm-title { display: flex; align-items: center; gap: 8px; }
+.lchat-save { margin-left: auto; border: 1px solid var(--rule); background: transparent; color: var(--accent); font: 500 13px var(--f-ui); padding: 4px 10px; border-radius: 999px; cursor: pointer; }
+.lchat-save:disabled { color: var(--soft); cursor: default; }
+.lchat-starters { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.lchat-starters button { border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: 14px var(--f-ui); padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.lchat-list { display: flex; flex-direction: column; gap: 10px; margin: 8px 0; }
+.lchat-me { align-self: flex-end; max-width: 85%; background: var(--accent-soft); color: var(--ink); padding: 8px 12px; border-radius: 14px 14px 4px 14px; font: 16px/1.45 var(--f-body); white-space: pre-wrap; }
+.lchat-ai { display: flex; flex-direction: column; gap: 4px; }
+.lchat-ai .lx-p { font-size: var(--en-size, 17px); }
+.lchat-keep { align-self: flex-start; border: 0; background: transparent; color: var(--accent); font: 13px var(--f-ui); padding: 4px 0; cursor: pointer; }
+.lchat-keep:disabled { color: var(--soft); cursor: default; }
+.lchat-wait { font-style: italic; }
+.lchat-form { display: flex; gap: 8px; align-items: flex-end; }
+.lchat-form textarea { flex: 1; min-height: 44px; max-height: 140px; resize: vertical; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); color: var(--ink); font: 16px/1.4 var(--f-body); padding: 10px 12px; }
+.lchat-form .btn { min-height: 44px; }
+.lchat-clear { margin-top: 6px; font-size: 13px; }

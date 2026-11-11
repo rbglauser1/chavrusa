@@ -429,6 +429,7 @@ export interface Settings {
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
   mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
+  lineChat?: boolean;       // a Chat button by each line: a written chat with the AI on that line (app/api/linechat); default on
   explainLine?: boolean;    // an Explain button by each line's meforshim (AI, app/api/explain); default on
   lineSources?: boolean;    // a Sources button by each line's meforshim (Sefaria's links, app/api/related); default on
   review?: boolean;         // review questions to test himself on an amud or perek (app/api/review)
@@ -570,7 +571,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall'] as const;
+export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat'] as const;
 
 export const OWNER_ID = 'owner';
 

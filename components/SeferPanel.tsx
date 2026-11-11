@@ -9,6 +9,7 @@ import { Dibbur } from './Dibbur';
 import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
 import MyButtonBox from './MyButtonBox';
+import LineChat from './LineChat';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
@@ -94,7 +95,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // as a tap on a line of this amud (before, it took a second tap).
   const pickAfter = useRef<{ ref: string; i: number } | null>(null);
   useEffect(() => {
-    setOpen(new Set()); setComm({}); setXOpen(new Set()); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
+    setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
     const want = pickAfter.current;
     if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -152,6 +153,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Explain and Sources under a line (Settings → Extras, both on unless switched off): which lines have them open, and
   // what Sefaria links to each line of this amud / perek (fetched once per amud / perek; free).
   const [xOpen, setXOpen] = useState<Set<number>>(new Set());
+  const [cOpen, setCOpen] = useState<Set<number>>(new Set()); // the line chats open
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
   const [iOpen, setIOpen] = useState<Set<number>>(new Set());
   // The learner's own buttons (Settings → Extras → My buttons): which is open on which line ("line|id"), and at the top.
@@ -783,6 +785,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {lineX && settings.explainLine !== false && (
                           <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}>✦ Explain</button>
                         )}
+                        {lineX && settings.lineChat !== false && (
+                          <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}>✦ Chat</button>
+                        )}
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
                           <button className={`comm-btn ${sOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setSOpen, i)}>Sources ({sourcesCount(rel.lines[partNum(i)])})</button>
                         )}
@@ -812,6 +817,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     </div>
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
+                  {cOpen.has(i) && <LineChat lineRef={partRef(i)} onClose={() => flipIn(setCOpen, i)} />}
                   {bOpen?.startsWith(`${i}|`) && (() => { const b = lineButtons.find((x) => x.id === bOpen.slice(bOpen.indexOf('|') + 1)); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={partRef(i)} onClose={() => setBOpen(null)} /> : null; })()}
                   {iOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
                     <IdeasBox groups={rel.lines[partNum(i)]} lineRef={partRef(i)} onClose={() => flipIn(setIOpen, i)} />

@@ -159,6 +159,7 @@ export const SET_PAGES: SetPage[] = [
     { label: 'Chazara (review)', opts: ON_OFF, on: 0, text: 'On Home: a short recap of last time, and a few questions on an older sugya.' },
     { label: 'Sugya map', opts: ON_OFF, on: 0, text: 'A map button at the top of the Sefer: the big picture, each topic and the Gemara’s steps.' },
     { label: 'Explain button on each line', opts: ON_OFF, on: 0, text: '✦ Explain next to Rashi and Tosafos: what the line says and where it stands in the sugya.' },
+    { label: 'Chat button on each line', opts: ON_OFF, on: 0, text: '✦ Chat next to Explain: a written chat with the AI about that line, right under it. Ask anything; save one answer, or the whole chat, to your Notebook.' },
     { label: 'Sources button on each line', opts: ON_OFF, on: 0, text: 'Sources next to Rashi and Tosafos: what Sefaria links to the line. With it, ✦ Ideas drawn from those sources.' },
     { label: 'Meforshim in the sugya map', opts: ON_OFF, on: 0, text: 'Under each step of the map, the meforshim on it, opening right there.' },
     { label: 'Review questions', opts: ON_OFF, on: 1, text: 'A Review button at the top of the Sefer: questions on the amud, answers hidden until you tap.' },
