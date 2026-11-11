@@ -114,6 +114,15 @@ export async function POST(req: NextRequest) {
   const recapBlock = recap ? `\n\n# The conversation so far in this session (most recent last)\n${recap}` : '';
   // How the call opens depends on the circumstances, like a real chavrusa: no formal hello if we were just learning.
   const mins = lastAt ? (Date.now() - new Date(lastAt).getTime()) / 60000 : null;
+  // The hello (Nov 10): after a while away (3 hours or more), a short friendly hello, a different one each call; just
+  // back from a few minutes away, none; in between, a few natural words.
+  const FLAVORS = ['that it is good to be learning together again', 'a warm "good to have you back" in your own words', 'a quick, friendly "let\'s get back into it"', 'a word of real enjoyment at sitting down to learn', 'a short, warm word that he came back to learn (no flattery)', 'a light, friendly line about picking the sugya back up', 'a cheerful "ready to go" in your own words', 'a brief, warm word about the learning waiting for us'];
+  const away = mins === null ? 'a while' : mins < 24 * 60 ? 'earlier today' : mins < 48 * 60 ? 'yesterday' : `${Math.round(mins / 1440)} days ago`;
+  const greet = mins !== null && mins < 20
+    ? 'no greeting; we were just learning'
+    : mins !== null && mins < 180
+    ? 'a few natural words, no formal greeting'
+    : `we last learned ${away}: start with one short, friendly hello the way a real chavrusa does when you sit down to learn again, for example ${FLAVORS[Math.floor(Math.random() * FLAVORS.length)]}. Say it in your own words, different from any other time, one sentence, no question that waits for an answer`;
   // Keep going by itself (Settings): the opening doesn't ask whether to go on; the app goes on after it by itself.
   const auto = s.autoGo === true && !preview;
   // "Open calls the Nov 3 way" (Settings, a test): everything about how a call opens as it was on Nov 3 at 9:23 PM,
@@ -125,16 +134,16 @@ export async function POST(req: NextRequest) {
   const autoOpen = !oldOpen && auto && !resume && !!(placeName || recap) && !pointed;
   // A tapped line: the app hands it to the voice as soon as the call opens (the way a tap mid-call does). Told to read
   // it from here, the voice said "let's start right here" and waited for the app, since its text comes only from the app.
-  const pointOpen = point && !oldOpen ? `Do not speak first, and do not say, read or recite any text yourself. In a moment the app hands you the line the learner chose (${point.ref}, line ${point.n}); when it arrives, begin with a few natural words (no formal greeting${mins !== null && mins < 20 ? '; we were just learning' : ''}) and do exactly what it says.${recapBlock}` : '';
+  const pointOpen = point && !oldOpen ? `Do not speak first, and do not say, read or recite any text yourself. In a moment the app hands you the line the learner chose (${point.ref}, line ${point.n}); when it arrives, begin with ${greet}, and then do exactly what it says.${recapBlock}` : '';
   const hello = pointOpen ? pointOpen : autoOpen
-    ? `Do not speak first, and do not say, read, recite or summarize any text yourself. In a moment the app hands you the next piece of the text${placeName ? ` (we are on ${placeName})` : ''}; when it arrives, begin with a few natural words (no formal greeting${mins !== null && mins < 20 ? '; we were just learning' : ''}) and then read it exactly as given, every word of it.${recapBlock}`
+    ? `Do not speak first, and do not say, read, recite or summarize any text yourself. In a moment the app hands you the next piece of the text${placeName ? ` (we are on ${placeName})` : ''}; when it arrives, begin with ${greet}, and then read it exactly as given, every word of it.${recapBlock}`
     : pointed
-    ? `Speak first, briefly. ${mins !== null && mins < 20 ? 'We were just learning; do not greet.' : 'At most a short natural opener; no formal greeting.'} ${pointed} Then listen.${recapBlock}`
+    ? `Speak first, briefly: ${greet}. ${pointed} Then listen.${recapBlock}`
     : !recap
     ? `Speak first, briefly and naturally, the way a chavrusa would when sitting down to learn: a short, warm, natural opener (not a formula, and different each time), ${placeName ? `then mention that last time we were on ${placeName} and ask if he wants to pick up there` : 'then ask what we are learning today'}. Then stop and listen.`
     : mins !== null && mins < 20
       ? `We were learning together just a few minutes ago. Do not greet. Speak first, very briefly, and simply continue from your last message: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again in a few words; otherwise ${goOnAsk}. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then listen.${recapBlock}`
-      : `Speak first, briefly and naturally. Use a short, casual opener only if it fits (we last learned ${mins !== null && mins < 24 * 60 ? 'earlier today' : 'on an earlier day'}); no formal greeting. In one sentence say where we were${placeName ? ` (${placeName})` : ''}. Your last message was: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again briefly; otherwise ${goOnAsk}. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then stop and listen.${recapBlock}`;
+      : `Speak first, briefly and naturally: ${greet}. In one sentence say where we were${placeName ? ` (${placeName})` : ''}. Your last message was: "${lastSaid}". If it ended with a question the learner hasn't answered, ask it again briefly; otherwise ${goOnAsk}. Do not read, recite or summarize the text yourself, and do not go on to the next line yourself: when he says to go on, delegate. Then stop and listen.${recapBlock}`;
   const resumeNote = pointOpen ? pointOpen : pointed ? `The call is resuming after a short pause. Do not greet. ${pointed}${recapBlock}` : `The call is resuming after a short pause, in the middle of learning. Do not greet and do not recap. Continue exactly where you left off. Your last message was: "${lastSaid}". If the learner hasn't answered it yet, wait for him; when he speaks, carry on from there.${recapBlock}`;
   // A pronunciation test (Settings → Voice → Test it): say one line, spelled the way a call would get it.
   const testText = preview ? String(req.nextUrl.searchParams.get('say') ?? '').slice(0, 400) : '';

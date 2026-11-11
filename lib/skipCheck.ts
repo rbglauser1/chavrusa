@@ -89,9 +89,11 @@ export function missingHebrew(text: string, said: string): string | null {
   const pieces = text.split(/\s*…\s*/).map((p) => p.trim()).filter(Boolean);
   if (!pieces.length || !said.trim()) return null;
   const heOf = (p: string) => (/[A-Za-z]/.test(p) ? p.split(/\s+[—–-]\s+/)[0] : p);
-  const heSaid = heWords(said);
-  const inHebrew = heSaid.length >= 3; // the transcript came back in Hebrew letters: compare letters with letters
-  const stream = inHebrew ? heSaid : (said.match(/[A-Za-z][A-Za-z'’]*/g) ?? []).map(latSkel);
+  // The transcript can mix Hebrew letters and English letters for the same reading ("Rav Shimi mi-Nehardea amar …
+  // סמוך לשקיעת החמה"): every word of it, in order, is boiled down to its sound skeleton, so both kinds count (Nov 10:
+  // three words in Hebrew letters made it judge by Hebrew letters only, and ask him to read again what he had read).
+  const inHebrew = false;
+  const stream = (said.replace(NIKUD, '').match(/[א-ת]+|[A-Za-z][A-Za-z'’]*/g) ?? []).map((w) => (/[א-ת]/.test(w) ? heSkel(w) : latSkel(w))).filter(Boolean);
   let at = 0;
   const judged: { i: number; share: number; words: number }[] = [];
   pieces.forEach((p, i) => {
