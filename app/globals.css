@@ -2631,3 +2631,5 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .htr-note { font: 13px var(--f-ui); color: var(--soft); margin-bottom: 4px; }
 .htr-items { list-style: none; margin: 0; padding: 0; }
 .htr-wait { font-size: 13px; }
+/* iPhone: paint each step as its own layer, so scrolling back up never leaves part of the screen blank (Nov 11). */
+.stepped-row, .stepped { transform: translateZ(0); -webkit-backface-visibility: hidden; backface-visibility: hidden; }

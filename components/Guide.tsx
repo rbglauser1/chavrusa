@@ -44,7 +44,7 @@ const LineButtons = ({ on }: { on?: string }) => (<>
 const Sefer = ({ on, children }: { on?: string; children?: ReactNode }) => (<>
   <Header />
   <Box r={[6.4, 22, 30, 3.4]} c="gd-chip">🗺 Sugya map</Box>
-  <Box r={[6.4, 55, 24, 3.4]} c="gd-chip">✓ Review</Box>
+  <Box r={[6.4, 52, 40, 3.4]} c="gd-chip">✓ Review questions</Box>
   <Line top={11} he="אמר רבי יוחנן: ״כאשר צוה ה׳…״" en="Rabbi Yochanan said: As Hashem commanded…" />
   <Line top={23} he="מאי טעמא דרבי יוחנן?" en="What is Rabbi Yochanan’s reason?" focus />
   <LineButtons on={on} />

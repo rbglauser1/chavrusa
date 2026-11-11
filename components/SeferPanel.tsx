@@ -707,7 +707,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             {(settings.sugyaMap || settings.review || settings.listenDaf !== false || amudButtons.length > 0) && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
               <div className="smap-btns">
                 {settings.sugyaMap && <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>}
-                {settings.review && <button className="smap-btn" onClick={() => setReviewOpen(true)}>✓ Review</button>}
+                {settings.review && <button className="smap-btn" onClick={() => setReviewOpen(true)}>✓ Review questions</button>}
                 {settings.listenDaf !== false && kind !== 'none' && !/^Mine /.test(src.ref) && <button className={`smap-btn ${listenOpen ? 'on' : ''}`} onClick={() => setListenOpen((o) => !o)}>🎧 Listen</button>}
                 {amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}>✦ {b.name}</button>)}
               </div>

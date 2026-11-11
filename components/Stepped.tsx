@@ -2,7 +2,7 @@
 // A meforesh broken into its steps (app/api/commsteps): a "Steps" button above a long piece. Tapped, the same words
 // are shown cut into steps, each with a label, punctuation, and one line of English; tapped again, the piece as it is.
 // Shown on Tosafos always (Settings → Extras → Tosafos steps), and on any other long meforesh when Steps is on.
-import { useState, type MouseEvent, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 
 type Step = { label: string; he: string; en: string };
 const cache = new Map<string, Step[]>();
@@ -23,10 +23,28 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
       })
       .catch(() => setState('failed'));
   };
-  const flip = (e: MouseEvent) => { e.stopPropagation(); const next = !on; setOn(next); if (next && !steps && state !== 'loading') load(); };
+  // Keep the Steps button where it was on the screen when the piece changes height (Nov 11: on iPhone the page jumped
+  // and part of the screen was left blank while scrolling back up).
+  const btn = useRef<HTMLButtonElement>(null);
+  const before = useRef<number | null>(null);
+  const flip = (e: MouseEvent) => {
+    e.stopPropagation();
+    before.current = btn.current?.getBoundingClientRect().top ?? null;
+    const next = !on; setOn(next); if (next && !steps && state !== 'loading') load();
+  };
+  useLayoutEffect(() => {
+    const top = before.current, el = btn.current;
+    if (top === null || !el) return;
+    let box: HTMLElement | null = el.parentElement;
+    while (box && !(box.scrollHeight > box.clientHeight && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+    const d = el.getBoundingClientRect().top - top;
+    if (Math.abs(d) > 1) { if (box) box.scrollTop += d; else window.scrollBy(0, d); }
+    if (!steps && state === 'loading') return; // again when the steps arrive
+    before.current = null;
+  }, [on, steps, state]);
   return (
     <>
-      <button className={`steps-btn ${on ? 'on' : ''}`} onClick={flip}>{on ? '☰ Steps ▴' : '☰ Steps'}</button>
+      <button ref={btn} className={`steps-btn ${on ? 'on' : ''}`} onClick={flip}>{on ? '☰ Steps ▴' : '☰ Steps'}</button>
       {!on ? children
         : steps ? (
           <div className="stepped">
