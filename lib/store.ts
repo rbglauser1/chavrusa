@@ -39,3 +39,17 @@ export async function writeJson(path: string, v: unknown): Promise<void> {
 export async function removeJson(path: string): Promise<void> {
   await db().storage.from(BUCKET).remove([path]).catch(() => {});
 }
+
+/** A binary file (the audio of "Listen to the daf") in the same private bucket. */
+export async function writeBytes(path: string, bytes: Buffer, contentType: string): Promise<void> {
+  await ensure();
+  const { error } = await db().storage.from(BUCKET).upload(path, bytes, { contentType, upsert: true });
+  if (error) throw new Error(error.message);
+}
+/** A link to a private file that works for a while (default 6 hours); null if it can't be made. */
+export async function signedUrl(path: string, seconds = 6 * 60 * 60): Promise<string | null> {
+  try {
+    const { data, error } = await db().storage.from(BUCKET).createSignedUrl(path, seconds);
+    return error || !data ? null : data.signedUrl;
+  } catch { return null; }
+}

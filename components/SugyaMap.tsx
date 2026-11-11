@@ -18,6 +18,7 @@ const VERB: Record<string, string> = { Question: 'asks', Answer: 'answers', Proo
 const labelOf = (s: { kind: string; who: string }) => (s.who && VERB[s.kind] ? `${s.who} ${VERB[s.kind]}` : `${s.kind}${s.who ? ` · ${s.who}` : ''}`);
 
 type Step = { line: number; kind: string; who: string; summary: string };
+type Dispute = { question: string; line: number; halacha: string; sides: { who: string; holds: string; reason: string; source: string }[] };
 type Topic = { title: string; line: number; intro: string; background: string[]; steps: Step[]; takeaway: string };
 
 export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onClose, onComm, onOpen }: {
@@ -65,6 +66,15 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
     }
     return [...got.values()].sort((a, b) => rank(a.c.title) - rank(b.c.title) || a.c.title.localeCompare(b.c.title));
   };
+  // "Who holds what": each machlokes of the amud as a table, made when first tapped and then kept (app/api/map/views).
+  const [views, setViews] = useState<{ disputes: Dispute[] } | 'loading' | 'failed' | null>(null);
+  useEffect(() => { setViews(null); }, [refText]);
+  const loadViews = () => {
+    setViews('loading');
+    fetch(`/api/map/views?ref=${encodeURIComponent(refText)}`).then((r) => r.json())
+      .then((d) => setViews(d.error ? 'failed' : { disputes: Array.isArray(d.disputes) ? d.disputes : [] }))
+      .catch(() => setViews('failed'));
+  };
   const [moreFor, setMoreFor] = useState<string | null>(null);
   const [openComm, setOpenComm] = useState<string | null>(null); // the meforesh opened right in the map
   return (
@@ -77,6 +87,33 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
           <>
             <div className="ai-note left">Made by AI · may contain mistakes · check it inside</div>
             {data.overview && <div className="smap-overview"><span className="smap-label">The big picture</span><p>{data.overview}</p></div>}
+            <div className="smap-views">
+              {views === null ? <button className="smap-views-btn" onClick={loadViews}>⚖ Who holds what</button>
+                : views === 'loading' ? <div className="muted">Laying out who holds what…</div>
+                : views === 'failed' ? <div className="muted">Couldn’t make the table just now. <button className="linklike" onClick={loadViews}>Try again</button></div>
+                : !views.disputes.length ? <div className="muted">No machlokes on this {/\d[ab]$/.test(refText) ? 'amud' : 'text'}.</div>
+                : (
+                  <>
+                    <span className="smap-label">Who holds what</span>
+                    {views.disputes.map((d, k) => (
+                      <div key={k} className="smap-dispute">
+                        <button className="smap-dispute-q" onClick={() => go(d.line)}><span>{d.question}</span><span className="smap-line">line {d.line}</span></button>
+                        <div className="smap-sides" style={{ gridTemplateColumns: `repeat(${Math.min(d.sides.length, 2)}, minmax(0, 1fr))` }}>
+                          {d.sides.map((x, j) => (
+                            <div key={j} className="smap-side">
+                              <b>{x.who}</b>
+                              <p>{x.holds}</p>
+                              {x.reason && <p><i>Why:</i> {x.reason}</p>}
+                              {x.source && <p><i>From:</i> {x.source}</p>}
+                            </div>
+                          ))}
+                        </div>
+                        {d.halacha && <p className="smap-dispute-h"><i>The Gemara’s ruling:</i> {d.halacha}</p>}
+                      </div>
+                    ))}
+                  </>
+                )}
+            </div>
             {data.topics.map((t, ti) => (
               <section key={ti} className="smap-topic">
                 {t.title && (

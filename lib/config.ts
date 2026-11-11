@@ -429,6 +429,9 @@ export interface Settings {
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
   mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
+  listenDaf?: boolean;      // a Listen button at the top of the Sefer: a spoken overview of the amud, recorded once and kept (app/api/listen); default on
+  halachaTrail?: boolean;   // a Halacha button on each line: from the Gemara to the Rambam, Shulchan Aruch and Mishnah Berurah (components/HalachaTrail); default on
+  tosSteps?: boolean;       // a Steps button on each long Tosafos: the piece cut into its steps, punctuated (app/api/commsteps); default on
   wordTap?: boolean;        // tap a word in an open line for its meaning (Jastrow / BDB via Sefaria, app/api/word); default on
   lineChat?: boolean;       // a Chat button by each line: a written chat with the AI on that line (app/api/linechat); default on
   explainLine?: boolean;    // an Explain button by each line's meforshim (AI, app/api/explain); default on
@@ -572,7 +575,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap'] as const;
+export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail'] as const;
 
 export const OWNER_ID = 'owner';
 

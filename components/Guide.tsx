@@ -155,24 +155,29 @@ export const SET_PAGES: SetPage[] = [
     { label: 'Live voice for calls', opts: ['GPT-Live', 'Gemini Live (test)'], on: 0, text: 'GPT-Live (OpenAI, about 5¢ a minute) or Gemini Live (Google, about 1–2¢ a minute, a test). Applies from the next Talk.' },
     { label: 'Gemini voice and pronunciation', value: 'Charon ▶ ›', text: 'With Gemini Live: its voice and its own pronunciation settings.' },
   ] },
-  { id: 'set-extras', chapter: 'Extras', title: 'Extras', rows: [
-    { label: 'Chazara (review)', opts: ON_OFF, on: 0, text: 'On Home: a short recap of last time, and a few questions on an older sugya.' },
-    { label: 'Sugya map', opts: ON_OFF, on: 0, text: 'A map button at the top of the Sefer: the big picture, each topic and the Gemara’s steps.' },
+  { id: 'set-extras', chapter: 'Extras', title: 'Extras: on each line', rows: [
     { label: 'Explain button on each line', opts: ON_OFF, on: 0, text: '✦ Explain next to Rashi and Tosafos: what the line says and where it stands in the sugya.' },
-    { label: 'Word meanings', opts: ON_OFF, on: 0, text: 'In a line that is open, tap any Hebrew or Aramaic word: what it means, from Jastrow (Gemara) or Brown-Driver-Briggs (Tanach). Free, no AI.' },
     { label: 'Chat button on each line', opts: ON_OFF, on: 0, text: '✦ Chat next to Explain: a written chat with the AI about that line, right under it. Ask anything; save one answer, or the whole chat, to your Notebook.' },
+    { label: 'Word meanings', opts: ON_OFF, on: 0, text: 'In a line that is open, or in a meforesh under it, tap any Hebrew or Aramaic word: what it means, from Jastrow (Gemara) or Brown-Driver-Briggs (Tanach). Tap an abbreviation (כה"ג, וי"ל) and it is opened into its words. Free, no AI.' },
+    { label: 'Tosafos steps', opts: ON_OFF, on: 0, text: 'A Steps button on every long Tosafos: the same words cut into question, answer, proof and second answer, with punctuation and one line of English on each. With Steps on (What’s shown), any other long meforesh has it too.' },
     { label: 'Sources button on each line', opts: ON_OFF, on: 0, text: 'Sources next to Rashi and Tosafos: what Sefaria links to the line. With it, ✦ Ideas drawn from those sources.' },
+    { label: 'From the sugya to the halacha', opts: ON_OFF, on: 0, text: '⚖ Halacha on a line: the road from the Gemara to the Rambam, the Tur, the Shulchan Aruch and the Mishnah Berurah, in order. Free, from Sefaria’s links.' },
+    { label: 'Notes on the line', opts: ON_OFF, on: 0, text: 'Add a note to any line, or say “make a note” in a call. All notes go to your Notebook.' },
+  ] },
+  { id: 'set-extras2', chapter: 'Extras', title: 'Extras: on the amud', rows: [
+    { label: 'Sugya map', opts: ON_OFF, on: 0, text: 'A map button at the top of the Sefer: the big picture, each topic and the Gemara’s steps.' },
     { label: 'Meforshim in the sugya map', opts: ON_OFF, on: 0, text: 'Under each step of the map, the meforshim on it, opening right there.' },
     { label: 'Review questions', opts: ON_OFF, on: 1, text: 'A Review button at the top of the Sefer: questions on the amud, answers hidden until you tap.' },
+    { label: 'Listen to the daf', opts: ON_OFF, on: 0, text: '🎧 Listen at the top of the Sefer: a spoken overview of the amud, eight to ten minutes, for the car. Made once (about 20¢), then kept and free to replay.' },
+    { label: 'My buttons', value: '+ Make a button', text: 'Your own AI buttons, with your own words (“Explain it simply,” “The mussar here,” “Shiur outline”). Choose whether each sits on every line or on the whole amud.' },
   ] },
-  { id: 'set-extras2', chapter: 'Extras', title: 'Extras (more)', rows: [
-    { label: 'Notes on the line', opts: ON_OFF, on: 0, text: 'Add a note to any line, or say “make a note” in a call. All notes go to your Notebook.' },
+  { id: 'set-extras3', chapter: 'Extras', title: 'Extras: around the learning', rows: [
+    { label: 'Chazara (review)', opts: ON_OFF, on: 0, text: 'On Home: a short recap of last time, and a few questions on an older sugya.' },
     { label: 'Progress and plans', opts: ON_OFF, on: 1, text: 'On Home: what you’ve learned, your goals, daf yomi, and a siyum when you finish.' },
     { label: 'Dark call screen', opts: ON_OFF, on: 1, text: 'When a call starts, the screen goes dark: the words being read, large, with Again, Pause and Go on.' },
     { label: 'Driving mode', opts: ON_OFF, on: 1, text: 'A 🚗 button: big buttons, the screen kept on, and your headphone or car buttons work.' },
     { label: 'Offline reading', opts: ON_OFF, on: 1, text: 'A Download button on a masechta, to read with no internet.' },
     { label: 'Saved texts', opts: ON_OFF, on: 0, text: 'A copy of each text you open, so it still opens when Sefaria is slow or down.' },
-    { label: 'My buttons', value: '+ Make a button', text: 'Your own AI buttons, with your own words (“Explain it simply,” “The mussar here,” “Shiur outline”). Choose whether each sits on every line or on the whole amud.' },
   ] },
   { id: 'set-more', chapter: 'More', title: 'Messages, credits, memory', rows: [
     { label: 'Messages', value: 'Inbox ›', text: 'What people sent you through Contact us.' },

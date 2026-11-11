@@ -10,6 +10,9 @@ import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
 import MyButtonBox from './MyButtonBox';
 import LineChat from './LineChat';
+import HalachaTrail from './HalachaTrail';
+import ListenBox from './ListenBox';
+import Stepped, { longPiece } from './Stepped';
 import WordBox, { wordAt } from './WordBox';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
@@ -96,7 +99,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // as a tap on a line of this amud (before, it took a second tap).
   const pickAfter = useRef<{ ref: string; i: number } | null>(null);
   useEffect(() => {
-    setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setWordOn(null); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
+    setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setHOpen(new Set()); setWordOn(null); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
     const want = pickAfter.current;
     if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -155,8 +158,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // what Sefaria links to each line of this amud / perek (fetched once per amud / perek; free).
   const [xOpen, setXOpen] = useState<Set<number>>(new Set());
   const [cOpen, setCOpen] = useState<Set<number>>(new Set()); // the line chats open
+  const [hOpen, setHOpen] = useState<Set<number>>(new Set()); // "From the sugya to the halacha" open on these lines
+  const [listenOpen, setListenOpen] = useState(false); // "Listen to the daf" at the top of the Sefer
   const closeWord = useCallback(() => setWordOn(null), []);
-  const [wordOn, setWordOn] = useState<{ i: number; w: string; at: DOMRect } | null>(null); // a word tapped for its meaning
+  const [wordOn, setWordOn] = useState<{ i: number; w: string; raw: string; at: DOMRect } | null>(null); // a word tapped for its meaning
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
   const [iOpen, setIOpen] = useState<Set<number>>(new Set());
   // The learner's own buttons (Settings → Extras → My buttons): which is open on which line ("line|id"), and at the top.
@@ -170,14 +175,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const lineX = kind !== 'none' && !!src && !/^Mine /.test(src.ref);
   const [rel, setRel] = useState<{ ref: string; lines: Record<string, Groups>; tanakh: boolean } | null>(null);
   useEffect(() => {
-    if (!lineX || !src || settings.lineSources === false) return;
+    if (!lineX || !src || (settings.lineSources === false && settings.halachaTrail === false)) return;
     if (rel?.ref === src.ref) return;
     let gone = false;
     const ref = src.ref.replace(/:\d+(-\d+)?$/, '');
     fetch(`/api/related?ref=${encodeURIComponent(ref)}`).then((r) => r.json())
       .then((d) => { if (!gone) setRel({ ref: src.ref, lines: d.lines ?? {}, tanakh: !!d.tanakh }); }).catch(() => {});
     return () => { gone = true; };
-  }, [src?.ref, lineX, settings.lineSources]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [src?.ref, lineX, settings.lineSources, settings.halachaTrail]); // eslint-disable-line react-hooks/exhaustive-deps
   // The reference of part i: "Mishnah Peah 1" + 4 -> "Mishnah Peah 1:4"; "Genesis 1:3-7" + 0 -> "Genesis 1:3".
   function partRef(i: number): string {
     if (!src) return '';
@@ -699,13 +704,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
-            {(settings.sugyaMap || settings.review || amudButtons.length > 0) && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
+            {(settings.sugyaMap || settings.review || settings.listenDaf !== false || amudButtons.length > 0) && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
               <div className="smap-btns">
                 {settings.sugyaMap && <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>}
                 {settings.review && <button className="smap-btn" onClick={() => setReviewOpen(true)}>✓ Review</button>}
+                {settings.listenDaf !== false && kind !== 'none' && !/^Mine /.test(src.ref) && <button className={`smap-btn ${listenOpen ? 'on' : ''}`} onClick={() => setListenOpen((o) => !o)}>🎧 Listen</button>}
                 {amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}>✦ {b.name}</button>)}
               </div>
             )}
+            {listenOpen && src && <ListenBox refText={src.ref.replace(/:\d+(-\d+)?$/, '')} heRef={src.heRef} onClose={() => setListenOpen(false)} />}
             {topOpen && src && (() => { const b = amudButtons.find((x) => x.id === topOpen); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={src.ref.replace(/:\d+(-\d+)?$/, '')} onClose={() => setTopOpen(null)} /> : null; })()}
             {reviewOpen && (
               <Review refText={src.ref} onClose={() => setReviewOpen(false)}
@@ -752,9 +759,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
-                  if (active && settings.wordTap !== false && !isComm && (e.target as HTMLElement).closest?.('.he')) {
+                  if (active && settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he')) {
                     const hit = wordAt(e.clientX, e.clientY);
-                    if (hit) { e.stopPropagation(); setWordOn({ i, w: hit.w, at: hit.rect }); return; }
+                    if (hit) { e.stopPropagation(); setWordOn({ i, w: hit.w, raw: hit.raw, at: hit.rect }); return; }
                   }
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
@@ -801,6 +808,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
                           <button className={`comm-btn ${sOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setSOpen, i)}>Sources ({sourcesCount(rel.lines[partNum(i)])})</button>
                         )}
+                        {lineX && settings.halachaTrail !== false && (kind === 'gemara' || kind === 'mishnah') && rel?.ref === src.ref && (rel.lines[partNum(i)]?.halacha.length ?? 0) > 0 && (
+                          <button className={`comm-btn ${hOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setHOpen, i)}>⚖ Halacha</button>
+                        )}
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
                           <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Ideas</button>
                         )}
@@ -827,11 +837,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     </div>
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
-                  {wordOn?.i === i && <WordBox key={`${wordOn.w}|${wordOn.at.top}|${wordOn.at.left}`} word={wordOn.w} lineRef={partRef(i)} at={wordOn.at} onClose={closeWord} />}
+                  {wordOn?.i === i && <WordBox key={`${wordOn.w}|${wordOn.at.top}|${wordOn.at.left}`} word={wordOn.w} raw={wordOn.raw} lineRef={partRef(i)} at={wordOn.at} onClose={closeWord} />}
                   {cOpen.has(i) && <LineChat lineRef={partRef(i)} onClose={() => flipIn(setCOpen, i)} />}
                   {bOpen?.startsWith(`${i}|`) && (() => { const b = lineButtons.find((x) => x.id === bOpen.slice(bOpen.indexOf('|') + 1)); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={partRef(i)} onClose={() => setBOpen(null)} /> : null; })()}
                   {iOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
                     <IdeasBox groups={rel.lines[partNum(i)]} lineRef={partRef(i)} onClose={() => flipIn(setIOpen, i)} />
+                  )}
+                  {hOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
+                    <HalachaTrail halacha={rel.lines[partNum(i)].halacha} lineLabel={`${partRef(i)}`} onClose={() => flipIn(setHOpen, i)}
+                      onOpen={onOpenExact ? (r) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined} />
                   )}
                   {sOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
                     <SourcesBox groups={rel.lines[partNum(i)]} tanakh={rel.tanakh} onClose={() => flipIn(setSOpen, i)}
@@ -840,7 +854,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   {(Object.entries(comm) as [string, Comm][]).filter(([k]) => k.startsWith(`${i}:`)).sort(([a], [b]) => commRank(a) - commRank(b)).map(([k, c]) => {
                     const label = k.slice(k.indexOf(':') + 1);
                     return (
-                      <div key={k} className="comm" onClick={(e) => { e.stopPropagation(); if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
+                      <div key={k} className="comm" onClick={(e) => {
+                        e.stopPropagation();
+                        // A tap on a word of the meforesh: its meaning, or an abbreviation opened up (Extras → Word meanings).
+                        if (settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he') && !(e.target as HTMLElement).closest('button')) {
+                          const hit = wordAt(e.clientX, e.clientY);
+                          if (hit) { setWordOn({ i, w: hit.w, raw: hit.raw, at: hit.rect }); return; }
+                        }
+                        if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
                         <div className="comm-title">
                           {label}
                           {c.refs?.length && onOpenExact ? (
@@ -856,7 +877,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             const gk = src ? `${src.ref}|${c.title}` : '';
                             return (
                               <div key={k2} className="comm-line">
-                                {pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}
+                                {/* A long piece can be broken into its steps: Tosafos always (Extras → Tosafos steps); any other meforesh when Steps is on. */}
+                                {longPiece(pt.he) && ((/^Tosa/i.test(c.title ?? label) && settings.tosSteps !== false) || settings.outline)
+                                  ? <Stepped refText={pt.ref}>{pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}</Stepped>
+                                  : pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}
                                 {settings.commSummary && c.title && (gists[pt.ref] ? <div className="gist"><span>Summary</span> {gists[pt.ref]}</div>
                                   : gistState[gk] === 'loading' ? <div className="gist muted">Summarizing…</div>
                                   : gistState[gk] === 'failed' ? <div className="gist muted">Couldn&apos;t summarize this. <button className="linklike" onClick={() => { setGistState((g) => { const n = { ...g }; delete n[gk]; return n; }); wantGists(c.title!); }}>Try again</button></div>
