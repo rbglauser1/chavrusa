@@ -68,7 +68,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }
   const [libUsed, setLibUsed] = useState(false); // load the library only once it's first opened
   useEffect(() => { if (showLib) setLibUsed(true); }, [showLib]);
-  useBackLayer(showLib, () => setShowLib(false)); // back closes the Library
+  // Closing the Library (✕ or back): back to the text, or, when no text is open yet, out of the Sefer altogether
+  // (Nov 10: ✕ left a blank page with no way out).
+  const closeLib = () => { setShowLib(false); if (!sources.length) onClose(); };
+  useBackLayer(showLib, closeLib); // back closes the Library
   useEffect(() => { if (libraryRequest) setShowLib(true); }, [libraryRequest]);
   // Approve a translation Sefaria has (e.g. Rabbi Aryeh Kaplan's), then reload this text with it.
   const [approving, setApproving] = useState(false);
@@ -584,7 +587,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {/* (The "Go to" box was removed: open places from the Library, or just tell the chavrusa.) */}
 
       {/* The library stays where you left it (hidden, not closed), so you can go back up a level later. */}
-      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library shown={showLib} onOpen={onOpenExact ?? onOpenRef} onClose={() => setShowLib(false)} /></div>}
+      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library shown={showLib} onOpen={onOpenExact ?? onOpenRef} onClose={closeLib} /></div>}
 
       {!showLib && sources.length > 0 && (
         <div className="sefer-tabs">

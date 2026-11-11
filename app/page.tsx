@@ -897,7 +897,7 @@ export default function Home() {
               <SeferPanel
                 embedded
                 sources={sources} selected={selected} onSelect={setSelected}
-                onClose={() => {}}
+                onClose={() => { if (newUI) setView('home'); }}
                 settings={settings} onSettings={updateSettings} sessionId={sessionId} onSeen={noteSeen}
                 libraryRequest={libReq}
                 onPoint={pointAt}
