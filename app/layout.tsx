@@ -29,7 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const num = (v: string | undefined) => (v && /^\d{1,2}$/.test(v) ? `${v}px` : undefined);
   const style = { ...(num(he) ? { '--he-size': num(he) } : {}), ...(num(en) ? { '--en-size': num(en) } : {}), ...(num(comm) ? { '--comm-size': num(comm) } : {}), ...(enFont ? { '--f-body': enFont, '--f-ui': enFont } : {}), ...(heFont ? { '--f-he': heFont } : {}) } as React.CSSProperties;
   return (
-    <html lang="en" data-look={LOOKS.includes(look) ? look : 'daf'} data-rashi={rashi === 'off' ? 'off' : 'on'} data-c-he={cHe || 'ink'} data-c-en={cEn || 'ink'} data-c-comm={cComm || 'sepia'} data-c-intro={cIntro || 'slate'} data-b-he={bolds?.[0] === 'b' ? 'on' : 'off'} data-b-en={bolds?.[1] === 'b' ? 'on' : 'off'} data-b-comm={bolds?.[2] === 'b' ? 'on' : 'off'} data-b-intro={bolds?.[3] === 'b' ? 'on' : 'off'} style={style} suppressHydrationWarning>
+    <html lang="en" data-look={LOOKS.includes(look) ? look : 'daf'} data-rashi={rashi === 'off' ? 'off' : 'on'} data-hefont={heFont ? 'chosen' : 'look'} data-c-he={cHe || 'ink'} data-c-en={cEn || 'ink'} data-c-comm={cComm || 'sepia'} data-c-intro={cIntro || 'slate'} data-b-he={bolds?.[0] === 'b' ? 'on' : 'off'} data-b-en={bolds?.[1] === 'b' ? 'on' : 'off'} data-b-comm={bolds?.[2] === 'b' ? 'on' : 'off'} data-b-intro={bolds?.[3] === 'b' ? 'on' : 'off'} style={style} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

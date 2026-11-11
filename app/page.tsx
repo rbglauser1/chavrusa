@@ -346,6 +346,7 @@ export default function Home() {
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
     if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
     if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
+    root.dataset.hefont = he ? 'chosen' : 'look'; // a chosen Hebrew font wins over the trop font (globals.css)
     // The commentaries' own font (Nov 7): Rashi script, the text's font, or any Hebrew font.
     const cf = f.comm || (settings.rashiScript ? 'rashi' : 'same');
     root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
