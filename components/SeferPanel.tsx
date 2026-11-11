@@ -10,6 +10,7 @@ import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
 import MyButtonBox from './MyButtonBox';
 import LineChat from './LineChat';
+import WordBox, { wordAt } from './WordBox';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
 import type { SourceData } from '@/lib/db';
@@ -95,7 +96,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // as a tap on a line of this amud (before, it took a second tap).
   const pickAfter = useRef<{ ref: string; i: number } | null>(null);
   useEffect(() => {
-    setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
+    setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setWordOn(null); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
     const want = pickAfter.current;
     if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -154,6 +155,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // what Sefaria links to each line of this amud / perek (fetched once per amud / perek; free).
   const [xOpen, setXOpen] = useState<Set<number>>(new Set());
   const [cOpen, setCOpen] = useState<Set<number>>(new Set()); // the line chats open
+  const [wordOn, setWordOn] = useState<{ i: number; w: string } | null>(null); // a word tapped for its meaning
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
   const [iOpen, setIOpen] = useState<Set<number>>(new Set());
   // The learner's own buttons (Settings → Extras → My buttons): which is open on which line ("line|id"), and at the top.
@@ -746,7 +748,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
-                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
+                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => {
+                  // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
+                  const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
+                  if (active && settings.wordTap !== false && !isComm && (e.target as HTMLElement).closest?.('.he')) {
+                    const w = wordAt(e.clientX, e.clientY);
+                    if (w) { e.stopPropagation(); setWordOn(wordOn?.i === i && wordOn.w === w ? null : { i, w }); return; }
+                  }
+                  if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>}
@@ -817,6 +826,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     </div>
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
+                  {wordOn?.i === i && <WordBox word={wordOn.w} lineRef={partRef(i)} onClose={() => setWordOn(null)} />}
                   {cOpen.has(i) && <LineChat lineRef={partRef(i)} onClose={() => flipIn(setCOpen, i)} />}
                   {bOpen?.startsWith(`${i}|`) && (() => { const b = lineButtons.find((x) => x.id === bOpen.slice(bOpen.indexOf('|') + 1)); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={partRef(i)} onClose={() => setBOpen(null)} /> : null; })()}
                   {iOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (

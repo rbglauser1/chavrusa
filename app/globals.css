@@ -2560,3 +2560,15 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .lchat-form textarea { flex: 1; min-height: 44px; max-height: 140px; resize: vertical; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); color: var(--ink); font: 16px/1.4 var(--f-body); padding: 10px 12px; }
 .lchat-form .btn { min-height: 44px; }
 .lchat-clear { margin-top: 6px; font-size: 13px; }
+
+/* A word's meaning (components/WordBox.tsx) */
+.wordbox .comm-title { display: flex; align-items: center; justify-content: space-between; }
+.wb-word { font-size: 1.5em; }
+.wb-entry { margin: 8px 0 12px; }
+.wb-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.wb-head .he { font-size: 1.25em; }
+.wb-head i { color: var(--soft); font-size: 14px; }
+.wb-head small { margin-left: auto; color: var(--soft); font: 12px var(--f-ui); }
+.wb-senses { margin: 4px 0 2px; padding-left: 22px; font: 16px/1.5 var(--f-body); }
+.wb-senses li { margin: 2px 0; }
+.wb-credit { font-size: 12px; margin-top: 6px; }

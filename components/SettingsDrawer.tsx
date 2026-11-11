@@ -493,6 +493,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               {([
                 ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
                 ['sugyaMap', 'Sugya map', 'A map button at the top of the Sefer, all in English: the big picture of the amud or perek, then each topic with an intro, what you need to know for it, its steps (question, answer, proof…; for Mishnah its rulings and disputes; for Chumash and Nach its story, speeches, mitzvos and prophecies), and where it ends up. From Sefaria (free): the meforshim on each step, where the halacha is ruled, and the verses quoted. Tap a step to go there. The outline is made by the AI once per amud or perek and kept.'],
+                ['wordTap', 'Word meanings', 'In a line that is open, tap any Hebrew or Aramaic word to see what it means: Jastrow’s dictionary for the Gemara, Brown-Driver-Briggs for Tanach. Free (no AI).'],
                 ['lineChat', 'Chat button on each line', 'Next to Explain on every line of any sefer: “✦ Chat” opens a written chat with the AI about that line, right under it. Ask anything; save any answer, or the whole chat, to your Notebook. Uses your Depth (above).'],
                 ['explainLine', 'Explain button on each line', 'Next to Rashi and Tosafos on every line of Gemara, Mishnah, Chumash and Nach: “✦ Explain” opens, right under the line, what it says and where it stands in the sugya. Made by the AI (Claude Opus) once per line and kept for good.'],
                 ['lineSources', 'Sources button on each line', 'Next to Rashi and Tosafos: “Sources” opens what Sefaria links to that line: where the halacha is, the same in Shas, Midrash, verses, and machshava, mussar and chassidus. Each opens right there in Hebrew and English. Free, no AI. Beside it, “✦ Ideas”: 2–4 points the AI (Opus) draws only from those seforim, each naming its source; made once per line and kept.'],
@@ -505,7 +506,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 ['offline', 'Offline reading', 'A “Download” button on a masechta or sefer in the Library: read it with no internet (the chavrusa itself still needs internet).'],
                 ['cacheTexts', 'Saved texts', 'Keep a copy of each text you open, so it still opens when Sefaria is slow or down. Free storage; refreshed monthly.'],
               ] as [keyof Settings, string, string][]).map(([k, label, about]) => {
-                const on = k === 'cacheTexts' || k === 'mapComms' || k === 'explainLine' || k === 'lineChat' || k === 'lineSources' ? s[k] !== false : !!s[k];
+                const on = k === 'cacheTexts' || k === 'mapComms' || k === 'explainLine' || k === 'wordTap' || k === 'lineChat' || k === 'lineSources' ? s[k] !== false : !!s[k];
                 return (
                   <div key={k} style={{ marginBottom: 12 }}>
                     <label>{label}</label>
