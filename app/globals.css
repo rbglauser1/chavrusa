@@ -2572,3 +2572,19 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .wb-senses { margin: 4px 0 2px; padding-left: 22px; font: 16px/1.5 var(--f-body); }
 .wb-senses li { margin: 2px 0; }
 .wb-credit { font-size: 12px; margin-top: 6px; }
+
+/* The word bubble (components/WordBox.tsx): sits on the tapped word. */
+.wp-scrim { position: fixed; inset: 0; z-index: 470; background: transparent; }
+.wp { position: fixed; z-index: 471; width: max-content; max-width: min(320px, calc(100vw - 20px)); padding: 10px 14px 8px; background: var(--ink); color: var(--bg); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.25); font: 16px/1.4 var(--f-body); }
+.wp::after { content: ''; position: absolute; left: calc(var(--ax) - 7px); width: 14px; height: 14px; background: var(--ink); transform: rotate(45deg); }
+.wp.above::after { bottom: -6px; } .wp.below::after { top: -6px; }
+.wp-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.wp-head .he { font-size: 1.3em; color: inherit; }
+.wp-head i { opacity: .7; font-size: 13px; }
+.wp-head small { margin-left: auto; opacity: .7; font: 11px var(--f-ui); }
+.wp-short { margin-top: 2px; }
+.wp .muted { color: inherit; opacity: .75; }
+.wp-more { display: block; margin: 4px 0 0 auto; border: 0; background: transparent; color: inherit; opacity: .85; font: 600 13px var(--f-ui); padding: 4px 0; cursor: pointer; }
+.wp.full { width: min(360px, calc(100vw - 20px)); }
+.wp-full { max-height: 52vh; overflow-y: auto; }
+.wp-full .wb-senses { font-size: 15px; }

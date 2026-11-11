@@ -22,6 +22,17 @@ function flat(senses: Sense[] | undefined, out: string[] = []): string[] {
   return out;
 }
 
+// The meaning in a few words: the first sense, up to its first stop, without the references Jastrow lists after it.
+function shortOf(senses: string[]): string {
+  for (const s0 of senses) {
+    const s = s0.replace(/\s*\[[^\]]*\]/g, '').replace(/^[\d.)\s—-]+/, '').trim();
+    const cut = s.search(/[;:]|\.\s|\s(?:Gen|Ex|Lev|Num|Deut|Targ|Y\.|B\.|Ber|Shabb|Ab\. Zar|Sabb|Pes|Yoma|Keth|Gitt|Kidd|B\. Kam|B\. Mets|B\. Bath|Sanh|Men|Hull|Nidd|Bets|Erub|Meg|Taan|Succ|Yeb|Sot|Ned|Naz|Shebu|Ab|Zeb|Bekh|Ker|Tem|Ar|Tosef|Sifra|Sifre|Mekh|Pesik|Midr|Lam|Koh|Ruth|Esth|Cant|Prov|Ps|Job|Is|Jer|Ez|Dan|Ezra|Neh|Chr)\b/);
+    const t = (cut > 3 ? s.slice(0, cut) : s).replace(/[,\s]+$/, '').trim();
+    if (t.length >= 2) return t.length > 140 ? `${t.slice(0, 140)}…` : t;
+  }
+  return '';
+}
+
 async function look(w: string, ref: string): Promise<Entry[]> {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), 10_000);
@@ -45,9 +56,12 @@ export async function GET(req: NextRequest) {
     if (!/^[ודבלמשהכ]+$/.test(w.slice(0, k))) break;
     found = await look(w.slice(k), ref);
   }
+  // The same entry can come back more than once (found through different forms): keep each once.
+  const seen = new Set<string>();
+  found = found.filter((e) => { const k = `${e.parent_lexicon}|${e.headword}`; if (seen.has(k)) return false; seen.add(k); return true; });
   const entries = found.slice(0, 5).map((e) => ({
     headword: e.headword ?? '', dictionary: NAME(e.parent_lexicon ?? ''), morphology: clean(e.content?.morphology ?? ''),
-    senses: flat(e.content?.senses).map((s) => (s.length > 600 ? `${s.slice(0, 600)}…` : s)),
-  })).filter((e) => e.senses.length);
+    senses: [...new Set(flat(e.content?.senses))].map((s) => (s.length > 600 ? `${s.slice(0, 600)}…` : s)),
+  })).filter((e) => e.senses.length).map((e) => ({ ...e, short: shortOf(e.senses) }));
   return NextResponse.json({ word: w, entries }, { headers: { 'Cache-Control': 'private, max-age=86400' } });
 }

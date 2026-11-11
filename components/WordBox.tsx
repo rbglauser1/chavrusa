@@ -1,13 +1,14 @@
 'use client';
 // Tap a word for its meaning (Settings → Extras → Word meanings): in a line that is already open, tapping a Hebrew or
-// Aramaic word shows what it means, from Jastrow (Gemara, Targum, Midrash) or Brown-Driver-Briggs (Tanach), through
-// Sefaria (app/api/word). No AI.
-import { useEffect, useState } from 'react';
+// Aramaic word shows a bubble right at the word with its meaning in a few words; "More" shows the full entry. From
+// Jastrow (Gemara, Targum, Midrash) or Brown-Driver-Briggs (Tanach), through Sefaria (app/api/word). No AI.
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 
-type Entry = { headword: string; dictionary: string; morphology: string; senses: string[] };
+type Entry = { headword: string; dictionary: string; morphology: string; senses: string[]; short: string };
 
-/** The word under a tap, from the screen point (works without wrapping each word). */
-export function wordAt(x: number, y: number): string | null {
+/** The word under a tap, from the screen point (works without wrapping each word), and where it sits on screen. */
+export function wordAt(x: number, y: number): { w: string; rect: DOMRect } | null {
   const d = document as Document & { caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null; caretRangeFromPoint?: (x: number, y: number) => Range | null };
   let node: Node | null = null, off = 0;
   const p = d.caretPositionFromPoint?.(x, y);
@@ -20,36 +21,80 @@ export function wordAt(x: number, y: number): string | null {
   if (a > 0 && !isW(t[a] ?? '') && isW(t[a - 1])) a--, b = a;
   while (a > 0 && isW(t[a - 1])) a--;
   while (b < t.length && isW(t[b])) b++;
-  const w = t.slice(a, b).replace(/^["'״׳]+|["'״׳]+$/g, '');
-  return /[א-ת]/.test(w) ? w : null;
+  const raw = t.slice(a, b);
+  const w = raw.replace(/^["'״׳]+|["'״׳]+$/g, '');
+  if (!/[א-ת]/.test(w)) return null;
+  const range = document.createRange();
+  range.setStart(node, a); range.setEnd(node, b);
+  return { w, rect: range.getBoundingClientRect() };
 }
 
-export default function WordBox({ word, lineRef, onClose }: { word: string; lineRef: string; onClose: () => void }) {
-  const [entries, setEntries] = useState<Entry[] | null>(null);
+const cache = new Map<string, Entry[]>();
+
+export default function WordBox({ word, lineRef, at, onClose }: { word: string; lineRef: string; at: DOMRect; onClose: () => void }) {
+  const key = `${word}|${lineRef}`;
+  const [entries, setEntries] = useState<Entry[] | null>(cache.get(key) ?? null);
   const [err, setErr] = useState(false);
-  const [more, setMore] = useState<number | null>(null);
+  const [full, setFull] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; below: boolean }>({ left: 12, top: at.bottom + 8, below: true });
+
   useEffect(() => {
+    if (cache.has(key)) return;
     let gone = false;
-    setEntries(null); setErr(false); setMore(null);
     fetch(`/api/word?w=${encodeURIComponent(word)}&ref=${encodeURIComponent(lineRef)}`).then((r) => r.json())
-      .then((d) => { if (!gone) setEntries(Array.isArray(d.entries) ? d.entries : []); })
+      .then((d) => { const e = Array.isArray(d.entries) ? d.entries : []; cache.set(key, e); if (!gone) setEntries(e); })
       .catch(() => { if (!gone) setErr(true); });
     return () => { gone = true; };
-  }, [word, lineRef]);
-  return (
-    <div className="comm wordbox" onClick={(e) => e.stopPropagation()}>
-      <div className="comm-title"><span className="he wb-word">{word}</span><button className="comm-x" aria-label="Close" onClick={onClose}>✕</button></div>
-      {err ? <div className="muted">Couldn’t look it up just now.</div>
-        : !entries ? <div className="muted">Looking it up…</div>
-        : !entries.length ? <div className="muted">Not found in the dictionary. Try tapping the word without its prefix, or ask in ✦ Chat.</div>
-        : entries.map((e, k) => (
-          <div key={k} className="wb-entry">
-            <div className="wb-head"><span className="he">{e.headword}</span>{e.morphology && <i>{e.morphology}</i>}<small>{e.dictionary}</small></div>
-            <ol className="wb-senses">{(more === k ? e.senses : e.senses.slice(0, 3)).map((s, j) => <li key={j} dir="auto">{s}</li>)}</ol>
-            {e.senses.length > 3 && <button className="linklike" onClick={() => setMore(more === k ? null : k)}>{more === k ? 'Less' : `More (${e.senses.length - 3})`}</button>}
-          </div>
-        ))}
-      <div className="muted wb-credit">From Jastrow’s dictionary (1903) and Brown-Driver-Briggs (1906), through Sefaria</div>
-    </div>
+  }, [key, word, lineRef]);
+
+  // Close when the page scrolls (the bubble would no longer sit on the word), or on Escape.
+  useEffect(() => {
+    const close = () => onClose();
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('scroll', close, true); window.addEventListener('resize', close); window.addEventListener('keydown', esc);
+    return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); window.removeEventListener('keydown', esc); };
+  }, [onClose]);
+
+  // Sit just above the word, or below it when there's no room above; never off the screen's sides.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const vw = window.innerWidth, vh = window.innerHeight, w = el.offsetWidth, h = el.offsetHeight;
+    const left = Math.max(10, Math.min(vw - w - 10, at.left + at.width / 2 - w / 2));
+    const below = at.top - h - 10 < 60 && at.bottom + h + 10 < vh;
+    const top = below ? at.bottom + 8 : Math.max(10, at.top - h - 8);
+    setPos({ left, top, below });
+  }, [at, entries, full, err]);
+
+  const first = entries?.[0];
+  const arrowX = Math.max(14, Math.min((box.current?.offsetWidth ?? 280) - 14, at.left + at.width / 2 - pos.left));
+  return createPortal(
+    <>
+      <div className="wp-scrim" onClick={onClose} />
+      <div ref={box} className={`wp ${pos.below ? 'below' : 'above'} ${full ? 'full' : ''}`} style={{ left: pos.left, top: pos.top, '--ax': `${arrowX}px` } as CSSProperties} role="dialog" aria-label={`The meaning of ${word}`} onClick={(e) => e.stopPropagation()}>
+        {err ? <div className="wp-short muted">Couldn’t look it up just now.</div>
+          : !entries ? <div className="wp-short muted">…</div>
+          : !first ? <div className="wp-short muted">Not in the dictionary. Ask in ✦ Chat.</div>
+          : !full ? (
+            <>
+              <div className="wp-head"><span className="he">{first.headword}</span>{first.morphology && <i>{first.morphology}</i>}</div>
+              <div className="wp-short">{first.short || first.senses[0]}</div>
+              <button className="wp-more" onClick={() => setFull(true)}>More ›</button>
+            </>
+          ) : (
+            <div className="wp-full">
+              {entries.map((e, k) => (
+                <div key={k} className="wb-entry">
+                  <div className="wp-head"><span className="he">{e.headword}</span>{e.morphology && <i>{e.morphology}</i>}<small>{e.dictionary}</small></div>
+                  <ol className="wb-senses">{e.senses.map((s, j) => <li key={j} dir="auto">{s}</li>)}</ol>
+                </div>
+              ))}
+              <div className="muted wb-credit">Jastrow (1903) and Brown-Driver-Briggs (1906), through Sefaria</div>
+            </div>
+          )}
+      </div>
+    </>,
+    document.body,
   );
 }

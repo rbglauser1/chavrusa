@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoldEn } from './BoldEn';
 import { Interlinear, pairPhrases } from './Interlinear';
@@ -155,7 +155,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // what Sefaria links to each line of this amud / perek (fetched once per amud / perek; free).
   const [xOpen, setXOpen] = useState<Set<number>>(new Set());
   const [cOpen, setCOpen] = useState<Set<number>>(new Set()); // the line chats open
-  const [wordOn, setWordOn] = useState<{ i: number; w: string } | null>(null); // a word tapped for its meaning
+  const closeWord = useCallback(() => setWordOn(null), []);
+  const [wordOn, setWordOn] = useState<{ i: number; w: string; at: DOMRect } | null>(null); // a word tapped for its meaning
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
   const [iOpen, setIOpen] = useState<Set<number>>(new Set());
   // The learner's own buttons (Settings → Extras → My buttons): which is open on which line ("line|id"), and at the top.
@@ -752,8 +753,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
                   if (active && settings.wordTap !== false && !isComm && (e.target as HTMLElement).closest?.('.he')) {
-                    const w = wordAt(e.clientX, e.clientY);
-                    if (w) { e.stopPropagation(); setWordOn(wordOn?.i === i && wordOn.w === w ? null : { i, w }); return; }
+                    const hit = wordAt(e.clientX, e.clientY);
+                    if (hit) { e.stopPropagation(); setWordOn({ i, w: hit.w, at: hit.rect }); return; }
                   }
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
@@ -826,7 +827,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     </div>
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
-                  {wordOn?.i === i && <WordBox word={wordOn.w} lineRef={partRef(i)} onClose={() => setWordOn(null)} />}
+                  {wordOn?.i === i && <WordBox key={`${wordOn.w}|${wordOn.at.top}|${wordOn.at.left}`} word={wordOn.w} lineRef={partRef(i)} at={wordOn.at} onClose={closeWord} />}
                   {cOpen.has(i) && <LineChat lineRef={partRef(i)} onClose={() => flipIn(setCOpen, i)} />}
                   {bOpen?.startsWith(`${i}|`) && (() => { const b = lineButtons.find((x) => x.id === bOpen.slice(bOpen.indexOf('|') + 1)); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={partRef(i)} onClose={() => setBOpen(null)} /> : null; })()}
                   {iOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
