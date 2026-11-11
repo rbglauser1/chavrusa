@@ -325,9 +325,13 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     // where you left off" open there).
     if (onSeen && !restoring.current) {
       if (seenTimer.current) window.clearTimeout(seenTimer.current);
+      const sid = sessionId, from = src?.ref;
       seenTimer.current = window.setTimeout(() => {
         const box = sc();
         if (!box || !src) return;
+        // Only if the same session and text are still open (Nov 10: a note from the text just left, Yehoshua, was
+        // saved under the session opened next, so Recent's Yoma opened Yehoshua).
+        if (latest.current.sid !== sid || latest.current.ref !== from) return;
         const top = viewTop(box) + 8;
         const els = Array.from(bodyRef.current?.querySelectorAll<HTMLElement>('.sefer-flow [data-line]') ?? []);
         const el = els.find((e) => e.getBoundingClientRect().bottom > top);
@@ -340,6 +344,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     }
   }
   const seenTimer = useRef<number | null>(null);
+  const latest = useRef({ sid: sessionId, ref: src?.ref });
+  latest.current = { sid: sessionId, ref: src?.ref };
+  useEffect(() => () => { if (seenTimer.current) window.clearTimeout(seenTimer.current); }, []);
 
   // The bumper: at the very top or bottom of an amud the page stops. A gentle extra push (pulling a little further
   // with your finger, or scrolling a little further with a mouse) brings in the previous / next amud.

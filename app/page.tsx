@@ -413,6 +413,9 @@ export default function Home() {
   function seenFor(id: string, d: { messages?: { created_at?: string }[]; sources?: SourceData[] }): Seen | null {
     const s = readSeen()[id];
     if (!s) return null;
+    // Only a place in a sefer this session learned (the amud or perek before or after counts; another sefer doesn't).
+    const book = (r: string) => r.replace(/[\s.]+[\d:ab.-]+$/i, '').trim();
+    if (!(d.sources ?? []).some((x) => book(x.ref) === book(s.ref))) return null;
     const lastMsg = Math.max(0, ...(d.messages ?? []).map((m) => Date.parse(m.created_at ?? '') || 0));
     const lastTap = Math.max(0, ...(d.sources ?? []).map((x) => x.tappedAt ?? 0));
     return s.at > Math.max(lastMsg, lastTap) ? s : null;

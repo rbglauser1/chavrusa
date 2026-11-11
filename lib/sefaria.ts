@@ -120,8 +120,11 @@ const creditOf = (v?: V3Version) => (v?.versionTitle ? { title: v.versionTitle, 
 function pick(versions: V3Version[], lang: 'he' | 'en'): V3Version | undefined {
   return versions.find((v) => (lang === 'he'
     ? (v.direction === 'rtl' || v.language === 'he' || v.actualLanguage === 'he' || v.actualLanguage === 'arc')
-    : (v.language === 'en' || v.actualLanguage === 'en')));
+    : isEnglish(v)));
 }
+// Sefaria marks every translation "en" in `language`, Italian and German included; `actualLanguage` says what it
+// really is (Nov 10: Yehoshua 1 came up in Italian).
+const isEnglish = (v: { language?: string; actualLanguage?: string }) => (v.actualLanguage ? v.actualLanguage === 'en' : v.language === 'en');
 
 export async function getText(ref: string, list: ApprovedEntry[]): Promise<SourceData & { verdict: Verdict }> {
   // His own texts (My Seforim, lib/mine.ts) open like any sefer.
@@ -142,7 +145,7 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
   if (!translationApproved(enV?.versionTitle, list)) enV = undefined;
   const available: { versionTitle?: string; language?: string; actualLanguage?: string }[] = Array.isArray(first?.available_versions) ? first.available_versions : [];
   const best = available
-    .filter((v) => (v.language === 'en' || v.actualLanguage === 'en') && translationApproved(v.versionTitle, list))
+    .filter((v) => isEnglish(v) && translationApproved(v.versionTitle, list))
     .sort((a, b) => translationRank(a.versionTitle) - translationRank(b.versionTitle))[0];
   if (best?.versionTitle && best.versionTitle !== enV?.versionTitle && translationRank(best.versionTitle) < translationRank(enV?.versionTitle)) {
     try {
