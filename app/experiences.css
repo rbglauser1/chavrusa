@@ -12,6 +12,7 @@
 [data-experience] .experience-home { max-width: 1240px; margin: auto; padding: 32px 36px 110px; }
 [data-experience] .experience-masthead { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:24px; border-bottom:1px solid var(--rule); }
 [data-experience] .experience-masthead button { background:none; border:0; min-height:44px; color:var(--ink); font-family:var(--f-ui); }
+[data-experience] .experience-masthead button:last-child { font-size:14px; }
 [data-experience] .experience-masthead button:first-child { font-family:var(--f-brand); font-size:28px; }
 [data-experience] .experience-eyebrow { font-family:var(--f-ui); font-size:11px; text-transform:uppercase; letter-spacing:1.6px; color:var(--soft); }
 [data-experience] .experience-hero { padding:64px 0 40px; max-width:850px; }
@@ -23,7 +24,7 @@
 [data-experience] .experience-arrow { position:absolute; right:24px; bottom:22px; color:var(--accent); font-size:28px; }
 [data-experience] .experience-tools { display:grid; gap:0; }
 [data-experience] .experience-tools button { display:flex; align-items:center; gap:16px; padding:18px 8px; text-align:start; border:0; border-bottom:1px solid var(--rule); background:none; min-width:0; }
-[data-experience] .experience-tools button>span:nth-child(2) { flex:1; }
+[data-experience] .experience-tools button>span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; }
 [data-experience] .experience-tools b { display:block; font-size:17px; font-weight:500; }
 [data-experience] .experience-tools small { display:block; font-size:13px; color:var(--soft); margin-top:4px; }
 [data-experience] .experience-tool-number { font:11px var(--f-ui); color:var(--accent); }
@@ -199,6 +200,9 @@
  [data-look='beis-medrash'] .experience-tools, [data-look='guided-learning'] .experience-tools, [data-look='living-page'] .experience-tools, [data-look='editorial'] .experience-tools { grid-template-columns:1fr; }
  [data-look='study-workspace'] .experience-voice, [data-look='study-workspace'] .experience-extras { grid-column:1; }
  [data-look='study-workspace'] .experience-tools button { padding:14px; }
+ [data-look='study-workspace'] .experience-tools { grid-template-columns:1fr; }
+ [data-experience] .experience-masthead { gap:10px; }
+ [data-experience] .experience-masthead button:first-child { font-size:clamp(22px,6vw,28px); }
 }
 [data-look='beis-medrash'] .experience-hero { background:linear-gradient(90deg,rgba(31,19,10,.88),rgba(31,19,10,.25)),url('/experiences/beis-medrash.webp') center / cover; }
 /* The software keyboard gets the room occupied by global navigation. */
