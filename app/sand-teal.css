@@ -117,7 +117,7 @@
 [data-look='sand-teal'] .st-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; padding:30px; color:var(--accent); }
 [data-look='sand-teal'] .st-empty h2 { font-size:26px; font-weight:500; }
 [data-look='sand-teal'] .st-empty p { font-size:14px; color:var(--soft); line-height:1.7; margin-bottom:24px; }
-[data-look='sand-teal'] .daf-dock { bottom:calc(164px + env(safe-area-inset-bottom)); z-index:60; }
+[data-look='sand-teal'] .daf-dock .daf-bar { bottom:calc(164px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:60; }
 /* The surrounding tools have their own spacious surfaces and restrained controls. */
 [data-look='sand-teal'] .hpage { display:flex; flex-direction:column; height:100dvh; min-height:0; max-width:none; padding:0 0 84px; }
 [data-look='sand-teal'] .hpage-head { flex-shrink:0; border:0; background:var(--bg); padding:24px; }
@@ -219,7 +219,7 @@
  [data-look='sand-teal'] .st-ask>svg:last-child { display:block; margin-left:auto; }
  [data-look='sand-teal'] .st-discussing .st-study-content { display:flex; justify-content:center; }
  [data-look='sand-teal'] .st-discussing .st-conversation { border-left:0; max-width:900px; }
- [data-look='sand-teal'] .daf-dock { bottom:112px; left:calc(224px + (100vw - 224px)*.2778); right:auto; }
+ [data-look='sand-teal'] .daf-dock .daf-bar { bottom:112px; left:calc(224px + (100vw - 224px)*.2778); right:auto; }
  [data-look='sand-teal'] .hpage { padding-bottom:0; }
  [data-look='sand-teal'] .hpage-head { padding:36px 48px 26px; }
  [data-look='sand-teal'] .hpage-head h1 { font-size:34px; }
