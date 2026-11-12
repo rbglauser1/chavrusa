@@ -74,7 +74,7 @@
 [data-look='sand-teal'] .st-source .sefer-body { padding:22px 22px 78px; min-width:0; background:none; }
 [data-look='sand-teal'] .st-source .sefer-flow { margin:0; padding:0; }
 [data-look='sand-teal'] .st-source .line { padding:16px 14px; margin:0 0 12px; border:0; border-radius:16px; transition:background .15s; }
-[data-look='sand-teal'] .st-source .line.focus { background:#e1e8de; box-shadow:none; }
+[data-look='sand-teal'] .st-source .line.focus { background:none; box-shadow:none; }
 [data-look='sand-teal'] .st-source .line .he { line-height:1.5; }
 [data-look='sand-teal'] .st-source .line .en, [data-look='sand-teal'] .st-source .il-en { font-family:var(--f-ui); font-weight:400; line-height:1.6; }
 [data-look='sand-teal'] .st-source .line .en { border:0; padding-top:0; margin-top:12px; }
