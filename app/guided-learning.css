@@ -217,3 +217,16 @@
 [data-look='guided-learning'] body:has(.gl-home) { height:100%; overflow:clip; overscroll-behavior:none; }
 [data-look='guided-learning'] .home-shell:has(>.gl-home) { position:fixed; inset:0; overscroll-behavior:none; }
 [data-look='guided-learning'] .gl-home:not(:has(.gl-overlay)) { overflow:clip; overscroll-behavior:none; touch-action:pinch-zoom; }
+
+/* Text-only reading: double-tap to enter/leave; the exit control is always available. */
+[data-look='guided-learning'] .gl-source { touch-action:manipulation; }
+[data-look='guided-learning'][data-guided-full] :is(.gl-navigation,.gl-study-header,.gl-steps,.gl-chat-pane,.gl-pane-title,.gl-read-footer) { display:none; }
+[data-look='guided-learning'][data-guided-full] .app.is-min { padding:env(safe-area-inset-top) 0 0; }
+[data-look='guided-learning'][data-guided-full] .gl-study { padding:0; max-width:none; }
+[data-look='guided-learning'][data-guided-full] .gl-workspace { display:flex; padding:0; }
+[data-look='guided-learning'][data-guided-full] .gl-read-pane { border:0; border-radius:0; }
+[data-look='guided-learning'][data-guided-full] .gl-source .sefer-body { padding-bottom:100px; }
+[data-look='guided-learning'][data-guided-full] .daf-dock .daf-bar { bottom:calc(20px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); }
+[data-look='guided-learning'] .gl-full-controls { position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); display:flex; gap:8px; z-index:80; }
+[data-look='guided-learning'] .gl-full-controls .gl-icon { box-shadow:0 2px 12px #00000015; border-radius:50%; width:46px; height:46px; }
+[data-look='guided-learning'] .gl-tools-menu small { display:block; font-size:10px; color:var(--soft); margin-top:4px; }

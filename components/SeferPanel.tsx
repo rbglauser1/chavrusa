@@ -601,7 +601,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const tapRef = useRef<{ t: number; timer: number | null }>({ t: 0, timer: null });
   function tap(run: () => void) {
     const r = tapRef.current!; const now = Date.now();
-    if (now - r.t < 320) { if (r.timer) window.clearTimeout(r.timer); r.timer = null; r.t = 0; onDoubleTap?.(); return; }
+    if (now - r.t < 320) { if (r.timer) window.clearTimeout(r.timer); r.timer = null; r.t = 0; setWordOn(null); onDoubleTap?.(); return; }
     r.t = now; r.timer = window.setTimeout(() => { r.timer = null; run(); }, 300);
   }
   const dbl = embedded && !!onDoubleTap;
@@ -800,7 +800,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
                   if (active && settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he')) {
                     const hit = wordAt(e.clientX, e.clientY);
-                    if (hit) { e.stopPropagation(); setWordOn({ i, w: hit.w, raw: hit.raw, at: hit.rect }); return; }
+                    if (hit) { e.stopPropagation(); const showWord = () => setWordOn({ i, w: hit.w, raw: hit.raw, at: hit.rect }); if (dbl) tap(showWord); else showWord(); return; }
                   }
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
@@ -909,7 +909,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         // A tap on a word of the meforesh: its meaning, or an abbreviation opened up (Extras → Word meanings).
                         if (settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he') && !(e.target as HTMLElement).closest('button')) {
                           const hit = wordAt(e.clientX, e.clientY);
-                          if (hit) { setWordOn({ i, w: hit.w, raw: hit.raw, at: hit.rect }); return; }
+                          if (hit) { const showWord = () => setWordOn({ i, w: hit.w, raw: hit.raw, at: hit.rect }); if (dbl) tap(showWord); else showWord(); return; }
                         }
                         if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
                         <div className="comm-title">
