@@ -60,6 +60,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   const [a, setA] = useState<Amud>(start);
   const [state, setState] = useState<'loading' | 'ok' | 'error'>('loading');
   const [err, setErr] = useState('');
+  const [tries, setTries] = useState(0); // "Try again" draws the page once more
   const [zoom, setZoom] = useState(1);
   const [full, setFull] = useState(false); // full screen: just the page (and Talk); a tap brings the bar back
   const fullRef = useRef(full); fullRef.current = full;
@@ -84,7 +85,11 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
     (async () => {
       try {
         const lib = await loadPdfJs();
-        const doc = await lib.getDocument({ url: `/api/daf?ref=${encodeURIComponent(ref(a))}` }).promise;
+        // A dropped connection ("Load failed" on the iPhone) is tried once more by itself, after a moment.
+        const url = `/api/daf?ref=${encodeURIComponent(ref(a))}`;
+        let doc;
+        try { doc = await lib.getDocument({ url }).promise; }
+        catch { await new Promise((r) => setTimeout(r, 1200)); if (gone) return; doc = await lib.getDocument({ url: `${url}&t=${Date.now()}` }).promise; }
         const page = await doc.getPage(1);
         const base = page.getViewport({ scale: 1 });
         const vp = page.getViewport({ scale: Math.min(4, 2600 / base.width) });
@@ -96,11 +101,15 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
         trimMargins(c);
         if (!gone) setState('ok');
       } catch (e) {
-        if (!gone) { setErr((e as Error).message || 'The page could not be loaded.'); setState('error'); }
+        if (!gone) {
+          const m = (e as Error).message || '';
+          setErr(/load failed|failed to fetch|network/i.test(m) || !m ? "The page didn't load. The connection may have dropped." : m);
+          setState('error');
+        }
       }
     })();
     return () => { gone = true; };
-  }, [a.tractate, a.daf, a.amud]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [a.tractate, a.daf, a.amud, tries]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Zoom around a point (where you pinch or double-tap): the canvas is resized and the scroll moved right away, so the
   // spot under your fingers stays under your fingers.
@@ -196,7 +205,7 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
       <div className="daf-page-box" ref={box}>
         <canvas ref={canvas} className="daf-page-canvas" style={{ width: `${zoom * 100}%`, visibility: state === 'ok' ? 'visible' : 'hidden' }} />
         {state === 'loading' && <div className="daf-page-msg">Opening the page…</div>}
-        {state === 'error' && <div className="daf-page-msg"><span>{err}<br /><a href={dafPdfUrl(a)} target="_blank" rel="noopener noreferrer">Open the page in a new tab ↗</a></span></div>}
+        {state === 'error' && <div className="daf-page-msg"><span>{err}<br /><button className="btn" style={{ margin: '12px 0' }} onClick={(e) => { e.stopPropagation(); setTries((n) => n + 1); }}>Try again</button><br /><a href={dafPdfUrl(a)} target="_blank" rel="noopener noreferrer">Open the page in a new tab ↗</a></span></div>}
       </div>
       {(talk || full) && (
         // Talk right here on the page: the call goes on while you look at the daf, at any zoom. In full screen, the way
