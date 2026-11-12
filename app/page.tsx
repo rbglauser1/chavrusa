@@ -404,7 +404,7 @@ export default function Home() {
     const root = document.documentElement;
     root.dataset.look = settings.theme;
     if (isExperience(settings.theme)) root.dataset.experience = settings.theme; else delete root.dataset.experience;
-    try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
+    try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}|${settings.fonts?.[settings.theme]?.comm ?? ''}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.dataset.justify = settings.justify ? 'on' : 'off';
     root.dataset.enmark = settings.enMark ?? 'plain';
@@ -418,6 +418,7 @@ export default function Home() {
     // Fonts chosen for this look (or the look's own).
     const f = settings.fonts?.[settings.theme] ?? {};
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
+    root.dataset.enfont = en ? 'chosen' : 'look';
     if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
     if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
     root.dataset.hefont = he ? 'chosen' : 'look'; // a chosen Hebrew font wins over the trop font (globals.css)

@@ -25,7 +25,7 @@
 [data-look='sand-teal'] .st-home-hero { position:relative; display:flex; align-items:center; min-height:0; }
 [data-look='sand-teal'] .st-home-hero .st-eyebrow { color:var(--soft); font-size:9px; }
 [data-look='sand-teal'] .st-home-hero h1 { font:500 clamp(34px,8.8vw,48px)/1.05 var(--f-brand); letter-spacing:-1.7px; margin:12px 0; }
-[data-look='sand-teal'] .st-home-hero em { color:var(--accent); font-family:'Spectral',Georgia,serif; font-weight:400; }
+[data-look='sand-teal'] .st-home-hero em { color:var(--accent); font-family:var(--f-accent,'Spectral'),Georgia,serif; font-weight:400; }
 [data-look='sand-teal'] .st-home-hero p { font-size:12px; color:var(--soft); line-height:1.6; margin:0; }
 [data-look='sand-teal'] .st-book-art { display:none; }
 [data-look='sand-teal'] .st-home-cards { display:grid; grid-template-columns:minmax(0,1fr); min-height:0; }
