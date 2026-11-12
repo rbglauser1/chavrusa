@@ -13,7 +13,7 @@ import LineChat from './LineChat';
 import Elsewhere from './Elsewhere';
 import ByHeart from './ByHeart';
 import Marks from './Marks';
-import { openSourceSheet } from './SourceSheet';
+import SheetView from './SheetView';
 import HalachaTrail from './HalachaTrail';
 import ListenBox from './ListenBox';
 import Stepped, { longPiece } from './Stepped';
@@ -479,6 +479,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useBackLayer(reviewOpen, () => setReviewOpen(false));
   // The amud buttons, also at the top of the amud before and after this one (Nov 11: scrolled up into 6a, there were
   // none). On another amud, a tap first makes it the one in front, then opens (the source sheet opens at once).
+  const [sheetFor, setSheetFor] = useState<SourceData | null>(null); // the source sheet, shown inside the app
   const pendingAmud = useRef<{ ref: string; what: 'map' | 'review' | 'listen' } | null>(null);
   useEffect(() => {
     const p = pendingAmud.current;
@@ -498,7 +499,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       <div className="smap-btns">
         {settings.sugyaMap && <button className="smap-btn" onClick={() => open('map')}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>}
         {settings.review && <button className="smap-btn" onClick={() => open('review')}>✓ Review questions</button>}
-        {settings.sourceSheet !== false && kind !== 'none' && <button className="smap-btn" onClick={() => void openSourceSheet(s2, { withMap: !!settings.sugyaMap, nikud: !!settings.nikud, lines: rel?.ref === s2.ref ? rel.lines : undefined })}>📄 Source sheet</button>}
+        {settings.sourceSheet !== false && kind !== 'none' && <button className="smap-btn" onClick={() => setSheetFor(s2)}>📄 Source sheet</button>}
         {settings.listenDaf !== false && kind !== 'none' && <button className={`smap-btn ${main && listenOpen ? 'on' : ''}`} onClick={() => open('listen')}>🎧 Listen</button>}
         {main && amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}>✦ {b.name}</button>)}
       </div>
@@ -740,6 +741,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
             {src && amudRow(src, true)}
+            {sheetFor && <SheetView src={sheetFor} opts={{ withMap: !!settings.sugyaMap, nikud: !!settings.nikud, lines: rel?.ref === sheetFor.ref ? rel.lines : undefined }} onClose={() => setSheetFor(null)} />}
             {settings.marks !== false && src && !isComm && <Marks refText={src.ref} box={flowEl} />}
             {listenOpen && src && <ListenBox refText={src.ref.replace(/:\d+(-\d+)?$/, '')} heRef={src.heRef} onClose={() => setListenOpen(false)} />}
             {topOpen && src && (() => { const b = amudButtons.find((x) => x.id === topOpen); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={src.ref.replace(/:\d+(-\d+)?$/, '')} onClose={() => setTopOpen(null)} /> : null; })()}

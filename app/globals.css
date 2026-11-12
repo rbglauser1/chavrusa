@@ -2675,3 +2675,14 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 
 /* A new version is ready (components/UpdateBar.tsx) */
 .upd-bar { position: fixed; left: 50%; transform: translateX(-50%); top: max(10px, env(safe-area-inset-top)); z-index: 490; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font: 14px var(--f-ui); padding: 10px 16px; box-shadow: 0 6px 20px rgba(0,0,0,.25); cursor: pointer; white-space: nowrap; max-width: calc(100vw - 20px); overflow: hidden; text-overflow: ellipsis; }
+
+/* The source sheet inside the app (components/SheetView.tsx) */
+.sheetv { position: fixed; inset: 0; z-index: 460; display: flex; flex-direction: column; background: #fff; }
+.sheetv-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: max(10px, env(safe-area-inset-top)) 12px 10px; border-bottom: 1px solid var(--rule); background: var(--bg); }
+.sheetv-top b { font: 600 16px var(--f-ui); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheetv-x { border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: 500 16px var(--f-ui); padding: 10px 14px; border-radius: 999px; cursor: pointer; }
+.sheetv-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+.sheetv-wait { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; font: 20px/1.4 var(--f-body); color: var(--ink); background: var(--bg); }
+.sheetv-wait small { font: 15px/1.4 var(--f-ui); color: var(--soft); max-width: 30ch; }
+.sheetv-spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--rule); border-top-color: var(--accent); animation: sheetvspin .9s linear infinite; }
+@keyframes sheetvspin { to { transform: rotate(360deg); } }
