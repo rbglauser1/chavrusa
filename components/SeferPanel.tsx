@@ -801,7 +801,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
-                    const mine = notes.filter((x) => x.n === i + 1);
+                    const mine = notes.filter((x) => x.n === i + 1 && x.on !== 'a mark'); // color marks show as color, not as a note here
                     const showAdd = open.has(i) || picked === i || src.focus === i + 1;
                     if (!mine.length && !showAdd && noteFor !== i) return null;
                     return (
@@ -948,11 +948,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   })}
                   {isOpen && !pairs && (
                     <div className="en" onClick={(e) => {
-                      // A tap on the English opens the line's buttons too (Nov 11); on a line already open it leaves it open.
+                      // A tap on the English opens the line's buttons, and a second tap closes them, like the Hebrew (Nov 11).
                       e.stopPropagation();
                       if ((e.target as HTMLElement).closest('button')) return;
-                      const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
-                      if (dbl) tap(() => { if (!active) toggleLine(i); }); else if (!active) toggleLine(i); }}>
+                      if (window.getSelection()?.toString()) return; // words being selected for a color mark
+                      if (dbl) tap(() => toggleLine(i)); else toggleLine(i); }}>
                       {en ? (src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)) : aiText[key] ? (
                         <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (

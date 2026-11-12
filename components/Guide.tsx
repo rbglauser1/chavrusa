@@ -108,6 +108,7 @@ export const SET_PAGES: SetPage[] = [
     { label: 'Rashi, Tosafos and other commentaries', opts: ['Regular letters', 'Rashi script'], on: 1, text: 'Show the meforshim in Rashi script, as in a printed Gemara, or in regular letters.' },
   ] },
   { id: 'set-lines', chapter: 'Look', title: 'Lines and the English', rows: [
+    { label: 'Alignment', opts: ['As usual', 'Justified'], on: 0, text: 'Justified: the Hebrew and English fill each line edge to edge, like a printed sefer.' },
     { label: 'Lines between lines', opts: ['Off', 'On'], on: 0, text: 'A thin rule between the lines of the text.' },
     { label: 'English layout', opts: ['Under the line', 'Phrase by phrase'], on: 0, text: 'The English under the whole line, or under each Hebrew phrase so you can match them word by word.' },
     { label: 'Phrase by phrase shows', opts: ['Sefaria’s full English', 'Only the translation'], on: 0, text: 'With phrase by phrase: the full English, or only the word-for-word part.' },

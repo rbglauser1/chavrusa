@@ -3,6 +3,7 @@
 // intro, the background it needs, its steps as a timeline, and where it ends up. Tap a step (or a topic) to go to its line.
 // Beside the AI's outline, straight from Sefaria (no AI): the meforshim on each step (tap one: it opens under its line),
 // and under each topic where the halacha is ruled and the pesukim it quotes (tap one: its words open right here).
+import { Bullets } from './Bullets';
 import { useEffect, useState } from 'react';
 import { LinkRow, RefText } from './RefText';
 import NoteAdd from './NoteAdd';
@@ -86,7 +87,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
         {data && (
           <>
             <div className="ai-note left">Made by AI · AI makes mistakes · check it inside</div>
-            {data.overview && <div className="smap-overview"><span className="smap-label">The big picture</span><p>{data.overview}</p></div>}
+            {data.overview && <div className="smap-overview"><span className="smap-label">The big picture</span><Bullets text={data.overview} /></div>}
             <div className="smap-views">
               {views === null ? <button className="smap-views-btn" onClick={loadViews}>⚖ Who holds what</button>
                 : views === 'loading' ? <div className="muted">Laying out who holds what…</div>
@@ -124,7 +125,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                     <span className="smap-line">line {t.line}</span>
                   </button>
                 )}
-                {t.intro && <p className="smap-intro">{t.intro}</p>}
+                {t.intro && <Bullets text={t.intro} className="smap-intro" />}
                 {t.background.length > 0 && (
                   <div className="smap-bg">
                     <span className="smap-label">Good to know</span>

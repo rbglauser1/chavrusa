@@ -5,6 +5,7 @@
 // PDF from the print screen. The map and the table are made once and kept, so after the first time it costs nothing.
 import type { SourceData } from '@/lib/db';
 import { stripNikud } from '@/lib/hebrew';
+import { bulletsHtml } from './Bullets';
 
 type Groups = { halacha: { title: string; ref: string }[] };
 type Map = { overview?: string; topics?: { title: string; line: number; intro?: string; steps?: { line: number; kind: string; who: string; summary: string }[]; takeaway?: string }[] };
@@ -28,11 +29,11 @@ export async function buildSourceSheet(src: SourceData, opts: { withMap: boolean
   const parts: string[] = [];
   parts.push(`<h1><span dir="rtl">${esc(src.heRef ?? '')}</span> · ${esc(ref)}</h1>`);
   parts.push('<p class="ainote">AI makes mistakes · not rabbinically approved · the map, the steps and the table were made by AI: check them inside; for halacha, ask your rav</p>');
-  if (map.overview) parts.push(`<h2>The big picture</h2><p>${esc(plain(map.overview))}</p>`);
+  if (map.overview) parts.push(`<h2>The big picture</h2>${bulletsHtml(plain(map.overview), esc)}`);
   if (map.topics?.length) {
     parts.push('<h2>The sugya, step by step</h2>');
     map.topics.forEach((t, k) => {
-      parts.push(`<h3>${k + 1}. ${esc(t.title)} <small>line ${t.line}</small></h3>${t.intro ? `<p>${esc(plain(t.intro))}</p>` : ''}`);
+      parts.push(`<h3>${k + 1}. ${esc(t.title)} <small>line ${t.line}</small></h3>${t.intro ? bulletsHtml(plain(t.intro), esc) : ''}`);
       if (t.steps?.length) parts.push(`<table class="steps">${t.steps.map((s) => `<tr><td class="k">${esc(s.kind)}${s.who ? ` · ${esc(s.who)}` : ''}</td><td>${esc(plain(s.summary))}</td><td class="n">${s.line}</td></tr>`).join('')}</table>`);
       if (t.takeaway) parts.push(`<p class="take"><b>The point:</b> ${esc(plain(t.takeaway))}</p>`);
     });
@@ -52,7 +53,7 @@ export async function buildSourceSheet(src: SourceData, opts: { withMap: boolean
   });
   parts.push('</table>');
   // On the phone: large, easy to read; on paper: a normal printed page.
-  const css = 'body{font:18px/1.6 Georgia,serif;margin:0 auto;padding:18px 18px 60px;max-width:760px;color:#111;-webkit-text-size-adjust:100%}h1{font-weight:400;font-size:26px;margin:0 0 6px}h2{font:600 20px Georgia,serif;margin:28px 0 8px;border-bottom:1px solid #999;padding-bottom:4px}h3{font:600 18px Georgia,serif;margin:16px 0 6px}h3 small,.n{color:#888;font:13px Arial,sans-serif}table{border-collapse:collapse;width:100%;margin:6px 0 10px}td,th{vertical-align:top;padding:6px 6px;text-align:left}.steps td{border-top:1px solid #e3e3e3}.steps .k{width:28%;font:600 13px Arial,sans-serif;color:#444}.steps .n,.text .n{width:24px;text-align:right}.who th{background:#f2f2f2;font:600 15px Arial,sans-serif;border:1px solid #ccc}.who td{border:1px solid #ccc}.text td{border-top:1px solid #eee}.he{font:24px/1.6 "Frank Ruhl Libre","Times New Roman",serif;text-align:right}.en{color:#333}.hal{font:14px Arial,sans-serif;color:#555;margin-top:4px}.note{font:15px Arial,sans-serif;background:#fffbe6;border-left:3px solid #e0b400;padding:4px 8px;margin-top:4px}.take{margin:6px 0 12px}.ainote{font:13px/1.4 Arial,sans-serif;color:#777;margin:0 0 6px}.foot{margin-top:28px;font:13px Arial,sans-serif;color:#777}@media print{body{font-size:11.5pt;padding:0}.ainote{font-size:9pt}h1{font-size:20pt}h2{font-size:13pt;break-after:avoid}h3{font-size:11.5pt}.he{font-size:14pt}.note,.hal,.foot{font-size:9.5pt}.steps .k{font-size:9pt}tr{break-inside:avoid}}';
+  const css = 'body{font:18px/1.6 Georgia,serif;margin:0 auto;padding:18px 18px 60px;max-width:760px;color:#111;-webkit-text-size-adjust:100%}h1{font-weight:400;font-size:26px;margin:0 0 6px}h2{font:600 20px Georgia,serif;margin:28px 0 8px;border-bottom:1px solid #999;padding-bottom:4px}h3{font:600 18px Georgia,serif;margin:16px 0 6px}h3 small,.n{color:#888;font:13px Arial,sans-serif}table{border-collapse:collapse;width:100%;margin:6px 0 10px}td,th{vertical-align:top;padding:6px 6px;text-align:left}.steps td{border-top:1px solid #e3e3e3}.steps .k{width:28%;font:600 13px Arial,sans-serif;color:#444}.steps .n,.text .n{width:24px;text-align:right}.who th{background:#f2f2f2;font:600 15px Arial,sans-serif;border:1px solid #ccc}.who td{border:1px solid #ccc}.text td{border-top:1px solid #eee}.he{font:24px/1.6 "Frank Ruhl Libre","Times New Roman",serif;text-align:right}.en{color:#333}.hal{font:14px Arial,sans-serif;color:#555;margin-top:4px}.note{font:15px Arial,sans-serif;background:#fffbe6;border-left:3px solid #e0b400;padding:4px 8px;margin-top:4px}.take{margin:6px 0 12px}.pts{margin:4px 0 10px;padding-left:22px}.pts li{margin:3px 0}.pts ul{margin:2px 0;padding-left:20px;list-style:circle;font-size:.95em;color:#333}.ainote{font:13px/1.4 Arial,sans-serif;color:#777;margin:0 0 6px}.foot{margin-top:28px;font:13px Arial,sans-serif;color:#777}@media print{body{font-size:11.5pt;padding:0}.ainote{font-size:9pt}h1{font-size:20pt}h2{font-size:13pt;break-after:avoid}h3{font-size:11.5pt}.he{font-size:14pt}.note,.hal,.foot{font-size:9.5pt}.steps .k{font-size:9pt}tr{break-inside:avoid}}';
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(ref)} · source sheet</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500&display=swap"><style>${css}</style></head><body>${parts.join('')}<p class="foot">Texts from Sefaria; see Credits and licenses in the app.</p></body></html>`;
   return html;
 }

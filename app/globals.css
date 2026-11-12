@@ -2655,9 +2655,9 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .bh-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; }
 
 /* Color marks (components/Marks.tsx) */
-::highlight(mark-blue) { background-color: rgba(70, 120, 230, .28); }
-::highlight(mark-green) { background-color: rgba(60, 170, 90, .28); }
-::highlight(mark-yellow) { background-color: rgba(250, 200, 30, .42); }
+::highlight(mark-blue) { background-color: #cddcfb; }
+::highlight(mark-green) { background-color: #cdeed6; }
+::highlight(mark-yellow) { background-color: #fde9a4; }
 .mk-bar { position: fixed; z-index: 475; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 16px); flex-wrap: wrap; justify-content: center; display: flex; gap: 4px; padding: 6px; background: var(--ink); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
 .mk-bar button { display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--bg); font: 500 14px var(--f-ui); padding: 8px 10px; border-radius: 8px; cursor: pointer; }
 .mk-bar button i { width: 12px; height: 12px; border-radius: 3px; }
@@ -2688,3 +2688,24 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 @keyframes sheetvspin { to { transform: rotate(360deg); } }
 .callx-ai { text-align: center; font: 12px 'Inter', var(--f-ui); color: #a4a9b2; padding: 6px 16px 0; }
 .amud-intro .ai-note { margin: 2px 0 4px; }
+
+/* Bullet points in the sugya map (components/Bullets.tsx) */
+.pts { margin: 4px 0 8px; padding-inline-start: 22px; }
+.pts > li { margin: 4px 0; line-height: 1.45; }
+.pts ul { margin: 3px 0 2px; padding-inline-start: 20px; list-style: circle; font-size: .94em; color: var(--soft); }
+.pts ul li { margin: 2px 0; }
+.smap-overview .pts { font-family: inherit; }
+.smap-overview .pts, .pts.smap-intro { font-size: max(17px, var(--en-size, 18px)); line-height: 1.5; margin-bottom: 10px; }
+
+/* The marks bar sits at the bottom of the screen, clear of the iPhone's own Copy / Look Up menu (Nov 11). */
+.mk-bar { top: auto !important; bottom: calc(96px + env(safe-area-inset-bottom)); flex-wrap: nowrap; }
+.mk-bar button { padding: 10px 12px; font-size: 15px; }
+[data-theme='dark'] ::highlight(mark-blue), [data-look='midnight'] ::highlight(mark-blue) { background-color: #2b3f6e; }
+[data-theme='dark'] ::highlight(mark-green), [data-look='midnight'] ::highlight(mark-green) { background-color: #24503a; }
+[data-theme='dark'] ::highlight(mark-yellow), [data-look='midnight'] ::highlight(mark-yellow) { background-color: #5c4c1a; }
+
+/* Justified text (Settings → Look → Lines and the English → Alignment) */
+[data-justify='on'] .sefer .line .he, [data-justify='on'] .sefer .comm .he, [data-justify='on'] .sefer .stepped .he { text-align: justify; text-align-last: right; }
+[data-justify='on'] .sefer .line .en, [data-justify='on'] .sefer .comm .en, [data-justify='on'] .sefer .comm-line .en { text-align: justify; text-align-last: left; -webkit-hyphens: auto; hyphens: auto; }
+[data-justify='on'] .min-text .he { text-align: justify; text-align-last: right; }
+[data-justify='on'] .min-text .en { text-align: justify; text-align-last: left; }

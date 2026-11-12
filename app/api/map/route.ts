@@ -41,11 +41,11 @@ const promptFor = (k: TextKind) => `You make a study map of a ${UNIT[k]} for a l
 Write in plain, clear English, the way a good chavrusa explains it across the table. For the learning terms a yeshiva learner knows, and for words the text itself quotes or learns from, write the Hebrew or Aramaic in Hebrew letters, as he knows them: גזירה שוה, קל וחומר, היקש, פרישה, the word "צוה", "וכפר". Never put such a term into an English rendering (not "verbal analogy", not "a fortiori") and never spell Hebrew out in English letters. Names of people and books in English as usual (Rashi, Rabbi Yochanan, Rav Pappa, Moses, Aaron). Call God "Hashem". Explain according to Chazal and the classic meforshim.
 Be clear above all: every sentence must make sense to a learner who has not yet learned this amud. Say what is learned from where, and why it matters; spell out what a question is really asking and what the answer means. Never vague words like "linking" or "connecting".
 Give:
-- "overview": 2 to 3 sentences: the big picture of this whole text: what it is about and how it moves.
+- "overview": the big picture of this whole text, as short bullet points, not a paragraph: 2 to 4 main points ("- " at the start of the line), each one short line; under a main point, if it helps, 1 to 3 smaller points indented two spaces ("  - "). What it is about, and how it moves from one part to the next.
 - "topics": the text's topics in order (usually 1 to 4). For each topic:
   - "title": a short English name for the topic (at most 7 words).
   - "line": the numbered line where it begins.
-  - "intro": 2 to 3 sentences giving the big picture of this topic: what question or subject it deals with, why it comes up here, and (if it began before this text) where it began.
+  - "intro": the big picture of this topic, as short bullet points in the same form ("- " main points, "  - " smaller points under them), 2 to 3 main points: what question or subject it deals with, why it comes up here, and (if it began before this text) where it began.
   - "background": the things a learner must know to follow this topic, if any (0 to 3), each one short line, "term: what it is" (like "גזירה שוה: learning a law from one passage to another because the Torah uses the same word in both"). Leave empty when nothing is needed.
   - "steps": the topic's steps in order. Each step: "line" (the numbered line where it begins), "kind" (exactly one of: ${KINDS[k].join(', ')}), "who" (the speaker or source, like ${WHO[k]}; empty if none), "summary" (one or two clear sentences, at most 35 words, telling what happens in this step, as a statement: never a question put to the learner, and not a test of what he knows. Not "The Gemara suggests linking commanded to the Yom Kippur passage", but "The Gemara asks: why not learn the פרישה from the word "צוה" said about Yom Kippur instead? Then פרישה would be needed only for Yom Kippur, not for the פרה אדומה.").
   The steps are the text's own flow, the way a chavrusa would trace it: who says what, what is asked, how it is answered, what is proven or pushed off.
@@ -75,11 +75,13 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   const n = s.he.length;
   const lineOf = (x: unknown) => Math.min(Math.max(1, Math.round(Number(x) || 1)), n);
   const str = (x: unknown, max: number) => String(x ?? '').trim().slice(0, max);
+  // The big picture and the intros are bullet points, one to a line ("- " and, under one, "  - "); keep the lines.
+  const pts = (x: unknown, max: number) => String(x ?? '').replace(/\r/g, '').split('\n').map((l) => l.replace(/\s+$/, '')).filter((l) => l.trim()).join('\n').slice(0, max);
   let overview = '';
   let topics: Topic[] = [];
   try {
     const d = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{}') as { overview?: unknown; topics?: unknown };
-    overview = str(d.overview, 700);
+    overview = pts(d.overview, 1200);
     topics = (Array.isArray(d.topics) ? d.topics : []).filter((t) => t && typeof t === 'object').map((t: Record<string, unknown>) => {
       const steps: Step[] = (Array.isArray(t.steps) ? t.steps : [])
         .filter((x: Record<string, unknown>) => x && Number.isFinite(Number(x.line)) && typeof x.summary === 'string')
@@ -90,7 +92,7 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
           summary: str(x.summary, 180),
         }));
       return {
-        title: str(t.title, 80), line: lineOf(t.line ?? steps[0]?.line), intro: str(t.intro, 700),
+        title: str(t.title, 80), line: lineOf(t.line ?? steps[0]?.line), intro: pts(t.intro, 1200),
         background: (Array.isArray(t.background) ? t.background : []).map((b) => str(b, 220)).filter(Boolean).slice(0, 4),
         steps, takeaway: str(t.takeaway, 300),
       };
