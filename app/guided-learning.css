@@ -210,3 +210,10 @@
  [data-look='guided-learning'] .gl-primary, [data-look='guided-learning'] .gl-home-tools button { transition:transform .15s,background .15s; }
  [data-look='guided-learning'] .gl-primary:hover, [data-look='guided-learning'] .gl-home-tools button:hover { transform:translateY(-2px); }
 }
+
+/* Home is a fixed surface, including Safari's root scrolling and pull gestures.
+   The learning overview keeps its own scrollable content and pinch zoom remains available. */
+[data-look='guided-learning']:has(.gl-home) { height:100%; overflow:clip; overscroll-behavior:none; }
+[data-look='guided-learning'] body:has(.gl-home) { height:100%; overflow:clip; overscroll-behavior:none; }
+[data-look='guided-learning'] .home-shell:has(>.gl-home) { position:fixed; inset:0; overscroll-behavior:none; }
+[data-look='guided-learning'] .gl-home:not(:has(.gl-overlay)) { overflow:clip; overscroll-behavior:none; touch-action:pinch-zoom; }
