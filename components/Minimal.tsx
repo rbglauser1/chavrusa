@@ -1,4 +1,5 @@
 'use client';
+import { isExperience } from '@/lib/experiences';
 // The minimalist layouts (Settings → Look → Layout). They use the same learning, voice and Sefer underneath as the
 // classic screen; only what's on screen changes. Three of them:
 //   page     — the sefer is the home screen; the chavrusa's last words sit under it like a caption; one Talk button.
@@ -157,6 +158,9 @@ function CasualThread({ items, busy, status, endRef }: { items: Msg[]; busy: boo
 }
 
 export default function Minimal(p: Props) {
+  const experience = isExperience(p.settings.theme);
+  const workspaceEnd = useRef<HTMLDivElement | null>(null);
+  const workspaceScroll = useRef<HTMLDivElement | null>(null);
   const [menu, setMenu] = useState(false);
   const [dafOpen, setDafOpen] = useState(false);
   const [mgOpen, setMgOpen] = useState(false); // Mikraos Gedolos: the printed-Chumash page of this perek
@@ -166,6 +170,13 @@ export default function Minimal(p: Props) {
   useEffect(() => { try { if (localStorage.getItem('quiet-full') === '1') setFullState(true); } catch {} }, []);
   const setFull = (v: boolean) => { setFullState(v); try { localStorage.setItem('quiet-full', v ? '1' : '0'); } catch {} };
   const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation (from the ⋯ menu)
+  useEffect(() => {
+    if (!experience) return;
+    const revealLatest = () => { const pane = workspaceScroll.current; if (pane && pane.clientHeight) pane.scrollTop = pane.scrollHeight; };
+    revealLatest();
+    window.addEventListener('resize', revealLatest);
+    return () => window.removeEventListener('resize', revealLatest);
+  }, [experience, tab, p.settings.theme, p.items.length, p.busy, p.textTick]);
   // The Library or the Sefer was asked for, or a new place opened: show the text.
   useEffect(() => { if (p.textTick) setTab('text'); }, [p.textTick]);
   // Quiet chat: the daf counter (in the bottom row) only shows with the text, not over the conversation or the keyboard.
@@ -174,7 +185,7 @@ export default function Minimal(p: Props) {
     return () => document.body.removeAttribute('data-hide-daf');
   }, [p.layout, tab, typing]);
   // Full screen: the whole page scrolls, so on the iPhone the words slide up under the top edge and fade.
-  const fullOn = full && p.layout === 'quiet' && tab === 'text';
+  const fullOn = !experience && full && p.layout === 'quiet' && tab === 'text';
   useEffect(() => {
     document.body.toggleAttribute('data-full', fullOn);
     return () => document.body.removeAttribute('data-full');
@@ -355,7 +366,7 @@ export default function Minimal(p: Props) {
     // The text (with the chavrusa's last words under it), or — from the ⋯ menu — the conversation, casual, text included.
     const hasText = !!p.sefer && (!!src || (p.textTick ?? 0) > 0);
     const showText = hasText && tab === 'text';
-    const isFull = full && showText;
+    const isFull = full && showText && !experience;
     const keyboard = (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10" /></svg>
     );
@@ -400,8 +411,9 @@ export default function Minimal(p: Props) {
       </section>
     ) : null;
     return (
-      <div className={`min min-quiet ${isFull ? 'full' : ''}`}>
+      <div className={`min min-quiet ${isFull ? 'full' : ''} ${experience ? `experience-learning ${showText ? 'experience-text' : 'experience-chat'}` : ''}`}>
         {isFull ? null : header}
+        {experience && <div className="experience-studybar"><span>{src?.ref || 'Your learning session'}</span><div role="group" aria-label="Learning view"><button aria-pressed={showText} onClick={() => { setTab('text'); if (!hasText) p.onLibrary(); }}>Read</button><button aria-pressed={!showText} onClick={() => setTab('talk')}>Discuss</button>{p.settings.theme === 'guided-learning' && <button disabled={p.busy || !src} onClick={() => { setTab('talk'); p.send('Quiz me on the passage we are learning. Ask one question at a time and wait for my answer before revealing the answer.'); }}>Recall</button>}</div></div>}
         {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{sefer}</div>}
         {!showText && (
           <main className="min-body">
@@ -411,6 +423,7 @@ export default function Minimal(p: Props) {
         {/* No words above the bottom row over the text — no caption, no status line. */}
         {!showText && label && <div className={`min-status slim ${labelErr ? 'err' : ''}`}>{label}</div>}
         {replyPanel}
+        {experience && showText && <aside className="experience-conversation" aria-label="Chavrusa conversation"><header><span>Your chavrusa</span><small>{src?.ref}</small></header><div className="experience-conversation-scroll" ref={workspaceScroll}>{p.items.length ? <Thread items={p.items} busy={p.busy} status={p.status} endRef={workspaceEnd} /> : <p className="muted">Ask about the passage, work through a question, or learn aloud.</p>}</div><form onSubmit={(e) => { e.preventDefault(); submit(); }}><label className="sr-only" htmlFor="workspace-question">Ask your chavrusa</label><textarea id="workspace-question" rows={2} value={p.input} onChange={(e) => p.setInput(e.target.value)} placeholder="Ask about this passage…" /><button className="btn primary" disabled={p.busy || !p.input.trim()}>Send</button></form></aside>}
         {bottom}
       </div>
     );

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { FONTS_EN, FONTS_HE, fontStack } from '@/lib/config';
 import './globals.css';
+import './experiences.css';
+import { EXPERIENCES, isExperience } from '@/lib/experiences';
 import { PullRefresh } from '@/components/PullRefresh';
 
 export const metadata: Metadata = {
@@ -20,7 +22,7 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@40
 
 // The look and text sizes are remembered in a cookie, so the page opens in your colors right away
 // (instead of flashing the default colors until Settings load).
-const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp'];
+const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp', ...EXPERIENCES.map((x) => x.id)];
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [look, he, en, rashi, comm, fEn, fHe, cols, bolds] = ((await cookies()).get('ui')?.value ?? '').split('|');
   // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).
@@ -29,7 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const num = (v: string | undefined) => (v && /^\d{1,2}$/.test(v) ? `${v}px` : undefined);
   const style = { ...(num(he) ? { '--he-size': num(he) } : {}), ...(num(en) ? { '--en-size': num(en) } : {}), ...(num(comm) ? { '--comm-size': num(comm) } : {}), ...(enFont ? { '--f-body': enFont, '--f-ui': enFont } : {}), ...(heFont ? { '--f-he': heFont } : {}) } as React.CSSProperties;
   return (
-    <html lang="en" data-look={LOOKS.includes(look) ? look : 'daf'} data-rashi={rashi === 'off' ? 'off' : 'on'} data-hefont={heFont ? 'chosen' : 'look'} data-c-he={cHe || 'ink'} data-c-en={cEn || 'ink'} data-c-comm={cComm || 'sepia'} data-c-intro={cIntro || 'slate'} data-b-he={bolds?.[0] === 'b' ? 'on' : 'off'} data-b-en={bolds?.[1] === 'b' ? 'on' : 'off'} data-b-comm={bolds?.[2] === 'b' ? 'on' : 'off'} data-b-intro={bolds?.[3] === 'b' ? 'on' : 'off'} style={style} suppressHydrationWarning>
+    <html lang="en" data-experience={isExperience(look) ? look : undefined} data-look={LOOKS.includes(look) ? look : 'daf'} data-rashi={rashi === 'off' ? 'off' : 'on'} data-hefont={heFont ? 'chosen' : 'look'} data-c-he={cHe || 'ink'} data-c-en={cEn || 'ink'} data-c-comm={cComm || 'sepia'} data-c-intro={cIntro || 'slate'} data-b-he={bolds?.[0] === 'b' ? 'on' : 'off'} data-b-en={bolds?.[1] === 'b' ? 'on' : 'off'} data-b-comm={bolds?.[2] === 'b' ? 'on' : 'off'} data-b-intro={bolds?.[3] === 'b' ? 'on' : 'off'} style={style} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
