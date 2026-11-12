@@ -243,6 +243,35 @@ export default function Home() {
     }
   }
   const talking = convo || live.active;
+  // "What we learned" (Settings → Extras): when a call of 3 minutes or more ends, a short summary of it goes to the
+  // Notebook, on the place we ended (app/api/daysummary).
+  // Learning time (Home): a minute is counted for each minute the learner is in a text and has touched, scrolled or
+  // typed in the last two minutes, or a call is on (app/api/time).
+  const touched = useRef(0);
+  useEffect(() => {
+    const t = () => { touched.current = Date.now(); };
+    for (const e of ['pointerdown', 'keydown', 'scroll', 'touchstart']) window.addEventListener(e, t, { passive: true, capture: true });
+    const tick = window.setInterval(() => {
+      const learning = liveRef.current || (document.visibilityState === 'visible' && viewRef.current === 'learn' && Date.now() - touched.current < 120_000);
+      if (!learning) return;
+      const d = new Date();
+      const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      void fetch('/api/time', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ day, add: 1 }) }).then(() => window.dispatchEvent(new Event('chavrusa-time'))).catch(() => {});
+    }, 60_000);
+    return () => { window.clearInterval(tick); for (const e of ['pointerdown', 'keydown', 'scroll', 'touchstart']) window.removeEventListener(e, t, { capture: true }); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const liveRef = useRef(false); liveRef.current = live.active;
+  const callMark = useRef<{ at: number; from: number } | null>(null);
+  const itemsRef = useRef(items); itemsRef.current = items;
+  useEffect(() => {
+    if (live.active) { callMark.current = { at: Date.now(), from: itemsRef.current.length }; return; }
+    const m = callMark.current; callMark.current = null;
+    if (!m || settings.daySummary === false || Date.now() - m.at < 3 * 60_000) return;
+    const said = itemsRef.current.slice(m.from).flatMap((x) => (x.kind === 'user' ? [{ who: 'me', text: x.text }] : x.kind === 'assistant' ? [{ who: 'chavrusa', text: x.text }] : []));
+    const here = sources[selected];
+    void fetch('/api/daysummary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: here?.ref ?? '', n: here?.focus ?? 1, transcript: said }) })
+      .then((r) => r.json()).then((d) => { if (d.note) window.dispatchEvent(new Event('chavrusa-notes')); }).catch(() => {});
+  }, [live.active]); // eslint-disable-line react-hooks/exhaustive-deps
   // Blank screen during a voice conversation (purely verbal). "Show screen" peeks for the rest of this call.
   const [peek, setPeek] = useState(false);
   useEffect(() => { if (!talking) setPeek(false); }, [talking]);
@@ -263,6 +292,7 @@ export default function Home() {
   const [drawer, setDrawer] = useState<'sessions' | 'settings' | null>(null);
   // The new main screen (Settings → Main screen): it opens first every time; 'learn' is the text and the chavrusa.
   const [view, setView] = useState<'home' | 'learn' | 'recent' | 'themes' | 'settings'>('home');
+  const viewRef = useRef(view); viewRef.current = view; // for the learning-time count
   const [settingsFrom, setSettingsFrom] = useState<'home' | 'learn'>('home'); // where Settings' back arrow returns to
   const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [contInfo, setContInfoState] = useState<(ContinueInfo & { id?: string }) | null>(null);
@@ -284,6 +314,38 @@ export default function Home() {
     window.addEventListener('chavrusa-guide-go', go);
     return () => window.removeEventListener('chavrusa-guide-go', go);
   }, []);
+  // Start a call straight away ("Hey Siri, open Learn", or a Home Screen icon made from the address …/?talk=1): the app
+  // opens on the place you were, with one big button. The phone asks for one tap before it lets a page use the
+  // microphone and speaker, so the tap is all it takes (Settings → Extras → Start a call from Siri).
+  const [quickTalk, setQuickTalk] = useState(false);
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('talk') !== '1') return;
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+      setQuickTalk(true);
+    } catch { /* optional */ }
+  }, []);
+  const startQuickTalk = async () => {
+    setQuickTalk(false);
+    const c = contInfo;
+    try {
+      if (c?.id && c.id !== sessionId) await openSession(c.id);
+      else if (c?.ref) { const src = sources.find((x) => x.ref === c.ref); if (src) showSource({ ...src, focus: c.line ?? src.focus }); else await openExact(c.ref, c.line); }
+    } catch { /* start the call anyway */ }
+    setView('learn');
+    window.setTimeout(() => { if (!live.active) toggleTalk(); }, 0);
+  };
+  const quickTalkCard = quickTalk ? (
+    <div className="qt" role="dialog" aria-label="Start learning">
+      <button className="qt-go" onClick={() => void startQuickTalk()}>
+        <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+        <b>Tap to start learning</b>
+        <span>{contInfo?.ref ? `Where we left off: ${contInfo.ref}` : 'Your chavrusa will ask what to learn'}</span>
+      </button>
+      <button className="qt-x" onClick={() => setQuickTalk(false)}>Not now</button>
+    </div>
+  ) : null;
   // Back from Stripe (buying credit): open Settings, where Credits shows the new balance, and tidy the address.
   useEffect(() => {
     try {
@@ -816,6 +878,7 @@ export default function Home() {
     };
     return (
       <div className="home-shell">
+        {quickTalkCard}
         {view === 'home' && (
           <HomeScreen
             cont={cont}
@@ -869,6 +932,7 @@ export default function Home() {
 
   return (
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
+      {quickTalkCard}
       {settings.driveMode && view === 'learn' && !driving && <button className="drive-fab" onClick={() => setDriving(true)} aria-label="Driving mode">🚗</button>}
       {driving && <DriveMode live={live} place={sources[selected]?.ref ?? ''} onExit={() => setDriving(false)} />}
       {callX && !driving && live.active && <CallScreen live={live} src={sources[selected] ?? null} nikud={!!settings.nikud} onText={() => setCallX(false)} />}

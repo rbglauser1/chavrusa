@@ -160,11 +160,17 @@ export const SET_PAGES: SetPage[] = [
     { label: 'Chat button on each line', opts: ON_OFF, on: 0, text: '✦ Chat next to Explain: a written chat with the AI about that line, right under it. Ask anything; save one answer, or the whole chat, to your Notebook.' },
     { label: 'Word meanings', opts: ON_OFF, on: 0, text: 'In a line that is open, or in a meforesh under it, tap any Hebrew or Aramaic word: what it means, from Jastrow (Gemara) or Brown-Driver-Briggs (Tanach). Tap an abbreviation (כה"ג, וי"ל) and it is opened into its words. Free, no AI.' },
     { label: 'Tosafos steps', opts: ON_OFF, on: 0, text: 'A Steps button on every long Tosafos: the same words cut into question, answer, proof and second answer, with punctuation and one line of English on each. With Steps on (What’s shown), any other long meforesh has it too.' },
+    { label: 'Where else in Shas', opts: ON_OFF, on: 0, text: '⇄ Elsewhere on a line of Gemara or Mishnah: the same sugya in other masechtos and elsewhere in this one. Free, from Sefaria’s links.' },
+  ] },
+  { id: 'set-extrasb', chapter: 'Extras', title: 'Extras: on each line (more)', rows: [
+    { label: 'Learn by heart', opts: ON_OFF, on: 0, text: '🧠 By heart on a Mishnah or in Pirkei Avos: more words hide each round. “Check me” listens and marks what you missed.' },
+    { label: 'Color marks', opts: ON_OFF, on: 0, text: 'Press and drag over words in a line, then pick Question, Answer or Key. The marks stay on the page and show in your Notebook.' },
     { label: 'Sources button on each line', opts: ON_OFF, on: 0, text: 'Sources next to Rashi and Tosafos: what Sefaria links to the line. With it, ✦ Ideas drawn from those sources.' },
     { label: 'From the sugya to the halacha', opts: ON_OFF, on: 0, text: '⚖ Halacha on a line: the road from the Gemara to the Rambam, the Tur, the Shulchan Aruch and the Mishnah Berurah, in order. Free, from Sefaria’s links.' },
     { label: 'Notes on the line', opts: ON_OFF, on: 0, text: 'Add a note to any line, or say “make a note” in a call. All notes go to your Notebook.' },
   ] },
   { id: 'set-extras2', chapter: 'Extras', title: 'Extras: on the amud', rows: [
+    { label: 'Source sheet', opts: ON_OFF, on: 0, text: '📄 Source sheet at the top of the Sefer: one printable page of the amud for a shiur or Shabbos.' },
     { label: 'Sugya map', opts: ON_OFF, on: 0, text: 'A map button at the top of the Sefer: the big picture, each topic and the Gemara’s steps.' },
     { label: 'Meforshim in the sugya map', opts: ON_OFF, on: 0, text: 'Under each step of the map, the meforshim on it, opening right there.' },
     { label: 'Review questions', opts: ON_OFF, on: 1, text: 'A “Review questions” button at the top of the Sefer: questions on the amud, answers hidden until you tap.' },
@@ -172,8 +178,13 @@ export const SET_PAGES: SetPage[] = [
     { label: 'My buttons', value: '+ Make a button', text: 'Your own AI buttons, with your own words (“Explain it simply,” “The mussar here,” “Shiur outline”). Choose whether each sits on every line or on the whole amud.' },
   ] },
   { id: 'set-extras3', chapter: 'Extras', title: 'Extras: around the learning', rows: [
+    { label: 'What we learned', opts: ON_OFF, on: 0, text: 'After a call of three minutes or more, a short summary goes to your Notebook.' },
+    { label: 'Learning time goal', opts: ['No goal', '30 min', '1 hour', '2 hours'], on: 2, text: 'Home shows how long you learned today and this week; a goal adds a line that fills up through the day.' },
+    { label: 'Start a call from Siri', value: 'Copy the address', text: 'Add …/?talk=1 to your Home Screen as “Learn”, then say “Hey Siri, open Learn”: the app opens at your place with one big button to start talking.' },
     { label: 'Chazara (review)', opts: ON_OFF, on: 0, text: 'On Home: a short recap of last time, and a few questions on an older sugya.' },
     { label: 'Progress and plans', opts: ON_OFF, on: 1, text: 'On Home: what you’ve learned, your goals, daf yomi, and a siyum when you finish.' },
+  ] },
+  { id: 'set-extras3b', chapter: 'Extras', title: 'Extras: around the learning (more)', rows: [
     { label: 'Dark call screen', opts: ON_OFF, on: 1, text: 'When a call starts, the screen goes dark: the words being read, large, with Again, Pause and Go on.' },
     { label: 'Driving mode', opts: ON_OFF, on: 1, text: 'A 🚗 button: big buttons, the screen kept on, and your headphone or car buttons work.' },
     { label: 'Offline reading', opts: ON_OFF, on: 1, text: 'A Download button on a masechta, to read with no internet.' },

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Settings } from '@/lib/config';
 import Progress from './Progress';
+import LearningTime from './LearningTime';
 
 type Recap = { sessionId: string; title: string; when: string; points: string[]; questions: { q: string; a: string }[] };
 
@@ -58,9 +59,9 @@ function Chazara() {
 
 export default function HomeExtras({ settings, onOpen, onSettings }: { settings: Settings; onOpen: (ref: string) => void; onSettings: (patch: Partial<Settings>) => void }) {
   const notes = settings.notes !== false;
-  if (!settings.chazara && !settings.progress && !notes) return null;
   return (
     <div className="hx">
+      <LearningTime goal={settings.timeGoal ?? 0} />
       {notes && (
         <button className="hx-card hx-nb" onClick={() => window.dispatchEvent(new Event('chavrusa-notebook'))}>
           <b>Notebook</b><span className="muted">All your notes, by sefer and topic</span>

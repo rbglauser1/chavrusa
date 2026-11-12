@@ -493,6 +493,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               {([
                 ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
                 ['sugyaMap', 'Sugya map', 'A map button at the top of the Sefer, all in English: the big picture of the amud or perek, then each topic with an intro, what you need to know for it, its steps (question, answer, proof…; for Mishnah its rulings and disputes; for Chumash and Nach its story, speeches, mitzvos and prophecies), and where it ends up. From Sefaria (free): the meforshim on each step, where the halacha is ruled, and the verses quoted. Tap a step to go there. The outline is made by the AI once per amud or perek and kept. In the map, “⚖ Who holds what” lays out each machlokes of the amud as a table: each opinion, its reason and its source (made once by the AI when you first tap it, about 2–4 cents, then kept).'],
+                ['elsewhere', 'Where else in Shas', 'A “⇄ Elsewhere” button on a line of Gemara or Mishnah that comes up in other places: the same sugya or statement in other masechtos and elsewhere in this one, each opening right there. From Sefaria’s links (free, no AI).'],
+                ['byHeart', 'Learn by heart', 'A “🧠 By heart” button on each Mishnah and in Pirkei Avos: the words hide a little more each round until you say it all from memory. “Check me” listens (the phone’s own speech recognition, free) and marks the words you missed.'],
+                ['marks', 'Color marks', 'Press and drag over words in a line, and pick Question (blue), Answer (green) or Key (yellow), like a pencil in a Gemara. The marks stay on the page and show in your Notebook. “Unmark” takes one off.'],
+                ['sourceSheet', 'Source sheet', 'A “📄 Source sheet” button at the top of the Sefer: one printable page of the amud for a shiur, a chabura or Shabbos: the big picture and steps, who holds what, the text with its English, the halacha of each line, and your notes and marks. Print it or save it as a PDF.'],
+                ['daySummary', 'What we learned', 'After a call of three minutes or more, a short summary of it (the main points and your questions) is saved to your Notebook on the place you ended. About a cent a call.'],
                 ['listenDaf', 'Listen to the daf', 'A “🎧 Listen” button at the top of the Sefer: a spoken overview of the amud or perek, eight to ten minutes, with nothing to look at: for the car. The first time it is written and recorded (about a minute, about 20¢ for an amud); after that it is kept and plays at once, free. In your voice for Basic talk and your nusach.'],
                 ['halachaTrail', 'From the sugya to the halacha', 'A “⚖ Halacha” button on a line of Gemara or Mishnah that the halacha is learned from: the road from that line to the Rambam, the Tur, the Shulchan Aruch, and the Mishnah Berurah and commentaries on that se’if, in order. From Sefaria’s links (free, no AI).'],
                 ['tosSteps', 'Tosafos steps', 'A “Steps” button on every long Tosafos: the same words cut into its steps (question, answer, proof, second answer), with punctuation and one line of English on each. Made once by the AI and kept; the words are checked letter by letter. With “Steps” on (What’s shown), the same button is on any other long meforesh.'],
@@ -509,7 +514,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 ['offline', 'Offline reading', 'A “Download” button on a masechta or sefer in the Library: read it with no internet (the chavrusa itself still needs internet).'],
                 ['cacheTexts', 'Saved texts', 'Keep a copy of each text you open, so it still opens when Sefaria is slow or down. Free storage; refreshed monthly.'],
               ] as [keyof Settings, string, string][]).map(([k, label, about]) => {
-                const on = k === 'cacheTexts' || k === 'mapComms' || k === 'explainLine' || k === 'listenDaf' || k === 'halachaTrail' || k === 'tosSteps' || k === 'wordTap' || k === 'lineChat' || k === 'lineSources' ? s[k] !== false : !!s[k];
+                const on = k === 'cacheTexts' || k === 'mapComms' || k === 'elsewhere' || k === 'byHeart' || k === 'marks' || k === 'sourceSheet' || k === 'daySummary' || k === 'explainLine' || k === 'listenDaf' || k === 'halachaTrail' || k === 'tosSteps' || k === 'wordTap' || k === 'lineChat' || k === 'lineSources' ? s[k] !== false : !!s[k];
                 return (
                   <div key={k} style={{ marginBottom: 12 }}>
                     <label>{label}</label>
@@ -518,6 +523,18 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   </div>
                 );
               })}
+            </div>
+            <div style={{ margin: '4px 0 16px' }}>
+              <label>Learning time goal</label>
+              <Seg value={String(s.timeGoal ?? 0)} options={[['0', 'No goal'], ['20', '20 min'], ['30', '30 min'], ['60', '1 hour'], ['120', '2 hours']]} onPick={(v) => onChange({ timeGoal: Number(v) })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app counts the time you learn (a page open and in use, or a call), and shows today and this week on Home. A goal adds a line that fills up through the day.</div>
+            </div>
+            <div style={{ margin: '4px 0 16px' }}>
+              <label>Start a call from Siri</label>
+              <div className="muted" style={{ fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
+                For the car: one icon that opens the app at your place, ready to talk. On the iPhone: (1) open <b>{typeof window !== 'undefined' ? window.location.origin : ''}/?talk=1</b> in Safari and sign in; (2) tap Share, then <b>Add to Home Screen</b>, and name it <b>Learn</b>; (3) then say “Hey Siri, open Learn”. It opens with one big button: the phone needs that one tap before the microphone can start.
+              </div>
+              <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => { try { void navigator.clipboard.writeText(`${window.location.origin}/?talk=1`); } catch { /* optional */ } }}>Copy the address</button>
             </div>
             <MyButtons list={s.myButtons ?? []} onChange={(l) => onChange({ myButtons: l })} />
           </Group>

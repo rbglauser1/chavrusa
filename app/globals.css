@@ -2633,3 +2633,42 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .htr-wait { font-size: 13px; }
 /* iPhone: paint each step as its own layer, so scrolling back up never leaves part of the screen blank (Nov 11). */
 .stepped-row, .stepped { transform: translateZ(0); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+
+/* Start learning at once (?talk=1, from Siri or a Home Screen icon) */
+.qt { position: fixed; inset: 0; z-index: 480; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--bg); padding: 24px; }
+.qt-go { width: min(340px, 100%); aspect-ratio: 1; border: 0; border-radius: 28px; background: var(--accent); color: var(--accent-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; cursor: pointer; font-family: var(--f-ui); }
+.qt-go b { font-size: 24px; font-weight: 600; }
+.qt-go span { font-size: 15px; opacity: .85; padding: 0 20px; text-align: center; }
+.qt-x { border: 0; background: transparent; color: var(--soft); font: 16px var(--f-ui); padding: 12px; cursor: pointer; }
+
+/* Where else in Shas, and section headings in a line box */
+.lx-h { font: 600 12px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); margin: 10px 0 2px; }
+
+/* Learn by heart */
+.bh-rounds { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.bh-rounds button { border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 500 13px var(--f-ui); padding: 5px 11px; border-radius: 999px; cursor: pointer; }
+.bh-rounds button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.bh-text { font-size: var(--he-size, 24px); line-height: 1.9; }
+.bh-blank { display: inline-block; border: 0; border-bottom: 2px solid var(--accent); background: var(--accent-soft); margin: 0 3px; padding: 0 4px; font: inherit; line-height: 1.1; cursor: pointer; border-radius: 4px; }
+.bh-ok { color: #1f6b3a; }
+.bh-miss { color: var(--danger, #9a2b2b); text-decoration: underline wavy; }
+.bh-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; }
+
+/* Color marks (components/Marks.tsx) */
+::highlight(mark-blue) { background-color: rgba(70, 120, 230, .28); }
+::highlight(mark-green) { background-color: rgba(60, 170, 90, .28); }
+::highlight(mark-yellow) { background-color: rgba(250, 200, 30, .42); }
+.mk-bar { position: fixed; z-index: 475; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 16px); flex-wrap: wrap; justify-content: center; display: flex; gap: 4px; padding: 6px; background: var(--ink); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.mk-bar button { display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--bg); font: 500 14px var(--f-ui); padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.mk-bar button i { width: 12px; height: 12px; border-radius: 3px; }
+.mk-blue i { background: #4678e6; } .mk-green i { background: #3caa5a; } .mk-yellow i { background: #fac81e; }
+.mk-un { opacity: .75; }
+
+/* Learning time on Home */
+.lt { display: flex; flex-direction: column; gap: 4px; }
+.lt-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lt-today { font-size: 15px; }
+.lt-done { color: #1f6b3a; font-weight: 600; }
+.lt-bar { height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; margin-top: 4px; }
+.lt-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+[data-look='sharp'] .lt-bar, [data-look='sharp'] .lt-bar i { border-radius: 0; height: 2px; }
