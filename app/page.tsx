@@ -252,7 +252,7 @@ export default function Home() {
     const t = () => { touched.current = Date.now(); };
     for (const e of ['pointerdown', 'keydown', 'scroll', 'touchstart']) window.addEventListener(e, t, { passive: true, capture: true });
     const tick = window.setInterval(() => {
-      const learning = liveRef.current || (document.visibilityState === 'visible' && viewRef.current === 'learn' && Date.now() - touched.current < 120_000);
+      const learning = callOnRef.current || (document.visibilityState === 'visible' && viewRef.current === 'learn' && Date.now() - touched.current < 120_000);
       if (!learning) return;
       const d = new Date();
       const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -260,7 +260,7 @@ export default function Home() {
     }, 60_000);
     return () => { window.clearInterval(tick); for (const e of ['pointerdown', 'keydown', 'scroll', 'touchstart']) window.removeEventListener(e, t, { capture: true }); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const liveRef = useRef(false); liveRef.current = live.active;
+  const callOnRef = useRef(false); callOnRef.current = live.active;
   const callMark = useRef<{ at: number; from: number } | null>(null);
   const itemsRef = useRef(items); itemsRef.current = items;
   useEffect(() => {

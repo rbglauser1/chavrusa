@@ -103,7 +103,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // as a tap on a line of this amud (before, it took a second tap).
   const pickAfter = useRef<{ ref: string; i: number } | null>(null);
   useEffect(() => {
-    setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setHOpen(new Set()); setEOpen(new Set()); setBOpen(new Set()); setWordOn(null); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
+    setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setHOpen(new Set()); setEOpen(new Set()); setHeartOpen(new Set()); setWordOn(null); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
     const want = pickAfter.current;
     if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -163,7 +163,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [xOpen, setXOpen] = useState<Set<number>>(new Set());
   const [cOpen, setCOpen] = useState<Set<number>>(new Set()); // the line chats open
   const [eOpen, setEOpen] = useState<Set<number>>(new Set()); // "Where else in Shas" open on these lines
-  const [bOpen, setBOpen] = useState<Set<number>>(new Set()); // "Learn by heart" open on these lines
+  const [heartOpen, setHeartOpen] = useState<Set<number>>(new Set()); // "Learn by heart" open on these lines
   const flowEl = useCallback(() => bodyRef.current?.querySelector('.sefer-flow') as HTMLElement | null, []);
   const [hOpen, setHOpen] = useState<Set<number>>(new Set()); // "From the sugya to the halacha" open on these lines
   const [listenOpen, setListenOpen] = useState(false); // "Listen to the daf" at the top of the Sefer
@@ -821,7 +821,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           <button className={`comm-btn ${eOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setEOpen, i)}>⇄ Elsewhere ({rel.lines[partNum(i)].parallels.length})</button>
                         )}
                         {lineX && settings.byHeart !== false && (kind === 'mishnah' || /^Pirkei Avot/.test(src.ref) || (kind === 'tanakh' && settings.byHeart === true)) && (
-                          <button className={`comm-btn ${bOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setBOpen, i)}>🧠 By heart</button>
+                          <button className={`comm-btn ${heartOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setHeartOpen, i)}>🧠 By heart</button>
                         )}
                         {lineX && settings.halachaTrail !== false && (kind === 'gemara' || kind === 'mishnah') && rel?.ref === src.ref && (rel.lines[partNum(i)]?.halacha.length ?? 0) > 0 && (
                           <button className={`comm-btn ${hOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setHOpen, i)}>⚖ Halacha</button>
@@ -862,7 +862,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     <Elsewhere items={rel.lines[partNum(i)].parallels} lineRef={partRef(i)} onClose={() => flipIn(setEOpen, i)}
                       onOpen={onOpenExact ? (r) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined} />
                   )}
-                  {bOpen.has(i) && <ByHeart he={src.he[i]} nikud={!!settings.nikud} onClose={() => flipIn(setBOpen, i)} />}
+                  {heartOpen.has(i) && <ByHeart he={src.he[i]} nikud={!!settings.nikud} onClose={() => flipIn(setHeartOpen, i)} />}
                   {hOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
                     <HalachaTrail halacha={rel.lines[partNum(i)].halacha} lineLabel={`${partRef(i)}`} onClose={() => flipIn(setHOpen, i)}
                       onOpen={onOpenExact ? (r) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined} />
