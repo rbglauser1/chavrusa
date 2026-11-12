@@ -46,4 +46,4 @@ Also replaced new Unicode nav/logo/arrow glyphs with SVG ExperienceIcon to avoid
 
 ## Scheduled retry
 
-A one-time continuation attempt is scheduled at 02:35 America/New_York November12. If work is complete then report status without redoing or redeploying. Do not promise usage reset guarantees. Include the display-automation control in the current turn's final response if needed. The automation ID is internal; never show it as text.
+A one-time continuation attempt is scheduled at 04:00 America/New_York November12. If work is complete then report status without redoing or redeploying. Do not promise usage reset guarantees. Include the display-automation control in the current turn's final response if needed. The automation ID is internal; never show it as text.

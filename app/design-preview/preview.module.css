@@ -1,0 +1,8 @@
+.preview { height:100dvh; overflow:auto; background:#e9edf2; color:#222b39; font:14px system-ui,sans-serif; }
+.toolbar { position:sticky; top:0; z-index:2; display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:14px 22px; background:#fff; border-bottom:1px solid #cbd3df; }
+.toolbar label { display:flex; align-items:center; gap:8px; }
+.toolbar select, .toolbar button { background:#fff; color:#222b39; border:1px solid #b8c3d1; padding:9px 12px; border-radius:7px; font:inherit; }
+.toolbar a { color:#374b96; }
+.toolbar small { flex-basis:100%; color:#586477; font-size:12px; }
+.stage { padding:24px; width:max-content; min-width:100%; display:flex; justify-content:center; }
+.frame { display:block; flex:none; border:1px solid #b8c3d1; background:white; border-radius:8px; box-shadow:0 10px 30px #22334422; }
