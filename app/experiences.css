@@ -53,6 +53,7 @@
 [data-experience] .min-head { background:var(--surface); padding:12px 18px; }
 [data-experience] .min-quiet .min-icon { width:44px; height:44px; }
 [data-experience] .min-sefer .sefer-body { padding:24px clamp(16px,4vw,46px) 60px; }
+[data-experience] .sefer.embedded .sefer-flow { margin:0; padding:0; min-width:0; overflow-wrap:anywhere; }
 [data-experience] .min-row, [data-experience] .min-typing { background:var(--surface); border-top:1px solid var(--rule); }
 [data-experience] .min-row { padding:12px 20px; }
 [data-experience] .line { padding:16px 12px; margin-bottom:8px; }
