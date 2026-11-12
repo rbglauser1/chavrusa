@@ -24,3 +24,7 @@ The Sand and Teal panel in the user's saved **Three Chavrusa Reading App Styles.
 4. Source, commentaries, Library, Notebook, Review, settings and voice entry remain reachable.
 5. Pending responses and failures stay clear. No new AI request occurs merely on selecting this look.
 6. Keep the preview isolated from production. Provide actual screenshots and a preview for review before further redesign/release.
+
+## Direct visual review
+
+Append `?preview-look=sand-teal` to the branch preview root or `/design-preview` to open this design without saving a theme choice to the shared database. Theme changes in this mode are local; other existing settings/learning/data operations still use their existing handlers and shared accounts. This is an authenticated appearance preview, not an authentication bypass or isolated test database.

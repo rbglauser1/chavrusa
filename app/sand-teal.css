@@ -261,3 +261,6 @@
  [data-look='sand-teal'][data-experience-keyboard] .st-navigation { display:none; }
  [data-look='sand-teal'][data-experience-keyboard] .app.is-min { padding-bottom:0; }
 }
+
+[data-look='sand-teal'] .st-study-footer.st-has-voice-status { flex-wrap:wrap; }
+[data-look='sand-teal'] .st-study-footer.st-has-voice-status>p { display:block; flex-basis:100%; margin:0; color:var(--soft); font:11px/1.5 var(--f-ui); }
