@@ -35,11 +35,14 @@ try {
   }
 
   const Module = require('node:module');
+  const iconFile = path.join(temp, 'ExperienceIcon.js');
+  const iconJs = ts.transpileModule(fs.readFileSync(path.join(root,'components','ExperienceIcon.tsx'),'utf8'), { compilerOptions: { module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020 } }).outputText.replace('require("react/jsx-runtime")', 'require(' + JSON.stringify(require.resolve('react/jsx-runtime')) + ')');
+  fs.writeFileSync(iconFile,iconJs);
   const componentFile = path.join(root, 'components', 'ExperienceHome.tsx');
   const component = new Module(componentFile, module);
   component.filename = componentFile;
   component.paths = Module._nodeModulePaths(root);
-  component._compile(ts.transpileModule(fs.readFileSync(componentFile, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 } }).outputText, componentFile);
+  component._compile(ts.transpileModule(fs.readFileSync(componentFile, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 } }).outputText.replace('require("./ExperienceIcon")', 'require(' + JSON.stringify(iconFile) + ')'), componentFile);
   const React = require('react');
   const { renderToStaticMarkup } = require('react-dom/server');
   const noop = () => {};

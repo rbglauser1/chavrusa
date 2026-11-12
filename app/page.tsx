@@ -857,6 +857,10 @@ export default function Home() {
   const minimal = !seferHome; // Quiet chat (or, with the text off, the voice-only screen)
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
+  useEffect(() => {
+    if (view === 'learn' && isExperience(settings.theme)) window.scrollTo({ top: 0 });
+  }, [view, settings.theme]);
+
   const experienceNav = <ExperienceNav look={look} view={view}
     onHome={() => setView('home')} onLearn={() => { setView('learn'); setTextTick((n) => n + 1); }}
     onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
