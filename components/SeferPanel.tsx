@@ -10,6 +10,7 @@ import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
 import MyButtonBox from './MyButtonBox';
 import LineChat from './LineChat';
+import Clamp from './Clamp';
 import Elsewhere from './Elsewhere';
 import ByHeart from './ByHeart';
 import Marks from './Marks';
@@ -81,7 +82,13 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // (Nov 10: ✕ left a blank page with no way out).
   const closeLib = () => { setShowLib(false); if (!sources.length) onClose(); };
   useBackLayer(showLib, closeLib); // back closes the Library
-  useEffect(() => { if (libraryRequest) setShowLib(true); }, [libraryRequest]);
+  // Open the Library only when the page asks anew; not again whenever the Sefer comes back on screen (review, Nov 11:
+  // it reopened over the text after Settings and on resume).
+  const libSeen = useRef(libraryRequest ?? 0);
+  useEffect(() => { if (libraryRequest && libraryRequest !== libSeen.current) { libSeen.current = libraryRequest; setShowLib(true); } }, [libraryRequest]);
+  // A new text in front (picked in the Library, or asked for by name): the Library steps aside.
+  const libRef = useRef(sources[selected]?.ref);
+  useEffect(() => { const r = sources[selected]?.ref; if (r && r !== libRef.current) { libRef.current = r; setShowLib(false); } }, [sources, selected]);
   // Approve a translation Sefaria has (e.g. Rabbi Aryeh Kaplan's), then reload this text with it.
   const [approving, setApproving] = useState(false);
   async function approve(title: string, ref: string) {
@@ -807,7 +814,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     return (
                       <div className="line-notes" onClick={(e) => e.stopPropagation()}>
                         {mine.map((x) => (
-                          <div key={x.id} className="line-note"><span className="ln-mark">✎</span><span className="ln-text" dir="auto">{x.on && <b className="ln-on">On {x.on}: </b>}{x.text}</span><button className="ln-x" aria-label="Delete this note" onClick={() => { if (window.confirm('Delete this note?')) void dropNote(x.id); }}>×</button></div>
+                          <div key={x.id} className="line-note"><span className="ln-mark">✎</span><span className="ln-text" dir="auto">{x.on && <b className="ln-on">On {x.on}: </b>}<Clamp text={x.text} lines={3} /></span><button className="ln-x" aria-label="Delete this note" onClick={() => { if (window.confirm('Delete this note?')) void dropNote(x.id); }}>×</button></div>
                         ))}
                         {noteFor === i ? (
                           <div className="ln-edit">

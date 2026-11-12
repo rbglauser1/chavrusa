@@ -1,3 +1,4 @@
+import { clipWords } from '@/lib/clip';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { keep } from '@/lib/keep';
@@ -32,7 +33,7 @@ async function makeGists(title: string, refs: string[]): Promise<Record<string, 
   let arr: unknown = [];
   try { arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]'); } catch { arr = []; }
   const out: Record<string, string> = {};
-  if (Array.isArray(arr)) items.forEach((x, i) => { const g = arr[i]; if (typeof g === 'string' && g.trim()) out[x.ref] = g.trim().slice(0, 600); });
+  if (Array.isArray(arr)) items.forEach((x, i) => { const g = arr[i]; if (typeof g === 'string' && g.trim()) out[x.ref] = clipWords(g, 700); });
   if (!Object.keys(out).length) throw new Error('The summaries did not come back in the right form.'); // not kept: tried again
   return out;
 }

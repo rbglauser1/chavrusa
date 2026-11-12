@@ -4,6 +4,7 @@
 //   Topics    — every #word in a note (#kashya, #halacha, #chazara…), pinned topics first.
 //   Newest    — newest first.
 // A search covers them all. Tap "Open" to go to the note's line. Share or print what is shown (one amud, one topic…).
+import Clamp from './Clamp';
 import { useEffect, useMemo, useState } from 'react';
 
 type Note = { id: string; ref: string; n: number; text: string; created: string; updated?: string; on?: string; quote?: string };
@@ -114,7 +115,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
           <textarea autoFocus rows={4} dir="auto" value={edit.text} onChange={(e) => setEdit({ id: x.id, text: e.target.value })} />
           <div className="ln-btns"><button className="btn" disabled={!edit.text.trim()} onClick={() => void save(x.id, edit.text)}>Save</button><button className="btn ghost" onClick={() => setEdit(null)}>Cancel</button></div>
         </div>
-      ) : <Text text={x.text} onTag={(t) => { setTag(t); setView('topics'); }} />}
+      ) : <Clamp text={x.text} lines={6}><Text text={x.text} onTag={(t) => { setTag(t); setView('topics'); }} /></Clamp>}
       <div className="nb-actions">
         {x.ref && <button className="linklike" onClick={() => onOpen(x.ref, x.n || 1)}>Open ↗</button>}
         <button className="linklike" onClick={() => setEdit({ id: x.id, text: x.text })}>Edit</button>

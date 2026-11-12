@@ -2709,3 +2709,15 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 [data-justify='on'] .sefer .line .en, [data-justify='on'] .sefer .comm .en, [data-justify='on'] .sefer .comm-line .en { text-align: justify; text-align-last: left; -webkit-hyphens: auto; hyphens: auto; }
 [data-justify='on'] .min-text .he { text-align: justify; text-align-last: right; }
 [data-justify='on'] .min-text .en { text-align: justify; text-align-last: left; }
+
+/* The answer to a typed question, over the text (quiet view) */
+.min-reply { position: fixed; left: 8px; right: 8px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 60; max-height: 52dvh; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.min-reply-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 0 14px; }
+.min-reply-body { overflow-y: auto; padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+.min-reply .min-me { align-self: flex-end; max-width: 88%; }
+[data-look='sharp'] .min-reply { border-color: var(--ink); box-shadow: none; }
+
+/* Long notes: a few lines, then "Show all" (components/Clamp.tsx) */
+.clamp { display: block; max-height: calc(1.55em * var(--lines, 4)); overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent); mask-image: linear-gradient(to bottom, #000 60%, transparent); }
+.clamp-all { display: block; }
+.clamp-more { display: inline-block; margin-top: 2px; font-size: 13px; }

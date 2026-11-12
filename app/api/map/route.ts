@@ -5,6 +5,7 @@ import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
+import { clipWords, cutOff } from '@/lib/clip';
 import { needCredit } from '@/lib/credits';
 import { keptModel } from '@/lib/keptModel';
 
@@ -74,7 +75,7 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   await logCost({ sessionId: null, kind: 'map', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const n = s.he.length;
   const lineOf = (x: unknown) => Math.min(Math.max(1, Math.round(Number(x) || 1)), n);
-  const str = (x: unknown, max: number) => String(x ?? '').trim().slice(0, max);
+  const str = (x: unknown, max: number) => clipWords(x, max);
   // The big picture and the intros are bullet points, one to a line ("- " and, under one, "  - "); keep the lines.
   const pts = (x: unknown, max: number) => String(x ?? '').replace(/\r/g, '').split('\n').map((l) => l.replace(/\s+$/, '')).filter((l) => l.trim()).join('\n').slice(0, max);
   let overview = '';
@@ -89,12 +90,12 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
           line: lineOf(x.line),
           kind: KINDS[k].includes(String(x.kind)) ? String(x.kind) : KINDS[k][0],
           who: str(x.who, 40),
-          summary: str(x.summary, 180),
+          summary: str(x.summary, 420),
         }));
       return {
-        title: str(t.title, 80), line: lineOf(t.line ?? steps[0]?.line), intro: pts(t.intro, 1200),
+        title: str(t.title, 100), line: lineOf(t.line ?? steps[0]?.line), intro: pts(t.intro, 1200),
         background: (Array.isArray(t.background) ? t.background : []).map((b) => str(b, 220)).filter(Boolean).slice(0, 4),
-        steps, takeaway: str(t.takeaway, 300),
+        steps, takeaway: str(t.takeaway, 500),
       };
     }).filter((t) => t.steps.length || t.intro);
   } catch { topics = []; }
@@ -104,7 +105,12 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
 }
 
 // Kept for good (lib/keep): each amud's map is paid for once, ever. An empty one (the text couldn't be read) isn't kept.
-const cached = (ref: string) => keep('sugya-map-v5-opus', ref, () => makeMap(ref), (m) => !m.steps.length);
+// Maps saved before Nov 11 could have words cut in half (the old 180-letter cut); those are made again, once.
+const damaged = (m: SugyaMapData) => m.topics.some((t) => cutOff(t.title, 80) || cutOff(t.takeaway, 300) || t.steps.some((x) => cutOff(x.summary, 180))) || m.steps.some((x) => cutOff(x.summary, 180));
+const cached = async (ref: string) => {
+  const m = await keep('sugya-map-v5-opus', ref, () => makeMap(ref), (x) => !x.steps.length);
+  return damaged(m) ? keep('sugya-map-v5b-opus', ref, () => makeMap(ref), (x) => !x.steps.length) : m;
+};
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');

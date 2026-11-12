@@ -25,5 +25,6 @@ export interface RunOptions {
   effort?: string;
   thinking?: 'disabled' | 'between_tools';
   maxSteps?: number;
+  maxTokens?: number;  // the longest reply allowed (default 4000)
   onText?: (delta: string) => void; // called with each piece of text as it is written
 }

@@ -29,7 +29,7 @@ export async function runAnthropic(o: RunOptions): Promise<RunResult> {
     // The system prompt is marked cacheable so repeated exchanges cost less.
     body: JSON.stringify({
       model: o.model,
-      max_tokens: 4000,
+      max_tokens: o.maxTokens ?? 4000,
       stream: true,
       ...(speedSettings && o.effort ? { output_config: { effort: o.effort } } : {}),
       ...(speedSettings && o.thinking ? { thinking: { type: o.thinking } } : {}),

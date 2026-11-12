@@ -16,6 +16,16 @@ export interface IndexInfo {
   year: number | null;        // earliest composition year, if known
 }
 
+// Always blocked, even with "Allow all" (review, Nov 11): academic, critical or non-Orthodox works and authors that
+// Sefaria carries. Your own list (Settings, the approved sources) can block more; it can't unblock these. A rav
+// should still review the full list.
+export const ALWAYS_BLOCKED: ApprovedEntry[] = [
+  ...['Cassuto', 'A New Israeli Commentary', 'Brown-Driver-Briggs', 'BDB', 'Klein Dictionary', 'The Torah: A Modern Commentary', 'Siddur Sim Shalom', "Mishkan T'filah", 'Kol Haneshamah', 'Lev Shalem', 'Legends of the Jews', 'Plaut']
+    .map((name) => ({ kind: 'work' as const, name, status: 'blocked' as const, lean: 'academic or non-Orthodox' })),
+  ...['Umberto Cassuto', 'Abraham Cohen', 'Abraham Joshua Heschel', 'Mordecai Kaplan', 'Martin Buber', 'Franz Rosenzweig', 'Hermann Cohen', 'Solomon Schechter', 'Louis Ginzberg', 'Gunther Plaut', 'Arthur Green', 'Zalman Schachter-Shalomi', 'Elliot Dorff', 'Shmuel Safrai', 'Francis Brown', 'Samuel Rolles Driver', 'Charles Augustus Briggs', 'Ernest Klein']
+    .map((name) => ({ kind: 'author' as const, name, status: 'blocked' as const, lean: 'academic or non-Orthodox' })),
+];
+
 // A marker in the approved list meaning "allow every sefer" (from Settings).
 export const ALL_WORKS = '__all_sefaria__';
 

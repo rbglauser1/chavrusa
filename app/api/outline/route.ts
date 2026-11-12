@@ -1,3 +1,4 @@
+import { clipWords } from '@/lib/clip';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { keep } from '@/lib/keep';
@@ -40,7 +41,7 @@ async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }>
   try {
     moves = (JSON.parse(json) as Move[])
       .filter((m) => m && Number.isFinite(Number(m.line)) && typeof m.summary === 'string')
-      .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: m.summary.trim().slice(0, 160) }));
+      .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: clipWords(m.summary, 220) }));
   } catch { moves = []; }
   if (!moves.length) throw new Error('The summary did not come back in the right form.'); // not kept: tried again next time
   return { moves, usd };

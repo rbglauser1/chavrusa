@@ -60,7 +60,7 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
         ) : (
           <>
             {state === 'loading' ? <div className="gist muted">Breaking it into steps…</div>
-              : <div className="gist muted">{/one step/.test(why) ? 'This piece is a single step.' : 'Couldn’t break this one into steps.'} {!/one step/.test(why) && <button className="linklike" onClick={(e) => { e.stopPropagation(); load(); }}>Try again</button>}</div>}
+              : <div className="gist muted">{/one step/.test(why) ? 'This piece is short: a single step.' : 'Couldn’t break this one into steps just now. The original is below, unchanged.'} {!/one step/.test(why) && <button className="linklike" onClick={(e) => { e.stopPropagation(); load(); }}>Try again</button>}</div>}
             {children}
           </>
         )}

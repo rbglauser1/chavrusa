@@ -49,7 +49,7 @@ export async function buildSourceSheet(src: SourceData, opts: { withMap: boolean
     const n = i + 1;
     const mine = notes.filter((x) => x.n === n);
     const hal = opts.lines?.[String(n)]?.halacha ?? [];
-    parts.push(`<tr><td class="n">${n}</td><td><div class="he" dir="rtl">${he(h)}</div>${src.en[i] ? `<div class="en">${esc(plain(src.en[i]))}</div>` : ''}${hal.length ? `<div class="hal">⚖ ${hal.slice(0, 4).map((x) => esc(x.title)).join(' · ')}</div>` : ''}${mine.map((x) => `<div class="note">${x.on === 'a mark' ? `■ ${esc(x.text.replace(/^Marked: /, ''))}: <span dir="auto">“${esc(x.quote ?? '')}”</span>` : `✎ ${x.quote ? `<span dir="auto">“${esc(x.quote)}”</span> ` : ''}${esc(x.text).replace(/\n/g, '<br>')}`}</div>`).join('')}</td></tr>`);
+    parts.push(`<tr><td class="n">${n}</td><td><div class="he" dir="rtl">${he(h)}</div>${src.en[i] ? `<div class="en">${esc(plain(src.en[i]))}</div>` : ''}${hal.length ? `<div class="hal">⚖ ${hal.slice(0, 4).map((x) => esc(x.title)).join(' · ')}</div>` : ''}${mine.map((x) => `<div class="note">${x.on === 'a mark' ? `■ ${esc(x.text.replace(/^Marked: /, ''))}: <span dir="auto">“${esc(x.quote ?? '')}”</span>` : `✎ ${x.quote ? `<span dir="auto">“${esc(x.quote)}”</span> ` : ''}${esc(x.on === 'a chat with the AI' && x.text.length > 500 ? `${x.text.slice(0, 500).replace(/\s+\S*$/, '')}… (the whole chat is in your Notebook)` : x.text).replace(/\n/g, '<br>')}`}</div>`).join('')}</td></tr>`);
   });
   parts.push('</table>');
   // On the phone: large, easy to read; on paper: a normal printed page.

@@ -195,7 +195,10 @@ export default function Minimal(p: Props) {
     if (src && p.talk.on) { const n = Math.min(Math.max((src.focus ?? 1) + d, 1), src.he.length); p.pointAt(src, n); return; }
     p.send(d === 1 ? 'next' : 'back');
   };
-  const submit = () => { if (p.input.trim() && !p.busy) p.send(p.input); };
+  // A typed question over the text (quiet view) opens a small reply panel: the question, "Thinking…", then the answer
+  // or the error, so it is always clear that it was heard and what came back (review, Nov 11).
+  const [reply, setReply] = useState<number | null>(null); // where the typed turn starts in the conversation
+  const submit = () => { if (p.input.trim() && !p.busy) { setReply(p.items.length); p.send(p.input); } };
 
   const header = (
     <header className="min-head">
@@ -377,6 +380,25 @@ export default function Minimal(p: Props) {
     const sefer = p.sefer && isValidElement(p.sefer)
       ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void; docScroll?: boolean }>, { onDoubleTap: () => setFull(!full), docScroll: isFull })
       : p.sefer;
+    const turn = reply !== null ? p.items.slice(reply) : [];
+    const replyPanel = showText && reply !== null ? (
+      <section className="min-reply" aria-label="Your question and the answer" aria-live="polite">
+        <div className="min-reply-head">
+          <button className="linklike" onClick={() => { setReply(null); setTab('talk'); }}>The whole conversation</button>
+          <button className="min-icon" onClick={() => setReply(null)} aria-label="Close the answer">✕</button>
+        </div>
+        <div className="min-reply-body">
+          {turn.some((it) => it.kind === 'assistant') && <div className="ai-note left">AI makes mistakes. Check the text inside; for halacha, ask your rav.</div>}
+          {turn.map((it, i) => it.kind === 'user'
+            ? <div key={i} className="min-me" dir="auto">{it.text}</div>
+            : it.kind === 'assistant'
+              ? <div key={i} className="min-them"><Formatted text={it.text} /></div>
+              : it.kind === 'error' ? <div key={i} className="min-error">{it.text} <button className="linklike" onClick={() => { const q = [...turn].reverse().find((x) => x.kind === 'user'); if (q && !p.busy) { setReply(p.items.length); p.send(q.text); } }}>Try again</button></div> : null)}
+          {p.busy && <div className="min-event">{p.status || 'Thinking…'}</div>}
+          {!p.busy && turn.length > 0 && !turn.some((it) => it.kind === 'assistant' || it.kind === 'error') && <div className="min-event">The answer was spoken. Ask again to see it in writing.</div>}
+        </div>
+      </section>
+    ) : null;
     return (
       <div className={`min min-quiet ${isFull ? 'full' : ''}`}>
         {isFull ? null : header}
@@ -388,6 +410,7 @@ export default function Minimal(p: Props) {
         )}
         {/* No words above the bottom row over the text — no caption, no status line. */}
         {!showText && label && <div className={`min-status slim ${labelErr ? 'err' : ''}`}>{label}</div>}
+        {replyPanel}
         {bottom}
       </div>
     );

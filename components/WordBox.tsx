@@ -1,7 +1,7 @@
 'use client';
 // Tap a word for its meaning (Settings → Extras → Word meanings): in a line that is already open, tapping a Hebrew or
 // Aramaic word shows a bubble right at the word with its meaning in a few words; "More" shows the full entry. From
-// Jastrow (Gemara, Targum, Midrash) or Brown-Driver-Briggs (Tanach), through Sefaria (app/api/word). No AI.
+// Jastrow's dictionary, through Sefaria (app/api/word). No AI.
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { looksAbbreviated, openAbbreviation } from '@/lib/abbrev';
@@ -103,7 +103,7 @@ export default function WordBox({ word, raw, lineRef, at, onClose }: { word: str
                   <ol className="wb-senses">{e.senses.map((s, j) => <li key={j} dir="auto">{s}</li>)}</ol>
                 </div>
               ))}
-              <div className="muted wb-credit">Jastrow (1903) and Brown-Driver-Briggs (1906), through Sefaria</div>
+              <div className="muted wb-credit">From Jastrow’s dictionary (1903), through Sefaria</div>
             </div>
           )}
       </div>

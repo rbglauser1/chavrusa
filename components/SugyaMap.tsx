@@ -78,6 +78,8 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
   };
   const [moreFor, setMoreFor] = useState<string | null>(null);
   const [openComm, setOpenComm] = useState<string | null>(null); // the meforesh opened right in the map
+  // Escape closes it (review, Nov 11).
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
   return (
     <div className="smap-back" onClick={onClose}>
       <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>

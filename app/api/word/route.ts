@@ -6,8 +6,8 @@ export const runtime = 'nodejs';
 // Tap a word for its meaning (Settings → Extras → Word meanings): Sefaria's dictionary lookup, the entries from the
 // dictionaries that are free to use: Jastrow (1903, for the Gemara, Targum and Midrash) and Brown-Driver-Briggs
 // (1906, for Tanach). No AI, so it costs nothing. Klein (a modern dictionary, under copyright) is left out.
-const OK = /^(Jastrow Dictionary|BDB Augmented Strong|BDB Dictionary|BDB Aramaic Dictionary)$/;
-const NAME = (l: string) => (/^Jastrow/.test(l) ? 'Jastrow' : 'Brown-Driver-Briggs');
+const OK = /^Jastrow Dictionary$/; // Nov 11: Brown-Driver-Briggs removed (written by Christian Bible scholars)
+const NAME = (_l: string) => 'Jastrow';
 
 type Sense = { definition?: string; senses?: Sense[]; number?: string };
 type Entry = { headword?: string; parent_lexicon?: string; content?: { morphology?: string; senses?: Sense[] } };

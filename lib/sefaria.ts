@@ -1,4 +1,5 @@
 import 'server-only';
+import { ALWAYS_BLOCKED } from './approval';
 import { ALL_WORKS, ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationApproved, translationRank, Verdict } from './approval';
 import { SourceData } from './db';
 import { yeshivishEnglish } from './hebrew';
@@ -200,7 +201,7 @@ export async function getLinks(ref: string, list: ApprovedEntry[], categories?: 
 
   // Judge each distinct book once (in parallel), drop anything not approved.
   // With "allow every sefer" on (and no blocked authors to check), no need to look each book up: much faster.
-  const quick = list.some((e) => e.kind === 'work' && e.status === 'approved' && e.name === ALL_WORKS) && !list.some((e) => e.kind === 'author' && e.status === 'blocked');
+  const quick = list.some((e) => e.kind === 'work' && e.status === 'approved' && e.name === ALL_WORKS) && !list.some((e) => e.kind === 'author' && e.status === 'blocked' && !ALWAYS_BLOCKED.includes(e)); // the fixed list's works are caught by title
   const books = [...new Set(items.map((l) => (l as any).index || bookTitleFromRef(l.ref)))].slice(0, quick ? 1000 : max > 80 ? 120 : 40);
   const verdicts = new Map<string, boolean>();
   await Promise.all(books.map(async (b) => verdicts.set(b, quick

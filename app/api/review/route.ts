@@ -1,3 +1,4 @@
+import { clipWords } from '@/lib/clip';
 import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
@@ -40,7 +41,7 @@ async function makeReview(ref: string): Promise<{ questions: Question[] }> {
   try {
     const arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]');
     questions = (Array.isArray(arr) ? arr : []).filter((x) => x && typeof x.q === 'string' && typeof x.a === 'string').map((x) => ({
-      q: String(x.q).trim().slice(0, 300), a: String(x.a).trim().slice(0, 600),
+      q: clipWords(x.q, 400), a: clipWords(x.a, 900),
       line: Math.min(Math.max(1, Math.round(Number(x.line) || 1)), s.he.length),
     })).slice(0, 10);
   } catch { questions = []; }

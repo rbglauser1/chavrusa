@@ -20,6 +20,8 @@ export default function Review({ refText, onGo, onClose }: { refText: string; on
     return () => { gone = true; };
   }, [refText, tick]);
   const flip = (i: number) => setShown((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; });
+  // Escape closes it (review, Nov 11).
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
   return (
     <div className="smap-back" onClick={onClose}>
       <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Review questions">

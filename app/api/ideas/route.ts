@@ -1,3 +1,4 @@
+import { clipWords } from '@/lib/clip';
 import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
@@ -56,7 +57,7 @@ async function makeIdeas(base: string, n: number): Promise<{ points: { text: str
     const arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? 'x');
     answered = Array.isArray(arr);
     points = (Array.isArray(arr) ? arr : []).filter((p) => p && typeof p.text === 'string').map((p) => ({
-      text: String(p.text).trim().slice(0, 700),
+      text: clipWords(p.text, 900),
       refs: (Array.isArray(p.refs) ? p.refs : []).map(String).filter((x: string) => known.has(x)).slice(0, 3),
     })).filter((p) => p.text && p.refs.length).slice(0, 4);
   } catch { points = []; }

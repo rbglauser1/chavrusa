@@ -1,4 +1,5 @@
 'use client';
+import { useMineTitles } from './useMineTitles';
 import { useEffect, useState } from 'react';
 import { useBackLayer } from '@/lib/back';
 import MySeforim from './MySeforim';
@@ -94,6 +95,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
   const [approvable, setApprovable] = useState<{ work: string; ref: string } | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
   useEffect(() => { setRecent(loadRecent()); }, [path, book]);
+  const nice = useMineTitles(recent.some((r) => /^Mine /.test(r.ref)));
   // Jumps from the trail shown in the Sefer.
   useEffect(() => {
     const on = () => { setPathState(memory.path); setBookState(memory.book); };
@@ -178,7 +180,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
           </div>
           {recent.slice(0, 5).map((r) => (
             <button key={r.ref} className="lib-item book" disabled={busy} onClick={() => open(r.ref)}>
-              <span className="en">{r.ref}</span>
+              <span className="en">{nice(r.ref)}</span>
               <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{r.trail.slice(0, -1).join(' › ')}</span>
             </button>
           ))}

@@ -159,7 +159,7 @@ export const SET_PAGES: SetPage[] = [
   { id: 'set-extras', chapter: 'Extras', title: 'Extras: on each line', rows: [
     { label: 'Explain button on each line', opts: ON_OFF, on: 0, text: '✦ Explain next to Rashi and Tosafos: what the line says and where it stands in the sugya.' },
     { label: 'Chat button on each line', opts: ON_OFF, on: 0, text: '✦ Chat next to Explain: a written chat with the AI about that line, right under it. Ask anything; save one answer, or the whole chat, to your Notebook.' },
-    { label: 'Word meanings', opts: ON_OFF, on: 0, text: 'In a line that is open, or in a meforesh under it, tap any Hebrew or Aramaic word: what it means, from Jastrow (Gemara) or Brown-Driver-Briggs (Tanach). Tap an abbreviation (כה"ג, וי"ל) and it is opened into its words. Free, no AI.' },
+    { label: 'Word meanings', opts: ON_OFF, on: 0, text: 'In a line that is open, or in a meforesh under it, tap any Hebrew or Aramaic word: what it means, from Jastrow’s dictionary. Tap an abbreviation (כה"ג, וי"ל) and it is opened into its words. Free, no AI.' },
     { label: 'Tosafos steps', opts: ON_OFF, on: 0, text: 'A Steps button on every long Tosafos: the same words cut into question, answer, proof and second answer, with punctuation and one line of English on each. With Steps on (What’s shown), any other long meforesh has it too.' },
     { label: 'Where else in Shas', opts: ON_OFF, on: 0, text: '⇄ Elsewhere on a line of Gemara or Mishnah: the same sugya in other masechtos and elsewhere in this one. Free, from Sefaria’s links.' },
   ] },

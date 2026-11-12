@@ -22,10 +22,12 @@ export default function LineChat({ lineRef, onClose }: { lineRef: string; onClos
   useEffect(() => { try { if (msgs.length) localStorage.setItem(KEY(lineRef), JSON.stringify(msgs.slice(-40))); else localStorage.removeItem(KEY(lineRef)); } catch { /* optional */ } }, [msgs, lineRef]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [msgs.length, busy]);
 
-  async function send(text: string) {
+  async function send(text: string, retry = false) {
     const q = text.trim();
     if (!q || busy) return;
-    const next: Msg[] = [...msgs, { role: 'user', content: q }];
+    // Try again: the same question, asked once (review, Nov 11: it showed twice).
+    const base = retry && msgs[msgs.length - 1]?.role === 'user' ? msgs.slice(0, -1) : msgs;
+    const next: Msg[] = [...base, { role: 'user', content: q }];
     setMsgs(next); setDraft(''); setBusy(true); setErr(''); setSavedAll(false);
     try {
       const r = await fetch('/api/linechat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: lineRef, messages: next.map(({ role, content }) => ({ role, content })) }) });
@@ -70,7 +72,7 @@ export default function LineChat({ lineRef, onClose }: { lineRef: string; onClos
             </div>
           ))}
         {busy && <div className="muted lchat-wait">Thinking…</div>}
-        {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') { setMsgs(msgs.slice(0, -1)); void send(last.content); } }}>Try again</button></div>}
+        {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') void send(last.content, true); }}>Try again</button></div>}
         <div ref={endRef} />
       </div>
       <form className="lchat-form" onSubmit={(e) => { e.preventDefault(); void send(draft); }}>

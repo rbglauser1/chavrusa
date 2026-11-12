@@ -1,4 +1,5 @@
 'use client';
+import { useMineTitles } from './useMineTitles';
 // The new main screen (Settings → Main screen → New): one home that always opens first.
 // A card to pick up where you left off, four circles (Library, Recent, Themes, Settings), and a Talk button
 // that starts a fresh call and waits for the learner to say what he wants to learn.
@@ -148,13 +149,14 @@ export function RecentList({ sessions, currentId, onOpen, onDelete, onClearAll, 
   const [all, setAll] = useState(false);
   if (!sessions.length) return <div className="recent-empty">Nothing here yet. Tap Talk on the main screen, or open the Library, to begin.</div>;
   const shown = all ? sessions : sessions.slice(0, 8);
+  const nice = useMineTitles(sessions.some((x) => /^Mine /.test(x.title ?? '')));
   return (
     <>
       <ul className="recent-list">
         {shown.map((s) => (
           <li key={s.id} className={`recent-row ${s.id === currentId ? 'on' : ''}`}>
             <button className="recent-open" onClick={() => onOpen(s.id)}>
-              <span className="recent-title" dir="auto">{s.title || 'Untitled session'}</span>
+              <span className="recent-title" dir="auto">{nice(s.title) || 'Untitled session'}</span>
               <span className="recent-when">{when(s.updated_at)}</span>
             </button>
             <button className="recent-x" onClick={() => onDelete(s.id)} aria-label="Delete this session">×</button>

@@ -1,3 +1,4 @@
+import { clipWords } from '@/lib/clip';
 import { NextRequest, NextResponse } from 'next/server';
 import { keep } from '@/lib/keep';
 import { costUsd } from '@/lib/config';
@@ -50,15 +51,15 @@ async function makeSteps(ref: string): Promise<{ steps: Step[] }> {
     const r = await runAnthropic({
       model: model.id, system: PROMPT,
       history: [{ role: 'user', content: `${on}The piece (${c.ref}):\n${piece}${attempt ? '\n\n(Your last reply changed, added or dropped words. Copy every word exactly, in order.)' : ''}` }],
-      tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
+      tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 12000,
     });
     await logCost({ sessionId: null, kind: 'commsteps', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
     let arr: unknown = [];
     try { arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]'); } catch { arr = []; }
     const steps: Step[] = (Array.isArray(arr) ? arr : [])
-      .map((x) => ({ label: String(x?.label ?? '').trim().slice(0, 30), he: String(x?.he ?? '').replace(/\s+/g, ' ').trim(), en: String(x?.en ?? '').trim().slice(0, 400) }))
+      .map((x) => ({ label: String(x?.label ?? '').trim().slice(0, 30), he: String(x?.he ?? '').replace(/\s+/g, ' ').trim(), en: clipWords(x?.en, 500) }))
       .filter((x) => x.he);
-    if (steps.length < 2) { lastErr = 'This piece is one step.'; continue; }
+    if (steps.length < 2) { lastErr = letters(piece).length > 400 ? 'The steps did not come back in the right form.' : 'This piece is one step.'; continue; }
     // Letter by letter: the same words, in the same order.
     if (letters(steps.map((x) => x.he).join(' ')) !== want) { lastErr = 'The words did not match the original.'; continue; }
     return { steps };
