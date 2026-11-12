@@ -9,6 +9,7 @@ import GeminiPronunciation from './GeminiPronunciation';
 import CallLogs from './CallLogs';
 import HebrewLab from './HebrewLab';
 import GptPronunciation from './GptPronunciation';
+import GuidedPalettePicker from './GuidedPalettePicker';
 import { Group, GroupList } from './SettingsGroup';
 import MyButtons from './MyButtons';
 
@@ -162,6 +163,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           {themes && (
           <Group id="look" title={asPage ? 'Look' : 'Look and text'} hint="Look, fonts, colors, sizes, commentaries" flat={part === 'themes'}>
             <Group id="look-look" level={2} title="Look and fonts">
+            {s.theme === 'guided-learning' && <div className="field"><label>Guided Learning colors</label><GuidedPalettePicker value={s.guidedPalette} onChange={guidedPalette=>onChange({guidedPalette})}/><p className="muted" style={{fontSize:12}}>Changes the workspace, cards and buttons for Guided Learning. Your text colors and fonts stay independent.</p></div>}
             <div className="field">
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
