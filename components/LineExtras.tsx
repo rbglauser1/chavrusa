@@ -52,7 +52,7 @@ export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () 
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
       <div className="comm-title">✦ Explanation{text && <NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the explanation" quote={text.replace(/⟦[^⟧]+⟧/g, '').slice(0, 140)} label="✎" />}<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
-      {text && <div className="ai-note left">Written by AI · may contain mistakes{data.sources.length ? ' · tap a source to check it inside' : ''}</div>}
+      {text && <div className="ai-note left">Written by AI · AI makes mistakes{data.sources.length ? ' · tap a source to check it inside' : ''}</div>}
       {data ? <WithSources text={data.text} sources={data.sources} />
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
         : <div className="muted">Reading the sources and explaining… (the first time takes a little while)</div>}
@@ -91,7 +91,6 @@ function Ideas({ lineRef, titles }: { lineRef: string; titles: Record<string, st
           {openRef?.startsWith(`${i}|`) && <RefText refs={[openRef.slice(openRef.indexOf('|') + 1)]} />}
         </div>
       ))}
-      <div className="muted smap-ai-note">Drawn by the AI only from the sources linked to this line · AI makes mistakes: check them inside.</div>
     </div>
   );
 }
@@ -105,6 +104,7 @@ export function IdeasBox({ groups, lineRef, onClose }: { groups: Groups; lineRef
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
       <div className="comm-title">✦ Ideas from the sources<NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the ideas" label="✎" /><button className="comm-x" aria-label="Close the ideas" onClick={onClose}>✕</button></div>
+      <div className="ai-note left">Drawn by AI from the sources linked to this line · AI makes mistakes · check them inside</div>
       <Ideas lineRef={lineRef} titles={titles} />
     </div>
   );

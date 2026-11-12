@@ -41,6 +41,7 @@ export default function ListenBox({ refText, heRef, onClose }: { refText: string
       {state === 'checking' && <div className="muted">Looking for the recording…</div>}
       {state === 'none' && (
         <>
+          <div className="ai-note left">Written and read by AI · AI makes mistakes</div>
           <p className="listen-what">A spoken overview of this {/\d[ab]$/.test(refText) ? 'amud' : 'perek'}, about eight to ten minutes, to hear in the car or on a walk. It is made once (about a minute, about 20¢) and then kept: after that it plays at once, free.</p>
           <button className="btn primary" onClick={() => void make()}>Make the recording</button>
         </>
@@ -49,9 +50,9 @@ export default function ListenBox({ refText, heRef, onClose }: { refText: string
       {state === 'failed' && <div className="muted">{err} <button className="linklike" onClick={() => void make()}>Try again</button></div>}
       {state === 'ready' && (
         <>
+          <div className="ai-note left">Written and read by AI · AI makes mistakes · an overview, not a replacement for learning inside</div>
           <audio ref={audio} className="listen-audio" src={url} controls preload="metadata" />
           <div className="listen-speeds">Speed{SPEEDS.map((x) => <button key={x} className={speed === x ? 'on' : ''} onClick={() => setSpeed(x)}>{x}×</button>)}</div>
-          <div className="ai-note left">Written and read by AI · may contain mistakes · an overview, not a replacement for learning inside</div>
         </>
       )}
     </div>

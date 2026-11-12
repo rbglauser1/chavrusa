@@ -85,7 +85,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {data && (
           <>
-            <div className="ai-note left">Made by AI · may contain mistakes · check it inside</div>
+            <div className="ai-note left">Made by AI · AI makes mistakes · check it inside</div>
             {data.overview && <div className="smap-overview"><span className="smap-label">The big picture</span><p>{data.overview}</p></div>}
             <div className="smap-views">
               {views === null ? <button className="smap-views-btn" onClick={loadViews}>⚖ Who holds what</button>
@@ -95,6 +95,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                 : (
                   <>
                     <span className="smap-label">Who holds what</span>
+                    <div className="ai-note left">Made by AI · AI makes mistakes · check it inside</div>
                     {views.disputes.map((d, k) => (
                       <div key={k} className="smap-dispute">
                         <button className="smap-dispute-q" onClick={() => go(d.line)}><span>{d.question}</span><span className="smap-line">line {d.line}</span></button>

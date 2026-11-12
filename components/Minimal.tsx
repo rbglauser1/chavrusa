@@ -112,13 +112,13 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
 function Thread({ items, busy, status, endRef }: { items: Msg[]; busy: boolean; status: string; endRef: React.RefObject<HTMLDivElement | null> }) {
   return (
     <div className="min-thread">
+      {items.some((it) => it.kind === 'assistant') && <div className="ai-note">AI makes mistakes. Check the text inside; for halacha, ask your rav.</div>}
       {items.map((it, i) => it.kind === 'user'
         ? <div key={i} className="min-me" dir="auto">{it.text}</div>
         : it.kind === 'assistant'
           ? <div key={i} className="min-them"><Formatted text={it.text} /></div>
           : <div key={i} className={it.kind === 'error' ? 'min-error' : 'min-event'}>{it.text}</div>)}
       {busy && <div className="min-event">{status || 'Thinking…'}</div>}
-      {items.some((it) => it.kind === 'assistant') && <div className="ai-note">AI makes mistakes. Check the text inside; for halacha, ask your rav.</div>}
       <div ref={endRef} />
     </div>
   );

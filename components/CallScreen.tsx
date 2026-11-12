@@ -43,6 +43,7 @@ export default function CallScreen({ live, src, nikud, onText }: { live: Live; s
         <button className="callx-text" onClick={onText}>TEXT</button>
       </header>
 
+      <div className="callx-ai">AI makes mistakes · not rabbinically approved · ask your rav</div>
       <main className="callx-main">
         <div className={`callx-state s-${live.state}`}><i />{LABEL[live.state] ?? live.state}</div>
         {now ? (
@@ -70,7 +71,7 @@ export default function CallScreen({ live, src, nikud, onText }: { live: Live; s
           </button>
         </div>
         <div className="callx-last">
-          <span>AI makes mistakes · ask your rav</span>
+          <span />
           <button onClick={() => live.stop()}>End the call</button>
         </div>
       </footer>

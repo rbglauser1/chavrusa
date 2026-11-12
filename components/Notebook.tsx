@@ -12,6 +12,8 @@ type View = 'sefer' | 'topics' | 'newest';
 const tagsOf = (text: string) => [...new Set((text.match(/#[\p{L}\p{N}_-]+/gu) ?? []).map((t) => t.slice(1).toLowerCase()))];
 // "Yoma 6a" → "Yoma"; "Genesis 24" → "Genesis"; "Mishnah Yoma 1" → "Mishnah Yoma"; "Rashi on Yoma 6a" → "Yoma"
 const bookOf = (ref: string) => (ref ? ref.replace(/^.* on /, '').replace(/ \d+[ab]?(:\d+)?$/, '') : 'Pages of your own');
+// Notes whose words the AI wrote (What we learned, a saved chat): they say so first.
+const aiNote = (x: Note) => /^what we learned|^a chat with the AI/.test(x.on ?? '');
 const where = (x: Note) => (x.ref ? `${x.ref}${x.n ? `, line ${x.n}` : ''}${x.on ? ` · on ${x.on}` : ''}` : 'A page of your own');
 
 function Text({ text, onTag }: { text: string; onTag: (t: string) => void }) {
@@ -83,7 +85,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
   const pageOf = (title: string, list: Note[]) => {
     const groups = new Map<string, Note[]>();
     for (const x of list) { const b = x.ref ? bookOf(x.ref) : 'Pages of my own'; groups.set(b, [...(groups.get(b) ?? []), x]); }
-    const body = [...groups].map(([b, xs]) => `<h2>${esc(b)}</h2>${xs.map((x) => `<p class="w">${esc(where(x))} · ${new Date(x.updated ?? x.created).toLocaleDateString()}</p>${x.quote ? `<p class="q" dir="auto">“${esc(x.quote)}”</p>` : ''}<p class="n" dir="auto">${esc(x.text).replace(/\n/g, '<br>')}</p>`).join('')}`).join('');
+    const body = [...groups].map(([b, xs]) => `<h2>${esc(b)}</h2>${xs.map((x) => `<p class="w">${esc(where(x))} · ${new Date(x.updated ?? x.created).toLocaleDateString()}</p>${aiNote(x) ? '<p class="w">Written by AI · AI makes mistakes</p>' : ''}${x.quote ? `<p class="q" dir="auto">“${esc(x.quote)}”</p>` : ''}<p class="n" dir="auto">${esc(x.text).replace(/\n/g, '<br>')}</p>`).join('')}`).join('');
     return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font:12pt/1.5 Georgia,serif;max-width:680px;margin:32px auto;padding:0 16px}h1{font-weight:400}h2{font:600 14pt Georgia,serif;margin:24px 0 8px;border-bottom:1px solid #ccc}.w{color:#777;font:10pt Arial,sans-serif;margin:14px 0 2px}.q{font-style:italic;color:#555;margin:0 0 2px}.n{margin:0 0 12px}</style></head><body><h1>${esc(title)}</h1><p class="w">${list.length} notes · ${new Date().toLocaleDateString()}</p>${body}</body></html>`;
   };
   const print = () => {
@@ -105,6 +107,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
   const Card = ({ x }: { x: Note }) => (
     <div className="nb-note">
       <div className="nb-where">{where(x)}<span>{new Date(x.updated ?? x.created).toLocaleDateString()}</span></div>
+      {aiNote(x) && <div className="ai-note left">Written by AI · AI makes mistakes</div>}
       {x.quote && <div className="nb-quote" dir="auto">“{x.quote}”</div>}
       {edit?.id === x.id ? (
         <div className="ln-edit">

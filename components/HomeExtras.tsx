@@ -44,6 +44,7 @@ function Chazara() {
   return (
     <div className="hx-card">
       <button className="hx-head" onClick={() => setOpen((o) => !o)}><span>Chazara</span><span className="muted">{open ? 'Hide' : 'Review what you learned'}</span></button>
+      {open && data && (data.last || data.older) && <div className="ai-note left">Recap written by AI · AI makes mistakes</div>}
       {open && !data && <div className="muted hx-wait">Putting it together…</div>}
       {open && data && !data.last && !data.older && <div className="muted hx-wait">Nothing to review yet. Learn a little, and it will be here.</div>}
       {open && data?.last && (

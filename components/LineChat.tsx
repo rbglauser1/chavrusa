@@ -56,7 +56,7 @@ export default function LineChat({ lineRef, onClose }: { lineRef: string; onClos
         {msgs.some((m) => m.role === 'assistant') && <button className="lchat-save" onClick={() => void saveAll()} disabled={savedAll}>{savedAll ? '✓ Saved to Notebook' : 'Save the chat'}</button>}
         <button className="comm-x" aria-label="Close the chat" onClick={onClose}>✕</button>
       </div>
-      <div className="ai-note left">Written by AI · may contain mistakes · ask your rav for halacha</div>
+      <div className="ai-note left">Written by AI · AI makes mistakes · ask your rav for halacha</div>
       {!msgs.length && (
         <div className="lchat-starters">{STARTERS.map((s) => <button key={s} onClick={() => void send(s)}>{s}</button>)}</div>
       )}

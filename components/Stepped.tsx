@@ -48,6 +48,7 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
       {!on ? children
         : steps ? (
           <div className="stepped">
+            <div className="ai-note left">Divided, punctuated and explained by AI · AI makes mistakes · the Hebrew words are the meforesh’s own, checked letter by letter</div>
             {steps.map((s, k) => (
               <div key={k} className="stepped-row">
                 <div className="stepped-label">{s.label}</div>
@@ -55,7 +56,6 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
                 {s.en && <div className="stepped-en">{s.en}</div>}
               </div>
             ))}
-            <div className="ai-note left">Divided and punctuated by AI · the words are the meforesh’s own, checked letter by letter</div>
           </div>
         ) : (
           <>

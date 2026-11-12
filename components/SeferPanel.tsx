@@ -577,7 +577,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {canTranslate && showAll && t.en[i] && <div className="tg-en">{yeshivishEnglish(t.en[i])}</div>}
     </div>
   ) : null);
-  const introBox = (t: string) => (t ? <div className="amud-intro"><span>On this {sectionWord(src?.ref ?? '')}</span>{t}</div> : null);
+  const introBox = (t: string) => (t ? <div className="amud-intro"><span>On this {sectionWord(src?.ref ?? '')}</span><div className="ai-note left">Written by AI · AI makes mistakes</div>{t}</div> : null);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
@@ -779,6 +779,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             )}
             {isComm && ownGists?.state === 'loading' && <div className="gist muted">Summarizing…</div>}
             {introBox(intro)}
+            {settings.outline && Object.keys(outline.byLine).length > 0 && <div className="ai-note left">The step headings are written by AI · AI makes mistakes</div>}
             {src.he.map((line, i) => {
               const isOpen = canTranslate && (showAll || open.has(i));
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
@@ -798,7 +799,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>}
-                  {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>Summary</span> {ownGists.list[i]}</div>}
+                  {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
                     const mine = notes.filter((x) => x.n === i + 1);
                     const showAdd = open.has(i) || picked === i || src.focus === i + 1;
@@ -923,7 +924,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                                 {longPiece(pt.he) && ((/^Tosa/i.test(c.title ?? label) && settings.tosSteps !== false) || settings.outline)
                                   ? <Stepped refText={pt.ref}>{pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}</Stepped>
                                   : pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}
-                                {settings.commSummary && c.title && (gists[pt.ref] ? <div className="gist"><span>Summary</span> {gists[pt.ref]}</div>
+                                {settings.commSummary && c.title && (gists[pt.ref] ? <div className="gist"><span>AI summary</span> {gists[pt.ref]}</div>
                                   : gistState[gk] === 'loading' ? <div className="gist muted">Summarizing…</div>
                                   : gistState[gk] === 'failed' ? <div className="gist muted">Couldn&apos;t summarize this. <button className="linklike" onClick={() => { setGistState((g) => { const n = { ...g }; delete n[gk]; return n; }); wantGists(c.title!); }}>Try again</button></div>
                                   : null)}
@@ -953,7 +954,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
                       if (dbl) tap(() => { if (!active) toggleLine(i); }); else if (!active) toggleLine(i); }}>
                       {en ? (src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)) : aiText[key] ? (
-                        <><span className="label-ai">AI translation</span><div>{aiText[key]}</div></>
+                        <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (
                         <button className="btn" disabled={loading === key} onClick={() => aiTranslate(key, line)}>
                           {loading === key ? 'Translating…' : 'No approved translation · AI translate this line'}

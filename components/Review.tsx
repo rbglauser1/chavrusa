@@ -28,7 +28,7 @@ export default function Review({ refText, onGo, onClose }: { refText: string; on
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {qs && (
           <>
-            <div className="muted rv-hint">Written by AI, may contain mistakes. Think of the answer, then tap to check. {shown.size}/{qs.length} checked</div>
+            <div className="muted rv-hint">Written by AI · AI makes mistakes. Think of the answer, then tap to check. {shown.size}/{qs.length} checked</div>
             <ol className="rv-list">
               {qs.map((x, i) => (
                 <li key={i} className={`rv-q ${shown.has(i) ? 'open' : ''}`}>

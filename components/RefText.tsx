@@ -32,6 +32,7 @@ export function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void 
   const usedAi = Object.values(ai).some((v) => v !== 'busy' && v !== 'failed');
   return (
     <div className="smap-link-text">
+      {usedAi && <div className="ai-note left">English translated by AI · AI makes mistakes</div>}
       {!text ? <div className="muted">Opening…</div>
         : text === 'none' ? <div className="muted">Couldn’t open it.</div>
         : text.he.map((h, i) => {
@@ -46,7 +47,6 @@ export function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void 
             </div>
           );
         })}
-      {usedAi && <div className="muted smap-ai-note">English translated by the AI.</div>}
       {onOpen && <button className="linklike" onClick={onOpen}>Learn it in the Sefer ↗</button>}
     </div>
   );
