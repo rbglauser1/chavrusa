@@ -83,6 +83,8 @@
 [data-experience] .nb { padding-inline:max(20px,calc((100vw - 1000px)/2)); background:var(--bg); }
 [data-experience] .nb-note { padding:24px; margin-block:16px; background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius); }
 [data-experience] .nb-tabs button, [data-experience] .nb-actions button { min-height:44px; }
+[data-experience] .nb-bar { flex-wrap:wrap; gap:8px 14px; font:14px var(--f-ui); }
+[data-experience] .nb-bar button, [data-experience] .nb-bar a { min-height:44px; display:inline-flex; align-items:center; }
 [data-experience] .smap, [data-experience] .modal-card, [data-experience] .drawer { background:var(--surface); color:var(--ink); border-color:var(--rule); border-radius:var(--radius); }
 [data-experience] .rv-q { border:1px solid var(--rule); border-radius:var(--radius); margin:12px 0; padding:12px; }
 [data-experience] .btn, [data-experience] .seg button { min-height:44px; }
