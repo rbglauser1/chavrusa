@@ -11,19 +11,16 @@ Live target: chavrusa-nine.vercel.app, Vercel project chavrusa (prj_ZONxfLFFvAWB
 ## Verification completed
 See docs/ui-verification.md for the measured matrix and limits. All eight homes and reading workspaces fit 390px phones, 834px portrait tablets, 1112px landscape tablets and 1280px desktops. All eight homes now also fit 320px compact phones. Shared chat send/pending/response, explicit Guided Recall, Rashi, source selection, next/previous amud, Library categories, Notebook search and editor cancellation, Settings and original theme isolation were checked against the real preview.
 
-Corrected desktop nav overlay, phone source-flow overflow, Notebook toolbar wrapping and compact Study Workspace cards/masthead. A final conversation-scroll adjustment reveals the latest turn when entering Read or resizing from phone to desktop; retest that adjustment after its deployment. Automated registration/CSS/default/SSR checks, TypeScript and production build passed before that final small adjustment; TypeScript passed afterward.
+Corrected desktop nav overlay, phone source-flow overflow, Notebook toolbar wrapping and compact Study Workspace cards/masthead. The final conversation-scroll adjustment was verified on deployment 779aa235036695c631432a95a8213c8b7b4f1dd1: distance to conversation bottom is zero after phone-to-desktop resizing and Discuss-to-Read switching. Automated registration/CSS/default/SSR checks (264 scoped selectors), TypeScript and production build all pass on the final code. Compact Home/masthead widths and source/Notebook overflow corrections are verified.
 
 No native iPhone/iPad Safari, physical keyboard/safe-area, microphone, pronunciation, background voice or forced API failure/retry claim is made. Existing voice handlers were retained. No Notebook save/edit/delete or new import in this UI phase. Two clearly labelled synthetic UI chat exchanges and one Recall action were run against the demo session.
 
 ## Saved preferences and cleanup
-Original saved theme: The Daf (daf). Hebrew32, commentary31, English22; original David Hebrew/commentary fonts retained. Provider Claude Sonnet5.5 Saver, Sharp Challenger. All nine original themes were selected successfully and removed the optional navigation. The Daf was restored and confirmed after reload during testing, but more theme checks followed: restore it again before finishing.
+Original saved theme: The Daf (daf). Hebrew32, commentary31, English22; original David Hebrew/commentary fonts retained. Provider Claude Sonnet5.5 Saver, Sharp Challenger. All nine original themes were selected successfully and removed the optional navigation. The Daf was restored after final preview testing. Original fonts and sizes were retained. Production sign-in is also available, and the original production Home was observed before release.
 
 Cloud browser session currently authenticated. Tabs are ephemeral; recover via inventory. Always use secure browserAuth if login is required; never enter chat credentials through ordinary tools. CUA API has no viewport setter, so use the protected /design-preview iframe helper. Local Chromium cannot launch (socket EPERM); do not repeat that path.
 
 ## Remaining release steps
-1. Wait for the newest branch deployment and verify the conversation panel is at its latest turn after phone-to-desktop resizing and Discuss-to-Read switching.
-2. Restore The Daf and confirm original fonts/sizes.
-3. Check build/deployment status, update PR, and merge only with no known defects. Release is already authorized.
-4. Verify the production domain receives the merged commit, all 17 looks remain available, then restore The Daf again. Record the final release result in PR metadata or this checkpoint.
+Final code verification is complete, with no known remaining UI defect from these checks. Release is authorized. Merge PR #1 only at its expected head; then verify the production domain receives the merge and all 17 looks remain available. Restore The Daf after the production smoke test. Record the actual release result in PR metadata. If PR #1 is already merged and its final metadata confirms the live smoke test, do not repeat the work.
 
 Workspace may show intended files as uncommitted relative to the original local checkout because commits were published through the GitHub connector. Compare remote content before changing it. Do not publish generated package-lock.json or next-env.d.ts. Hero WebP is already committed. No access token, password, environment value or protected preview-share token should appear in output.
