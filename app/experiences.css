@@ -198,3 +198,22 @@
  [data-look='study-workspace'] .experience-tools button { padding:14px; }
 }
 [data-look='beis-medrash'] .experience-hero { background:linear-gradient(90deg,rgba(31,19,10,.88),rgba(31,19,10,.25)),url('/experiences/beis-medrash.webp') center / cover; }
+/* The software keyboard gets the room occupied by global navigation. */
+@media(max-width:999px) {
+ [data-experience][data-experience-keyboard] .experience-nav { display:none; }
+ [data-experience][data-experience-keyboard] .app.is-min { padding-bottom:0; }
+ [data-experience][data-experience-keyboard] .experience-learning { height:var(--experience-height,100dvh); }
+}
+/* Journal and open-page lists are deliberately different from studio cards. */
+[data-look='paper-ink'] .lib-item, [data-look='editorial'] .lib-item, [data-look='living-page'] .lib-item { background:transparent; border-width:0 0 1px; border-radius:0; }
+[data-look='editorial'] .rv-q, [data-look='paper-ink'] .rv-q { border-width:0 0 1px; border-radius:0; }
+[data-look='guided-learning'] .rv-q { padding:24px; border-left:4px solid var(--accent); }
+[data-look='midnight-sefer'] .nb-note { border-top:2px solid var(--accent); }
+[data-look='beis-medrash'] .nb-note { box-shadow:0 5px 20px #3928180c; border-top:3px solid var(--accent); }
+[data-look='study-workspace'] .nb-tabs, [data-look='sand-teal'] .nb-tabs { padding:6px; background:var(--surface-2); border-radius:12px; }
+
+/* Adapt custom text colors to the new dark interface and light printed pages. */
+[data-look='midnight-sefer'] { --hue-sepia: #f0ad62; --hue-slate: #86c4ec; --hue-maroon: #f2909b; --hue-green: #7fdcb3; --hue-bronze: #e8c35a; --hue-navy: #a9b9ff; --hue-gray: #b9b9b2; }
+[data-look='midnight-sefer'][data-c-he='sepia'] .mg-paper { --he-hue: #8f4a12; } [data-look='midnight-sefer'][data-c-he='slate'] .mg-paper { --he-hue: #1d5f8c; } [data-look='midnight-sefer'][data-c-he='maroon'] .mg-paper { --he-hue: #9e1f30; } [data-look='midnight-sefer'][data-c-he='green'] .mg-paper { --he-hue: #17704d; } [data-look='midnight-sefer'][data-c-he='bronze'] .mg-paper { --he-hue: #9a6a0e; } [data-look='midnight-sefer'][data-c-he='navy'] .mg-paper { --he-hue: #2440a0; } [data-look='midnight-sefer'][data-c-he='gray'] .mg-paper { --he-hue: #6e6e66; }
+[data-look='midnight-sefer'][data-c-en='sepia'] .mg-paper { --en-hue: #8f4a12; } [data-look='midnight-sefer'][data-c-en='slate'] .mg-paper { --en-hue: #1d5f8c; } [data-look='midnight-sefer'][data-c-en='maroon'] .mg-paper { --en-hue: #9e1f30; } [data-look='midnight-sefer'][data-c-en='green'] .mg-paper { --en-hue: #17704d; } [data-look='midnight-sefer'][data-c-en='bronze'] .mg-paper { --en-hue: #9a6a0e; } [data-look='midnight-sefer'][data-c-en='navy'] .mg-paper { --en-hue: #2440a0; } [data-look='midnight-sefer'][data-c-en='gray'] .mg-paper { --en-hue: #6e6e66; }
+[data-look='midnight-sefer'][data-c-comm='sepia'] .mg-paper { --comm-hue: #8f4a12; } [data-look='midnight-sefer'][data-c-comm='slate'] .mg-paper { --comm-hue: #1d5f8c; } [data-look='midnight-sefer'][data-c-comm='maroon'] .mg-paper { --comm-hue: #9e1f30; } [data-look='midnight-sefer'][data-c-comm='green'] .mg-paper { --comm-hue: #17704d; } [data-look='midnight-sefer'][data-c-comm='bronze'] .mg-paper { --comm-hue: #9a6a0e; } [data-look='midnight-sefer'][data-c-comm='navy'] .mg-paper { --comm-hue: #2440a0; } [data-look='midnight-sefer'][data-c-comm='gray'] .mg-paper { --comm-hue: #6e6e66; }
