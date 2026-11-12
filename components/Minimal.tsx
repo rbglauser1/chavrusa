@@ -191,6 +191,13 @@ export default function Minimal(p: Props) {
     document.body.toggleAttribute('data-full', fullOn);
     return () => document.body.removeAttribute('data-full');
   }, [fullOn]);
+  // Sand and Teal: a double tap on the text (or ⋯ → Full screen) shows just the text; again, ⤡, Esc or Back to return.
+  const [stFullOn, setStFull] = useState(false);
+  const stFull = p.settings.theme === 'sand-teal' && stFullOn && tab === 'text' && !!p.sefer;
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-st-full', stFull);
+    return () => document.documentElement.removeAttribute('data-st-full');
+  }, [stFull]);
   const endRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing, tab]);
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';
@@ -302,7 +309,7 @@ export default function Minimal(p: Props) {
   );
 
   if (p.settings.theme === 'sand-teal') return <>
-    <SandTealStudy refText={src?.ref} heRef={src?.heRef} sefer={p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
+    <SandTealStudy full={stFull} setFull={setStFull} refText={src?.ref} heRef={src?.heRef} sefer={p.sefer && isValidElement(p.sefer) ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void }>, { onDoubleTap: () => setStFull((v) => !v) }) : p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
     {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}/>}
     {mgOpen && src && <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? 1} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={x=>p.onToggle?.(x)} onLearn={p.learnThis}/>}
   </>;
