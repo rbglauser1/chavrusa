@@ -1,5 +1,6 @@
 'use client';
 import { isExperience } from '@/lib/experiences';
+import { GuidedLearningStudy } from './GuidedLearning';
 import { SandTealStudy } from './SandTeal';
 // The minimalist layouts (Settings → Look → Layout). They use the same learning, voice and Sefer underneath as the
 // classic screen; only what's on screen changes. Three of them:
@@ -308,6 +309,12 @@ export default function Minimal(p: Props) {
     </div>
   );
 
+  if (p.settings.theme === 'guided-learning') return <>
+    <GuidedLearningStudy refText={src?.ref} heRef={src?.heRef} sefer={p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
+    {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}/>}
+    {mgOpen && src && <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? 1} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={x=>p.onToggle?.(x)} onLearn={p.learnThis}/>}
+  </>;
+
   if (p.settings.theme === 'sand-teal') return <>
     <SandTealStudy full={stFull} setFull={setStFull} refText={src?.ref} heRef={src?.heRef} sefer={p.sefer && isValidElement(p.sefer) ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void }>, { onDoubleTap: () => setStFull((v) => !v) }) : p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
     {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}/>}
@@ -427,7 +434,7 @@ export default function Minimal(p: Props) {
     return (
       <div className={`min min-quiet ${isFull ? 'full' : ''} ${experience ? `experience-learning ${showText ? 'experience-text' : 'experience-chat'}` : ''}`}>
         {isFull ? null : header}
-        {experience && <div className="experience-studybar"><span>{src?.ref || 'Your learning session'}</span><div role="group" aria-label="Learning view"><button aria-pressed={showText} onClick={() => { setTab('text'); if (!hasText) p.onLibrary(); }}>Read</button><button aria-pressed={!showText} onClick={() => setTab('talk')}>Discuss</button>{p.settings.theme === 'guided-learning' && <button disabled={p.busy || !src} onClick={() => { setTab('talk'); p.send('Quiz me on the passage we are learning. Ask one question at a time and wait for my answer before revealing the answer.'); }}>Recall</button>}</div></div>}
+        {experience && <div className="experience-studybar"><span>{src?.ref || 'Your learning session'}</span><div role="group" aria-label="Learning view"><button aria-pressed={showText} onClick={() => { setTab('text'); if (!hasText) p.onLibrary(); }}>Read</button><button aria-pressed={!showText} onClick={() => setTab('talk')}>Discuss</button></div></div>}
         {p.sefer && <div className="min-sefer" style={showText ? undefined : { display: 'none' }}>{sefer}</div>}
         {!showText && (
           <main className="min-body">

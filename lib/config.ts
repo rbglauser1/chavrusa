@@ -373,6 +373,7 @@ export interface Settings {
   display: 'toggle' | 'original' | 'off';  // off = voice/listen-only, no text shown
   nikud: boolean;
   theme: Look;
+  guidedPalette?: import('./guided').GuidedPalette; // Guided Learning UI palette, independent of text colors
   layout: 'classic' | 'sefer' | 'page' | 'quiet' | 'shtender'; // the screen's arrangement (Settings → Look → Layout)
   outline: boolean;        // a one-line summary of each move above its line in the Sefer (AI, made once per amud)
   commSummary: boolean;    // Rashi, Tosafos, Bartenura…: a short English summary under each comment (AI, made once per amud)
@@ -585,7 +586,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
+export const OPTIONAL_SETTING_KEYS = ['guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
 
 export const OWNER_ID = 'owner';
 

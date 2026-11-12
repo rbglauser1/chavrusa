@@ -5,6 +5,7 @@ import { logLine } from '@/lib/callLog';
 import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_COMM, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
+import { guidedPalette } from '@/lib/guided';
 import { isExperience } from '@/lib/experiences';
 import ExperienceNav from '@/components/ExperienceNav';
 import Review from '@/components/Review';
@@ -376,7 +377,8 @@ export default function Home() {
   const designPreviewOnly = useRef(false);
   // ---------- Load ----------
   useEffect(() => {
-    const previewLook = new URLSearchParams(window.location.search).get('preview-look') === 'sand-teal' ? 'sand-teal' as const : null;
+    const requestedLook = new URLSearchParams(window.location.search).get('preview-look');
+    const previewLook = isExperience(requestedLook) ? requestedLook : null;
     designPreviewOnly.current = !!previewLook;
     try {
       const kept = localStorage.getItem('chavrusa_settings');
@@ -403,8 +405,9 @@ export default function Home() {
     if (settings === DEFAULT_SETTINGS) return; // not loaded yet: keep the look the page opened with
     const root = document.documentElement;
     root.dataset.look = settings.theme;
+    if(settings.theme==='guided-learning') root.dataset.guidedPalette=guidedPalette(settings.guidedPalette); else delete root.dataset.guidedPalette;
     if (isExperience(settings.theme)) root.dataset.experience = settings.theme; else delete root.dataset.experience;
-    try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}|${settings.fonts?.[settings.theme]?.comm ?? ''}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
+    try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}|${settings.fonts?.[settings.theme]?.comm ?? ''}|${guidedPalette(settings.guidedPalette)}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.dataset.justify = settings.justify ? 'on' : 'off';
     root.dataset.enmark = settings.enMark ?? 'plain';
@@ -427,7 +430,7 @@ export default function Home() {
     root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
     const cs = fontStack(FONTS_COMM, cf);
     if (cf !== 'rashi' && cf !== 'same' && cs) root.style.setProperty('--f-comm', cs); else root.style.removeProperty('--f-comm');
-  }, [settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn]);
+  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 
@@ -880,7 +883,7 @@ export default function Home() {
   const sandReviewPanel=sandReview && (reviewRef ? <Review refText={reviewRef} onClose={()=>setSandReview(false)} onGo={n=>{setSandReview(false);setView('learn');void openExact(reviewRef,n);}}/> : <div className="st-overlay"><section className="st-details" role="dialog" aria-label="Review"><h2>A little learning first.</h2><p>Open a sefer, then return here to review it.</p><button className="btn" onClick={()=>{setSandReview(false);setView('learn');openLibrary();}}>Choose a sefer</button><button className="btn ghost" onClick={()=>setSandReview(false)}>Close</button></section></div>);
 
   const experienceNav = <ExperienceNav look={look} view={view}
-    onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
+    onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal'||look==='guided-learning') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
     onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
     onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} onReview={() => setSandReview(true)} onSettings={() => {setSettingsFrom(view==='learn'?'learn':'home');setView('settings');}} />;
 

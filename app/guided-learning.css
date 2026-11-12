@@ -1,0 +1,212 @@
+/* A separate guided experience. Preset palettes never override source/font preferences. */
+[data-look='guided-learning'], .mini.guided-learning { --bg:#f8f7fc; --surface:#fff; --surface-2:#eee9fc; --ink:#29243d; --soft:#625e72; --rule:#ded9ea; --accent:#6246c9; --accent-ink:#fff; --accent-soft:#eee9fc; --gl-mint:#c9f0d9; --gl-yellow:#ffe5a0; --gl-pink:#f5d4e8; --src-bg:#fff; --src-ink:#29243d; --src-rule:#ded9ea; --f-body:'Inter',sans-serif; --f-ui:'Inter',sans-serif; --f-brand:'Fredoka','Inter',sans-serif; --radius:20px; }
+[data-look='guided-learning'][data-guided-palette='lagoon'] { --bg:#f3f9f7; --surface-2:#e0efeb; --accent:#086d68; --accent-soft:#dceee9; --gl-mint:#c6e5ff; --gl-yellow:#ffe39b; --gl-pink:#ccebd9; --rule:#cddfd9; }
+[data-look='guided-learning'][data-guided-palette='sunset'] { --bg:#fff7f4; --surface-2:#fce6e6; --accent:#b03e57; --accent-soft:#fae5e8; --gl-mint:#e7d9ff; --gl-yellow:#ffe3ad; --gl-pink:#f9ccd2; --rule:#ead6d6; }
+[data-look='guided-learning'][data-guided-palette='sky'] { --bg:#f5f8ff; --surface-2:#e3ebfc; --accent:#245bb9; --accent-soft:#e1eafa; --gl-mint:#d7edaf; --gl-yellow:#d4e6ff; --gl-pink:#fbd6df; --rule:#d6dfef; }
+[data-look='guided-learning'] body { overflow:hidden; }
+[data-look='guided-learning'] :is(button,a,select,textarea):focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+[data-look='guided-learning'] button { -webkit-tap-highlight-color:transparent; }
+[data-look='guided-learning'] button:disabled { opacity:.5; cursor:default; }
+[data-look='guided-learning'] .home-shell { height:100dvh; padding:64px 0 calc(76px + env(safe-area-inset-bottom)); overflow:hidden; }
+[data-look='guided-learning'] .app.is-min { height:100dvh; padding:64px 0 calc(76px + env(safe-area-inset-bottom)); }
+[data-look='guided-learning'] .app.is-min>.main { min-height:0; }
+[data-look='guided-learning'] .gl-navigation { position:fixed; z-index:75; top:0; left:0; right:0; height:64px; padding:8px 20px; display:flex; align-items:center; justify-content:space-between; background:var(--bg); border-bottom:1px solid var(--rule); font-family:var(--f-ui); }
+[data-look='guided-learning'] .gl-brand { display:flex; gap:9px; align-items:center; border:0; background:none; font:500 23px var(--f-brand); color:var(--ink); padding:0; }
+[data-look='guided-learning'] .gl-brand>span { display:grid; place-items:center; width:35px; height:35px; border-radius:12px; background:var(--accent); color:white; transform:rotate(-7deg); }
+[data-look='guided-learning'] .gl-brand small { display:none; }
+[data-look='guided-learning'] .gl-navigation nav { position:fixed; inset:auto 0 0; display:flex; justify-content:space-around; border-top:1px solid var(--rule); background:var(--surface); padding:6px 12px calc(8px + env(safe-area-inset-bottom)); }
+[data-look='guided-learning'] .gl-navigation nav button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-width:58px; min-height:56px; border:0; background:none; color:var(--soft); border-radius:16px; font:11px var(--f-ui); }
+[data-look='guided-learning'] .gl-navigation nav button[aria-current] { color:var(--accent); background:var(--accent-soft); }
+[data-look='guided-learning'] .gl-icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:44px; height:44px; padding:0; border:1px solid var(--rule); background:var(--surface); border-radius:15px; color:var(--accent); font:17px var(--f-ui); }
+[data-look='guided-learning'] .gl-primary { display:inline-flex; align-items:center; justify-content:center; gap:12px; min-height:46px; padding:12px 18px; border:0; border-radius:15px; background:var(--accent); color:white; font:500 13px var(--f-ui); }
+[data-look='guided-learning'] .gl-eyebrow { font:600 9px/1.4 var(--f-ui); letter-spacing:1.4px; }
+[data-look='guided-learning'] .gl-home { height:100%; min-height:0; max-width:1180px; margin:auto; padding:14px 20px 10px; display:grid; grid-template-rows:32px minmax(120px,1fr) minmax(172px,1fr) auto auto; gap:14px; font-family:var(--f-ui); }
+[data-look='guided-learning'] .gl-home-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+[data-look='guided-learning'] .gl-home-top>span { display:flex; align-items:center; gap:7px; color:var(--soft); font-size:9px; font-weight:500; letter-spacing:1.2px; }
+[data-look='guided-learning'] .gl-home-top>span>svg { width:16px; color:var(--accent); }
+[data-look='guided-learning'] .gl-color-button { display:flex; align-items:center; gap:7px; min-height:44px; border:0; background:none; color:var(--accent); padding:0; font:11px var(--f-ui); }
+[data-look='guided-learning'] .gl-palette-dot { width:16px; height:16px; border-radius:50%; background:conic-gradient(var(--accent) 0deg 120deg,var(--gl-mint) 120deg 240deg,var(--gl-pink) 240deg 360deg); border:1px solid var(--rule); }
+[data-look='guided-learning'] .gl-home-intro { display:flex; align-items:center; min-height:0; }
+[data-look='guided-learning'] .gl-home-intro .gl-eyebrow { display:none; }
+[data-look='guided-learning'] .gl-home-intro h1 { margin:0 0 12px; font:500 clamp(30px,8.4vw,46px)/1.06 var(--f-brand); letter-spacing:-.6px; }
+[data-look='guided-learning'] .gl-home-intro h1 span { color:var(--accent); }
+[data-look='guided-learning'] .gl-home-intro p:not(.gl-eyebrow) { margin:0; font-size:12px; line-height:1.6; color:var(--soft); }
+[data-look='guided-learning'] .gl-path-art { display:none; width:45%; max-height:250px; margin-left:auto; color:var(--accent); }
+[data-look='guided-learning'] .gl-home-work { min-height:0; display:grid; grid-template-columns:minmax(0,1fr); gap:20px; }
+[data-look='guided-learning'] .gl-continue { min-height:0; display:flex; flex-direction:column; align-items:stretch; gap:9px; padding:22px; background:var(--accent); color:white; border:0; border-radius:25px; text-align:left; box-shadow:0 7px 0 color-mix(in srgb,var(--accent),#000 18%); }
+[data-look='guided-learning'] .gl-continue strong { font:500 31px/1.25 var(--f-he); margin:auto 0 0; overflow-wrap:anywhere; }
+[data-look='guided-learning'] .gl-continue>span:not(.gl-eyebrow) { font-size:11px; }
+[data-look='guided-learning'] .gl-card-action { display:flex; align-items:center; justify-content:space-between; margin-top:auto; border-top:1px solid #ffffff40; padding-top:13px; }
+[data-look='guided-learning'] .gl-card-action>svg { padding:5px; width:30px; height:30px; background:#ffffff25; border-radius:50%; }
+[data-look='guided-learning'] .gl-route-card { display:none; }
+[data-look='guided-learning'] .gl-home-tools { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+[data-look='guided-learning'] .gl-home-tools button { min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:9px; padding:13px 10px; border:1px solid var(--rule); border-radius:19px; background:var(--surface); text-align:left; color:var(--ink); font:500 10px/1.4 var(--f-ui); }
+[data-look='guided-learning'] .gl-tool-icon { display:grid; place-items:center; width:31px; height:31px; border-radius:11px; background:var(--gl-yellow); color:var(--ink); }
+[data-look='guided-learning'] .gl-home-tools button:nth-child(2) .gl-tool-icon { background:var(--gl-pink); }
+[data-look='guided-learning'] .gl-home-tools button:nth-child(3) .gl-tool-icon { background:var(--gl-mint); }
+[data-look='guided-learning'] .gl-home-tools small, [data-look='guided-learning'] .gl-home-tools button>svg { display:none; }
+[data-look='guided-learning'] .gl-home-footer { display:flex; flex-direction:column; gap:5px; }
+[data-look='guided-learning'] .gl-home-footer>button { border:0; display:flex; align-items:center; justify-content:center; gap:9px; min-height:42px; background:none; color:var(--accent); font:12px var(--f-ui); }
+[data-look='guided-learning'] .gl-home-footer>div { display:flex; flex-wrap:wrap; gap:4px 12px; justify-content:center; color:var(--soft); font:8px/1.4 var(--f-ui); }
+[data-look='guided-learning'] .gl-home-footer>div>button { min-height:30px; background:none; border:0; padding:0; color:var(--soft); font-size:9px; }
+[data-look='guided-learning'] .gl-home-footer>div>span { flex-basis:100%; text-align:center; }
+/* Read, Discuss and Recall are three real workspace states. */
+[data-look='guided-learning'] .gl-study { display:flex; flex-direction:column; width:100%; min-height:0; height:100%; overflow:hidden; font-family:var(--f-ui); }
+[data-look='guided-learning'] .gl-study-header { display:flex; align-items:center; gap:9px; padding:12px 16px; position:relative; flex-shrink:0; }
+[data-look='guided-learning'] .gl-study-header>div:not(.gl-tools-menu) { min-width:0; flex:1; }
+[data-look='guided-learning'] .gl-study-header h1 { margin:0; font:500 19px var(--f-brand); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+[data-look='guided-learning'] .gl-study-header>div>span { display:block; font:12px var(--f-he); color:var(--soft); margin-top:3px; }
+[data-look='guided-learning'] .gl-steps { display:flex; gap:8px; padding:0 16px 12px; flex-shrink:0; }
+[data-look='guided-learning'] .gl-steps button { flex:1; min-width:0; min-height:49px; display:flex; align-items:center; justify-content:center; gap:7px; padding:8px; border:1px solid var(--rule); border-radius:16px; background:var(--surface); color:var(--soft); font:500 11px var(--f-ui); }
+[data-look='guided-learning'] .gl-steps b { display:grid; place-items:center; width:24px; height:24px; border-radius:8px; background:var(--surface-2); color:var(--accent); font-size:10px; }
+[data-look='guided-learning'] .gl-steps button[aria-current] { background:var(--accent); color:white; border-color:var(--accent); }
+[data-look='guided-learning'] .gl-steps button[aria-current] b { background:#ffffff30; color:white; }
+[data-look='guided-learning'] .gl-steps .gl-step-hint { display:none; }
+[data-look='guided-learning'] .gl-workspace { display:flex; flex:1; min-height:0; padding:0 12px; gap:18px; }
+[data-look='guided-learning'] .gl-read-pane { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; background:var(--surface); border:1px solid var(--rule); border-radius:22px; }
+[data-look='guided-learning'] .gl-pane-title { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 16px; border-bottom:1px solid var(--rule); flex-shrink:0; }
+[data-look='guided-learning'] .gl-pane-title>span { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--soft); }
+[data-look='guided-learning'] .gl-pane-title select { font:10px var(--f-ui); max-width:140px; padding:8px 4px; border:0; border-radius:7px; color:var(--accent); background:var(--accent-soft); }
+[data-look='guided-learning'] .gl-source { display:flex; flex:1; min-width:0; min-height:0; }
+[data-look='guided-learning'] .gl-source>.sefer { min-height:0; width:100%; border:0; background:none; }
+[data-look='guided-learning'] .gl-source .sefer-body { padding:18px 16px 72px; }
+[data-look='guided-learning'] .gl-source .line { border:0; border-radius:14px; margin-bottom:10px; padding:14px 9px; }
+[data-look='guided-learning'] .gl-source .line.focus { background:none; box-shadow:none; }
+[data-look='guided-learning'] .gl-source .line.open { box-shadow:inset 3px 0 var(--accent); }
+[data-look='guided-learning'] .gl-source .comm { border-radius:16px; }
+[data-look='guided-learning'] .gl-read-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border-top:1px solid var(--rule); flex-shrink:0; }
+[data-look='guided-learning'] .gl-read-footer p { font-size:10px; line-height:1.5; color:var(--soft); max-width:140px; margin:0; }
+[data-look='guided-learning'] .gl-chat-pane { display:none; flex-direction:column; min-width:0; min-height:0; flex:1; border:1px solid var(--rule); border-radius:22px; background:var(--surface); overflow:hidden; }
+[data-look='guided-learning'] .gl-chat-pane>header { display:flex; align-items:center; gap:10px; padding:16px; border-bottom:1px solid var(--rule); flex-shrink:0; }
+[data-look='guided-learning'] .gl-chat-pane>header>div { flex:1; min-width:0; }
+[data-look='guided-learning'] .gl-chat-pane h2 { font:500 20px var(--f-brand); margin:0; }
+[data-look='guided-learning'] .gl-chat-pane>header p { font-size:10px; color:var(--soft); margin:6px 0 0; }
+[data-look='guided-learning'] .gl-chat-symbol { display:grid; place-items:center; flex-shrink:0; width:38px; height:38px; background:var(--gl-yellow); border-radius:13px; color:var(--ink); }
+[data-look='guided-learning'] .gl-chat-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding:14px 18px; }
+[data-look='guided-learning'] .gl-ai-note { font:10px/1.6 var(--f-ui); color:var(--soft); margin:0 0 18px; }
+[data-look='guided-learning'] .gl-question-starters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+[data-look='guided-learning'] .gl-question-starters button { display:flex; align-items:center; gap:8px; border:1px solid var(--rule); border-radius:12px; padding:10px; background:var(--bg); color:var(--accent); font:11px var(--f-ui); min-height:44px; }
+[data-look='guided-learning'] .gl-message { font:var(--en-size,16px)/1.7 var(--f-body); overflow-wrap:anywhere; }
+[data-look='guided-learning'] .gl-you { background:var(--accent-soft); padding:14px 16px; border-radius:16px 16px 3px 16px; margin:14px 0 16px 14px; }
+[data-look='guided-learning'] .gl-chavrusa { padding:10px 0; }
+[data-look='guided-learning'] .gl-chavrusa>span { font:600 9px var(--f-ui); letter-spacing:1.4px; color:var(--accent); }
+[data-look='guided-learning'] .gl-chavrusa p { margin:10px 0; }
+[data-look='guided-learning'] .gl-chavrusa .heb { font-family:var(--f-he); }
+[data-look='guided-learning'] .gl-chavrusa blockquote { border-left:3px solid var(--accent); margin:14px 0; padding-left:14px; }
+[data-look='guided-learning'] .gl-composer { display:flex; gap:8px; margin:8px 12px; padding:8px; background:var(--bg); border:1px solid var(--rule); border-radius:18px; flex-shrink:0; }
+[data-look='guided-learning'] .gl-composer textarea { flex:1; min-width:0; resize:none; border:0; background:none; color:var(--ink); padding:7px; font:16px/1.5 var(--f-body); outline:none; }
+[data-look='guided-learning'] .gl-composer .gl-primary { align-self:flex-end; padding:10px; min-width:44px; }
+[data-look='guided-learning'] .gl-chat-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 14px 10px; flex-shrink:0; }
+[data-look='guided-learning'] .gl-chat-footer button, [data-look='guided-learning'] .gl-text-button { display:flex; align-items:center; gap:8px; min-height:44px; padding:4px; border:0; background:none; color:var(--accent); font:11px var(--f-ui); }
+[data-look='guided-learning'] .gl-recall-start { flex:1; min-height:0; overflow:auto; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:22px; }
+[data-look='guided-learning'] .gl-big-spark { width:60px; height:60px; display:grid; place-items:center; border-radius:21px; background:var(--gl-mint); transform:rotate(-8deg); }
+[data-look='guided-learning'] .gl-big-spark svg { width:36px; height:36px; }
+[data-look='guided-learning'] .gl-recall-start h3 { font:500 27px/1.15 var(--f-brand); margin:22px 0 14px; }
+[data-look='guided-learning'] .gl-recall-start p { font:12px/1.8 var(--f-ui); color:var(--soft); max-width:290px; margin:0 0 20px; }
+[data-look='guided-learning'] .gl-thinking, [data-look='guided-learning'] .gl-voice-status { color:var(--accent); font:12px/1.5 var(--f-ui); padding:10px; }
+[data-look='guided-learning'] .gl-thinking { display:flex; align-items:center; gap:9px; }
+[data-look='guided-learning'] .gl-error { color:var(--danger); border:1px solid var(--danger); padding:12px; border-radius:12px; font-size:13px; }
+[data-look='guided-learning'] .gl-error button { min-height:44px; border:0; background:none; color:inherit; text-decoration:underline; }
+[data-look='guided-learning'] .gl-stage-discuss .gl-read-pane, [data-look='guided-learning'] .gl-stage-recall .gl-read-pane { display:none; }
+[data-look='guided-learning'] .gl-stage-discuss .gl-chat-pane, [data-look='guided-learning'] .gl-stage-recall .gl-chat-pane { display:flex; }
+[data-look='guided-learning'] .gl-empty { width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; color:var(--accent); }
+[data-look='guided-learning'] .gl-empty h2 { font:500 25px var(--f-brand); }
+[data-look='guided-learning'] .gl-empty p { color:var(--soft); font-size:13px; }
+[data-look='guided-learning'] .gl-tools-menu { position:absolute; right:16px; top:62px; width:260px; z-index:90; border:1px solid var(--rule); border-radius:18px; padding:8px; background:var(--surface); box-shadow:var(--shadow); }
+[data-look='guided-learning'] .gl-tools-menu button { display:block; width:100%; border:0; background:none; color:var(--ink); text-align:left; min-height:46px; border-radius:10px; padding:12px; font:12px var(--f-ui); }
+[data-look='guided-learning'] .gl-tools-menu button:hover { background:var(--accent-soft); }
+[data-look='guided-learning'] .daf-dock .daf-bar { bottom:calc(160px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:60; }
+/* Library, Notebook and preferences keep their real handlers with new surfaces. */
+[data-look='guided-learning'] .hpage { height:100%; max-width:1120px; padding:0; display:flex; flex-direction:column; min-height:0; }
+[data-look='guided-learning'] .hpage-head { padding:18px 22px; background:none; flex-shrink:0; }
+[data-look='guided-learning'] .hpage-head h1 { font-family:var(--f-brand); }
+[data-look='guided-learning'] .hpage-body { min-height:0; overflow:auto; padding:8px 20px 24px; }
+[data-look='guided-learning'] .sg-1 { border:1px solid var(--rule); border-radius:20px; background:var(--surface); overflow:clip; margin-bottom:14px; }
+[data-look='guided-learning'] .sg-1.open>.sg-head { background:var(--accent-soft); }
+[data-look='guided-learning'] .gl-palettes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+[data-look='guided-learning'] .gl-palettes button { display:flex; align-items:center; gap:8px; min-height:58px; min-width:0; padding:12px; border:1px solid var(--rule); border-radius:15px; background:var(--surface); text-align:left; color:var(--ink); font:11px var(--f-ui); }
+[data-look='guided-learning'] .gl-palettes button[aria-checked=true] { border:2px solid var(--accent); background:var(--accent-soft); }
+[data-look='guided-learning'] .gl-palettes button>span:last-child { margin-left:auto; color:var(--accent); }
+[data-look='guided-learning'] .gl-swatches { display:flex; flex-shrink:0; }
+[data-look='guided-learning'] .gl-swatches i { display:block; height:17px; width:17px; border:2px solid white; border-radius:50%; margin-right:-5px; }
+[data-look='guided-learning'] .lib { width:100%; height:100%; min-height:0; overflow:auto; padding:20px; }
+[data-look='guided-learning'] .lib-item { border-radius:16px; padding:18px; }
+[data-look='guided-learning'] .gl-study:has(.lib) .gl-steps, [data-look='guided-learning'] .gl-study:has(.lib) .gl-chat-pane, [data-look='guided-learning'] .gl-study:has(.lib) .gl-pane-title, [data-look='guided-learning'] .gl-study:has(.lib) .gl-read-footer { display:none; }
+[data-look='guided-learning'] .gl-study:has(.lib) .gl-read-pane { display:flex; }
+[data-look='guided-learning'] .nb { padding:24px; background:var(--bg); }
+[data-look='guided-learning'] .nb-head h1 { font-family:var(--f-brand); }
+[data-look='guided-learning'] .nb-tabs { background:var(--accent-soft); border-radius:14px; padding:5px; }
+[data-look='guided-learning'] .nb-tabs button { border:0; border-radius:10px; }
+[data-look='guided-learning'] .nb-tabs button.on { background:var(--surface); }
+[data-look='guided-learning'] .nb-note { box-shadow:none; }
+[data-look='guided-learning'] .gl-overlay { position:fixed; z-index:150; inset:0; background:var(--scrim); padding:20px; display:grid; place-items:center; }
+[data-look='guided-learning'] .gl-dialog { width:min(620px,100%); max-height:85dvh; overflow:auto; background:var(--bg); padding:24px; border-radius:26px; color:var(--ink); }
+[data-look='guided-learning'] .gl-dialog>header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+[data-look='guided-learning'] .gl-dialog h2 { font:500 28px var(--f-brand); }
+[data-look='guided-learning'][data-experience-keyboard] .gl-navigation nav { display:none; }
+@media(min-width:700px) {
+ [data-look='guided-learning'] .gl-home { padding:22px 38px 18px; gap:20px; grid-template-rows:36px minmax(170px,1fr) minmax(240px,1.1fr) 110px auto; }
+ [data-look='guided-learning'] .gl-home-intro h1 { font-size:52px; }
+ [data-look='guided-learning'] .gl-home-intro p:not(.gl-eyebrow) { font-size:14px; }
+ [data-look='guided-learning'] .gl-home-intro .gl-eyebrow { display:block; margin:0 0 12px; }
+ [data-look='guided-learning'] .gl-home-work { grid-template-columns:1.05fr 1fr; }
+ [data-look='guided-learning'] .gl-route-card { display:flex; flex-direction:column; padding:22px; border:1px solid var(--rule); border-radius:25px; background:var(--surface); min-height:0; }
+ [data-look='guided-learning'] .gl-route-card h2 { font:500 19px var(--f-brand); margin:0 0 12px; }
+ [data-look='guided-learning'] .gl-route-card ol { display:grid; gap:10px; padding:0; margin:auto 0; list-style:none; }
+ [data-look='guided-learning'] .gl-route-card li { display:flex; align-items:center; gap:12px; }
+ [data-look='guided-learning'] .gl-route-card li>b { display:grid; place-items:center; width:32px; height:32px; border-radius:11px; background:var(--gl-mint); font-size:12px; }
+ [data-look='guided-learning'] .gl-route-card li:nth-child(2)>b { background:var(--gl-yellow); }
+ [data-look='guided-learning'] .gl-route-card li:nth-child(3)>b { background:var(--gl-pink); }
+ [data-look='guided-learning'] .gl-route-card li>span { flex:1; }
+ [data-look='guided-learning'] .gl-route-card strong { font:500 12px var(--f-ui); }
+ [data-look='guided-learning'] .gl-route-card small { display:block; font:10px var(--f-ui); color:var(--soft); margin-top:4px; }
+ [data-look='guided-learning'] .gl-route-note { color:var(--soft); font:10px var(--f-ui); margin-top:13px; }
+ [data-look='guided-learning'] .gl-continue { padding:26px; }
+ [data-look='guided-learning'] .gl-continue strong { font-size:40px; }
+ [data-look='guided-learning'] .gl-home-tools button { flex-direction:row; flex-wrap:wrap; align-items:center; padding:16px; font-size:12px; }
+ [data-look='guided-learning'] .gl-home-tools small { display:block; margin-top:5px; color:var(--soft); font:10px var(--f-ui); }
+ [data-look='guided-learning'] .gl-home-footer { flex-direction:row; align-items:center; justify-content:space-between; }
+ [data-look='guided-learning'] .gl-home-footer>div { justify-content:flex-end; font-size:9px; }
+ [data-look='guided-learning'] .gl-color-button { font-size:12px; }
+ [data-look='guided-learning'] .gl-read-footer p { max-width:none; }
+ [data-look='guided-learning'] .gl-steps .gl-step-hint { display:inline; font-size:10px; opacity:.8; }
+}
+@media(min-width:1050px) {
+ [data-look='guided-learning'] .gl-navigation { height:80px; padding-inline:36px; }
+ [data-look='guided-learning'] .gl-brand { position:relative; padding-bottom:13px; }
+ [data-look='guided-learning'] .gl-brand small { display:block; position:absolute; left:44px; bottom:0; font:8px var(--f-ui); color:var(--soft); letter-spacing:1.5px; }
+ [data-look='guided-learning'] .gl-navigation nav { position:static; border:0; background:none; padding:0; gap:7px; }
+ [data-look='guided-learning'] .gl-navigation nav button { flex-direction:row; min-height:44px; padding:10px 20px; font-size:12px; }
+ [data-look='guided-learning'] .home-shell { padding:80px 0 0; }
+ [data-look='guided-learning'] .app.is-min { padding:80px 0 16px; }
+ [data-look='guided-learning'] .gl-home { grid-template-rows:32px minmax(150px,1fr) minmax(210px,1fr) 92px auto; padding:18px 38px; gap:18px; }
+ [data-look='guided-learning'] .gl-home-intro h1 { font-size:54px; }
+ [data-look='guided-learning'] .gl-path-art { display:block; }
+ [data-look='guided-learning'] .gl-home-tools button { flex-wrap:nowrap; }
+ [data-look='guided-learning'] .gl-home-tools button>svg { display:block; margin-left:auto; color:var(--accent); }
+ [data-look='guided-learning'] .gl-study { max-width:1600px; margin:auto; padding-inline:20px; }
+ [data-look='guided-learning'] .gl-workspace { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(350px,.9fr); }
+ [data-look='guided-learning'] .gl-study .gl-read-pane, [data-look='guided-learning'] .gl-study .gl-chat-pane { display:flex; }
+ [data-look='guided-learning'] .gl-study-header { padding:16px; }
+ [data-look='guided-learning'] .gl-steps { max-width:760px; }
+ [data-look='guided-learning'] .gl-study:has(.lib) .gl-workspace { display:flex; }
+ [data-look='guided-learning'] .daf-dock .daf-bar { left:calc(27% + 16px); bottom:104px; }
+}
+@media(max-height:760px) and (max-width:699px) {
+ [data-look='guided-learning'] .gl-home { gap:10px; padding:8px 16px; grid-template-rows:32px minmax(90px,1fr) minmax(145px,1fr) 78px auto; }
+ [data-look='guided-learning'] .gl-home-intro h1 { font-size:30px; margin-bottom:7px; }
+ [data-look='guided-learning'] .gl-home-intro p:not(.gl-eyebrow) { font-size:11px; }
+ [data-look='guided-learning'] .gl-continue { padding:16px 19px; gap:6px; border-radius:21px; }
+ [data-look='guided-learning'] .gl-continue strong { font-size:28px; }
+ [data-look='guided-learning'] .gl-card-action { padding-top:7px; }
+ [data-look='guided-learning'] .gl-home-tools button { padding:10px; gap:6px; font-size:9px; }
+ [data-look='guided-learning'] .gl-home-footer { gap:0; }
+ [data-look='guided-learning'] .gl-home-footer>button { min-height:34px; font-size:11px; }
+ [data-look='guided-learning'] .gl-home-footer>div>button { min-height:25px; }
+ [data-look='guided-learning'] .gl-home-footer>div { font-size:7px; }
+ [data-look='guided-learning'] .gl-recall-start { justify-content:flex-start; }
+}
+@media(prefers-reduced-motion:no-preference) {
+ [data-look='guided-learning'] .gl-primary, [data-look='guided-learning'] .gl-home-tools button { transition:transform .15s,background .15s; }
+ [data-look='guided-learning'] .gl-primary:hover, [data-look='guided-learning'] .gl-home-tools button:hover { transform:translateY(-2px); }
+}
