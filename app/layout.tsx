@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { FONTS_EN, FONTS_HE, fontStack } from '@/lib/config';
 import './globals.css';
 import './experiences.css';
+import './sand-teal.css';
 import { EXPERIENCES, isExperience } from '@/lib/experiences';
 import { PullRefresh } from '@/components/PullRefresh';
 

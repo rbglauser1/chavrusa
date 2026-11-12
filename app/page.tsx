@@ -7,6 +7,7 @@ import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import { isExperience } from '@/lib/experiences';
 import ExperienceNav from '@/components/ExperienceNav';
+import Review from '@/components/Review';
 import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
@@ -311,6 +312,9 @@ export default function Home() {
     return () => window.removeEventListener('chavrusa-notebook', open);
   }, []);
   useBackLayer(notebook, () => setNotebook(false));
+  const [sandReview, setSandReview] = useState(false);
+  useBackLayer(sandReview, () => setSandReview(false));
+  useEffect(() => { const open=()=>setSandReview(true); window.addEventListener('sand-review',open); return()=>window.removeEventListener('sand-review',open); }, []);
   // "How to use the app" from Settings: back to Home, where the guide opens.
   useEffect(() => {
     const go = () => { setDrawer(null); setView('home'); window.setTimeout(() => window.dispatchEvent(new Event('chavrusa-guide')), 200); };
@@ -861,10 +865,19 @@ export default function Home() {
     if (view === 'learn' && isExperience(settings.theme)) window.scrollTo({ top: 0 });
   }, [view, settings.theme]);
 
+  const resumeLearning = async () => {
+    const c=contInfo;
+    if (c?.id && c.id!==sessionId) await openSession(c.id);
+    else if (c?.ref) { const src=sources.find(x=>x.ref===c.ref); if(src) showSource({...src,focus:c.line??src.focus}); else await openExact(c.ref,c.line); }
+    setView('learn'); setTextTick(n=>n+1);
+  };
+  const reviewRef=current?.ref || contInfo?.ref;
+  const sandReviewPanel=sandReview && (reviewRef ? <Review refText={reviewRef} onClose={()=>setSandReview(false)} onGo={n=>{setSandReview(false);setView('learn');void openExact(reviewRef,n);}}/> : <div className="st-overlay"><section className="st-details" role="dialog" aria-label="Review"><h2>A little learning first.</h2><p>Open a sefer, then return here to review it.</p><button className="btn" onClick={()=>{setSandReview(false);setView('learn');openLibrary();}}>Choose a sefer</button><button className="btn ghost" onClick={()=>setSandReview(false)}>Close</button></section></div>);
+
   const experienceNav = <ExperienceNav look={look} view={view}
-    onHome={() => setView('home')} onLearn={() => { setView('learn'); setTextTick((n) => n + 1); }}
+    onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
     onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
-    onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} />;
+    onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} onReview={() => setSandReview(true)} onSettings={() => {setSettingsFrom(view==='learn'?'learn':'home');setView('settings');}} />;
 
   if (!ready) return <div className="app boot" aria-busy="true" />;
 
@@ -893,6 +906,7 @@ export default function Home() {
     return (
       <div className="home-shell">
         {experienceNav}
+        {sandReviewPanel}
         {quickTalkCard}
       <UpdateBar busy={live.active} />
         <UpdateBar busy={live.active} />
@@ -951,6 +965,7 @@ export default function Home() {
   return (
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
       {experienceNav}
+        {sandReviewPanel}
       {quickTalkCard}
       {settings.driveMode && view === 'learn' && !driving && <button className="drive-fab" onClick={() => setDriving(true)} aria-label="Driving mode">🚗</button>}
       {driving && <DriveMode live={live} place={sources[selected]?.ref ?? ''} onExit={() => setDriving(false)} />}

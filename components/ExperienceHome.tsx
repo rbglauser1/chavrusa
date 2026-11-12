@@ -1,5 +1,6 @@
 'use client';
 import ExperienceIcon from './ExperienceIcon';
+import { SandTealHome } from './SandTeal';
 import type { ReactNode } from 'react';
 import type { Experience } from '@/lib/experiences';
 import type { ContinueInfo } from './Home';
@@ -14,6 +15,7 @@ const COPY: Record<Experience, [string,string,string]> = {
   'study-workspace': ['Your study workspace','Continue where you left off.','Your text, sources and conversation in one place.'],
 };
 export default function ExperienceHome(p: { look: Experience; cont: ContinueInfo | null; onContinue: () => void; onLibrary: () => void; onRecent: () => void; onThemes: () => void; onSettings: () => void; onTalk: () => void; talkSupported: boolean; talkOn: boolean; extras?: ReactNode; onGuide: () => void; onFilm: () => void }) {
+  if (p.look === 'sand-teal') return <SandTealHome {...p}/>;
   const [eyebrow,title,subtitle] = COPY[p.look];
   const tools: [string,string,string,() => void][] = [['01','Library','Find your next sefer',p.onLibrary],['02','Recent sessions','Return to a conversation',p.onRecent],['03','Notebook','Your notes and saved insights',() => window.dispatchEvent(new Event('chavrusa-notebook'))],['04','Look and fonts','Make this space your own',p.onThemes]];
   return <div className={`experience-home experience-${p.look}`}>

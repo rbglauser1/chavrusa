@@ -1,5 +1,6 @@
 'use client';
 import { isExperience } from '@/lib/experiences';
+import { SandTealStudy } from './SandTeal';
 // The minimalist layouts (Settings → Look → Layout). They use the same learning, voice and Sefer underneath as the
 // classic screen; only what's on screen changes. Three of them:
 //   page     — the sefer is the home screen; the chavrusa's last words sit under it like a caption; one Talk button.
@@ -299,6 +300,12 @@ export default function Minimal(p: Props) {
       </div>
     </div>
   );
+
+  if (p.settings.theme === 'sand-teal') return <>
+    <SandTealStudy refText={src?.ref} heRef={src?.heRef} sefer={p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
+    {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}/>}
+    {mgOpen && src && <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? 1} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={x=>p.onToggle?.(x)} onLearn={p.learnThis}/>}
+  </>;
 
   // ---------- The dock under the Sefer (Sefer only): the last words, a box, and the conversation when pulled up ----------
   if (p.layout === 'dock') {
