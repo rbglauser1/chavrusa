@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { notesChanged } from './NoteAdd';
 
-type Note = { id: string; ref: string; n: number; text: string; on?: string; quote?: string };
+type Note = { id: string; ref: string; n: number; text: string; on?: string; quote?: string; at?: number };
 export const MARKS = [
   { key: 'q', label: 'Question', color: 'blue' },
   { key: 'a', label: 'Answer', color: 'green' },
@@ -42,9 +42,15 @@ function rangesOf(root: Element, needle: string): Range[] {
   return out;
 }
 
+/** Where `needle` is in one line: in its Hebrew, or (if not there) in its English, in reading order. */
+function lineRanges(line: Element, needle: string): Range[] {
+  const he = [...line.querySelectorAll('.he')].flatMap((el) => rangesOf(el, needle));
+  return he.length ? he : [...line.querySelectorAll('.en')].flatMap((el) => rangesOf(el, needle));
+}
+
 export default function Marks({ refText, box }: { refText: string; box: () => HTMLElement | null }) {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [bar, setBar] = useState<{ x: number; y: number; n: number; text: string } | null>(null);
+  const [bar, setBar] = useState<{ x: number; y: number; n: number; text: string; at: number } | null>(null);
   const timer = useRef<number | null>(null);
 
   const load = useCallback(() => {
@@ -64,8 +70,10 @@ export default function Marks({ refText, box }: { refText: string; box: () => HT
       if (root) for (const x of notes) {
         const line = root.querySelector(`[data-line="${x.n}"]`);
         const he = line?.querySelectorAll('.he');
-        he?.forEach((el) => by[colorOf(x.text)].push(...rangesOf(el, x.quote ?? '')));
-        if (!he?.length || !by[colorOf(x.text)].length) { const en = line?.querySelectorAll('.en'); en?.forEach((el) => by[colorOf(x.text)].push(...rangesOf(el, x.quote ?? ''))); }
+        // Only the place that was marked (the same words elsewhere in the line stay plain). Older marks: the first place.
+        const found = line ? lineRanges(line, x.quote ?? '') : [];
+        const one = found[typeof x.at === 'number' ? x.at : 0] ?? found[0];
+        if (one) by[colorOf(x.text)].push(one);
       }
       for (const c of Object.keys(by)) H.CSS!.highlights!.set(`mark-${c}`, new H.Highlight!(...by[c]));
     };
@@ -92,7 +100,11 @@ export default function Marks({ refText, box }: { refText: string; box: () => HT
         const n = Number(line?.getAttribute('data-line'));
         if (!line || !root.contains(line) || !n || !text || text.length > 240) { setBar(null); return; }
         const rect = r.getBoundingClientRect();
-        setBar({ x: rect.left + rect.width / 2, y: rect.bottom, n, text });
+        // Which of the same words in this line was chosen: the one nearest the selection.
+        const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+        let at = 0, best = Infinity;
+        lineRanges(line, text).forEach((g, i) => { const q = g.getBoundingClientRect(); const d = Math.hypot(q.left + q.width / 2 - cx, q.top + q.height / 2 - cy); if (d < best) { best = d; at = i; } });
+        setBar({ x: cx, y: rect.bottom, n, text, at });
       }, 250);
     };
     document.addEventListener('selectionchange', on);
@@ -102,7 +114,7 @@ export default function Marks({ refText, box }: { refText: string; box: () => HT
   const mark = async (label: string) => {
     if (!bar) return;
     const b = bar; setBar(null); window.getSelection()?.removeAllRanges();
-    const r = await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: refText, n: b.n, text: `Marked: ${label}`, on: ON, quote: b.text }) });
+    const r = await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: refText, n: b.n, text: `Marked: ${label}`, on: ON, quote: b.text, at: b.at }) });
     if (r.ok) { notesChanged(); load(); }
   };
   const unmark = async () => {
@@ -110,7 +122,14 @@ export default function Marks({ refText, box }: { refText: string; box: () => HT
     const b = bar; setBar(null); window.getSelection()?.removeAllRanges();
     const flat = (s: string) => [...s].filter((c) => !NIK.test(c) && !/\s/.test(c)).join('');
     const sel = flat(b.text);
-    const gone = notes.filter((x) => x.n === b.n && (flat(x.quote ?? '').includes(sel) || sel.includes(flat(x.quote ?? ''))));
+    const box0 = box(); const line = box0?.querySelector(`[data-line="${b.n}"]`);
+    const selRect = line ? lineRanges(line, b.text)[b.at]?.getBoundingClientRect() : undefined;
+    const meets = (x: Note) => { // the mark's own place overlaps the chosen words (older marks: by their words alone)
+      if (!line || !selRect) return true;
+      const g = lineRanges(line, x.quote ?? ''); const q = (g[typeof x.at === 'number' ? x.at : 0] ?? g[0])?.getBoundingClientRect();
+      return !q || (q.left < selRect.right + 1 && selRect.left < q.right + 1 && q.top < selRect.bottom + 1 && selRect.top < q.bottom + 1);
+    };
+    const gone = notes.filter((x) => x.n === b.n && (flat(x.quote ?? '').includes(sel) || sel.includes(flat(x.quote ?? ''))) && meets(x));
     await Promise.all(gone.map((x) => fetch(`/api/notes?id=${encodeURIComponent(x.id)}`, { method: 'DELETE' })));
     if (gone.length) { notesChanged(); load(); }
   };
