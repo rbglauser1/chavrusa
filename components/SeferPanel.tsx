@@ -477,6 +477,33 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Back (the phone's or browser's) closes the map, the review questions, or the Library (lib/back).
   useBackLayer(mapOpen, () => setMapOpen(false));
   useBackLayer(reviewOpen, () => setReviewOpen(false));
+  // The amud buttons, also at the top of the amud before and after this one (Nov 11: scrolled up into 6a, there were
+  // none). On another amud, a tap first makes it the one in front, then opens (the source sheet opens at once).
+  const pendingAmud = useRef<{ ref: string; what: 'map' | 'review' | 'listen' } | null>(null);
+  useEffect(() => {
+    const p = pendingAmud.current;
+    if (!p || src?.ref !== p.ref) return;
+    pendingAmud.current = null;
+    window.setTimeout(() => { if (p.what === 'map') setMapOpen(true); else if (p.what === 'review') setReviewOpen(true); else setListenOpen(true); }, 300);
+  }, [src?.ref]);
+  const amudRow = (s2: SourceData, main: boolean) => {
+    const show = (settings.sugyaMap || settings.review || settings.listenDaf !== false || settings.sourceSheet !== false || (main && amudButtons.length > 0)) && !isComm && !/:\d+(-\d+)?$/.test(s2.ref) && !/^Mine /.test(s2.ref);
+    if (!show) return null;
+    const open = (what: 'map' | 'review' | 'listen') => {
+      if (main) { if (what === 'map') setMapOpen(true); else if (what === 'review') setReviewOpen(true); else setListenOpen((o) => !o); return; }
+      pendingAmud.current = { ref: s2.ref, what };
+      void onOpenExact?.(s2.ref);
+    };
+    return (
+      <div className="smap-btns">
+        {settings.sugyaMap && <button className="smap-btn" onClick={() => open('map')}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>}
+        {settings.review && <button className="smap-btn" onClick={() => open('review')}>✓ Review questions</button>}
+        {settings.sourceSheet !== false && kind !== 'none' && <button className="smap-btn" onClick={() => void openSourceSheet(s2, { withMap: !!settings.sugyaMap, nikud: !!settings.nikud, lines: rel?.ref === s2.ref ? rel.lines : undefined })}>📄 Source sheet</button>}
+        {settings.listenDaf !== false && kind !== 'none' && <button className={`smap-btn ${main && listenOpen ? 'on' : ''}`} onClick={() => open('listen')}>🎧 Listen</button>}
+        {main && amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}>✦ {b.name}</button>)}
+      </div>
+    );
+  };
   const [noteText, setNoteText] = useState('');
   const loadNotes = () => { if (settings.notes !== false && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
   useEffect(loadNotes, [src?.ref, settings.notes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -679,6 +706,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 {prevSrc ? (
                   <>
                     <div className="next-head"><span className="he">{prevSrc.heRef}</span> <small>{prevSrc.ref} · before this {sectionWord(src.ref)}</small></div>
+                    {amudRow(prevSrc, false)}
                     {introBox(prevIntro)}
                     {prevSrc.he.map((line, i) => {
                       const en = prevSrc.en[i] || (prevSrc.en.length ? undefined : prevSrc.altEn?.[i]);
@@ -711,15 +739,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
-            {(settings.sugyaMap || settings.review || settings.listenDaf !== false || settings.sourceSheet !== false || amudButtons.length > 0) && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref) && (
-              <div className="smap-btns">
-                {settings.sugyaMap && <button className="smap-btn" onClick={() => setMapOpen(true)}>🗺 {kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}</button>}
-                {settings.review && <button className="smap-btn" onClick={() => setReviewOpen(true)}>✓ Review questions</button>}
-                {settings.sourceSheet !== false && kind !== 'none' && !/^Mine /.test(src.ref) && <button className="smap-btn" onClick={() => void openSourceSheet(src, { withMap: !!settings.sugyaMap, nikud: !!settings.nikud, lines: rel?.ref === src.ref ? rel.lines : undefined })}>📄 Source sheet</button>}
-                {settings.listenDaf !== false && kind !== 'none' && !/^Mine /.test(src.ref) && <button className={`smap-btn ${listenOpen ? 'on' : ''}`} onClick={() => setListenOpen((o) => !o)}>🎧 Listen</button>}
-                {amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}>✦ {b.name}</button>)}
-              </div>
-            )}
+            {src && amudRow(src, true)}
             {settings.marks !== false && src && !isComm && <Marks refText={src.ref} box={flowEl} />}
             {listenOpen && src && <ListenBox refText={src.ref.replace(/:\d+(-\d+)?$/, '')} heRef={src.heRef} onClose={() => setListenOpen(false)} />}
             {topOpen && src && (() => { const b = amudButtons.find((x) => x.id === topOpen); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={src.ref.replace(/:\d+(-\d+)?$/, '')} onClose={() => setTopOpen(null)} /> : null; })()}
@@ -924,7 +944,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     );
                   })}
                   {isOpen && !pairs && (
-                    <div className="en" onClick={(e) => { e.stopPropagation(); if (dbl) tap(() => {}); }}>
+                    <div className="en" onClick={(e) => {
+                      // A tap on the English opens the line's buttons too (Nov 11); on a line already open it leaves it open.
+                      e.stopPropagation();
+                      if ((e.target as HTMLElement).closest('button')) return;
+                      const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
+                      if (dbl) tap(() => { if (!active) toggleLine(i); }); else if (!active) toggleLine(i); }}>
                       {en ? (src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)) : aiText[key] ? (
                         <><span className="label-ai">AI translation</span><div>{aiText[key]}</div></>
                       ) : (
@@ -945,6 +970,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 {nextSrc ? (
                   <>
                     <div className="next-head"><span className="he">{nextSrc.heRef}</span> <small>{nextSrc.ref} · the text continues</small></div>
+                    {amudRow(nextSrc, false)}
                     {introBox(nextIntro)}
                     {nextSrc.he.map((line, i) => {
                       const en = nextSrc.en[i] || (nextSrc.en.length ? undefined : nextSrc.altEn?.[i]);

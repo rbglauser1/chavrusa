@@ -13,6 +13,7 @@ import HomeExtras from '@/components/HomeExtras';
 import { useBackLayer } from '@/lib/back';
 import DriveMode from '@/components/DriveMode';
 import CallScreen from '@/components/CallScreen';
+import UpdateBar from '@/components/UpdateBar';
 import { getOfflineText } from '@/lib/offlineStore';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
@@ -879,6 +880,8 @@ export default function Home() {
     return (
       <div className="home-shell">
         {quickTalkCard}
+      <UpdateBar busy={live.active} />
+        <UpdateBar busy={live.active} />
         {view === 'home' && (
           <HomeScreen
             cont={cont}
