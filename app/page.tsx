@@ -5,6 +5,8 @@ import { logLine } from '@/lib/callLog';
 import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_COMM, FONTS_EN, FONTS_HE, fontStack, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
+import { isExperience } from '@/lib/experiences';
+import ExperienceNav from '@/components/ExperienceNav';
 import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
@@ -394,6 +396,7 @@ export default function Home() {
     if (settings === DEFAULT_SETTINGS) return; // not loaded yet: keep the look the page opened with
     const root = document.documentElement;
     root.dataset.look = settings.theme;
+    if (isExperience(settings.theme)) root.dataset.experience = settings.theme; else delete root.dataset.experience;
     try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.dataset.justify = settings.justify ? 'on' : 'off';
@@ -854,6 +857,11 @@ export default function Home() {
   const minimal = !seferHome; // Quiet chat (or, with the text off, the voice-only screen)
   const isCommentary = (ref: string) => /^(Rashi|Tosafot|Tosafos|Rashbam|Ran|Rosh) on /i.test(ref);
 
+  const experienceNav = <ExperienceNav look={look} view={view}
+    onHome={() => setView('home')} onLearn={() => { setView('learn'); setTextTick((n) => n + 1); }}
+    onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
+    onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} />;
+
   if (!ready) return <div className="app boot" aria-busy="true" />;
 
   // ---------- The new main screen and its pages ----------
@@ -880,11 +888,13 @@ export default function Home() {
     };
     return (
       <div className="home-shell">
+        {experienceNav}
         {quickTalkCard}
       <UpdateBar busy={live.active} />
         <UpdateBar busy={live.active} />
         {view === 'home' && (
           <HomeScreen
+            look={settings.theme}
             cont={cont}
             onContinue={() => void homeContinue()}
             onLibrary={() => { goLearn(); openLibrary(); }}
@@ -936,6 +946,7 @@ export default function Home() {
 
   return (
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
+      {experienceNav}
       {quickTalkCard}
       {settings.driveMode && view === 'learn' && !driving && <button className="drive-fab" onClick={() => setDriving(true)} aria-label="Driving mode">🚗</button>}
       {driving && <DriveMode live={live} place={sources[selected]?.ref ?? ''} onExit={() => setDriving(false)} />}

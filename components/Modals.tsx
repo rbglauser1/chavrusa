@@ -1,4 +1,5 @@
 'use client';
+import { isExperience } from '@/lib/experiences';
 import { Look, LOOKS } from '@/lib/config';
 
 export function LookPicker({ value, onPick }: { value: Look; onPick: (l: Look) => void }) {
@@ -6,7 +7,7 @@ export function LookPicker({ value, onPick }: { value: Look; onPick: (l: Look) =
     <div className="looks" role="radiogroup" aria-label="Look">
       {LOOKS.map((l) => (
         <button key={l.id} className={`look ${value === l.id ? 'on' : ''}`} role="radio" aria-checked={value === l.id} onClick={() => onPick(l.id)}>
-          <span className={`mini ${l.id}`} aria-hidden="true">
+          <span className={`mini ${l.id}${isExperience(l.id) ? ' experience-mini' : ''}`} aria-hidden="true">
             <span className="m-head" />
             <span className="m-src" />
             <span className="m-line" style={{ width: '70%' }} />

@@ -1,4 +1,7 @@
 'use client';
+import ExperienceHome from './ExperienceHome';
+import { isExperience } from '@/lib/experiences';
+import type { Look } from '@/lib/config';
 import { useMineTitles } from './useMineTitles';
 // The new main screen (Settings → Main screen → New): one home that always opens first.
 // A card to pick up where you left off, four circles (Library, Recent, Themes, Settings), and a Talk button
@@ -42,6 +45,7 @@ export function when(iso: string) {
 export interface ContinueInfo { heRef?: string; ref?: string; line?: number; title?: string; when?: string }
 
 export function Home(p: {
+  look?: Look;
   cont: ContinueInfo | null;
   onContinue: () => void;
   onLibrary: () => void;
@@ -72,6 +76,11 @@ export function Home(p: {
     ['notebook', 'Notebook', 'Your notes, by sefer and topic', () => window.dispatchEvent(new Event('chavrusa-notebook'))], // shown in the Sharp look only
     ['settings', 'Settings', 'Look, learning style, voice, display', p.onSettings],
   ];
+  if (isExperience(p.look)) return <>
+    <ExperienceHome {...p} look={p.look} onGuide={() => setGuide(true)} onFilm={() => { unlockNarration(); setHowTo(true); }} />
+    {guide && <Guide onClose={() => setGuide(false)} />}
+    {howTo && <HowTo onClose={() => setHowTo(false)} />}
+  </>;
   return (
     <div className="home">
       <header className="home-top">
