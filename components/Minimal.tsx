@@ -160,7 +160,7 @@ function CasualThread({ items, busy, status, endRef }: { items: Msg[]; busy: boo
 export default function Minimal(p: Props) {
   const experience = isExperience(p.settings.theme);
   const workspaceEnd = useRef<HTMLDivElement | null>(null);
-  useEffect(() => { if (experience) workspaceEnd.current?.scrollIntoView({ block: 'nearest' }); }, [experience, p.items.length, p.busy]);
+  const workspaceScroll = useRef<HTMLDivElement | null>(null);
   const [menu, setMenu] = useState(false);
   const [dafOpen, setDafOpen] = useState(false);
   const [mgOpen, setMgOpen] = useState(false); // Mikraos Gedolos: the printed-Chumash page of this perek
@@ -170,6 +170,13 @@ export default function Minimal(p: Props) {
   useEffect(() => { try { if (localStorage.getItem('quiet-full') === '1') setFullState(true); } catch {} }, []);
   const setFull = (v: boolean) => { setFullState(v); try { localStorage.setItem('quiet-full', v ? '1' : '0'); } catch {} };
   const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation (from the ⋯ menu)
+  useEffect(() => {
+    if (!experience) return;
+    const revealLatest = () => { const pane = workspaceScroll.current; if (pane && pane.clientHeight) pane.scrollTop = pane.scrollHeight; };
+    revealLatest();
+    window.addEventListener('resize', revealLatest);
+    return () => window.removeEventListener('resize', revealLatest);
+  }, [experience, tab, p.settings.theme, p.items.length, p.busy, p.textTick]);
   // The Library or the Sefer was asked for, or a new place opened: show the text.
   useEffect(() => { if (p.textTick) setTab('text'); }, [p.textTick]);
   // Quiet chat: the daf counter (in the bottom row) only shows with the text, not over the conversation or the keyboard.
@@ -416,7 +423,7 @@ export default function Minimal(p: Props) {
         {/* No words above the bottom row over the text — no caption, no status line. */}
         {!showText && label && <div className={`min-status slim ${labelErr ? 'err' : ''}`}>{label}</div>}
         {replyPanel}
-        {experience && showText && <aside className="experience-conversation" aria-label="Chavrusa conversation"><header><span>Your chavrusa</span><small>{src?.ref}</small></header><div className="experience-conversation-scroll">{p.items.length ? <Thread items={p.items} busy={p.busy} status={p.status} endRef={workspaceEnd} /> : <p className="muted">Ask about the passage, work through a question, or learn aloud.</p>}</div><form onSubmit={(e) => { e.preventDefault(); submit(); }}><label className="sr-only" htmlFor="workspace-question">Ask your chavrusa</label><textarea id="workspace-question" rows={2} value={p.input} onChange={(e) => p.setInput(e.target.value)} placeholder="Ask about this passage…" /><button className="btn primary" disabled={p.busy || !p.input.trim()}>Send</button></form></aside>}
+        {experience && showText && <aside className="experience-conversation" aria-label="Chavrusa conversation"><header><span>Your chavrusa</span><small>{src?.ref}</small></header><div className="experience-conversation-scroll" ref={workspaceScroll}>{p.items.length ? <Thread items={p.items} busy={p.busy} status={p.status} endRef={workspaceEnd} /> : <p className="muted">Ask about the passage, work through a question, or learn aloud.</p>}</div><form onSubmit={(e) => { e.preventDefault(); submit(); }}><label className="sr-only" htmlFor="workspace-question">Ask your chavrusa</label><textarea id="workspace-question" rows={2} value={p.input} onChange={(e) => p.setInput(e.target.value)} placeholder="Ask about this passage…" /><button className="btn primary" disabled={p.busy || !p.input.trim()}>Send</button></form></aside>}
         {bottom}
       </div>
     );

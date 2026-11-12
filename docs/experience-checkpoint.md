@@ -1,49 +1,29 @@
-# Chavrusa UI continuation checkpoint
+# Chavrusa optional UI checkpoint — November 12, 2026
 
-Updated during the November 12 2026 overnight session. Continue the original task rather than restarting it.
+## Scope
+Eight optional experiences under Look and fonts. Preserve all nine original looks, The Daf default, saved font preferences and existing source/chat/voice behavior. User authorized release after verification. Never print secrets or delete existing data.
 
-## Authorized scope
+## Repository
+rbglauser1/chavrusa, feat/optional-design-themes, PR #1. Before release main remains bdcbeb26a816945958533a817354ea3240aedb3a. Read the actual PR and branch state before continuing; this document may be older than the final merge.
 
-Implement eight complete opt-in UI experiences under Look and fonts, preserving all original themes/defaults and existing functionality. User requested installation and making the optional experiences live after verification. They asked to sleep while work continues. Do not release known-broken UI. No further design-choice clarification is needed.
+Live target: chavrusa-nine.vercel.app, Vercel project chavrusa (prj_ZONxfLFFvAWBl5mVtgPN7VtFWYDt), team chavrusa1 (team_x1XImj9kNL7hUE5hrrB2QLar). Do not use chavrusa-hbyd. Branch preview: chavrusa-git-feat-optional-design-themes-chavrusa1.vercel.app. Preview shares Production database and AI configuration with explicit user permission. All six existing configuration entries have Production and Preview targets; values were never printed.
 
-Vercel was connected and team access approved. User explicitly authorized enabling existing Production configuration for Preview even though database and AI accounts are shared. All six existing secrets now target Production and Preview; values were never read or printed. Vercel permission was explicitly set to Allow all actions for Vercel only. Do not ask to reconnect or reauthorize these actions.
+## Verification completed
+See docs/ui-verification.md for the measured matrix and limits. All eight homes and reading workspaces fit 390px phones, 834px portrait tablets, 1112px landscape tablets and 1280px desktops. All eight homes now also fit 320px compact phones. Shared chat send/pending/response, explicit Guided Recall, Rashi, source selection, next/previous amud, Library categories, Notebook search and editor cancellation, Settings and original theme isolation were checked against the real preview.
 
-## Repository and deployment
+Corrected desktop nav overlay, phone source-flow overflow, Notebook toolbar wrapping and compact Study Workspace cards/masthead. A final conversation-scroll adjustment reveals the latest turn when entering Read or resizing from phone to desktop; retest that adjustment after its deployment. Automated registration/CSS/default/SSR checks, TypeScript and production build passed before that final small adjustment; TypeScript passed afterward.
 
-- Repo rbglauser1/chavrusa, branch feat/optional-design-themes, draft PR 1.
-- Current workspace /workspace/scratch/8d74e7798af7/chavrusa.
-- Remote latest before this checkpoint: e4ce3151f3273156859bafa0454b0de18b23117b.
-- Live app chavrusa-nine.vercel.app is project chavrusa, ID prj_ZONxfLFFvAWBl5mVtgPN7VtFWYDt, team team_x1XImj9kNL7hUE5hrrB2QLar (chavrusa1).
-- Configured Preview redeployment dpl_D7etfnpSccoCoBh6nhFLr7FPKerY, hostname chavrusa-gv73h39om-chavrusa1.vercel.app. Branch alias chavrusa-git-feat-optional-design-themes-chavrusa1.vercel.app.
-- Do not use the separate chavrusa-hbyd project.
-- Vercel get_access_to_vercel_url provides short-lived preview access without disabling protection. Keep share tokens private.
+No native iPhone/iPad Safari, physical keyboard/safe-area, microphone, pronunciation, background voice or forced API failure/retry claim is made. Existing voice handlers were retained. No Notebook save/edit/delete or new import in this UI phase. Two clearly labelled synthetic UI chat exchanges and one Recall action were run against the demo session.
 
-## Browser and preferences
+## Saved preferences and cleanup
+Original saved theme: The Daf (daf). Hebrew32, commentary31, English22; original David Hebrew/commentary fonts retained. Provider Claude Sonnet5.5 Saver, Sharp Challenger. All nine original themes were selected successfully and removed the optional navigation. The Daf was restored and confirmed after reload during testing, but more theme checks followed: restore it again before finishing.
 
-Cloud browser cdp / browser 1. Current authenticated app tab was 8, testingTab binding in CUA. It is on the new preview. Rebind by inventory if stale. App login succeeded through secure browserAuth. Never enter or reconstruct credentials through normal tools; use browserAuth if login is required again.
+Cloud browser session currently authenticated. Tabs are ephemeral; recover via inventory. Always use secure browserAuth if login is required; never enter chat credentials through ordinary tools. CUA API has no viewport setter, so use the protected /design-preview iframe helper. Local Chromium cannot launch (socket EPERM); do not repeat that path.
 
-Original saved theme is The Daf (daf). Hebrew size32, commentary31, English22. Original provider/style/learning options were not changed. Only theme changed to paper-ink during current checks; restore daf before finishing or pausing long term. Preview shares production settings and notes. Do not delete existing data. Older synthetic application-audit notes and a PDF import already existed before this UI implementation.
+## Remaining release steps
+1. Wait for the newest branch deployment and verify the conversation panel is at its latest turn after phone-to-desktop resizing and Discuss-to-Read switching.
+2. Restore The Daf and confirm original fonts/sizes.
+3. Check build/deployment status, update PR, and merge only with no known defects. Release is already authorized.
+4. Verify the production domain receives the merged commit, all 17 looks remain available, then restore The Daf again. Record the final release result in PR metadata or this checkpoint.
 
-## Implemented
-
-Eight IDs in lib/experiences.ts: paper-ink, midnight-sefer, beis-medrash, sand-teal, editorial, guided-learning, living-page, study-workspace. ExperienceHome and ExperienceNav are conditional on those IDs. Existing theme IDs, defaults, AI/source/voice logic are retained. experiences.css is scoped; server cookies recognize new IDs. Wide screen source/chat panes and explicit Read/Discuss views. Original generated Beis Medrash background WebP.
-
-## Validation and current fixes
-
-Production builds and TypeScript passed. scripts/check-experiences.cjs verifies registrations/normalization/default/CSS scoping and server renders all eight homes. Browser verification is ongoing, NOT complete. Local Playwright cannot launch Chromium (socket EPERM); remote browser cannot reach localhost, so use Vercel preview with CUA. Do not retry this local browser path.
-
-Browser verified new picker includes eight and original nine, changing to Paper and Ink updates per-theme fonts, Home renders, Continue opens saved Berachos source, full source and conversation DOM appear. Desktop screenshot revealed a serious overlay: :has(.experience-learning) rule gave nav bottom8 while desktop top0, stretching nav over screen. Fixed locally by removing the :has rule, assigning desktop nav explicit height70/bottomauto, sizing .experience-learning to parent height with min-height0/flex1, and resetting document scroll on entering learning. These fixes need deployment and browser verification. Source scroll uses inner panel; preserve that position.
-
-Also replaced new Unicode nav/logo/arrow glyphs with SVG ExperienceIcon to avoid missing glyphs. Added keyboard-aware nav handling and per-dark-theme text colors. Latest local checks count256 CSS selectors. Follow latest repo state if count changes.
-
-## Next actions
-
-1. Publish current local fixes and this checkpoint to review branch (GitHub connector tree/commit/update_ref; local gh not authenticated). Check branch latest SHA before publication. Binary hero is already on remote; do not upload again unnecessarily.
-2. Wait for preview build, reload authenticated branch alias, inspect nav and reading layout screenshot. Test actual functionality; do not rely solely on build success.
-3. Check all eight themes: Home, learning source, chat, Library, Notebook, Settings, review, per-look font persistence and switching to originals. Explicitly test phone and tablet layouts through supported browser UI/device emulation; CUA API lacks direct viewport setter.
-4. Fix responsive issues, check typed question pending/answer and sources with clearly synthetic prompt; no personal halachic queries are needed for UI testing. Do not start voice/mic unless necessary and authorized permissions allow it.
-5. Restore original daf theme and changed preferences. Update docs/PR with measured results. Merge/release only when usable checks pass; user authorized making optional designs live but original default must remain.
-
-## Scheduled retry
-
-A one-time continuation attempt is scheduled at 04:00 America/New_York November12. If work is complete then report status without redoing or redeploying. Do not promise usage reset guarantees. Include the display-automation control in the current turn's final response if needed. The automation ID is internal; never show it as text.
+Workspace may show intended files as uncommitted relative to the original local checkout because commits were published through the GitHub connector. Compare remote content before changing it. Do not publish generated package-lock.json or next-env.d.ts. Hero WebP is already committed. No access token, password, environment value or protected preview-share token should appear in output.

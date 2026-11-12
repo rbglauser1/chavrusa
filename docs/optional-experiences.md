@@ -18,6 +18,6 @@ Paper and Ink uses open editorial lists. Midnight Sefer uses deep blue surfaces 
 
 `node scripts/check-experiences.cjs` checks registration, persistence normalization, legacy values and CSS isolation. `npx tsc --noEmit` and `npm run build` validate types and production compilation.
 
-Browser validation is not complete. Local Chromium fails under the execution environment's socket restrictions; the remote browser cannot reach localhost. The Vercel preview is protected by Vercel sign-in. These are validation limitations, not passed tests.
+Authenticated browser verification uses the actual Vercel preview, including the real source, conversation, Library, Notebook and settings services. `/design-preview` is an authenticated iframe harness for genuine CSS viewport sizes; it does not emulate Safari, touch hardware or an on-screen keyboard. See `ui-verification.md` for observed results and explicit limits.
 
-Before merging, verify all eight themes at phone, portrait/landscape tablet and desktop widths; source selection and return position; chat send/pending/error behavior; commentaries; Library import; Notebook save/edit/search; review; font persistence; theme switching back to each original look; mobile keyboard/safe areas; and voice permission, interruption and background behavior. Confirm theme preferences against the intended preview database, since preview and production may share settings.
+Preview and Production share database and AI configuration with the user's explicit permission. Theme selection saves to those shared settings. Restore The Daf after verification. Do not remove existing notes or sessions as cleanup.
