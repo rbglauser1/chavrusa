@@ -236,3 +236,7 @@
  [data-experience] .experience-nav { height:70px; bottom:auto; }
  [data-look='living-page'] .experience-nav { height:auto; top:auto; bottom:20px; }
 }
+
+/* Explicit font choices also control the new experiences’ display typography.
+   Removing the choice restores each look’s own heading and accent families. */
+[data-experience][data-enfont='chosen'] { --f-brand:var(--f-body); --f-accent:var(--f-body); }

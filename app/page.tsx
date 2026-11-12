@@ -7,6 +7,7 @@ import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import { isExperience } from '@/lib/experiences';
 import ExperienceNav from '@/components/ExperienceNav';
+import Review from '@/components/Review';
 import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
@@ -311,6 +312,9 @@ export default function Home() {
     return () => window.removeEventListener('chavrusa-notebook', open);
   }, []);
   useBackLayer(notebook, () => setNotebook(false));
+  const [sandReview, setSandReview] = useState(false);
+  useBackLayer(sandReview, () => setSandReview(false));
+  useEffect(() => { const open=()=>setSandReview(true); window.addEventListener('sand-review',open); return()=>window.removeEventListener('sand-review',open); }, []);
   // "How to use the app" from Settings: back to Home, where the guide opens.
   useEffect(() => {
     const go = () => { setDrawer(null); setView('home'); window.setTimeout(() => window.dispatchEvent(new Event('chavrusa-guide')), 200); };
@@ -369,17 +373,20 @@ export default function Home() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const warned = useRef(false);
 
+  const designPreviewOnly = useRef(false);
   // ---------- Load ----------
   useEffect(() => {
+    const previewLook = new URLSearchParams(window.location.search).get('preview-look') === 'sand-teal' ? 'sand-teal' as const : null;
+    designPreviewOnly.current = !!previewLook;
     try {
       const kept = localStorage.getItem('chavrusa_settings');
-      if (kept) { setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(kept) }); setReady(true); }
+      if (kept) { setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(kept), ...(previewLook ? { theme: previewLook } : {}) }); setReady(true); }
     } catch { /* storage unavailable */ }
     const fallback = window.setTimeout(() => setReady(true), 2500); // never stay blank
     fetch('/api/settings').then((r) => r.json()).then((s) => {
       window.clearTimeout(fallback);
       setReady(true);
-      if (s && !s.error) { setSettings(s); try { localStorage.setItem('chavrusa_settings', JSON.stringify(s)); } catch { /* optional */ } }
+      if (s && !s.error) { setSettings(previewLook ? { ...s, theme: previewLook } : s); try { localStorage.setItem('chavrusa_settings', JSON.stringify(s)); } catch { /* optional */ } }
       else setItems([{ kind: 'error', text: `Could not reach the database: ${s?.error ?? 'unknown error'}` }]);
       setLoaded(true);
     }).catch((e) => { window.clearTimeout(fallback); setReady(true); setItems([{ kind: 'error', text: `Could not load settings: ${String(e)}` }]); setLoaded(true); });
@@ -397,7 +404,7 @@ export default function Home() {
     const root = document.documentElement;
     root.dataset.look = settings.theme;
     if (isExperience(settings.theme)) root.dataset.experience = settings.theme; else delete root.dataset.experience;
-    try { document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
+    try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}|${settings.fonts?.[settings.theme]?.comm ?? ''}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.dataset.justify = settings.justify ? 'on' : 'off';
     root.dataset.enmark = settings.enMark ?? 'plain';
@@ -411,6 +418,7 @@ export default function Home() {
     // Fonts chosen for this look (or the look's own).
     const f = settings.fonts?.[settings.theme] ?? {};
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
+    root.dataset.enfont = en ? 'chosen' : 'look';
     if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
     if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
     root.dataset.hefont = he ? 'chosen' : 'look'; // a chosen Hebrew font wins over the trop font (globals.css)
@@ -447,7 +455,7 @@ export default function Home() {
 
   // Keep this phone's copy of the settings current, for the next time the app opens.
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || designPreviewOnly.current) return;
     try { localStorage.setItem('chavrusa_settings', JSON.stringify(settings)); } catch { /* optional */ }
   }, [settings, loaded]);
 
@@ -456,6 +464,7 @@ export default function Home() {
     if (patch.ui === 'home') { setDrawer(null); setView('home'); }
     else if (patch.ui === 'classic') setView('learn');
     setSettings((s) => ({ ...s, ...patch }));
+    if (designPreviewOnly.current && 'theme' in patch) { const { theme: _theme, ...rest } = patch; if (!Object.keys(rest).length) return; patch = rest; }
     // One save at a time, in order: two changes made in quick succession used to race on the server, and the
     // second could write back the settings as they were before the first.
     saveChain.current = saveChain.current.then(() => fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }).then(() => undefined, () => undefined));
@@ -861,10 +870,19 @@ export default function Home() {
     if (view === 'learn' && isExperience(settings.theme)) window.scrollTo({ top: 0 });
   }, [view, settings.theme]);
 
+  const resumeLearning = async () => {
+    const c=contInfo;
+    if (c?.id && c.id!==sessionId) await openSession(c.id);
+    else if (c?.ref) { const src=sources.find(x=>x.ref===c.ref); if(src) showSource({...src,focus:c.line??src.focus}); else await openExact(c.ref,c.line); }
+    setView('learn'); setTextTick(n=>n+1);
+  };
+  const reviewRef=current?.ref || contInfo?.ref;
+  const sandReviewPanel=sandReview && (reviewRef ? <Review refText={reviewRef} onClose={()=>setSandReview(false)} onGo={n=>{setSandReview(false);setView('learn');void openExact(reviewRef,n);}}/> : <div className="st-overlay"><section className="st-details" role="dialog" aria-label="Review"><h2>A little learning first.</h2><p>Open a sefer, then return here to review it.</p><button className="btn" onClick={()=>{setSandReview(false);setView('learn');openLibrary();}}>Choose a sefer</button><button className="btn ghost" onClick={()=>setSandReview(false)}>Close</button></section></div>);
+
   const experienceNav = <ExperienceNav look={look} view={view}
-    onHome={() => setView('home')} onLearn={() => { setView('learn'); setTextTick((n) => n + 1); }}
+    onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
     onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
-    onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} />;
+    onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} onReview={() => setSandReview(true)} onSettings={() => {setSettingsFrom(view==='learn'?'learn':'home');setView('settings');}} />;
 
   if (!ready) return <div className="app boot" aria-busy="true" />;
 
@@ -893,6 +911,7 @@ export default function Home() {
     return (
       <div className="home-shell">
         {experienceNav}
+        {sandReviewPanel}
         {quickTalkCard}
       <UpdateBar busy={live.active} />
         <UpdateBar busy={live.active} />
@@ -951,6 +970,7 @@ export default function Home() {
   return (
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
       {experienceNav}
+        {sandReviewPanel}
       {quickTalkCard}
       {settings.driveMode && view === 'learn' && !driving && <button className="drive-fab" onClick={() => setDriving(true)} aria-label="Driving mode">🚗</button>}
       {driving && <DriveMode live={live} place={sources[selected]?.ref ?? ''} onExit={() => setDriving(false)} />}
