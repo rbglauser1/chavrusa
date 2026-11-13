@@ -2808,3 +2808,4 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 [data-look='midnight'][data-c-comm='oceanmist'] .mg-paper { --comm-hue: #356D78; } [data-look='midnight'][data-c-comm='slategray'] .mg-paper { --comm-hue: #455D70; }
 [data-c-intro='oceanmist'] { --intro-hue: var(--hue-oceanmist); } [data-c-intro='slategray'] { --intro-hue: var(--hue-slategray); }
 [data-look='midnight'][data-c-intro='oceanmist'] .mg-paper { --intro-hue: #356D78; } [data-look='midnight'][data-c-intro='slategray'] .mg-paper { --intro-hue: #455D70; }
+[data-aihe='times'] .lx-p.he-p { font-family: 'Times New Roman', Times, serif; } /* the AI's Hebrew in Times (Nov 13) */

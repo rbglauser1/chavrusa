@@ -343,6 +343,7 @@ export const FONTS_HE: { id: string; name: string; stack: string }[] = [
   { id: '', name: "The look's own", stack: '' },
   { id: 'frank', name: 'Frank Ruhl (classic sefer)', stack: "'Frank Ruhl Libre', 'Times New Roman', serif" },
   { id: 'david', name: 'David', stack: "'David Libre', 'Frank Ruhl Libre', serif" },
+  { id: 'times', name: 'Times New Roman (as Explain first showed)', stack: "'Times New Roman', Times, serif" },
   { id: 'notoserif', name: 'Noto Serif Hebrew (square, matches Source Serif)', stack: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif" },
   { id: 'bellefair', name: 'Bellefair (elegant)', stack: "'Bellefair', 'Frank Ruhl Libre', serif" },
   { id: 'heebo', name: 'Heebo (modern sans)', stack: "'Heebo', 'Assistant', sans-serif" },
@@ -440,6 +441,7 @@ export interface Settings {
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
   mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
+  aiHeFont?: 'text' | 'times'; // the font of the AI's Hebrew: the text's Hebrew font, or Times New Roman
   aiSize?: number; // px: what the AI writes (Explain, Chat, Ideas, outlines…); unset: follows the English size
   aiHub?: boolean; // the AI tools in one floating ✦ (default) instead of buttons under each line and atop the amud
   aiLang?: 'en' | 'he' | 'both'; // the language the AI writes in for the screen (not the voice, not translations)
@@ -598,7 +600,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
+export const OPTIONAL_SETTING_KEYS = ['aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
 
 export const OWNER_ID = 'owner';
 
