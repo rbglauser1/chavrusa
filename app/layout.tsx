@@ -8,6 +8,7 @@ import './guided-learning.css';
 import { guidedPalette } from '@/lib/guided';
 import { EXPERIENCES, isExperience } from '@/lib/experiences';
 import { PullRefresh } from '@/components/PullRefresh';
+import { ViewportFix } from '@/components/ViewportFix';
 
 export const metadata: Metadata = {
   title: 'Chavrusa',
@@ -43,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link rel="stylesheet" href={FONTS} />
       </head>
-      <body>{children}<PullRefresh /></body>
+      <body>{children}<PullRefresh /><ViewportFix /></body>
     </html>
   );
 }

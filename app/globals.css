@@ -2721,3 +2721,6 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .clamp { display: block; max-height: calc(1.55em * var(--lines, 4)); overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent); mask-image: linear-gradient(to bottom, #000 60%, transparent); }
 .clamp-all { display: block; }
 .clamp-more { display: inline-block; margin-top: 2px; font-size: 13px; }
+
+/* iPhone: keep the buttons pinned to the bottom of the screen where you see it (components/ViewportFix.tsx). */
+body[data-full] .min-quiet.full .min-row, .daf-dock .daf-bar, .min-full-ctl, [data-look] .st-full-ctl, [data-look] .gl-full-controls { translate: 0 var(--vv-shift, 0px); }
