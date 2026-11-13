@@ -6,8 +6,10 @@
   --accent: #CC7C5E; --accent-ink: #ffffff; --accent-soft: #F5E9E3;
   --me: #7A7974; --src-bg: #FAFAF8; --src-ink: #131313; --src-rule: #E0E0DF;
   --danger: #B5482A; --scrim: rgba(31, 30, 29, 0.38); --shadow: 0 8px 28px -12px rgba(31, 30, 29, 0.22);
-  --f-body: 'Spectral', Georgia, serif; --f-ui: 'Inter', system-ui, sans-serif;
-  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Spectral', Georgia, serif;
+  /* Claude's own type is licensed (a serif for reading, a geometric sans for buttons); these are the closest free
+     matches: Source Serif 4 for the English and headings, DM Sans for buttons and labels. */
+  --f-body: 'Source Serif 4', Georgia, serif; --f-ui: 'DM Sans', system-ui, sans-serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Source Serif 4', Georgia, serif;
   --radius: 12px; color-scheme: light;
 }
 [data-look='clay'] body { background: var(--bg); }
@@ -72,3 +74,8 @@
 .mini.clay .m-head { background: #FAFAF8; border-bottom: 1px solid #E0E0DF; }
 .mini.clay .m-src { background: #FAFAF8; border: 1px solid #E0E0DF; border-radius: 6px; }
 .mini.clay .m-line { background: #CC7C5E; opacity: 0.8; }
+
+/* Claude-like type details: headings in the serif at a normal weight, slightly tight; labels in the sans. */
+[data-look='clay'] .home-brand, [data-look='clay'] .hpage-head h1, [data-look='clay'] .hpage-head h2, [data-look='clay'] .drawer-head h2, [data-look='clay'] .sg-1 > .sg-head .sg-title { font-family: var(--f-brand); font-weight: 500; letter-spacing: -0.01em; }
+[data-look='clay'] .home-hello { font-family: var(--f-brand); font-style: normal; color: var(--ink); }
+[data-look='clay'] .btn, [data-look='clay'] .seg button, [data-look='clay'] .min-tabs button, [data-look='clay'] .sg-hint, [data-look='clay'] .field label, [data-look='clay'] .home-card-label, [data-look='clay'] .home-row-title { font-family: var(--f-ui); }

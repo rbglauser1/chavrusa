@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { FONTS_EN, FONTS_HE, FONTS_COMM, fontStack } from '@/lib/config';
 import './globals.css';
 import './clay.css';
+import './plain.css';
 import './experiences.css';
 import './sand-teal.css';
 import './guided-learning.css';
@@ -25,11 +26,11 @@ export const viewport: Viewport = {
   width: 'device-width', initialScale: 1, viewportFit: 'cover',
 };
 
-const FONTS = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Noto+Rashi+Hebrew:wght@400;500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=David+Libre:wght@400;500;700&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Rubik:wght@300;400;500;600;700&family=Assistant:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;1,400&family=Bellefair&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+Hebrew:wght@400;500;700&family=Heebo:wght@400;500;700&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Caveat:wght@500;700&family=Fredoka:wght@400;500;600&family=Playpen+Sans+Hebrew:wght@400;500;700&family=Amatic+SC:wght@400;700&family=Varela+Round&family=Secular+One&display=swap';
+const FONTS = 'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Frank+Ruhl+Libre:wght@400;500;700&family=Noto+Rashi+Hebrew:wght@400;500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=David+Libre:wght@400;500;700&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Rubik:wght@300;400;500;600;700&family=Assistant:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;1,400&family=Bellefair&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+Hebrew:wght@400;500;700&family=Heebo:wght@400;500;700&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Caveat:wght@500;700&family=Fredoka:wght@400;500;600&family=Playpen+Sans+Hebrew:wght@400;500;700&family=Amatic+SC:wght@400;700&family=Varela+Round&family=Secular+One&display=swap';
 
 // The look and text sizes are remembered in a cookie, so the page opens in your colors right away
 // (instead of flashing the default colors until Settings load).
-const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp', 'clay', ...EXPERIENCES.map((x) => x.id)];
+const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp', 'clay', 'plain', ...EXPERIENCES.map((x) => x.id)];
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [look, he, en, rashi, comm, fEn, fHe, cols, bolds, fComm, palette] = ((await cookies()).get('ui')?.value ?? '').split('|');
   // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).

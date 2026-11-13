@@ -1,0 +1,82 @@
+/* Plain chat: the clean white style of ChatGPT (Nov 12). Its own font (Söhne) is licensed; Inter is the closest free
+   match. White page, near-black text, light grey bubbles for your words, black round buttons. Scoped to [data-look='plain']. */
+[data-look='plain'] {
+  --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F4F4F4;
+  --ink: #0D0D0D; --soft: #5D5D5D; --rule: #E5E5E5;
+  --accent: #0D0D0D; --accent-ink: #FFFFFF; --accent-soft: #F4F4F4;
+  --me: #5D5D5D; --src-bg: #F9F9F9; --src-ink: #0D0D0D; --src-rule: #E5E5E5;
+  --danger: #D92D20; --scrim: rgba(0, 0, 0, 0.35); --shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.18);
+  --f-body: 'Inter', -apple-system, system-ui, sans-serif; --f-ui: 'Inter', -apple-system, system-ui, sans-serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Inter', -apple-system, system-ui, sans-serif;
+  --radius: 16px; color-scheme: light;
+}
+[data-look='plain'] body { background: #FFFFFF; -webkit-font-smoothing: antialiased; }
+[data-look='plain'] .app, [data-look='plain'] .main, [data-look='plain'] .sefer, [data-look='plain'] .sefer.embedded { background: transparent; }
+
+/* Bars: white, no line until the page scrolls under them */
+[data-look='plain'] .topbar, [data-look='plain'] .sefer-head, [data-look='plain'] .min-head, [data-look='plain'] .hpage-head, [data-look='plain'] .drawer-head { background: #FFFFFF; border-bottom: 1px solid #F0F0F0; box-shadow: none; }
+[data-look='plain'] .min-rule { display: none; }
+[data-look='plain'] .drawer, [data-look='plain'] .hpage { background: #FFFFFF; }
+[data-look='plain'] .home-brand, [data-look='plain'] .min-brand, [data-look='plain'] .brand { font-family: var(--f-brand); font-weight: 600; letter-spacing: -0.02em; }
+[data-look='plain'] .home-brand { font-family: var(--f-he); font-weight: 500; letter-spacing: 0; }
+[data-look='plain'] .home-hello { font-family: var(--f-ui); font-style: normal; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+
+/* Buttons: white pills with a hairline; main actions solid black */
+[data-look='plain'] .btn, [data-look='plain'] .chip, [data-look='plain'] .min-pill, [data-look='plain'] .min-step { background: #FFFFFF; border: 1px solid #E5E5E5; color: #0D0D0D; border-radius: 999px; font-family: var(--f-ui); font-weight: 500; box-shadow: none; }
+[data-look='plain'] .btn:hover, [data-look='plain'] .chip:hover { background: #F4F4F4; }
+[data-look='plain'] .btn.primary, [data-look='plain'] .min-talk-pill, [data-look='plain'] .min-talk, [data-look='plain'] .send, [data-look='plain'] .min-round { background: #0D0D0D; border-color: #0D0D0D; color: #FFFFFF; box-shadow: none; }
+[data-look='plain'] .min-round.live { background: #D92D20; }
+[data-look='plain'] .min-icon { color: #0D0D0D; }
+[data-look='plain'] .seg { background: #F4F4F4; border: 0; border-radius: 999px; padding: 3px; gap: 3px; }
+[data-look='plain'] .seg button { border-radius: 999px; color: #5D5D5D; font-family: var(--f-ui); font-weight: 500; }
+[data-look='plain'] .seg button + button { border-left: 0; }
+[data-look='plain'] .seg button.on { background: #FFFFFF; color: #0D0D0D; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+[data-look='plain'] .min-menu, [data-look='plain'] .min-sheet, [data-look='plain'] .smap, [data-look='plain'] .hx-card, [data-look='plain'] .min-reply { background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 16px; box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.2); }
+[data-look='plain'] .min-tabs { background: #F4F4F4; border-radius: 999px; padding: 3px; }
+[data-look='plain'] .min-tabs button { border-radius: 999px; color: #5D5D5D; font-weight: 500; }
+[data-look='plain'] .min-tabs button.on { background: #FFFFFF; color: #0D0D0D; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+[data-look='plain'] .daf-dock .daf-bar { background: #FFFFFF; border: 1px solid #E5E5E5; box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.2); }
+[data-look='plain'] .daf-dock .daf-bar button { color: #0D0D0D; }
+[data-look='plain'] .ai-note { color: #8F8F8F; }
+
+/* The text */
+[data-look='plain'] .sefer .line:hover { background: transparent; }
+[data-look='plain'] .sefer .line.open, [data-look='plain'] .sefer .line.focus { background: transparent; box-shadow: inset 2px 0 0 #0D0D0D; }
+[data-look='plain'] .line .num { color: #8F8F8F; font-family: var(--f-ui); }
+[data-look='plain'] .line .en { color: #0D0D0D; }
+[data-look='plain'] .sefer .comm-btn, [data-look='plain'] .sefer.embedded.tools .comm-btns .comm-btn { background: #FFFFFF; border: 1px solid #E5E5E5; color: #0D0D0D; border-radius: 999px; font-family: var(--f-ui); font-weight: 500; box-shadow: none; }
+[data-look='plain'] .sefer .comm-btn.on, [data-look='plain'] .sefer.embedded.tools .comm-btns .comm-btn.on { background: #0D0D0D; border-color: #0D0D0D; color: #FFFFFF; }
+[data-look='plain'] .sefer .comm-btn.ai, [data-look='plain'] .sefer.embedded.tools .comm-btns .comm-btn.ai { background: #F4F4F4; border-color: #F4F4F4; color: #0D0D0D; font-weight: 600; }
+[data-look='plain'] .sefer .comm-btn.ai.on, [data-look='plain'] .sefer.embedded.tools .comm-btns .comm-btn.ai.on { background: #0D0D0D; border-color: #0D0D0D; color: #FFFFFF; }
+[data-look='plain'] .sefer .comm-btn.more { color: #5D5D5D; }
+[data-look='plain'] .comm, [data-look='plain'] .quote, [data-look='plain'] .pin-inner { border-inline-start-color: #E5E5E5; }
+[data-look='plain'] .min-comm { background: #F9F9F9; border-inline-start: 2px solid #E5E5E5; }
+[data-look='plain'] .lx-src { background: transparent; border-color: #0D0D0D; }
+[data-look='plain'] .smap-btns .smap-btn.on { background: #0D0D0D; color: #FFFFFF; border-color: #0D0D0D; }
+
+/* Conversation: your words in a grey bubble on the right, the answers plain on the page */
+[data-look='plain'] .turn.them .say, [data-look='plain'] .min-them { background: transparent; border: 0; box-shadow: none; }
+[data-look='plain'] .turn.me .say, [data-look='plain'] .min-me { background: #F4F4F4; color: #0D0D0D; border-radius: 22px; padding: 10px 16px; }
+[data-look='plain'] .composer-inner { background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 28px; box-shadow: 0 4px 16px -6px rgba(0, 0, 0, 0.12); }
+
+/* Home */
+[data-look='plain'] .home-card, [data-look='plain'] .home-list { background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 20px; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+[data-look='plain'] .home-card-label { color: #8F8F8F; letter-spacing: .06em; }
+[data-look='plain'] .home-card-go { background: #0D0D0D; color: #FFFFFF; }
+[data-look='plain'] .home-row-icon { background: #F4F4F4; color: #0D0D0D; border-radius: 50%; }
+[data-look='plain'] .home-talk-btn { background: #0D0D0D; color: #FFFFFF; box-shadow: none; }
+[data-look='plain'] .home-talk-btn.live { background: #D92D20; }
+
+/* Settings */
+[data-look='plain'] .drawer-body, [data-look='plain'] .hpage-body { --sg-bg: #FFFFFF; }
+[data-look='plain'] .sg-title { font-weight: 600; letter-spacing: -0.01em; }
+[data-look='plain'] .sg-1.open > .sg-head { background: #F9F9F9; box-shadow: inset 3px 0 0 #0D0D0D, 0 1px 0 #E5E5E5; }
+[data-look='plain'] .sg-arrow, [data-look='plain'] .sg-1.open > .sg-head .sg-arrow { color: #0D0D0D; }
+[data-look='plain'] .sg-close { color: #0D0D0D; }
+[data-look='plain'] .field select, [data-look='plain'] .field input[type='number'], [data-look='plain'] .field input[type='text'] { background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; }
+
+/* The look picker's little preview */
+.mini.plain { background: #FFFFFF; }
+.mini.plain .m-head { background: #FFFFFF; border-bottom: 1px solid #E5E5E5; }
+.mini.plain .m-src { background: #F4F4F4; border: 0; border-radius: 8px; }
+.mini.plain .m-line { background: #0D0D0D; opacity: 0.75; }
