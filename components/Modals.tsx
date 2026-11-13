@@ -1,11 +1,16 @@
 'use client';
+import { useState } from 'react';
 import { isExperience } from '@/lib/experiences';
 import { Look, LOOKS } from '@/lib/config';
 
+// Only the chosen look shows until "Show all looks" is tapped (Nov 13: fewer choices in view, less to take in).
 export function LookPicker({ value, onPick }: { value: Look; onPick: (l: Look) => void }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? LOOKS : LOOKS.filter((l) => l.id === value).concat(LOOKS.some((l) => l.id === value) ? [] : LOOKS.slice(0, 1));
   return (
+    <>
     <div className="looks" role="radiogroup" aria-label="Look">
-      {LOOKS.map((l) => (
+      {shown.map((l) => (
         <button key={l.id} className={`look ${value === l.id ? 'on' : ''}`} role="radio" aria-checked={value === l.id} onClick={() => onPick(l.id)}>
           <span className={`mini ${l.id}${isExperience(l.id) ? ' experience-mini' : ''}`} aria-hidden="true">
             <span className="m-head" />
@@ -19,6 +24,8 @@ export function LookPicker({ value, onPick }: { value: Look; onPick: (l: Look) =
         </button>
       ))}
     </div>
+    <button className="show-all" onClick={() => setAll(!all)}>{all ? 'Show only my look ▴' : `Show all looks (${LOOKS.length}) ▾`}</button>
+    </>
   );
 }
 

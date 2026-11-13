@@ -2745,3 +2745,5 @@ body[data-full] .min-quiet.full .min-row, .daf-dock .daf-bar, .min-full-ctl, [da
 .comm-outline-pts li { margin: 3px 0; }
 .comm-outline-pts ul { margin: 2px 0 4px; padding-left: 18px; color: var(--soft); font-size: .95em; }
 .wait-dots { display: none; }
+/* "Show all looks / voices / voice tests" (Nov 13): the long lists stay closed until asked for. */
+.show-all { display: block; margin: 10px 0 4px; padding: 6px 0; background: none; border: 0; font: inherit; font-size: 14px; color: var(--accent); cursor: pointer; text-align: left; }

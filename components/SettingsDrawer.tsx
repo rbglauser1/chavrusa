@@ -31,6 +31,7 @@ function Seg<T extends string>({ value, options, onPick }: { value: T; options: 
 export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive, part = 'all', asPage = false }: Props) {
   const themes = part !== 'settings', rest = part !== 'themes';
   const [editing, setEditing] = useState<CustomStyle | null>(null);
+  const [voiceMore, setVoiceMore] = useState(false); // voice tests and fine-tuning: hidden until asked for (Nov 13)
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [newMem, setNewMem] = useState('');
   const [costs, setCosts] = useState<{ totalUsd: number; byModel: Record<string, { exchanges: number; usd: number }> } | null>(null);
@@ -408,6 +409,30 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                     : 'A short, literal translation in the chavrusa’s own words, the way a rebbi translates inside in shiur. When the app reads a line by itself (no brain), it uses the literal words instead.'} In calls; applies from the next thing he reads.</div>
               </div>
             </Group>
+            <Group id="voice-save" level={2} title="Pausing to save" hint={s.liveIdleSec ? `after ${s.liveIdleSec < 60 ? `${s.liveIdleSec} s` : `${s.liveIdleSec / 60} min`} quiet` : 'never'}>
+              <div className="field">
+                  <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
+                  <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
+                    <option value="15">15 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="120">2 minutes</option>
+                    <option value="300">5 minutes</option>
+                    <option value="0">Never pause</option>
+                  </select>
+                  {s.saver !== false && s.liveIdleSec > 15 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 15 quiet seconds.</div>}
+              </div>
+              {s.liveIdleSec > 0 && (
+                <div className="field">
+                  <label>When paused</label>
+                  <Seg value={s.liveWake ? 'wake' : 'tap'} options={[['wake', 'Start talking to resume'], ['tap', 'Tap Resume']]} onPick={(v) => onChange({ liveWake: v === 'wake' })} />
+                  {s.liveWake && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Your first second or two may be missed while it reconnects. While paused, the microphone listens only on your device; nothing is sent until you speak.</div>}
+                </div>
+              )}
+            </Group>
+            <button className="show-all" onClick={() => setVoiceMore(!voiceMore)}>{voiceMore ? 'Hide voice tests and fine-tuning ▴' : 'Voice tests and fine-tuning ▾'}</button>
+            {voiceMore && (
+              <>
             <Group id="voice-pron" level={2} title="Pronunciation and tests" hint={`Vowel key ${({ key: 'A', keyB: 'B', keyC: 'C', keyD: 'D' } as Record<string, string>)[(s.liveRules?.length ? s.liveRules : ['key']).find((r) => /^key[BCD]?$/.test(r)) ?? 'key'] ?? 'A'} · tests · say it my way`}>
               {(() => {
                 // The Vowel key's versions, to choose and simply learn with (no test needed). Each is the same key with
@@ -471,27 +496,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 </div>
               )}
             </Group>
-            <Group id="voice-save" level={2} title="Pausing to save" hint={s.liveIdleSec ? `after ${s.liveIdleSec < 60 ? `${s.liveIdleSec} s` : `${s.liveIdleSec / 60} min`} quiet` : 'never'}>
-              <div className="field">
-                  <label htmlFor="live-idle">Pause the call when it’s quiet for (saves cost)</label>
-                  <select id="live-idle" value={String(s.liveIdleSec)} onChange={(e) => onChange({ liveIdleSec: Number(e.target.value) })}>
-                    <option value="15">15 seconds</option>
-                    <option value="30">30 seconds</option>
-                    <option value="60">1 minute</option>
-                    <option value="120">2 minutes</option>
-                    <option value="300">5 minutes</option>
-                    <option value="0">Never pause</option>
-                  </select>
-                  {s.saver !== false && s.liveIdleSec > 15 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Saver is on, so the call pauses after 15 quiet seconds.</div>}
-              </div>
-              {s.liveIdleSec > 0 && (
-                <div className="field">
-                  <label>When paused</label>
-                  <Seg value={s.liveWake ? 'wake' : 'tap'} options={[['wake', 'Start talking to resume'], ['tap', 'Tap Resume']]} onPick={(v) => onChange({ liveWake: v === 'wake' })} />
-                  {s.liveWake && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Your first second or two may be missed while it reconnects. While paused, the microphone listens only on your device; nothing is sent until you speak.</div>}
-                </div>
-              )}
-            </Group>
             <Group id="voice-rec" level={2} title="Call recorder" hint="Send me a call's log">
               <CallLogs />
             </Group>
@@ -506,6 +510,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
               <GeminiPronunciation s={s} onChange={onChange} />
             </Group>
+              </>
+            )}
             <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
           </Group>
 

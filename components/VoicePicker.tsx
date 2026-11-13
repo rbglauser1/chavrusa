@@ -137,9 +137,12 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
     catch (e) { setMsg((e as Error).message); setPlaying(null); }
   }
 
+  // Only the chosen voice shows until "Show all voices" is tapped (Nov 13).
+  const [all, setAll] = useState(false);
+  const shown = all ? voices : voices.filter((v) => v.id === value).concat(voices.some((v) => v.id === value) ? [] : voices.slice(0, 1));
   return (
     <div className="voice-list" role="radiogroup">
-      {voices.map((v) => (
+      {shown.map((v) => (
         <div key={v.id} className={`voice-row ${value === v.id ? 'on' : ''}`}>
           <button className="voice-pick" role="radio" aria-checked={value === v.id} onClick={() => onPick(v.id)}>
             <span className="dot" aria-hidden="true" />{v.name}
@@ -149,6 +152,7 @@ export function VoicePicker({ kind, voices, value, onPick, disabled }: {
           </button>
         </div>
       ))}
+      {voices.length > 1 && <button className="show-all" onClick={() => setAll(!all)}>{all ? 'Show only my voice ▴' : `Show all voices (${voices.length}) ▾`}</button>}
       {disabled && <div className="muted" style={{ fontSize: 12 }}>End the current call to hear samples.</div>}
       {msg && <div className="goto-msg" style={{ padding: 0 }}>{msg}</div>}
     </div>
