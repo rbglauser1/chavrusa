@@ -56,7 +56,7 @@ export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () 
       {text && <div className="ai-note left">Written by AI · AI makes mistakes{data.sources.length ? ' · tap a source to check it inside' : ''}</div>}
       {data ? <><WithSources text={data.text} sources={data.sources} /><LineChat lineRef={lineRef} onClose={() => {}} follow={{ about: data.text }} /></>
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
-        : <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Reading the sources and explaining… (the first time takes a little while)</div>}
+        : <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
     </div>
   );
 }
@@ -80,7 +80,7 @@ function Ideas({ lineRef, titles }: { lineRef: string; titles: Record<string, st
     return () => { gone = true; };
   }, [lineRef, tick]);
   if (err) return <div className="muted lx-ideas">{err} {err.includes('just now') && <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button>}</div>;
-  if (!points) return <div className="muted lx-ideas"><span className="wait-dots"><span /><span /><span /></span>Reading the sources…</div>;
+  if (!points) return <div className="muted lx-ideas"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>;
   return (
     <div className="lx-ideas">
       {points.map((p, i) => (

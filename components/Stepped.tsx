@@ -70,7 +70,7 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
         <div className="comm-outline" onClick={(e) => e.stopPropagation()}>
           <div className="ai-note left">Outline by AI · AI makes mistakes · check it inside</div>
           {outline ? <Bullets text={outline} className="comm-outline-pts" />
-            : olState === 'loading' ? <div className="gist muted"><span className="wait-dots"><span /><span /><span /></span>Making the outline…</div>
+            : olState === 'loading' ? <div className="gist muted"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>
             : <div className="gist muted">Couldn’t make the outline just now. <button className="linklike" onClick={(e) => { e.stopPropagation(); loadOutline(); }}>Try again</button></div>}
         </div>
       )}
@@ -88,7 +88,7 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
           </div>
         ) : (
           <>
-            {state === 'loading' ? <div className="gist muted"><span className="wait-dots"><span /><span /><span /></span>Breaking it into steps…</div>
+            {state === 'loading' ? <div className="gist muted"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>
               : <div className="gist muted">{/one step/.test(why) ? 'This piece is short: a single step.' : 'Couldn’t break this one into steps just now. The original is below, unchanged.'} {!/one step/.test(why) && <button className="linklike" onClick={(e) => { e.stopPropagation(); load(); }}>Try again</button>}</div>}
             {children}
           </>
