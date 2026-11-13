@@ -15,7 +15,7 @@ function OnIt({ x, onOpen }: { x: Item; onOpen?: (ref: string) => void }) {
     fetch(`/api/halacha?ref=${encodeURIComponent(x.ref)}`).then((r) => r.json()).then((d) => { if (!gone) setOn(Array.isArray(d.on) ? d.on : []); }).catch(() => { if (!gone) setOn([]); });
     return () => { gone = true; };
   }, [x.ref]);
-  if (!on) return <li className="muted htr-wait">Looking on {x.title}…</li>;
+  if (!on) return <li className="muted htr-wait"><span className="wait-dots"><span /><span /><span /></span>Looking on {x.title}…</li>;
   if (!on.length) return null;
   return <>{on.map((y) => <LinkRow key={y.ref} x={y} onOpen={onOpen} />)}</>;
 }

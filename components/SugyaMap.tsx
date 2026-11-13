@@ -84,7 +84,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
     <div className="smap-back" onClick={onClose}>
       <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
         <div className="smap-head"><span>{title} · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
-        {!data && !err && <div className="muted smap-wait">Laying it out…</div>}
+        {!data && !err && <div className="muted smap-wait"><span className="wait-dots"><span /><span /><span /></span>Laying it out…</div>}
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {data && (
           <>
@@ -92,7 +92,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
             {data.overview && <div className="smap-overview"><span className="smap-label">The big picture</span><Bullets text={data.overview} /></div>}
             <div className="smap-views">
               {views === null ? <button className="smap-views-btn" onClick={loadViews}>⚖ Who holds what</button>
-                : views === 'loading' ? <div className="muted">Laying out who holds what…</div>
+                : views === 'loading' ? <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Laying out who holds what…</div>
                 : views === 'failed' ? <div className="muted">Couldn’t make the table just now. <button className="linklike" onClick={loadViews}>Try again</button></div>
                 : !views.disputes.length ? <div className="muted">No machlokes on this {/\d[ab]$/.test(refText) ? 'amud' : 'text'}.</div>
                 : (

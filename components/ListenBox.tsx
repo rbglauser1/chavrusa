@@ -46,7 +46,7 @@ export default function ListenBox({ refText, heRef, onClose }: { refText: string
           <button className="btn primary" onClick={() => void make()}>Make the recording</button>
         </>
       )}
-      {state === 'making' && <div className="muted">Writing the talk and recording it… about a minute. You can keep learning; it will be here when it’s ready.</div>}
+      {state === 'making' && <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Writing the talk and recording it… about a minute. You can keep learning; it will be here when it’s ready.</div>}
       {state === 'failed' && <div className="muted">{err} <button className="linklike" onClick={() => void make()}>Try again</button></div>}
       {state === 'ready' && (
         <>

@@ -71,7 +71,7 @@ export default function LineChat({ lineRef, onClose }: { lineRef: string; onClos
               <button className="lchat-keep" onClick={() => void saveOne(k)} disabled={m.saved}>{m.saved ? '✓ Saved' : '✎ Save to Notebook'}</button>
             </div>
           ))}
-        {busy && <div className="muted lchat-wait">Thinking…</div>}
+        {busy && <div className="muted lchat-wait"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
         {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') void send(last.content, true); }}>Try again</button></div>}
         <div ref={endRef} />
       </div>

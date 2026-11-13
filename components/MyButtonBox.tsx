@@ -24,7 +24,7 @@ export default function MyButtonBox({ id, name, refText, onClose }: { id: string
       {data && <div className="ai-note left">Written by AI · AI makes mistakes</div>}
       {data ? <WithSources text={data.text} sources={data.sources} />
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
-        : <div className="muted">Working on it…</div>}
+        : <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Working on it…</div>}
     </div>
   );
 }

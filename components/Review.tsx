@@ -26,7 +26,7 @@ export default function Review({ refText, onGo, onClose }: { refText: string; on
     <div className="smap-back" onClick={onClose}>
       <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Review questions">
         <div className="smap-head"><span>Review · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
-        {!qs && !err && <div className="muted smap-wait">Writing the questions…</div>}
+        {!qs && !err && <div className="muted smap-wait"><span className="wait-dots"><span /><span /><span /></span>Writing the questions…</div>}
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {qs && (
           <>
