@@ -28,7 +28,7 @@ async function makeIntro(ref: string): Promise<string> {
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runAnthropic;
   const r = await run({
-    model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
+    lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const model = MODELS.anthropic.middle;
     let text = lines.map((x) => `${x.who}: ${x.text}`).join('\n');
     if (text.length > 30000) text = text.slice(-30000);
-    const r = await runAnthropic({ model: model.id, system: PROMPT, history: [{ role: 'user', content: text }], tools: [], execute: async () => '', effort: 'low', thinking: 'disabled', maxSteps: 1 });
+    const r = await runAnthropic({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: text }], tools: [], execute: async () => '', effort: 'low', thinking: 'disabled', maxSteps: 1 });
     await logCost({ sessionId: null, kind: 'daysummary', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
     const out = r.text.replace(/\*\*|__|^#+\s*/gm, '').trim();
     if (!out) return NextResponse.json({ skipped: true });

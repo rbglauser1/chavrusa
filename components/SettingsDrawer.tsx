@@ -110,6 +110,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           <Group id="ai" title="Depth, AI and cost" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''}`}>
             <div className="field">
+              <label>The AI writes in</label>
+              <Seg value={s.aiLang ?? 'en'} options={[['en', 'English'], ['he', 'Hebrew'], ['both', 'Both']]} onPick={(v) => onChange({ aiLang: v as 'en' | 'he' | 'both' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Everything the AI writes on the screen: the chat, ✦ Chat, Explain, Ideas, the sugya map, outlines, steps, review questions, Chazara and notes. Both: the English, then the same in Hebrew. Quotes stay as written. The voice in a call stays in English. Things already made are made again in the new language the first time you open them (a few cents each), then kept.</div>
+            </div>
+            <div className="field">
               <label>Company</label>
               <Seg<Provider> value={s.provider} options={[['anthropic', 'Claude'], ['openai', 'OpenAI']]} onPick={(v) => onChange({ provider: v })} />
             </div>

@@ -45,7 +45,7 @@ async function makeIdeas(base: string, n: number): Promise<{ points: { text: str
   if (!srcs.length) return { points: [] };
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const r = await runAnthropic({
-    model: model.id, system: PROMPT,
+    lang: true, model: model.id, system: PROMPT,
     history: [{ role: 'user', content: `The line: ${base}, line ${n}\n${he}\n${en}\n\nThe linked seforim:\n\n${srcs.join('\n\n')}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });

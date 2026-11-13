@@ -69,7 +69,7 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runAnthropic;
   const r = await run({
-    model: model.id, system: promptFor(k), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
+    lang: true, model: model.id, system: promptFor(k), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
   await logCost({ sessionId: null, kind: 'map', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});

@@ -40,7 +40,7 @@ async function run(b: MyButton, ref: string): Promise<{ text: string; sources: s
   const library = b.reach === 'library';
   const model = await keptModel();
   const r = await runAnthropic({
-    model: model.id,
+    lang: true, model: model.id,
     system: `${GUARD}${library ? '\nYou have the whole library: "links" shows what is linked to a line, "read" opens any sefer, "search" and "find" look further. Read what the request needs, no more.' : ''}\n\nTHE LEARNER'S BUTTON: "${b.name}"\nHis request: ${b.prompt}`,
     history: [{ role: 'user', content: context }],
     tools: library ? LIBRARY_TOOLS : [], execute: library ? libraryExecutor(approved, used) : async () => '',

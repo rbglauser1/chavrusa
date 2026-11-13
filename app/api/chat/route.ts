@@ -355,6 +355,7 @@ export async function POST(req: NextRequest) {
         const run = settings.provider === 'anthropic' ? runAnthropic : runOpenAI;
         const result = await run({
           model: model.id,
+          lang: !spoken, // typed turns: the language chosen in Settings; a call stays in English for the voice
           system,
           history: [
             // Saver keeps only the recent conversation on spoken turns: less to read every time.

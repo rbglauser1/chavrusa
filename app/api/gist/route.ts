@@ -28,7 +28,7 @@ async function makeGists(title: string, refs: string[]): Promise<Record<string, 
   const body = items.map((x, i) => `[${i + 1}] ${clip(x.he)}`).join('\n\n').slice(0, 30000);
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runAnthropic;
-  const r = await run({ model: model.id, system: PROMPT, history: [{ role: 'user', content: `${title}\n\n${body}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  const r = await run({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${title}\n\n${body}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'gist', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   let arr: unknown = [];
   try { arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]'); } catch { arr = []; }

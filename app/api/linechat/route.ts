@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const first: Msg = { role: 'user', content: `We are learning ${s.ref}, line ${n} (its reference: ${s.ref}:${n}).\n\n${lines.slice(0, 26000)}${comm}\n\n---\n${msgs[0].content}` };
     const history = [first, ...msgs.slice(1)];
     const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
-    const r = await run({ model: model.id, system: `${PROMPT}\n\n${SCOPE}`, history, tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: 5 });
+    const r = await run({ lang: true, model: model.id, system: `${PROMPT}\n\n${SCOPE}`, history, tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: 5 });
     await logCost({ sessionId: null, kind: 'linechat', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
     const text = r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, '').trim();
     if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });

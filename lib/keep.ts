@@ -1,4 +1,5 @@
 import 'server-only';
+import { aiLang } from './aiLang';
 import { readJson, safeKey, writeJson } from './store';
 import { getSettings } from './db';
 
@@ -15,7 +16,10 @@ const pathOf = (kind: string, key: string) => `ai/${safeKey(kind)}/${safeKey(key
 export async function keep<T>(kind: string, key: string, make: () => Promise<T>, empty?: (v: T) => boolean): Promise<T> {
   // Made by Sonnet (Settings → Made once and kept): kept apart from Opus's (translations are the same either way).
   const sonnet = !kind.startsWith('translate') && (await getSettings().catch(() => null))?.keptModel === 'sonnet';
-  const path = pathOf(sonnet ? `${kind}-sonnet` : kind, key);
+  // Written in Hebrew, or in both (Settings → The AI writes in): kept apart from the English. Translations: always one.
+  const lang = kind.startsWith('translate') ? 'en' : await aiLang();
+  const kinded = `${kind}${lang === 'en' ? '' : `-${lang}`}`;
+  const path = pathOf(sonnet ? `${kinded}-sonnet` : kinded, key);
   const had = await readJson<{ v: T }>(path);
   if (had && had.v !== undefined) return had.v;
   const v = await make();

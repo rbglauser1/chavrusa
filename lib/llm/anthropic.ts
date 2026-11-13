@@ -3,7 +3,10 @@ import { readSSE } from './sse';
 import { RunOptions, RunResult } from './types';
 
 // Claude Messages API, streamed, with a tool-use loop. Text is passed to onText as it arrives.
+import { aiLang, langRule } from '../aiLang';
+
 export async function runAnthropic(o: RunOptions): Promise<RunResult> {
+  if (o.lang) { const extra = langRule(await aiLang()); if (extra) o = { ...o, system: o.system + extra }; }
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set.');
 

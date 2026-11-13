@@ -81,6 +81,9 @@ export const SET_PAGES: SetPage[] = [
     { label: 'Who explains first', opts: ['I do', 'Chavrusa does'], on: 1, text: '“I do”: you try to explain each piece first and the chavrusa checks you. “Chavrusa does”: it explains and you follow.' },
     { label: 'Nusach and pronunciation', opts: ['Ashkenaz', 'Sephardi'], on: 0, text: 'How the Hebrew and Aramaic are said: yeshivish Ashkenaz (kamatz “aw,” ת without a dagesh “s”) or Sephardi (Israeli).' },
   ] },
+  { id: 'set-lang', chapter: 'AI and cost', title: 'Language', rows: [
+    { label: 'The AI writes in', opts: ['English', 'Hebrew', 'Both'], on: 0, text: 'Everything the AI writes: English, Hebrew, or English then Hebrew. The voice stays English.' },
+  ] },
   { id: 'set-ai', chapter: 'AI and cost', title: 'Depth, AI and cost', rows: [
     { label: 'Company', opts: ['Claude', 'OpenAI'], on: 0, text: 'Whose AI is the brain that plans and explains: Claude (Anthropic) or OpenAI.' },
     { label: 'Depth', opts: ['Basic', 'Standard', 'Deep'], on: 1, text: 'How strong the brain is. Deeper thinks harder and costs more; the price per million words is shown under it.' },

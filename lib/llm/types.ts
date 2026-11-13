@@ -27,4 +27,5 @@ export interface RunOptions {
   maxSteps?: number;
   maxTokens?: number;  // the longest reply allowed (default 4000)
   onText?: (delta: string) => void; // called with each piece of text as it is written
+  lang?: boolean;      // write in the language chosen in Settings → The AI writes in (English / Hebrew / both)
 }

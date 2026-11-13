@@ -3,7 +3,10 @@ import { readSSE } from './sse';
 import { RunOptions, RunResult } from './types';
 
 // OpenAI Responses API, streamed, with a function-calling loop (GPT-6 tools require the Responses API).
+import { aiLang, langRule } from '../aiLang';
+
 export async function runOpenAI(o: RunOptions): Promise<RunResult> {
+  if (o.lang) { const extra = langRule(await aiLang()); if (extra) o = { ...o, system: o.system + extra }; }
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('OPENAI_API_KEY is not set.');
 

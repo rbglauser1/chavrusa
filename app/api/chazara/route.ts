@@ -33,7 +33,7 @@ async function recapOf(sess: SessionRow): Promise<Recap | null> {
   await needCredit();
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runAnthropic;
-  const r = await run({ model: model.id, system: PROMPT, history: [{ role: 'user', content: convo }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  const r = await run({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: convo }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: sess.id, kind: 'chazara', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   try {
     const j = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{}');

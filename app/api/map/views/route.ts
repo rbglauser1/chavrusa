@@ -36,7 +36,7 @@ async function makeViews(ref: string): Promise<{ disputes: Dispute[]; made: bool
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const model = await keptModel();
-  const r = await runAnthropic({ model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  const r = await runAnthropic({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'mapviews', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const str = (x: unknown, max: number) => clipWords(x, max);
   let d: { disputes?: unknown };

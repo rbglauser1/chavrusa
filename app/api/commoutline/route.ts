@@ -43,7 +43,7 @@ async function makeOutline(ref: string): Promise<{ outline: string }> {
   const en = c.en.length ? `\n\nSefaria's English of the piece (may be missing or loose):\n${c.en.join(' ').replace(/<[^>]+>/g, '').slice(0, 4000)}` : '';
   const model = await keptModel();
   const r = await runAnthropic({
-    model: model.id, system: PROMPT,
+    lang: true, model: model.id, system: PROMPT,
     history: [{ role: 'user', content: `${on}The piece (${c.ref}):\n${piece}${en}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 2000,
   });

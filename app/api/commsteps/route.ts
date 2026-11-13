@@ -49,7 +49,7 @@ async function makeSteps(ref: string): Promise<{ steps: Step[] }> {
   let lastErr = 'The steps did not come back in the right form.';
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await runAnthropic({
-      model: model.id, system: PROMPT,
+      lang: true, model: model.id, system: PROMPT,
       history: [{ role: 'user', content: `${on}The piece (${c.ref}):\n${piece}${attempt ? '\n\n(Your last reply changed, added or dropped words. Copy every word exactly, in order.)' : ''}` }],
       tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 12000,
     });
