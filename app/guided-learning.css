@@ -230,3 +230,9 @@
 [data-look='guided-learning'] .gl-full-controls { position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); display:flex; gap:8px; z-index:80; }
 [data-look='guided-learning'] .gl-full-controls .gl-icon { box-shadow:0 2px 12px #00000015; border-radius:50%; width:46px; height:46px; }
 [data-look='guided-learning'] .gl-tools-menu small { display:block; font-size:10px; color:var(--soft); margin-top:4px; }
+
+/* These settings scroll inside their own pane. Inherited document-level sticky
+   offsets otherwise pin section headings over the palette and font controls. */
+[data-look='guided-learning'] .hpage-body { --sg-top:0px; }
+[data-look='guided-learning'] .hpage-body .sg { scroll-margin-top:8px; }
+[data-look='guided-learning'] .hpage-body .sg.open>.sg-head { position:static; top:auto; z-index:auto; }
