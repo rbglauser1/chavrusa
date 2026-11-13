@@ -3,9 +3,11 @@
 // are shown cut into steps, each with a label, punctuation, and one line of English; tapped again, the piece as it is.
 // Shown on Tosafos always (Settings → Extras → Tosafos steps), and on any other long meforesh when Steps is on.
 import { useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { Bullets } from './Bullets';
 
 type Step = { label: string; he: string; en: string };
 const cache = new Map<string, Step[]>();
+const outlines = new Map<string, string>();
 /** Long enough to be worth breaking up (about 30 words). */
 export const longPiece = (he: string[]) => he.join(' ').replace(/[^א-ת ]/g, '').length >= 170;
 
@@ -14,6 +16,10 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
   const [steps, setSteps] = useState<Step[] | null>(cache.get(refText) ?? null);
   const [state, setState] = useState<'idle' | 'loading' | 'failed'>('idle');
   const [why, setWhy] = useState('');
+  // Outline (Nov 13): a short bulleted outline by the AI, to read before Steps.
+  const [ol, setOl] = useState(false);
+  const [outline, setOutline] = useState<string | null>(outlines.get(refText) ?? null);
+  const [olState, setOlState] = useState<'idle' | 'loading' | 'failed'>('idle');
   const load = () => {
     setState('loading');
     fetch(`/api/commsteps?ref=${encodeURIComponent(refText)}`).then((r) => r.json())
@@ -41,10 +47,33 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
     if (Math.abs(d) > 1) { if (box) box.scrollTop += d; else window.scrollBy(0, d); }
     if (!steps && state === 'loading') return; // again when the steps arrive
     before.current = null;
-  }, [on, steps, state]);
+  }, [on, steps, state, ol, outline]);
+  // Outline (Nov 13): a short bulleted outline of the piece by the AI, to read before Steps. Opens above the piece.
+  const loadOutline = () => {
+    setOlState('loading');
+    fetch(`/api/commoutline?ref=${encodeURIComponent(refText)}`).then((r) => r.json())
+      .then((d) => { if (d.outline) { outlines.set(refText, d.outline); setOutline(d.outline); setOlState('idle'); } else setOlState('failed'); })
+      .catch(() => setOlState('failed'));
+  };
+  const flipOutline = (e: MouseEvent) => {
+    e.stopPropagation();
+    before.current = btn.current?.getBoundingClientRect().top ?? null;
+    const next = !ol; setOl(next); if (next && !outline && olState !== 'loading') loadOutline();
+  };
   return (
     <>
-      <button ref={btn} className={`steps-btn ${on ? 'on' : ''}`} onClick={flip}>{on ? '☰ Steps ▴' : '☰ Steps'}</button>
+      <div className="steps-btns">
+        <button className={`steps-btn ${ol ? 'on' : ''}`} onClick={flipOutline}>{ol ? '• Outline ▴' : '• Outline'}</button>
+        <button ref={btn} className={`steps-btn ${on ? 'on' : ''}`} onClick={flip}>{on ? '☰ Steps ▴' : '☰ Steps'}</button>
+      </div>
+      {ol && (
+        <div className="comm-outline" onClick={(e) => e.stopPropagation()}>
+          <div className="ai-note left">Outline by AI · AI makes mistakes · check it inside</div>
+          {outline ? <Bullets text={outline} className="comm-outline-pts" />
+            : olState === 'loading' ? <div className="gist muted"><span className="wait-dots"><span /><span /><span /></span>Making the outline…</div>
+            : <div className="gist muted">Couldn’t make the outline just now. <button className="linklike" onClick={(e) => { e.stopPropagation(); loadOutline(); }}>Try again</button></div>}
+        </div>
+      )}
       {!on ? children
         : steps ? (
           <div className="stepped">
@@ -59,7 +88,7 @@ export default function Stepped({ refText, children, heClass = 'he rashi' }: { r
           </div>
         ) : (
           <>
-            {state === 'loading' ? <div className="gist muted">Breaking it into steps…</div>
+            {state === 'loading' ? <div className="gist muted"><span className="wait-dots"><span /><span /><span /></span>Breaking it into steps…</div>
               : <div className="gist muted">{/one step/.test(why) ? 'This piece is short: a single step.' : 'Couldn’t break this one into steps just now. The original is below, unchanged.'} {!/one step/.test(why) && <button className="linklike" onClick={(e) => { e.stopPropagation(); load(); }}>Try again</button>}</div>}
             {children}
           </>

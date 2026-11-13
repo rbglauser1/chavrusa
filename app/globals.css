@@ -2737,3 +2737,11 @@ body[data-full] .min-quiet.full .min-row, .daf-dock .daf-bar, .min-full-ctl, [da
 /* Side margins (Settings → Lines and the English): the text a little further in from the edges. */
 [data-margin='wider'] .sefer .sefer-flow { margin-inline: 12px; }
 [data-margin='widest'] .sefer .sefer-flow { margin-inline: 26px; }
+/* Outline on a Tosafos (Nov 13): the AI's bulleted outline, before Steps. */
+.steps-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.comm-outline { margin: 2px 0 10px; padding: 10px 14px; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); font-family: var(--f-body); }
+.comm-outline .ai-note { margin-bottom: 6px; }
+.comm-outline-pts { margin: 0; padding-left: 20px; font-size: var(--en-size, 16px); line-height: 1.55; color: var(--ink); }
+.comm-outline-pts li { margin: 3px 0; }
+.comm-outline-pts ul { margin: 2px 0 4px; padding-left: 18px; color: var(--soft); font-size: .95em; }
+.wait-dots { display: none; }
