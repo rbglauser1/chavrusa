@@ -517,6 +517,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           <Group id="extras" title="Extras" hint={[s.cacheTexts !== false && 'saved texts', s.notes && 'notes', s.sugyaMap && 'sugya map', s.review && 'review', s.chazara && 'chazara', s.progress && 'progress', s.driveMode && 'driving', s.offline && 'offline'].filter(Boolean).join(' · ') || 'all off'}>
             <div className="field">
+              <label>AI tools</label>
+              <Seg value={s.aiHub === false ? 'lines' : 'hub'} options={[['hub', 'In one ✦ button'], ['lines', 'Under each line']]} onPick={(v) => onChange({ aiHub: v === 'hub' })} />
+              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>One ✦: a floating button at the bottom right with Explain, Chat and Ideas for the line, and the Sugya map, Review questions, Source sheet and Listen for the amud. Under each line: the ✦ buttons under every line and a row at the top of the amud, as before. Outline and Steps stay in the Tosafos either way.</div>
               <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
               {([
                 ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],

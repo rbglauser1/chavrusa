@@ -9,6 +9,7 @@ import { Dibbur } from './Dibbur';
 import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
 import MyButtonBox from './MyButtonBox';
+import AiHub, { type HubAction } from './AiHub';
 import LineChat from './LineChat';
 import Clamp from './Clamp';
 import Elsewhere from './Elsewhere';
@@ -120,6 +121,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const amudTop = useRef<HTMLDivElement | null>(null); // where the amud's AI boxes open (map, review, listen)
   // What scrolls: the Sefer's own body, or (full screen in Quiet chat) the whole page.
   const sc = (): HTMLElement | null => (docScroll && typeof document !== 'undefined' ? (document.scrollingElement as HTMLElement) : bodyRef.current);
   const viewTop = (el: HTMLElement) => (docScroll ? 0 : el.getBoundingClientRect().top);
@@ -498,7 +500,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     pendingAmud.current = null;
     window.setTimeout(() => { if (p.what === 'map') setMapOpen(true); else if (p.what === 'review') setReviewOpen(true); else setListenOpen(true); }, 300);
   }, [src?.ref]);
+  const hubOn = settings.aiHub !== false;
   const amudRow = (s2: SourceData, main: boolean) => {
+    if (hubOn) return null; // the ✦ has them (AiHub)
     const show = (settings.sugyaMap || settings.review || settings.listenDaf !== false || settings.sourceSheet !== false || (main && amudButtons.length > 0)) && !isComm && !/:\d+(-\d+)?$/.test(s2.ref) && !/^Mine /.test(s2.ref);
     if (!show) return null;
     const open = (what: 'map' | 'review' | 'listen') => {
@@ -617,6 +621,37 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     setOpen((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
   }
 
+  // The ✦ (AiHub): which line it is about — the one you tapped, else the first line showing on the screen.
+  const hubLine = (): number | null => {
+    if (picked != null) return picked;
+    if (open.size) return Math.max(...open);
+    const els = [...(bodyRef.current?.querySelectorAll<HTMLElement>('[data-line]') ?? [])].filter((e) => /^\d+$/.test(e.dataset.line ?? ''));
+    for (const e of els) if (e.getBoundingClientRect().bottom > 120) return Number(e.dataset.line) - 1;
+    return els.length ? 0 : null;
+  };
+  const showLine = (i: number) => window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${i + 1}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
+  const addIn = (set: (f: (x: Set<number>) => Set<number>) => void, i: number) => { set((x) => new Set(x).add(i)); showLine(i); };
+  const toAmud = () => window.setTimeout(() => amudTop.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
+  const hubLineActs = (i: number): HubAction[] => {
+    if (!lineX || !src) return [];
+    const L = rel?.ref === src.ref ? rel.lines[partNum(i)] : undefined;
+    return [
+      ...(settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, i) }] : []),
+      ...(settings.lineChat !== false ? [{ label: '✦ Chat', run: () => addIn(setCOpen, i) }] : []),
+      ...(settings.lineSources !== false && L && hasIdeas(L) ? [{ label: '✦ Ideas', run: () => addIn(setIOpen, i) }] : []),
+      ...lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setBOpen(`${i}|${b.id}`); showLine(i); } })),
+    ];
+  };
+  const hubAmud: HubAction[] = !src || isComm || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
+    ...(settings.sugyaMap ? [{ label: `🗺 ${kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}`, run: () => { setMapOpen(true); toAmud(); } }] : []),
+    ...(settings.review ? [{ label: '✓ Review questions', run: () => { setReviewOpen(true); toAmud(); } }] : []),
+    ...(settings.sourceSheet !== false && kind !== 'none' ? [{ label: '📄 Source sheet', run: () => setSheetFor(src) }] : []),
+    ...(settings.listenDaf !== false && kind !== 'none' ? [{ label: '🎧 Listen', run: () => { setListenOpen(true); toAmud(); } }] : []),
+    ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
+  ];
+  const hub = hubOn && src && !isComm && !showLib && (lineX || hubAmud.length > 0)
+    ? <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
+    : null;
   return (
     <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''}`} aria-label="Sefer">
       {full && (
@@ -751,6 +786,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               <div className="he">{src.heRef}</div>
               <small>{src.ref}{src.translation ? ` · Translation: ${src.translation}` : ''}</small>
             </div>
+            <div ref={amudTop} />
             {src && amudRow(src, true)}
             {sheetFor && <SheetView src={sheetFor} opts={{ withMap: !!settings.sugyaMap, nikud: !!settings.nikud, lines: rel?.ref === sheetFor.ref ? rel.lines : undefined }} onClose={() => setSheetFor(null)} />}
             {settings.marks !== false && src && !isComm && <Marks refText={src.ref} box={flowEl} />}
@@ -842,10 +878,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {quick.map((x) => (
                           <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                         ))}
-                        {lineX && settings.explainLine !== false && (
+                        {lineX && !hubOn && settings.explainLine !== false && (
                           <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}>✦ Explain</button>
                         )}
-                        {lineX && settings.lineChat !== false && (
+                        {lineX && !hubOn && settings.lineChat !== false && (
                           <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}>✦ Chat</button>
                         )}
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
@@ -860,10 +896,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {lineX && settings.halachaTrail !== false && (kind === 'gemara' || kind === 'mishnah') && rel?.ref === src.ref && (rel.lines[partNum(i)]?.halacha.length ?? 0) > 0 && (
                           <button className={`comm-btn ${hOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setHOpen, i)}>⚖ Halacha</button>
                         )}
-                        {lineX && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
+                        {lineX && !hubOn && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
                           <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Ideas</button>
                         )}
-                        {lineX && lineButtons.map((b) => (
+                        {lineX && !hubOn && lineButtons.map((b) => (
                           <button key={b.id} className={`comm-btn ai ${bOpen === `${i}|${b.id}` ? 'on' : ''}`} onClick={() => setBOpen(bOpen === `${i}|${b.id}` ? null : `${i}|${b.id}`)}>✦ {b.name}</button>
                         ))}
                         {conns === null && !fallback.length && i === 0 && connState === 'loading' && <span className="muted comm-note">Finding commentaries…</span>}
@@ -1032,6 +1068,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         })()}
         </div>
       </div>
+      {hub}
     </aside>
   );
 }
