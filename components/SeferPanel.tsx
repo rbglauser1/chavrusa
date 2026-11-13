@@ -39,6 +39,7 @@ interface Props {
   onOpenRef: (q: string) => Promise<string | null>; // returns an error message, or null when opened
   onOpenExact?: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; // an exact Sefaria reference (Library)
   libraryRequest?: number; // changes when the page asks to open the Library
+  onLibraryOpened?: () => void; // acknowledge the pending request across screen mounts
   talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
   inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
@@ -53,7 +54,7 @@ interface Props {
 // top of 5a): the amud above and below that were showing, and how far down he was. Kept for 10 minutes.
 const kept = new Map<string, { prev: SourceData | null; next: SourceData | null; top: number; at: number }>();
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, onLibraryOpened, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
@@ -84,8 +85,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useBackLayer(showLib, closeLib); // back closes the Library
   // Open the Library only when the page asks anew; not again whenever the Sefer comes back on screen (review, Nov 11:
   // it reopened over the text after Settings and on resume).
-  const libSeen = useRef(libraryRequest ?? 0);
-  useEffect(() => { if (libraryRequest && libraryRequest !== libSeen.current) { libSeen.current = libraryRequest; setShowLib(true); } }, [libraryRequest]);
+  useEffect(() => {
+    if (!libraryRequest) return;
+    setShowLib(true);
+    onLibraryOpened?.();
+  }, [libraryRequest, onLibraryOpened]);
   // A new text in front (picked in the Library, or asked for by name): the Library steps aside.
   const libRef = useRef(sources[selected]?.ref);
   useEffect(() => { const r = sources[selected]?.ref; if (r && r !== libRef.current) { libRef.current = r; setShowLib(false); } }, [sources, selected]);

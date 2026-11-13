@@ -129,6 +129,7 @@ export default function Home() {
   const [libReq, setLibReq] = useState(0);
   const [textTick, setTextTick] = useState(0); // Quiet chat: go to its Text tab
   const openLibrary = () => { setSeferOpen(true); setLibReq((n) => n + 1); };
+  const acknowledgeLibrary = useCallback(() => setLibReq(0), []);
   const coachLog = useRef<{ learner: string; said: string }[]>([]);
   const coachBusy = useRef(false);
   const liveRef = useRef<{ note: (t: string) => void } | null>(null);
@@ -1009,6 +1010,7 @@ export default function Home() {
                 onClose={() => { if (newUI) setView('home'); }}
                 settings={settings} onSettings={updateSettings} sessionId={sessionId} onSeen={noteSeen}
                 libraryRequest={libReq}
+                onLibraryOpened={acknowledgeLibrary}
                 onPoint={pointAt}
                 onOpenRef={(q) => openRef(q, true)}
                 onOpenExact={openExact}
@@ -1283,6 +1285,7 @@ export default function Home() {
           onClose={() => { setSeferOpen(false); setLibReq(0); }}
           settings={settings} onSettings={updateSettings} sessionId={sessionId} onSeen={noteSeen}
           libraryRequest={libReq}
+          onLibraryOpened={acknowledgeLibrary}
           onPoint={pointAt}
           talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}
           onOpenRef={(q) => openRef(q, true)}
