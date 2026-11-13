@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { FONTS_EN, FONTS_HE, FONTS_COMM, fontStack } from '@/lib/config';
 import './globals.css';
+import './clay.css';
 import './experiences.css';
 import './sand-teal.css';
 import './guided-learning.css';
@@ -28,7 +29,7 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@40
 
 // The look and text sizes are remembered in a cookie, so the page opens in your colors right away
 // (instead of flashing the default colors until Settings load).
-const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp', ...EXPERIENCES.map((x) => x.id)];
+const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp', 'clay', ...EXPERIENCES.map((x) => x.id)];
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [look, he, en, rashi, comm, fEn, fHe, cols, bolds, fComm, palette] = ((await cookies()).get('ui')?.value ?? '').split('|');
   // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).

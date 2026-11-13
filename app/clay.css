@@ -1,0 +1,73 @@
+/* Clay: the warm off-white, soft near-black and terracotta of the Claude app (Nov 12). Scoped to [data-look='clay']. */
+[data-look='clay'] {
+  --bg: #F5F4EE; --surface: #FAF9F5; --surface-2: #EEECE3;
+  --ink: #1F1E1D; --soft: #6B6A64; --rule: #E3E0D5;
+  --accent: #D97757; --accent-ink: #ffffff; --accent-soft: #F6E6DE;
+  --me: #6B6A64; --src-bg: #FAF9F5; --src-ink: #1F1E1D; --src-rule: #E3E0D5;
+  --danger: #B5482A; --scrim: rgba(31, 30, 29, 0.38); --shadow: 0 8px 28px -12px rgba(31, 30, 29, 0.22);
+  --f-body: 'Spectral', Georgia, serif; --f-ui: 'Inter', system-ui, sans-serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif; --f-brand: 'Spectral', Georgia, serif;
+  --radius: 12px; color-scheme: light;
+}
+[data-look='clay'] body { background: var(--bg); }
+[data-look='clay'] .app, [data-look='clay'] .main, [data-look='clay'] .sefer, [data-look='clay'] .sefer.embedded { background: transparent; }
+
+/* Bars */
+[data-look='clay'] .topbar, [data-look='clay'] .sefer-head, [data-look='clay'] .min-head, [data-look='clay'] .hpage-head, [data-look='clay'] .drawer-head { background: var(--bg); border-bottom: 1px solid var(--rule); box-shadow: none; }
+[data-look='clay'] .min-rule { display: none; }
+[data-look='clay'] .drawer, [data-look='clay'] .hpage { background: var(--bg); }
+
+/* Buttons: quiet white with a hairline; the chosen one and the main actions in terracotta */
+[data-look='clay'] .btn, [data-look='clay'] .chip, [data-look='clay'] .min-pill, [data-look='clay'] .min-step { background: var(--surface); border: 1px solid var(--rule); color: var(--ink); border-radius: 10px; box-shadow: 0 1px 2px rgba(31, 30, 29, 0.05); }
+[data-look='clay'] .btn.primary, [data-look='clay'] .min-talk-pill, [data-look='clay'] .min-talk, [data-look='clay'] .send, [data-look='clay'] .min-round { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: none; }
+[data-look='clay'] .min-round.live { background: #1F1E1D; }
+[data-look='clay'] .min-icon { color: var(--soft); }
+[data-look='clay'] .seg { background: #EEECE3; border: 0; border-radius: 10px; padding: 3px; gap: 3px; }
+[data-look='clay'] .seg button { border-radius: 8px; color: var(--soft); }
+[data-look='clay'] .seg button + button { border-left: 0; }
+[data-look='clay'] .seg button.on { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(31, 30, 29, 0.12); }
+[data-look='clay'] .min-menu, [data-look='clay'] .min-sheet, [data-look='clay'] .smap, [data-look='clay'] .hx-card, [data-look='clay'] .min-reply { background: var(--surface); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+[data-look='clay'] .min-tabs { background: #EEECE3; border-radius: 10px; padding: 3px; }
+[data-look='clay'] .min-tabs button { border-radius: 8px; color: var(--soft); }
+[data-look='clay'] .min-tabs button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(31, 30, 29, 0.12); }
+[data-look='clay'] .daf-dock .daf-bar { background: var(--surface); border: 1px solid var(--rule); box-shadow: 0 4px 14px -6px rgba(31, 30, 29, 0.3); }
+[data-look='clay'] .daf-dock .daf-bar button { color: var(--accent); }
+
+/* The text: no shaded box on the line you're on, a terracotta rule at its side */
+[data-look='clay'] .sefer .line:hover { background: transparent; }
+[data-look='clay'] .sefer .line.open, [data-look='clay'] .sefer .line.focus { background: transparent; box-shadow: inset 2px 0 0 var(--accent); }
+[data-look='clay'] .line .num { color: var(--accent); }
+[data-look='clay'] .sefer .comm-btn, [data-look='clay'] .sefer.embedded.tools .comm-btns .comm-btn { background: var(--surface); border: 1px solid var(--rule); color: var(--ink); border-radius: 10px; font-family: var(--f-ui); font-weight: 500; box-shadow: 0 1px 2px rgba(31, 30, 29, 0.05); }
+[data-look='clay'] .sefer .comm-btn.on, [data-look='clay'] .sefer.embedded.tools .comm-btns .comm-btn.on { background: #1F1E1D; border-color: #1F1E1D; color: #FAF9F5; }
+[data-look='clay'] .sefer .comm-btn.ai, [data-look='clay'] .sefer.embedded.tools .comm-btns .comm-btn.ai { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--rule)); font-weight: 600; }
+[data-look='clay'] .sefer .comm-btn.ai.on, [data-look='clay'] .sefer.embedded.tools .comm-btns .comm-btn.ai.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+[data-look='clay'] .sefer .comm-btn.more { color: var(--soft); }
+[data-look='clay'] .comm, [data-look='clay'] .quote, [data-look='clay'] .pin-inner { border-inline-start-color: var(--accent); }
+[data-look='clay'] .min-comm { background: var(--surface); border-inline-start: 2px solid var(--accent); }
+[data-look='clay'] .lx-src { background: transparent; border-color: var(--accent); }
+[data-look='clay'] .smap-btns .smap-btn.on { background: #1F1E1D; color: #FAF9F5; border-color: #1F1E1D; }
+
+/* Conversation: your words in a soft grey bubble, the chavrusa's on the page */
+[data-look='clay'] .turn.them .say, [data-look='clay'] .min-them { background: transparent; border: 0; box-shadow: none; }
+[data-look='clay'] .turn.me .say, [data-look='clay'] .min-me { background: #EEECE3; color: var(--ink); border-radius: 14px; }
+[data-look='clay'] .composer-inner { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 2px 10px -4px rgba(31, 30, 29, 0.12); }
+
+/* Home */
+[data-look='clay'] .home-brand { color: var(--ink); }
+[data-look='clay'] .home-card, [data-look='clay'] .home-list { background: var(--surface); border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(31, 30, 29, 0.05); -webkit-backdrop-filter: none; backdrop-filter: none; }
+[data-look='clay'] .home-card-label { color: var(--accent); }
+[data-look='clay'] .home-card-go { background: var(--accent-soft); color: var(--accent); }
+[data-look='clay'] .home-row-icon { background: var(--accent-soft); color: var(--accent); }
+[data-look='clay'] .home-talk-btn { background: var(--accent); color: #fff; box-shadow: 0 8px 22px -10px rgba(217, 119, 87, 0.8); }
+[data-look='clay'] .home-talk-btn.live { background: #1F1E1D; }
+
+/* Settings */
+[data-look='clay'] .drawer-body, [data-look='clay'] .hpage-body { --sg-bg: var(--bg); }
+[data-look='clay'] .sg-1.open > .sg-head { background: color-mix(in srgb, var(--accent) 7%, var(--bg)); }
+[data-look='clay'] .field select, [data-look='clay'] .field input[type='number'], [data-look='clay'] .field input[type='text'] { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; }
+
+/* The look picker's little preview */
+.mini.clay { background: #F5F4EE; }
+.mini.clay .m-head { background: #FAF9F5; border-bottom: 1px solid #E3E0D5; }
+.mini.clay .m-src { background: #FAF9F5; border: 1px solid #E3E0D5; border-radius: 6px; }
+.mini.clay .m-line { background: #D97757; opacity: 0.8; }

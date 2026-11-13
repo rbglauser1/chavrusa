@@ -287,7 +287,7 @@ export function styleById(id: string | undefined, custom?: CustomStyle[] | null)
   return allStyles(custom).find((s) => s.id === id) ?? STYLES[0];
 }
 
-export type Look = Experience | 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink' | 'sharp';
+export type Look = Experience | 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink' | 'sharp' | 'clay';
 
 // Colors of the different things on the page (Settings → Look → Colors). "ink" = the same as the text.
 export type ColorPart = 'he' | 'en' | 'comm' | 'intro';
@@ -304,7 +304,8 @@ export const colorOf = (s: { colors?: Partial<Record<ColorPart, ColorId>> }, p: 
 
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   ...EXPERIENCES,
-  { id: 'sharp', name: 'Sharp (new)', blurb: 'Crisp paper white and black hairlines, square corners, one deep blue. Numbered lines, like a well-set page' },
+  { id: 'clay', name: 'Clay (new)', blurb: 'Warm off-white, soft near-black and terracotta, like the Claude app' },
+  { id: 'sharp', name: 'Sharp', blurb: 'Crisp paper white and black hairlines, square corners, one deep blue. Numbered lines, like a well-set page' },
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
   { id: 'shtender', name: 'Shtender (white oak)', blurb: 'Pale white oak, like a shtender in the beis medrash' },
   { id: 'techelet', name: 'Techelet', blurb: 'Bright, clean and modern in techelet blue' },
@@ -357,7 +358,7 @@ export const fontStack = (list: { id: string; stack: string }[], id?: string) =>
 // Older saved values from the first version map onto the new looks.
 export function normalizeLook(v: unknown): Look {
   if (isExperience(v)) return v;
-  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink' || v === 'sharp') return v;
+  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink' || v === 'sharp' || v === 'clay') return v;
   if (v === 'dark') return 'shtender';
   if (v === 'light') return 'techelet';
   return 'daf';
