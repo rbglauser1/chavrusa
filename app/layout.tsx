@@ -5,6 +5,8 @@ import './globals.css';
 import './experiences.css';
 import './sand-teal.css';
 import './guided-learning.css';
+import './paper-ink.css';
+import './midnight-home.css';
 import { guidedPalette } from '@/lib/guided';
 import { EXPERIENCES, isExperience } from '@/lib/experiences';
 import { PullRefresh } from '@/components/PullRefresh';

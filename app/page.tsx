@@ -883,7 +883,7 @@ export default function Home() {
   const sandReviewPanel=sandReview && (reviewRef ? <Review refText={reviewRef} onClose={()=>setSandReview(false)} onGo={n=>{setSandReview(false);setView('learn');void openExact(reviewRef,n);}}/> : <div className="st-overlay"><section className="st-details" role="dialog" aria-label="Review"><h2>A little learning first.</h2><p>Open a sefer, then return here to review it.</p><button className="btn" onClick={()=>{setSandReview(false);setView('learn');openLibrary();}}>Choose a sefer</button><button className="btn ghost" onClick={()=>setSandReview(false)}>Close</button></section></div>);
 
   const experienceNav = <ExperienceNav look={look} view={view}
-    onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal'||look==='guided-learning') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
+    onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal'||look==='guided-learning'||look==='paper-ink'||look==='midnight-sefer') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
     onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
     onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} onReview={() => setSandReview(true)} onSettings={() => {setSettingsFrom(view==='learn'?'learn':'home');setView('settings');}} />;
 

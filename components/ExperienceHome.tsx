@@ -1,5 +1,7 @@
 'use client';
 import ExperienceIcon from './ExperienceIcon';
+import { PaperInkHome } from './PaperInk';
+import MidnightHome from './MidnightHome';
 import { GuidedLearningHome } from './GuidedLearning';
 import { SandTealHome } from './SandTeal';
 import type { ReactNode } from 'react';
@@ -16,6 +18,8 @@ const COPY: Record<Experience, [string,string,string]> = {
   'study-workspace': ['Your study workspace','Continue where you left off.','Your text, sources and conversation in one place.'],
 };
 export default function ExperienceHome(p: { look: Experience; cont: ContinueInfo | null; onContinue: () => void; onLibrary: () => void; onRecent: () => void; onThemes: () => void; onSettings: () => void; onTalk: () => void; talkSupported: boolean; talkOn: boolean; extras?: ReactNode; onGuide: () => void; onFilm: () => void }) {
+  if (p.look === 'paper-ink') return <PaperInkHome {...p}/>;
+  if (p.look === 'midnight-sefer') return <MidnightHome {...p}/>;
   if (p.look === 'guided-learning') return <GuidedLearningHome {...p}/>;
   if (p.look === 'sand-teal') return <SandTealHome {...p}/>;
   const [eyebrow,title,subtitle] = COPY[p.look];
