@@ -122,7 +122,7 @@ function Thread({ items, busy, status, endRef }: { items: Msg[]; busy: boolean; 
         : it.kind === 'assistant'
           ? <div key={i} className="min-them"><Formatted text={it.text} /></div>
           : <div key={i} className={it.kind === 'error' ? 'min-error' : 'min-event'}>{it.text}</div>)}
-      {busy && <div className="min-event"><span className="dots"><span /><span /><span /></span>{status || 'Thinking…'}</div>}
+      {busy && <div className="min-event"><span className="swirl" aria-hidden="true" /><span className="dots"><span /><span /><span /></span>{status || 'Thinking…'}</div>}
       <div ref={endRef} />
     </div>
   );
@@ -154,7 +154,7 @@ function CasualThread({ items, busy, status, endRef }: { items: Msg[]; busy: boo
               : pc.kind === 'en' ? <p key={k} className="c-en">{pc.text}</p>
               : <div key={k} className="c-say"><Formatted text={pc.text} /></div>)}</div>
           : it.kind === 'error' ? <div key={i} className="min-error">{it.text}</div> : null)}
-      {busy && <div className="min-event"><span className="dots"><span /><span /><span /></span>{status || 'Thinking…'}</div>}
+      {busy && <div className="min-event"><span className="swirl" aria-hidden="true" /><span className="dots"><span /><span /><span /></span>{status || 'Thinking…'}</div>}
       <div ref={endRef} />
     </div>
   );
@@ -446,7 +446,7 @@ export default function Minimal(p: Props) {
             : it.kind === 'assistant'
               ? <div key={i} className="min-them"><Formatted text={it.text} /></div>
               : it.kind === 'error' ? <div key={i} className="min-error">{it.text} <button className="linklike" onClick={() => { const q = [...turn].reverse().find((x) => x.kind === 'user'); if (q && !p.busy) { setReply(p.items.length); p.send(q.text); } }}>Try again</button></div> : null)}
-          {p.busy && <div className="min-event"><span className="dots"><span /><span /><span /></span>{p.status || 'Thinking…'}</div>}
+          {p.busy && <div className="min-event"><span className="swirl" aria-hidden="true" /><span className="dots"><span /><span /><span /></span>{p.status || 'Thinking…'}</div>}
           {!p.busy && turn.length > 0 && !turn.some((it) => it.kind === 'assistant' || it.kind === 'error') && <div className="min-event">The answer was spoken. Ask again to see it in writing.</div>}
         </div>
       </section>

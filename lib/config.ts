@@ -305,7 +305,7 @@ export const colorOf = (s: { colors?: Partial<Record<ColorPart, ColorId>> }, p: 
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   ...EXPERIENCES,
   { id: 'plain', name: 'Plain chat (new)', blurb: 'Clean white, black buttons and a simple sans-serif, like ChatGPT' },
-  { id: 'clay', name: 'Clay (new)', blurb: 'Warm off-white, soft near-black, round buttons and a terracotta accent, like the Claude app' },
+  { id: 'clay', name: 'Claude (new)', blurb: 'Warm off-white, soft near-black, round buttons and a terracotta accent, like the Claude app' },
   { id: 'sharp', name: 'Sharp', blurb: 'Crisp paper white and black hairlines, square corners, one deep blue. Numbered lines, like a well-set page' },
   { id: 'daf', name: 'The Daf', blurb: 'Like a page of Gemara: quiet, paper-like, text always in view' },
   { id: 'shtender', name: 'Shtender (white oak)', blurb: 'Pale white oak, like a shtender in the beis medrash' },

@@ -107,3 +107,15 @@
 [data-look='clay'] .daf-dock .daf-bar { background: #FAFAF8; border: 1px solid #E0E0DF; box-shadow: 0 4px 12px -6px rgba(19, 19, 19, 0.18); }
 [data-look='clay'] .daf-dock .daf-bar button { color: #7A7974; }
 [data-look='clay'] .ln-add { color: #A3A29E; font-family: var(--f-ui); }
+
+/* The swirl (Nov 13): while the chavrusa is answering, a small terracotta comet turns before the dots — an original
+   mark in the spirit of Claude's thinking animation (Claude's own logo isn't copied). */
+.swirl { display: none; }
+[data-look='clay'] .min-event .swirl {
+  display: inline-block; width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 18%, color-mix(in srgb, var(--accent) 25%, transparent) 40%, var(--accent) 92%, transparent 92%);
+  -webkit-mask: radial-gradient(circle, transparent 0 4px, #000 4.5px); mask: radial-gradient(circle, transparent 0 4px, #000 4.5px);
+  animation: clay-swirl 1.1s cubic-bezier(.45, .05, .55, .95) infinite;
+}
+@keyframes clay-swirl { from { transform: rotate(0deg) scale(.92); } 50% { transform: rotate(200deg) scale(1.06); } to { transform: rotate(360deg) scale(.92); } }
+@media (prefers-reduced-motion: reduce) { [data-look='clay'] .min-event .swirl { animation-duration: 2.6s; } }
