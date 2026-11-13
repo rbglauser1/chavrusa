@@ -1,4 +1,5 @@
 'use client';
+import { useBackLayer } from '@/lib/back';
 import { isExperience } from '@/lib/experiences';
 import { PaperInkStudy } from './PaperInk';
 import { GuidedLearningStudy } from './GuidedLearning';
@@ -193,6 +194,20 @@ export default function Minimal(p: Props) {
     document.body.toggleAttribute('data-full', fullOn);
     return () => document.body.removeAttribute('data-full');
   }, [fullOn]);
+  // The other new looks (Midnight Sefer, Beis Medrash, Editorial, Living Page, Study Workspace): a double tap on the text
+  // shows just the text too (Nov 13); again, ⤡, Esc or Back to return. Their layout stays; only the extras hide.
+  const xFull = experience && p.layout === 'quiet' && full && tab === 'text' && !!p.sefer;
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-xfull', xFull);
+    return () => document.documentElement.removeAttribute('data-xfull');
+  }, [xFull]);
+  useBackLayer(xFull, () => setFull(false));
+  useEffect(() => {
+    if (!xFull) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setFull(false); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [xFull]); // eslint-disable-line react-hooks/exhaustive-deps
   // Sand and Teal: a double tap on the text (or ⋯ → Full screen) shows just the text; again, ⤡, Esc or Back to return.
   const [stFullOn, setStFull] = useState(false);
   const stFull = p.settings.theme === 'sand-teal' && stFullOn && tab === 'text' && !!p.sefer;
@@ -427,6 +442,7 @@ export default function Minimal(p: Props) {
             <MicIcon size={18} />
           </button>
         )}
+        {xFull && <button className="min-icon x-exit" onClick={() => setFull(false)} aria-label="Exit full screen">⤡</button>}
       </footer>
     );
     const sefer = p.sefer && isValidElement(p.sefer)
