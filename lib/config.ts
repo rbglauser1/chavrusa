@@ -320,6 +320,8 @@ export const LOOKS: { id: Look; name: string; blurb: string }[] = [
 // Fonts the learner can choose for each look (Settings → Look → Fonts). "" = the look's own font.
 export const FONTS_EN: { id: string; name: string; stack: string }[] = [
   { id: '', name: "The look's own", stack: '' },
+  { id: 'sourceserif', name: 'Source Serif (closest to Claude)', stack: "'Source Serif 4', Georgia, serif" },
+  { id: 'dmsans', name: 'DM Sans (Claude-like sans)', stack: "'DM Sans', system-ui, sans-serif" },
   { id: 'spectral', name: 'Spectral', stack: "'Spectral', Georgia, serif" },
   { id: 'crimson', name: 'Crimson Pro', stack: "'Crimson Pro', Georgia, serif" },
   { id: 'cormorant', name: 'Cormorant Garamond', stack: "'Cormorant Garamond', Georgia, serif" },
