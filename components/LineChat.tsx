@@ -75,6 +75,9 @@ export default function LineChat({ lineRef, onClose }: { lineRef: string; onClos
         {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') void send(last.content, true); }}>Try again</button></div>}
         <div ref={endRef} />
       </div>
+      {msgs.length > 0 && !busy && STARTERS.some((q) => !msgs.some((x) => x.role === 'user' && x.content === q)) && (
+        <div className="lchat-starters more">{STARTERS.filter((q) => !msgs.some((x) => x.role === 'user' && x.content === q)).map((q) => <button key={q} onClick={() => void send(q)}>{q}</button>)}</div>
+      )}
       <form className="lchat-form" onSubmit={(e) => { e.preventDefault(); void send(draft); }}>
         <textarea value={draft} rows={1} placeholder="Ask about this line…" onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(draft); } }} />
