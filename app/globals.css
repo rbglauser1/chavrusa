@@ -2773,3 +2773,6 @@ body[data-full] .min-quiet.full .min-row, .daf-dock .daf-bar, .min-full-ctl, [da
 .ai-hub-tip { margin-top: 10px; }
 /* Full screen (and the new looks' full screen): the ✦ sits above Talk and ⤡. */
 body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-btn { bottom: calc(76px + env(safe-area-inset-bottom)); }
+/* The ✦ panel's buttons in terracotta, like the ✦ buttons that used to sit under the lines (Nov 13), in every look. */
+.ai-hub-acts button { color: #CC7C5E; border-color: color-mix(in srgb, #CC7C5E 45%, var(--rule)); font-weight: 600; background: var(--surface); }
+.ai-hub-acts button:active { background: #CC7C5E; color: #fff; border-color: #CC7C5E; }
