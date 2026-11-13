@@ -2789,3 +2789,10 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 [data-look='midnight'][data-c-en='terracotta'] .mg-paper { --en-hue: #B5603F; } [data-look='midnight'][data-c-en='teal'] .mg-paper { --en-hue: #1C6B6E; } [data-look='midnight'][data-c-en='charcoal'] .mg-paper { --en-hue: #3F3F3D; }
 [data-look='midnight'][data-c-comm='terracotta'] .mg-paper { --comm-hue: #B5603F; } [data-look='midnight'][data-c-comm='teal'] .mg-paper { --comm-hue: #1C6B6E; } [data-look='midnight'][data-c-comm='charcoal'] .mg-paper { --comm-hue: #3F3F3D; }
 [data-look='midnight'][data-c-intro='terracotta'] .mg-paper { --intro-hue: #B5603F; } [data-look='midnight'][data-c-intro='teal'] .mg-paper { --intro-hue: #1C6B6E; } [data-look='midnight'][data-c-intro='charcoal'] .mg-paper { --intro-hue: #3F3F3D; }
+
+/* What the AI writes (Nov 13): its own size (Settings → Text sizes → AI writing size; else the English size, at least
+   17px), and Hebrew paragraphs right to left in the Hebrew font, a little larger since Hebrew letters run small. */
+.line-x .lx-p, .lchat .lx-p, .comm-outline-pts { font-size: var(--ai-size, max(17px, var(--en-size, 18px))); }
+.lx-p.he-p { font-family: var(--f-he); text-align: right; font-size: calc(var(--ai-size, max(17px, var(--en-size, 18px))) * 1.12); line-height: 1.7; }
+.lchat-follow { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--rule); }
+.lchat-follow .lchat-form textarea { min-height: 40px; }

@@ -118,6 +118,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setHOpen(new Set()); setEOpen(new Set()); setHeartOpen(new Set()); setWordOn(null); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
     const want = pickAfter.current;
     if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
+    // Coming back to a text: the AI boxes you had open on it (Explain, Chat, Ideas) open again (Nov 13).
+    if (src?.ref) try {
+      const v = JSON.parse(localStorage.getItem(`chavrusa-aiopen:${src.ref}`) ?? 'null');
+      if (v) { setXOpen(new Set(v.x ?? [])); setCOpen(new Set(v.c ?? [])); setIOpen(new Set(v.i ?? [])); }
+    } catch { /* optional */ }
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
@@ -184,6 +189,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [wordOn, setWordOn] = useState<{ i: number; w: string; raw: string; at: DOMRect } | null>(null); // a word tapped for its meaning
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
   const [iOpen, setIOpen] = useState<Set<number>>(new Set());
+  useEffect(() => { // remember the open AI boxes on this text (above)
+    if (!src?.ref) return;
+    try {
+      const k = `chavrusa-aiopen:${src.ref}`;
+      if (xOpen.size + cOpen.size + iOpen.size) localStorage.setItem(k, JSON.stringify({ x: [...xOpen], c: [...cOpen], i: [...iOpen] }));
+      else localStorage.removeItem(k);
+    } catch { /* optional */ }
+  }, [xOpen, cOpen, iOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   // The learner's own buttons (Settings → Extras → My buttons): which is open on which line ("line|id"), and at the top.
   const [bOpen, setBOpen] = useState<string | null>(null);
   const [topOpen, setTopOpen] = useState<string | null>(null);

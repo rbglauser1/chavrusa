@@ -221,6 +221,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="range"><input type="range" min={14} max={36} value={s.commSize ?? 20} onChange={(e) => onChange({ commSize: Number(e.target.value) })} /><span className="he rashi" style={{ fontSize: s.commSize ?? 20 }}>אבג</span></div>
             </div>
             <div className="field">
+              <label>AI writing size (Explain, Chat, Ideas, outlines)</label>
+              <div className="range"><input type="range" min={14} max={32} value={s.aiSize ?? Math.max(17, s.enSize)} onChange={(e) => onChange({ aiSize: Number(e.target.value) })} /><span style={{ fontSize: s.aiSize ?? Math.max(17, s.enSize) }}>Abc אבג</span></div>
+            </div>
+            <div className="field">
               <label>English text size</label>
               <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
             </div>

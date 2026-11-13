@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
     } catch { /* optional */ }
     const settings = await getSettings();
     const model = MODELS[settings.provider][settings.tier];
-    const first: Msg = { role: 'user', content: `We are learning ${s.ref}, line ${n} (its reference: ${s.ref}:${n}).\n\n${lines.slice(0, 26000)}${comm}\n\n---\n${msgs[0].content}` };
+    const about = typeof b.about === 'string' && b.about.trim() ? `\n\nThe explanation of this line he was given (his questions follow up on it):\n${b.about.replace(/⟦([^⟧]+)⟧/g, '$1').slice(0, 4000)}` : '';
+    const first: Msg = { role: 'user', content: `We are learning ${s.ref}, line ${n} (its reference: ${s.ref}:${n}).\n\n${lines.slice(0, 26000)}${comm}${about}\n\n---\n${msgs[0].content}` };
     const history = [first, ...msgs.slice(1)];
     const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
     const r = await run({ lang: true, model: model.id, system: `${PROMPT}\n\n${SCOPE}`, history, tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: 5 });

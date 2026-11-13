@@ -12,14 +12,17 @@ const split = (r: string): [string, number] => { const m = r.match(/^(.*?):(\d+)
 const plain = (t: string) => t.replace(/⟦([^⟧]+)⟧/g, '$1');
 const STARTERS = ['What is this line saying?', 'Why is this line needed here?', 'What does Rashi add?', 'Is there a halacha from this?'];
 
-export default function LineChat({ lineRef, onClose }: { lineRef: string; onClose: () => void }) {
-  const [msgs, setMsgs] = useState<Msg[]>(() => { try { return JSON.parse(localStorage.getItem(KEY(lineRef)) ?? '[]'); } catch { return []; } });
+// follow: used inside Explain for follow-up questions (Nov 13): no title or starters, the explanation goes to the AI
+// with the question, and the follow-ups are kept apart from the line's own ✦ Chat.
+export default function LineChat({ lineRef, onClose, follow }: { lineRef: string; onClose: () => void; follow?: { about: string } }) {
+  const store = follow ? `${lineRef}#explain` : lineRef;
+  const [msgs, setMsgs] = useState<Msg[]>(() => { try { return JSON.parse(localStorage.getItem(KEY(store)) ?? '[]'); } catch { return []; } });
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [savedAll, setSavedAll] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { try { if (msgs.length) localStorage.setItem(KEY(lineRef), JSON.stringify(msgs.slice(-40))); else localStorage.removeItem(KEY(lineRef)); } catch { /* optional */ } }, [msgs, lineRef]);
+  useEffect(() => { try { if (msgs.length) localStorage.setItem(KEY(store), JSON.stringify(msgs.slice(-40))); else localStorage.removeItem(KEY(store)); } catch { /* optional */ } }, [msgs, store]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [msgs.length, busy]);
 
   async function send(text: string, retry = false) {
@@ -30,7 +33,7 @@ export default function LineChat({ lineRef, onClose }: { lineRef: string; onClos
     const next: Msg[] = [...base, { role: 'user', content: q }];
     setMsgs(next); setDraft(''); setBusy(true); setErr(''); setSavedAll(false);
     try {
-      const r = await fetch('/api/linechat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: lineRef, messages: next.map(({ role, content }) => ({ role, content })) }) });
+      const r = await fetch('/api/linechat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: lineRef, about: follow?.about, messages: next.map(({ role, content }) => ({ role, content })) }) });
       const d = await r.json();
       if (!d.text) throw new Error(d.error || 'No answer came back.');
       setMsgs((m) => [...m, { role: 'assistant', content: d.text, sources: Array.isArray(d.sources) ? d.sources : [] }]);
@@ -52,6 +55,31 @@ export default function LineChat({ lineRef, onClose }: { lineRef: string; onClos
     if (await save(text)) setSavedAll(true);
   }
 
+  if (follow) return (
+    <div className="lchat lchat-follow" onClick={(e) => e.stopPropagation()}>
+      {msgs.length > 0 && (
+        <div className="lchat-list">
+          {msgs.map((m, k) => m.role === 'user'
+            ? <div key={k} className="lchat-me">{m.content}</div>
+            : (
+              <div key={k} className="lchat-ai">
+                <WithSources text={m.content} sources={m.sources ?? []} />
+                <button className="lchat-keep" onClick={() => void saveOne(k)} disabled={m.saved}>{m.saved ? '✓ Saved' : '✎ Save to Notebook'}</button>
+              </div>
+            ))}
+        </div>
+      )}
+      {busy && <div className="muted lchat-wait"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
+      {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') void send(last.content, true); }}>Try again</button></div>}
+      <div ref={endRef} />
+      <form className="lchat-form" onSubmit={(e) => { e.preventDefault(); void send(draft); }}>
+        <textarea value={draft} rows={1} placeholder="Ask a follow-up…" onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(draft); } }} />
+        <button type="submit" className="btn primary" disabled={busy || !draft.trim()}>Ask</button>
+      </form>
+      {msgs.length > 0 && <button className="linklike lchat-clear" onClick={() => { setMsgs([]); setErr(''); }}>Clear the follow-ups</button>}
+    </div>
+  );
   return (
     <div className="comm line-x lchat" onClick={(e) => e.stopPropagation()}>
       <div className="comm-title">✦ Chat about this line

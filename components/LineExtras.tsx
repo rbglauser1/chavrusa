@@ -1,4 +1,5 @@
 'use client';
+import LineChat from './LineChat';
 // Under a line in the Sefer, next to its meforshim (Settings → Extras):
 //   Explain: what this line says and where it stands in the sugya, by the AI (Opus, made once per line and kept).
 //   Sources: what Sefaria links to this line (halacha, parallels, Midrash, verses, machshava), each opening right here
@@ -22,7 +23,7 @@ export function WithSources({ text, sources, pClass = 'lx-p' }: { text: string; 
         const here = bits.filter((b) => b.startsWith('⟦')).map((b) => b.slice(1, -1).trim()).filter((r) => sources.includes(r));
         return (
           <div key={i}>
-            <p className={pClass}>{bits.map((b, k) => {
+            <p className={`${pClass}${/^[\s"'(]*[\u0590-\u05FF]/.test(para) ? ' he-p' : ''}`} dir="auto">{bits.map((b, k) => {
               if (!b.startsWith('⟦')) return <span key={k}>{b}</span>;
               const r = b.slice(1, -1).trim();
               if (!sources.includes(r)) return null;
@@ -53,7 +54,7 @@ export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () 
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
       <div className="comm-title">✦ Explanation{text && <NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the explanation" quote={text.replace(/⟦[^⟧]+⟧/g, '').slice(0, 140)} label="✎" />}<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
       {text && <div className="ai-note left">Written by AI · AI makes mistakes{data.sources.length ? ' · tap a source to check it inside' : ''}</div>}
-      {data ? <WithSources text={data.text} sources={data.sources} />
+      {data ? <><WithSources text={data.text} sources={data.sources} /><LineChat lineRef={lineRef} onClose={() => {}} follow={{ about: data.text }} /></>
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
         : <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Reading the sources and explaining… (the first time takes a little while)</div>}
     </div>

@@ -421,6 +421,7 @@ export default function Home() {
     root.style.setProperty('--he-size', `${settings.heSize}px`);
     root.style.setProperty('--en-size', `${settings.enSize}px`);
     root.style.setProperty('--comm-size', `${settings.commSize ?? 20}px`);
+    if (settings.aiSize) root.style.setProperty('--ai-size', `${settings.aiSize}px`); else root.style.removeProperty('--ai-size');
     // Fonts chosen for this look (or the look's own).
     const f = settings.fonts?.[settings.theme] ?? {};
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
@@ -433,7 +434,7 @@ export default function Home() {
     root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
     const cs = fontStack(FONTS_COMM, cf);
     if (cf !== 'rashi' && cf !== 'same' && cs) root.style.setProperty('--f-comm', cs); else root.style.removeProperty('--f-comm');
-  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin]);
+  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 
