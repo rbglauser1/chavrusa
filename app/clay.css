@@ -162,3 +162,9 @@
 [data-look='clay'][data-enmark='light'] :is(.en, .min-en, .il-en) .en-x { color: #4A4A4A; }
 [data-look='clay'] :is(.ai-note, .muted) { color: #888781; }
 [data-look='clay'] .line .num { color: #9C9C9B; }
+
+/* Voice in terracotta (Nov 13): the Talk/mic button and the Home Talk bar; black while a call is on. */
+[data-look='clay'] .min-talk-pill, [data-look='clay'] .min-talk, [data-look='clay'] .min-round { background: #CC7C5E; border-color: #CC7C5E; color: #fff; box-shadow: 0 4px 12px -4px rgba(204, 124, 94, 0.55); }
+[data-look='clay'] .min-round.live, [data-look='clay'] .min-talk.live { background: #131313; border-color: #131313; }
+[data-look='clay'] .home-talk-btn { background: #CC7C5E; box-shadow: 0 8px 22px -10px rgba(204, 124, 94, 0.8); }
+[data-look='clay'] .home-talk-btn.live { background: #131313; }
