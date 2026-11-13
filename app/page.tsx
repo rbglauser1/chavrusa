@@ -1132,7 +1132,7 @@ export default function Home() {
                 <div className={`he ${isCommentary(current.ref) ? 'rashi' : ''}`}>
                   {current.he.map((line, i) => {
                     const t = settings.nikud ? line : stripNikud(line);
-                    if (i === 0 && look === 'daf') {
+                    if (i === 0 && (look === 'daf' || look === 'cream')) {
                       const sp = t.indexOf(' ');
                       return <span key={i}><span className="first">{sp > 0 ? t.slice(0, sp) : t}</span>{sp > 0 ? t.slice(sp) : ''} </span>;
                     }
@@ -1272,7 +1272,7 @@ export default function Home() {
               </button>
             )}
             <button className="send" disabled={!input.trim() || busy} onClick={() => { spokeLast.current = false; if (!live.active) voice.unlock(); send(input); }} aria-label="Send">
-              {look === 'daf' ? 'שלח' : look === 'techelet' ? 'Send' : (
+              {look === 'daf' || look === 'cream' ? 'שלח' : look === 'techelet' ? 'Send' : (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
               )}
             </button>

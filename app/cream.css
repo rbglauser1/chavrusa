@@ -1,0 +1,40 @@
+/* Cream (Nov 13): exactly like The Daf, on an off-white, slightly cream paper like a printed Gemara page. */
+[data-look='cream'] {
+  --bg: #eceee8;
+  --surface: #f4f5f1;
+  --surface-2: #e2e5de;
+  --ink: #1c211e;
+  --soft: #5d655f;
+  --rule: #c9cec6;
+  --accent: #2d3b6b;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(45, 59, 107, 0.1);
+  --me: #5d655f;
+  --src-bg: transparent;
+  --src-ink: #1c211e;
+  --src-rule: #c9cec6;
+  --danger: #a3361f;
+  --scrim: rgba(28, 33, 30, 0.35);
+  --shadow: 0 12px 32px rgba(28, 33, 30, 0.16);
+  --f-body: 'Spectral', Georgia, 'Times New Roman', serif;
+  --f-ui: 'Spectral', Georgia, serif;
+  --f-he: 'Frank Ruhl Libre', 'Times New Roman', serif;
+  --f-brand: 'Frank Ruhl Libre', serif;
+  --radius: 4px;
+  color-scheme: light;
+}
+[data-look='cream'] {
+  --bg: #F8F3E6; --surface: #FBF7EE; --surface-2: #F0E9D8; --rule: #E2D9C4; --src-rule: #E2D9C4;
+}
+[data-look='cream'] body { background: #F8F3E6; }
+[data-look='cream'] .chip { border-radius: 2px; font-style: italic; }
+[data-look='cream'] .pin { margin: 0 14px; border-bottom: 1px solid var(--rule); border-top: 0; }
+[data-look='cream'] .pin-text .he .first { font-size: 1.45em; font-weight: 700; color: var(--accent); }
+[data-look='cream'] .turn .letter { display: block; font-family: var(--f-he); font-weight: 700; color: var(--accent); width: 16px; line-height: 1.55; }
+[data-look='cream'] .turn.me .letter { color: var(--soft); }
+[data-look='cream'] .turn.me .say { font-style: italic; }
+[data-look='cream'] .composer-inner { border-top: 1px solid var(--ink); }
+[data-look='cream'] .composer textarea { font-style: italic; }
+[data-look='cream'] .send { background: none; color: var(--accent); font-family: var(--f-he); font-size: 17px; font-weight: 700; padding: 0 4px; }
+[data-look='cream'] .quote { background: transparent; border-inline-start-width: 2px; }
+.mini.cream { background: #F8F3E6; }
