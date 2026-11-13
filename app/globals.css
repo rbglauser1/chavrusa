@@ -2796,3 +2796,15 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 .lx-p.he-p { font-family: var(--f-he); text-align: right; font-size: calc(var(--ai-size, max(17px, var(--en-size, 18px))) * 1.12); line-height: 1.7; }
 .lchat-follow { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--rule); }
 .lchat-follow .lchat-form textarea { min-height: 40px; }
+
+/* Two more text colors the learner chose (Nov 13): Ocean mist #356D78 and Slate gray #455D70. */
+:root { --hue-oceanmist: #356D78; --hue-slategray: #455D70; }
+[data-look='midnight'] { --hue-oceanmist: #8FC3CC; --hue-slategray: #A9BCCB; }
+[data-c-he='oceanmist'] { --he-hue: var(--hue-oceanmist); } [data-c-he='slategray'] { --he-hue: var(--hue-slategray); }
+[data-look='midnight'][data-c-he='oceanmist'] .mg-paper { --he-hue: #356D78; } [data-look='midnight'][data-c-he='slategray'] .mg-paper { --he-hue: #455D70; }
+[data-c-en='oceanmist'] { --en-hue: var(--hue-oceanmist); } [data-c-en='slategray'] { --en-hue: var(--hue-slategray); }
+[data-look='midnight'][data-c-en='oceanmist'] .mg-paper { --en-hue: #356D78; } [data-look='midnight'][data-c-en='slategray'] .mg-paper { --en-hue: #455D70; }
+[data-c-comm='oceanmist'] { --comm-hue: var(--hue-oceanmist); } [data-c-comm='slategray'] { --comm-hue: var(--hue-slategray); }
+[data-look='midnight'][data-c-comm='oceanmist'] .mg-paper { --comm-hue: #356D78; } [data-look='midnight'][data-c-comm='slategray'] .mg-paper { --comm-hue: #455D70; }
+[data-c-intro='oceanmist'] { --intro-hue: var(--hue-oceanmist); } [data-c-intro='slategray'] { --intro-hue: var(--hue-slategray); }
+[data-look='midnight'][data-c-intro='oceanmist'] .mg-paper { --intro-hue: #356D78; } [data-look='midnight'][data-c-intro='slategray'] .mg-paper { --intro-hue: #455D70; }

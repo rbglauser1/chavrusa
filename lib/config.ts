@@ -291,11 +291,12 @@ export type Look = Experience | 'daf' | 'shtender' | 'techelet' | 'midnight' | '
 
 // Colors of the different things on the page (Settings → Look → Colors). "ink" = the same as the text.
 export type ColorPart = 'he' | 'en' | 'comm' | 'intro';
-export type ColorId = 'ink' | 'sepia' | 'slate' | 'maroon' | 'green' | 'bronze' | 'navy' | 'gray' | 'terracotta' | 'teal' | 'charcoal';
+export type ColorId = 'ink' | 'sepia' | 'slate' | 'maroon' | 'green' | 'bronze' | 'navy' | 'gray' | 'terracotta' | 'teal' | 'charcoal' | 'oceanmist' | 'slategray';
 export const COLOR_IDS: { id: ColorId; name: string }[] = [
   { id: 'ink', name: 'Same as text' }, { id: 'sepia', name: 'Sepia' }, { id: 'slate', name: 'Slate blue' }, { id: 'maroon', name: 'Maroon' },
   { id: 'green', name: 'Green' }, { id: 'bronze', name: 'Bronze' }, { id: 'navy', name: 'Navy' }, { id: 'gray', name: 'Gray' },
   { id: 'terracotta', name: 'Terracotta' }, { id: 'teal', name: 'Teal' }, { id: 'charcoal', name: 'Dark gray' },
+  { id: 'oceanmist', name: 'Ocean mist' }, { id: 'slategray', name: 'Slate gray' },
 ];
 export const COLOR_PARTS: { id: ColorPart; name: string }[] = [
   { id: 'he', name: 'Gemara / pasuk' }, { id: 'en', name: 'Its English' }, { id: 'comm', name: 'Meforshim' }, { id: 'intro', name: 'Amud intro' },
