@@ -1,5 +1,6 @@
 'use client';
 import ExperienceIcon from './ExperienceIcon';
+import { PaperInkNav } from './PaperInk';
 import { GuidedLearningNav } from './GuidedLearning';
 import { SandTealNav } from './SandTeal';
 import { useEffect } from 'react';
@@ -23,6 +24,7 @@ export default function ExperienceNav(p: { look: Look; view: View; onHome: () =>
     };
   }, [p.look]);
   if (!isExperience(p.look)) return null;
+  if (p.look === 'paper-ink') return <PaperInkNav {...p} onSettings={p.onSettings ?? p.onThemes} onReview={p.onReview ?? p.onLearn}/>;
   if (p.look === 'guided-learning') return <GuidedLearningNav {...p} onSettings={p.onSettings ?? p.onThemes} onReview={p.onReview ?? p.onLearn}/>;
   if (p.look === 'sand-teal') return <SandTealNav {...p} onSettings={p.onSettings ?? p.onThemes} onReview={p.onReview ?? p.onLearn}/>;
   const items = [['home','Home','home',p.onHome],['learn','Learn','learn',p.onLearn],['library','Library','library',p.onLibrary],['notebook','Notebook','notebook',p.onNotebook],['themes','Looks','themes',p.onThemes]] as const;

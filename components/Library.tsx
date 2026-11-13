@@ -51,6 +51,9 @@ const UNIT_LABEL: Record<string, string> = { Chapter: 'Perek', Perek: 'Perek', S
 // Where the learner was in the library, kept for the whole visit (even when the Sefer is closed and reopened).
 const memory: { path: string[]; book: { title: string; part?: string } | null } = { path: [], book: null };
 
+/** A real category shortcut from the Paper and Ink Home. Existing navigation keeps this same visit memory. */
+export function browseLibrary(path: string[]) { memory.path = [...path]; memory.book = null; window.dispatchEvent(new Event('lib-jump')); }
+
 // The trail to where the learner is in the library (shown above the text in the Sefer, to jump back to any level).
 export function libraryTrail(): string[] {
   return [...memory.path, ...(memory.book ? [memory.book.title, ...(memory.book.part ? memory.book.part.split('|') : [])] : [])];

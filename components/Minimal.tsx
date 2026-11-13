@@ -1,5 +1,6 @@
 'use client';
 import { isExperience } from '@/lib/experiences';
+import { PaperInkStudy } from './PaperInk';
 import { GuidedLearningStudy } from './GuidedLearning';
 import { SandTealStudy } from './SandTeal';
 // The minimalist layouts (Settings → Look → Layout). They use the same learning, voice and Sefer underneath as the
@@ -206,6 +207,12 @@ export default function Minimal(p: Props) {
     document.documentElement.toggleAttribute('data-guided-full', glFull);
     return () => document.documentElement.removeAttribute('data-guided-full');
   }, [glFull]);
+  const [paperFullOn, setPaperFull] = useState(false);
+  const paperFull = p.settings.theme === 'paper-ink' && paperFullOn && tab === 'text' && !!p.sefer;
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-paper-full', paperFull);
+    return () => document.documentElement.removeAttribute('data-paper-full');
+  }, [paperFull]);
   const endRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing, tab]);
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';
@@ -315,6 +322,12 @@ export default function Minimal(p: Props) {
       </div>
     </div>
   );
+
+  if (p.settings.theme === 'paper-ink') return <>
+    <PaperInkStudy full={paperFull} setFull={setPaperFull} refText={src?.ref} heRef={src?.heRef} sefer={p.sefer && isValidElement(p.sefer) ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void }>, { onDoubleTap: () => setPaperFull(v => !v) }) : p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
+    {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}/>}
+    {mgOpen && src && <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? 1} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={x=>p.onToggle?.(x)} onLearn={p.learnThis}/>}
+  </>;
 
   if (p.settings.theme === 'guided-learning') return <>
     <GuidedLearningStudy full={glFull} setFull={setGlFull} refText={src?.ref} heRef={src?.heRef} sefer={p.sefer && isValidElement(p.sefer) ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void }>, { onDoubleTap: () => setGlFull(v => !v) }) : p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
