@@ -79,3 +79,12 @@
 [data-look='clay'] .home-brand, [data-look='clay'] .hpage-head h1, [data-look='clay'] .hpage-head h2, [data-look='clay'] .drawer-head h2, [data-look='clay'] .sg-1 > .sg-head .sg-title { font-family: var(--f-brand); font-weight: 500; letter-spacing: -0.01em; }
 [data-look='clay'] .home-hello { font-family: var(--f-brand); font-style: normal; color: var(--ink); }
 [data-look='clay'] .btn, [data-look='clay'] .seg button, [data-look='clay'] .min-tabs button, [data-look='clay'] .sg-hint, [data-look='clay'] .field label, [data-look='clay'] .home-card-label, [data-look='clay'] .home-row-title { font-family: var(--f-ui); }
+
+/* Waiting for the answer: three terracotta dots that rise and fade one after another (Clay only; Nov 12). */
+.min-event .dots { display: none; }
+[data-look='clay'] .min-event .dots, [data-look='clay'] .status .dots { display: inline-flex; align-items: center; gap: 5px; margin-right: 8px; vertical-align: middle; height: 14px; }
+[data-look='clay'] .min-event .dots span, [data-look='clay'] .status .dots span { width: 7px; height: 7px; margin: 0; border-radius: 50%; background: var(--accent); animation: clay-dot 1.3s ease-in-out infinite; }
+[data-look='clay'] .min-event .dots span:nth-child(2), [data-look='clay'] .status .dots span:nth-child(2) { animation-delay: .16s; }
+[data-look='clay'] .min-event .dots span:nth-child(3), [data-look='clay'] .status .dots span:nth-child(3) { animation-delay: .32s; }
+@keyframes clay-dot { 0%, 60%, 100% { transform: translateY(0) scale(.85); opacity: .35; } 30% { transform: translateY(-4px) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { [data-look='clay'] .min-event .dots span, [data-look='clay'] .status .dots span { animation-duration: 2.4s; } }
