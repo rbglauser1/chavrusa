@@ -91,17 +91,11 @@
 @keyframes clay-dot { 0%, 60%, 100% { transform: translateY(0) scale(.85); opacity: .35; } 30% { transform: translateY(-4px) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { [data-look='clay'] .min-event .dots span, [data-look='clay'] .status .dots span { animation-duration: 2.4s; } }
 
-/* Quieter reading page, like Claude (Nov 12, from the learner's screenshot): no side line, no dividers — space does
-   the separating; calmer English; no hyphen breaks; header and bottom buttons light and borderless-feeling. */
-[data-look='clay'] .sefer.embedded.rules .line, [data-look='clay'] .sefer.embedded .line { border-bottom: 0; padding-bottom: 18px; margin-bottom: 18px; }
-[data-look='clay'] .il-pair + .il-pair { border-top: 0; padding-top: 12px; }
-[data-look='clay'] .tg { border-top: 0; }
-[data-look='clay'] .line .en { border-top: 0; padding-top: 2px; line-height: 1.6; }
+/* Quieter reading page, like Claude (Nov 12): no side line; header and bottom buttons light. Dividers, spacing and
+   margins are settings (Lines and the English), shared by every look. */
+[data-look='clay'] .line .en { border-top: 0; padding-top: 2px; }
 [data-look='clay'] .line .he { line-height: 1.65; }
 [data-look='clay'] .en b, [data-look='clay'] .min-en b { font-weight: 600; color: var(--ink); }
-[data-look='clay'][data-enmark='soft'] .en .en-x, [data-look='clay'][data-enmark='soft'] .min-en .en-x { color: #8C8B86; }
-[data-look='clay'][data-enmark='light'] .en .en-x, [data-look='clay'][data-enmark='light'] .min-en .en-x { color: #6E6D68; }
-[data-look='clay'] .sefer .line .en, [data-look='clay'] .sefer .comm .en, [data-look='clay'] .min-text .en { -webkit-hyphens: manual; hyphens: manual; }
 [data-look='clay'] .min-head, [data-look='clay'] .sefer-head, [data-look='clay'] .topbar { border-bottom-color: transparent; background: color-mix(in srgb, var(--bg) 92%, transparent); }
 [data-look='clay'] .min-head .min-icon { color: #383835; }
 [data-look='clay'] .min-row { background: transparent; border-top: 0; }

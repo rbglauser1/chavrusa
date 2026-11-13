@@ -435,6 +435,8 @@ export interface Settings {
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
   mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
+  partGap?: 'normal' | 'more' | 'most';   // room between the parts of the text (after the English, before the next Hebrew)
+  sideMargin?: 'normal' | 'wider' | 'widest'; // the text a little further in from the screen's edges
   justify?: boolean;        // the text's Hebrew and English justified (even edges on both sides), like a printed sefer
   elsewhere?: boolean;      // "⇄ Elsewhere" on a line of Gemara / Mishnah: the same sugya in other places in Shas (Sefaria links); default on
   byHeart?: boolean;        // "🧠 By heart" on Mishnah and Avos lines (true: on pesukim too); default on
@@ -588,7 +590,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
+export const OPTIONAL_SETTING_KEYS = ['partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
 
 export const OWNER_ID = 'owner';
 

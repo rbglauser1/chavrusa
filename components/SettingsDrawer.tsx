@@ -248,6 +248,16 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Justified: the Hebrew and the English fill the whole width of each line, with even edges on both sides, like a printed sefer. The last line of each stays as usual.</div>
             </div>
             <div className="field">
+              <label>Space between parts</label>
+              <Seg value={s.partGap ?? 'normal'} options={[['normal', 'Normal'], ['more', 'More'], ['most', 'Most']]} onPick={(v) => onChange({ partGap: v as 'normal' | 'more' | 'most' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>More room after the English before the next Hebrew, so each part stands on its own.</div>
+            </div>
+            <div className="field">
+              <label>Side margins</label>
+              <Seg value={s.sideMargin ?? 'normal'} options={[['normal', 'Normal'], ['wider', 'Wider'], ['widest', 'Widest']]} onPick={(v) => onChange({ sideMargin: v as 'normal' | 'wider' | 'widest' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The text a little further in from the edges of the screen.</div>
+            </div>
+            <div className="field">
               <label>Lines between lines</label>
               <Seg value={s.lineRules ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ lineRules: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line between each line of the text, with its Hebrew and English kept together above it. Also in the ⋯ menu.</div>

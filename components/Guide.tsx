@@ -107,9 +107,13 @@ export const SET_PAGES: SetPage[] = [
     { label: 'Tosafos open on every line', opts: ['Off', 'On'], on: 0, text: 'The same for Tosafos.' },
     { label: 'Rashi, Tosafos and other commentaries', opts: ['Regular letters', 'Rashi script'], on: 1, text: 'Show the meforshim in Rashi script, as in a printed Gemara, or in regular letters.' },
   ] },
+  { id: 'set-space', chapter: 'Look', title: 'Spacing', rows: [
+    { label: 'Space between parts', opts: ['Normal', 'More', 'Most'], on: 0, text: 'More room after the English before the next Hebrew.' },
+    { label: 'Side margins', opts: ['Normal', 'Wider', 'Widest'], on: 0, text: 'The text a little further in from the edges.' },
+  ] },
   { id: 'set-lines', chapter: 'Look', title: 'Lines and the English', rows: [
     { label: 'Alignment', opts: ['As usual', 'Justified'], on: 0, text: 'Justified: the Hebrew and English fill each line edge to edge, like a printed sefer.' },
-    { label: 'Lines between lines', opts: ['Off', 'On'], on: 0, text: 'A thin rule between the lines of the text.' },
+    { label: 'Lines between lines', opts: ['Off', 'On'], on: 0, text: 'A thin rule between the lines of the text, and dotted ones between phrases.' },
     { label: 'English layout', opts: ['Under the line', 'Phrase by phrase'], on: 0, text: 'The English under the whole line, or under each Hebrew phrase so you can match them word by word.' },
     { label: 'Phrase by phrase shows', opts: ['Sefaria’s full English', 'Only the translation'], on: 0, text: 'With phrase by phrase: the full English, or only the word-for-word part.' },
     { label: 'Word-for-word translation in bold', opts: ['Bold', 'Not bold'], on: 0, text: 'Sefaria marks the literal translation; this shows it in bold so it stands out from the added explanation.' },

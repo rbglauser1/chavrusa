@@ -1211,8 +1211,8 @@ body[data-full] .min-quiet.full .min-row > .min-icon, body[data-full] .min-quiet
 /* English under the Gemara: how the translation words stand apart from Sefaria's added explanation (Settings). */
 .en b, .min-en b { font-weight: inherit; color: inherit; }
 .en .en-x, .min-en .en-x { color: inherit; }
-[data-enmark='soft'] .en .en-x, [data-enmark='soft'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 50%, transparent); }
-[data-enmark='light'] .en .en-x, [data-enmark='light'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 70%, transparent); }
+[data-enmark='soft'] .en .en-x, [data-enmark='soft'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 60%, transparent); } /* calmer (Nov 12): was 50% */
+[data-enmark='light'] .en .en-x, [data-enmark='light'] .min-en .en-x { color: color-mix(in srgb, var(--ink) 78%, transparent); }
 [data-enmark='italic'] .en .en-x, [data-enmark='italic'] .min-en .en-x { font-style: italic; }
 
 /* Amud heading: the large Hebrew name and daf on the right, like a printed page. */
@@ -1681,7 +1681,9 @@ body.no-select, body.no-select * { -webkit-user-select: none !important; user-se
 .il .il-he { margin: 0; }
 .il .il-en, .line .il .il-en { direction: ltr; text-align: left; font-family: var(--f-body); font-size: var(--en-size, 16px); line-height: 1.45; margin: 1px 0 0; padding: 0; border: 0; }
 .min-he .il .il-he { font-size: inherit; text-align: right; }
-.il-pair + .il-pair { padding-top: 8px; border-top: 1px dotted color-mix(in srgb, var(--rule) 70%, transparent); }
+.il-pair + .il-pair { padding-top: 8px; }
+/* The dotted lines between phrases belong to "Lines between lines" (Settings), like the lines between lines. */
+.sefer.rules .il-pair + .il-pair { border-top: 1px dotted color-mix(in srgb, var(--rule) 70%, transparent); }
 [data-hespace='closer'] .il { gap: 6px; }
 [data-hespace='closer'] .il-pair + .il-pair { padding-top: 5px; }
 
@@ -2706,7 +2708,7 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 
 /* Justified text (Settings → Look → Lines and the English → Alignment) */
 [data-justify='on'] .sefer .line .he, [data-justify='on'] .sefer .comm .he, [data-justify='on'] .sefer .stepped .he { text-align: justify; text-align-last: right; }
-[data-justify='on'] .sefer .line .en, [data-justify='on'] .sefer .comm .en, [data-justify='on'] .sefer .comm-line .en { text-align: justify; text-align-last: left; -webkit-hyphens: auto; hyphens: auto; }
+[data-justify='on'] .sefer .line .en, [data-justify='on'] .sefer .comm .en, [data-justify='on'] .sefer .comm-line .en { text-align: justify; text-align-last: left; -webkit-hyphens: manual; hyphens: manual; }
 [data-justify='on'] .min-text .he { text-align: justify; text-align-last: right; }
 [data-justify='on'] .min-text .en { text-align: justify; text-align-last: left; }
 
@@ -2724,3 +2726,14 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 
 /* iPhone: keep the buttons pinned to the bottom of the screen where you see it (components/ViewportFix.tsx). */
 body[data-full] .min-quiet.full .min-row, .daf-dock .daf-bar, .min-full-ctl, [data-look] .st-full-ctl, [data-look] .gl-full-controls { translate: 0 var(--vv-shift, 0px); }
+
+/* Calmer English everywhere (Nov 12, from the Clay look): a little more room between its lines, a steady weight. */
+.sefer .line .en, .min-text .en { line-height: 1.6; }
+/* Space between parts (Settings → Lines and the English): more room after the English before the next Hebrew. */
+[data-gap='more'] .sefer .line + .line { margin-top: 14px; }
+[data-gap='more'] .il-pair + .il-pair { margin-top: 10px; }
+[data-gap='most'] .sefer .line + .line { margin-top: 30px; }
+[data-gap='most'] .il-pair + .il-pair { margin-top: 20px; }
+/* Side margins (Settings → Lines and the English): the text a little further in from the edges. */
+[data-margin='wider'] .sefer .sefer-flow { margin-inline: 12px; }
+[data-margin='widest'] .sefer .sefer-flow { margin-inline: 26px; }
