@@ -2755,7 +2755,8 @@ body[data-full] .min-quiet.full .min-row, .daf-dock .daf-bar, .min-full-ctl, [da
   color: var(--accent); font-size: 22px; line-height: 1; display: grid; place-items: center; cursor: pointer;
   box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.35);
 }
-.ai-hub-btn.on { background: var(--accent); color: var(--accent-ink, #fff); border-color: var(--accent); }
+.ai-hub-btn.on { background: #CC7C5E; color: #fff; border-color: #CC7C5E; }
+.ai-hub-btn { color: #CC7C5E; } /* the ✦ is terracotta in every look (Nov 13) */
 .ai-hub-scrim { position: fixed; inset: 0; z-index: 69; background: rgba(0, 0, 0, 0.18); }
 .ai-hub {
   position: fixed; right: 16px; left: 16px; bottom: calc(144px + env(safe-area-inset-bottom)); max-width: 420px; margin-left: auto;

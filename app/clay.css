@@ -5,7 +5,7 @@
    Hebrew: Noto Serif Hebrew, a squarer serif drawn to sit with Source Serif. */
 [data-look='clay'] {
   --bg: #F9F9F7; --surface: #FAFAF8; --surface-2: #F0EFEC;
-  --ink: #383835; --soft: #7A7974; --rule: #E0E0DF;
+  --ink: #131313; --soft: #7A7974; --rule: #E0E0DF;
   --accent: #CC7C5E; --accent-ink: #ffffff; --accent-soft: #F5E9E3;
   --me: #7A7974; --src-bg: #FAFAF8; --src-ink: #131313; --src-rule: #E0E0DF;
   --danger: #B5482A; --scrim: rgba(19, 19, 19, 0.38); --shadow: 0 8px 28px -12px rgba(19, 19, 19, 0.22);
@@ -138,3 +138,27 @@
   [data-look='clay'] .home-row { padding: 9px 10px; }
   [data-look='clay'] .home > .home-howto { font-size: 12.5px; padding: 1px 8px; }
 }
+
+/* Quieter reading page, like Claude (Nov 12; restored Nov 13 after it was dropped by mistake): no side line; header and
+   bottom buttons light. Dividers, spacing and margins are settings (Lines and the English), shared by every look. */
+[data-look='clay'] .line .en { border-top: 0; padding-top: 2px; }
+[data-look='clay'] .line .he { line-height: 1.65; }
+[data-look='clay'] .min-head, [data-look='clay'] .sefer-head, [data-look='clay'] .topbar { border-bottom: 0; background: color-mix(in srgb, var(--bg) 92%, transparent); }
+[data-look='clay'] .min-head .min-icon { color: #131313; }
+[data-look='clay'] .min-row { background: transparent; border-top: 0; }
+[data-look='clay'] .min-row .min-icon { color: #7A7974; }
+[data-look='clay'] .ascroll-btn { background: #FAFAF8; border: 1px solid #E0E0DF; color: #131313; box-shadow: 0 4px 12px -6px rgba(19, 19, 19, 0.18); }
+[data-look='clay'] .daf-dock .daf-bar { background: #FAFAF8; border: 1px solid #E0E0DF; box-shadow: 0 4px 12px -6px rgba(19, 19, 19, 0.18); }
+[data-look='clay'] .daf-dock .daf-bar button { color: #7A7974; }
+[data-look='clay'] .ln-add { color: #888781; font-family: var(--f-ui); }
+
+/* Text colors as in the Claude app (measured Nov 13): all text near-black #131313, in one color — Hebrew and English
+   alike (the colored-text options apply in the other looks); the parts of the English that aren't the translation in
+   Claude's grey #6A6A6A; small notes #888781. */
+[data-look='clay'] :is(.sefer .line > .he, .sefer .line .il-he, .min-he, .he) { color: #131313; }
+[data-look='clay'] :is(.sefer .line > .en, .sefer .line .il-en, .min-en, .en) { color: #131313; }
+[data-look='clay'] :is(.en, .min-en, .il-en) b { font-weight: 600; color: #131313; }
+[data-look='clay'][data-enmark='soft'] :is(.en, .min-en, .il-en) .en-x { color: #6A6A6A; }
+[data-look='clay'][data-enmark='light'] :is(.en, .min-en, .il-en) .en-x { color: #4A4A4A; }
+[data-look='clay'] :is(.ai-note, .muted) { color: #888781; }
+[data-look='clay'] .line .num { color: #9C9C9B; }
