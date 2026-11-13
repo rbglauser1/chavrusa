@@ -153,11 +153,11 @@
 [data-look='clay'] .ln-add { color: #888781; font-family: var(--f-ui); }
 
 /* Text colors as in the Claude app (measured Nov 13): all text near-black #131313, in one color — Hebrew and English
-   alike (the colored-text options apply in the other looks); the parts of the English that aren't the translation in
+   alike, unless a text color is chosen in Settings (then that color); the parts of the English that aren't the translation in
    Claude's grey #6A6A6A; small notes #888781. */
-[data-look='clay'] :is(.sefer .line > .he, .sefer .line .il-he, .min-he, .he) { color: #131313; }
-[data-look='clay'] :is(.sefer .line > .en, .sefer .line .il-en, .min-en, .en) { color: #131313; }
-[data-look='clay'] :is(.en, .min-en, .il-en) b { font-weight: 600; color: #131313; }
+[data-look='clay']:not([data-c-he]:not([data-c-he='ink'])) :is(.sefer .line > .he, .sefer .line .il-he, .min-he) { color: #131313; }
+[data-look='clay']:not([data-c-en]:not([data-c-en='ink'])) :is(.sefer .line > .en, .sefer .line .il-en, .min-en) { color: #131313; }
+[data-look='clay']:not([data-c-en]:not([data-c-en='ink'])) :is(.en, .min-en, .il-en) b { font-weight: 600; color: #131313; }
 [data-look='clay'][data-enmark='soft'] :is(.en, .min-en, .il-en) .en-x { color: #6A6A6A; }
 [data-look='clay'][data-enmark='light'] :is(.en, .min-en, .il-en) .en-x { color: #4A4A4A; }
 [data-look='clay'] :is(.ai-note, .muted) { color: #888781; }

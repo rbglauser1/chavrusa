@@ -2776,3 +2776,16 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 /* The ✦ panel's buttons in terracotta, like the ✦ buttons that used to sit under the lines (Nov 13), in every look. */
 .ai-hub-acts button { color: #CC7C5E; border-color: color-mix(in srgb, #CC7C5E 45%, var(--rule)); font-weight: 600; background: var(--surface); }
 .ai-hub-acts button:active { background: #CC7C5E; color: #fff; border-color: #CC7C5E; }
+
+/* More text colors (Nov 13): terracotta (a shade deeper than the ✦ so text stays easy to read), blue-green teal,
+   dark gray. On dark pages (Midnight) lighter versions. */
+:root { --hue-terracotta: #B5603F; --hue-teal: #1C6B6E; --hue-charcoal: #3F3F3D; }
+[data-look='midnight'] { --hue-terracotta: #E89A7C; --hue-teal: #7FCFCF; --hue-charcoal: #CFCFC8; }
+[data-c-he='terracotta'] { --he-hue: var(--hue-terracotta); } [data-c-he='teal'] { --he-hue: var(--hue-teal); } [data-c-he='charcoal'] { --he-hue: var(--hue-charcoal); }
+[data-c-en='terracotta'] { --en-hue: var(--hue-terracotta); } [data-c-en='teal'] { --en-hue: var(--hue-teal); } [data-c-en='charcoal'] { --en-hue: var(--hue-charcoal); }
+[data-c-comm='terracotta'] { --comm-hue: var(--hue-terracotta); } [data-c-comm='teal'] { --comm-hue: var(--hue-teal); } [data-c-comm='charcoal'] { --comm-hue: var(--hue-charcoal); }
+[data-c-intro='terracotta'] { --intro-hue: var(--hue-terracotta); } [data-c-intro='teal'] { --intro-hue: var(--hue-teal); } [data-c-intro='charcoal'] { --intro-hue: var(--hue-charcoal); }
+[data-look='midnight'][data-c-he='terracotta'] .mg-paper { --he-hue: #B5603F; } [data-look='midnight'][data-c-he='teal'] .mg-paper { --he-hue: #1C6B6E; } [data-look='midnight'][data-c-he='charcoal'] .mg-paper { --he-hue: #3F3F3D; }
+[data-look='midnight'][data-c-en='terracotta'] .mg-paper { --en-hue: #B5603F; } [data-look='midnight'][data-c-en='teal'] .mg-paper { --en-hue: #1C6B6E; } [data-look='midnight'][data-c-en='charcoal'] .mg-paper { --en-hue: #3F3F3D; }
+[data-look='midnight'][data-c-comm='terracotta'] .mg-paper { --comm-hue: #B5603F; } [data-look='midnight'][data-c-comm='teal'] .mg-paper { --comm-hue: #1C6B6E; } [data-look='midnight'][data-c-comm='charcoal'] .mg-paper { --comm-hue: #3F3F3D; }
+[data-look='midnight'][data-c-intro='terracotta'] .mg-paper { --intro-hue: #B5603F; } [data-look='midnight'][data-c-intro='teal'] .mg-paper { --intro-hue: #1C6B6E; } [data-look='midnight'][data-c-intro='charcoal'] .mg-paper { --intro-hue: #3F3F3D; }
