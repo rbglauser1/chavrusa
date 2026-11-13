@@ -629,8 +629,16 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     for (const e of els) if (e.getBoundingClientRect().bottom > 120) return Number(e.dataset.line) - 1;
     return els.length ? 0 : null;
   };
-  const showLine = (i: number) => window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${i + 1}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
-  const addIn = (set: (f: (x: Set<number>) => Set<number>) => void, i: number) => { set((x) => new Set(x).add(i)); showLine(i); };
+  // After the ✦ opens a box under a line, bring that box into view (a line can be long: it scrolls to the new box).
+  const showLine = (i: number) => {
+    const ln = () => bodyRef.current?.querySelector(`[data-line="${i + 1}"]`);
+    const before = new Set(ln()?.querySelectorAll('.line-x') ?? []);
+    window.setTimeout(() => {
+      const fresh = [...(ln()?.querySelectorAll('.line-x') ?? [])].find((b) => !before.has(b));
+      (fresh ?? ln())?.scrollIntoView({ block: fresh ? 'center' : 'start', behavior: 'smooth' });
+    }, 160);
+  };
+  const addIn = (set: (f: (x: Set<number>) => Set<number>) => void, i: number) => { showLine(i); set((x) => new Set(x).add(i)); };
   const toAmud = () => window.setTimeout(() => amudTop.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
   const hubLineActs = (i: number): HubAction[] => {
     if (!lineX || !src) return [];
@@ -639,7 +647,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       ...(settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, i) }] : []),
       ...(settings.lineChat !== false ? [{ label: '✦ Chat', run: () => addIn(setCOpen, i) }] : []),
       ...(settings.lineSources !== false && L && hasIdeas(L) ? [{ label: '✦ Ideas', run: () => addIn(setIOpen, i) }] : []),
-      ...lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setBOpen(`${i}|${b.id}`); showLine(i); } })),
+      ...lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(i); setBOpen(`${i}|${b.id}`); } })),
     ];
   };
   const hubAmud: HubAction[] = !src || isComm || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
