@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       });
       await logCost({ sessionId: null, kind: 'guide-lines', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
       const arr = parseAiJson(r.text, '[') as Partial<Row>[];
-      const str = (x: unknown, m: number) => String(x ?? '').replace(/\*\*/g, '').trim().slice(0, m);
+      const str = (x: unknown, m: number) => String(x ?? '').replace(/\*/g, '').trim().slice(0, m);
       const lines = (Array.isArray(arr) ? arr : []).map((x, i) => ({ n: Number(x.n) || i + 1, where: str(x.where, 300), ask: str(x.ask, 400), hint: str(x.hint, 300) }))
         .filter((x) => x.n >= 1 && x.n <= s.he.length);
       if (lines.length < Math.min(3, s.he.length)) throw new Error('The guide did not come back.');

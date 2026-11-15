@@ -17,7 +17,7 @@ export const maxDuration = 90;
 const PROMPT = `You are a warm, brilliant chavrusa about to learn a section of a sefer with the learner. Before reading a word, you get him into it: a short opening that excites his mind and curiosity, the way a great maggid shiur opens a sugya.
 You get the whole section with numbered lines. Return JSON only:
 {"hook": "...", "watch": "..."}
-- hook: 3 or 4 short sentences. Open with the puzzle, the tension or the big question this section is wrestling with (often a question the learner would never have thought to ask, or something that seems obvious and isn't). Say in a sentence why it matters. Do NOT give away the answer or summarize the section — leave him wanting to find out. Plain, lively, no clichés ("fascinating", "delve", "journey"), no headings.
+- hook: 3 or 4 short sentences (never more than 4). Open with the puzzle, the tension or the big question this section is wrestling with (often a question the learner would never have thought to ask, or something that seems obvious and isn't). Say in a sentence why it matters. Do NOT give away the answer or summarize the section — leave him wanting to find out. Plain, lively, no clichés ("fascinating", "delve", "journey"), no headings.
 - watch: one sentence: one specific thing to watch for as he reads (a word, a move, a proof), phrased to make him look for it.
 Write the Hebrew or Aramaic of a quoted word in Hebrew letters. No markdown.`;
 
@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
       if (!hook) throw new Error('The opening did not come back.');
       return { hook, watch: String(d.watch ?? '').replace(/\*\*/g, '').trim().slice(0, 500) };
     }, (x) => !x.hook);
-    return NextResponse.json(out);
+    const clean = (t: string) => t.replace(/\*+([^*]+)\*+/g, '$1').replace(/\*/g, '');
+    return NextResponse.json({ hook: clean(out.hook), watch: clean(out.watch) });
   } catch (e) { return NextResponse.json({ hook: '', error: (e as Error).message }); }
 }
