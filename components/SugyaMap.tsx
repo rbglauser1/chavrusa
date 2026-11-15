@@ -3,7 +3,7 @@
 // intro, the background it needs, its steps as a timeline, and where it ends up. Tap a step (or a topic) to go to its line.
 // Beside the AI's outline, straight from Sefaria (no AI): the meforshim on each step (tap one: it opens under its line),
 // and under each topic where the halacha is ruled and the pesukim it quotes (tap one: its words open right here).
-import { Bullets } from './Bullets';
+import { Bullets, isHebrewText } from './Bullets';
 import { useEffect, useState } from 'react';
 import { LinkRow, RefText } from './RefText';
 import NoteAdd from './NoteAdd';
@@ -131,7 +131,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                 {t.background.length > 0 && (
                   <div className="smap-bg">
                     <span className="smap-label">Good to know</span>
-                    <ul>{t.background.map((b, i) => { const m = b.match(/^([^:]{1,40}):\s*(.*)$/); return <li key={i}>{m ? <><b>{m[1]}</b>: {m[2]}</> : b}</li>; })}</ul>
+                    <ul dir={isHebrewText(t.background.join(' ')) ? 'rtl' : undefined}>{t.background.map((b, i) => { const m = b.match(/^([^:]{1,40}):\s*(.*)$/); return <li key={i}>{m ? <><b>{m[1]}</b>: {m[2]}</> : b}</li>; })}</ul>
                   </div>
                 )}
                 <ol className="smap-list">

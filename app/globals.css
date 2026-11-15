@@ -2127,7 +2127,7 @@ html:not([data-hefont='chosen']) body .pointed :is(.line .he, .min-he, .il-he, .
 .smap-topic-title { flex: 1; font-family: var(--f-body); font-size: 17px; }
 .smap-intro { margin: 0 0 10px; font-size: 14.5px; line-height: 1.45; }
 .smap-bg { margin: 0 0 10px; }
-.smap-bg ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.4; }
+.smap-bg ul { margin: 0; padding: 0; padding-inline-start: 18px; font-size: 13.5px; line-height: 1.4; }
 .smap-bg li { margin-bottom: 3px; }
 .smap-take { margin: 6px 0 0; font-size: 14px; line-height: 1.4; }
 .k-dispute .smap-kind, .k-rebuke .smap-kind { color: #b0413e; }
@@ -2833,3 +2833,6 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 ul.pts[dir='rtl'], ul.pts[dir='rtl'] ul { padding-left: 0; padding-right: 20px; text-align: right; }
 ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .smap :is(.smap-topic-title, .smap-label, .smap-sum, .smap-intro, .smap-side, .smap-dispute-h, .smap-note, .smap-bg li, p, li), .line-x :is(p, li), .lchat :is(.lchat-me, .lchat-ai p), .comm-outline li, .review :is(p, li, .rv-q, .rv-a) { unicode-bidi: plaintext; text-align: start; }
+
+/* Good to know in Hebrew: the dot sits on the right, outside the words (Nov 14) */
+.smap-bg ul[dir=rtl] li { unicode-bidi: normal; direction: rtl; text-align: right; }
