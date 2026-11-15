@@ -2828,3 +2828,9 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
   background: radial-gradient(ellipse 92% 31% at 50% 47%, transparent 0 58%, rgba(20, 20, 18, 0.30) 78%, rgba(20, 20, 18, 0.52) 100%); }
 .read-window .rw-top, .read-window .rw-bottom { display: none; }
 [data-look='midnight'] .read-window { background: radial-gradient(ellipse 92% 31% at 50% 47%, transparent 0 58%, rgba(0, 0, 0, 0.5) 78%, rgba(0, 0, 0, 0.72) 100%); }
+
+/* Hebrew written by the AI reads right to left everywhere (Nov 14): lists in Hebrew put their bullets on the right, and
+   each line of AI text takes its direction from its own words. */
+ul.pts[dir='rtl'], ul.pts[dir='rtl'] ul { padding-left: 0; padding-right: 20px; text-align: right; }
+ul.pts[dir='rtl'] ul { padding-right: 18px; }
+.smap :is(.smap-topic-title, .smap-label, .smap-sum, .smap-intro, .smap-side, .smap-dispute-h, .smap-note, .smap-bg li, p, li), .line-x :is(p, li), .lchat :is(.lchat-me, .lchat-ai p), .comm-outline li, .review :is(p, li, .rv-q, .rv-a) { unicode-bidi: plaintext; text-align: start; }

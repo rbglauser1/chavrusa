@@ -21,12 +21,16 @@ export function toPoints(text: string): Point[] {
   return (t.match(/[^.!?]+[.!?]+["”’)]?|[^.!?]+$/g) ?? [t]).map((x) => x.trim()).filter(Boolean).map((x) => ({ text: x, sub: [] }));
 }
 
+/** Mostly Hebrew letters: the list runs right to left (bullets on the right, text right-aligned; Nov 14). */
+export const isHebrewText = (t: string) => { const he = (t.match(/[\u05D0-\u05EA]/g) ?? []).length, en = (t.match(/[A-Za-z]/g) ?? []).length; return he > en; };
+
 export function Bullets({ text, className }: { text: string; className?: string }) {
   const pts = toPoints(text);
   if (!pts.length) return null;
+  const rtl = isHebrewText(text);
   return (
-    <ul className={`pts ${className ?? ''}`}>
-      {pts.map((p, i) => <li key={i}>{p.text}{p.sub.length > 0 && <ul>{p.sub.map((x, j) => <li key={j}>{x}</li>)}</ul>}</li>)}
+    <ul className={`pts ${className ?? ''}`} dir={rtl ? 'rtl' : undefined}>
+      {pts.map((p, i) => <li key={i} dir="auto">{p.text}{p.sub.length > 0 && <ul>{p.sub.map((x, j) => <li key={j} dir="auto">{x}</li>)}</ul>}</li>)}
     </ul>
   );
 }
@@ -34,5 +38,5 @@ export function Bullets({ text, className }: { text: string; className?: string 
 /** The same, as HTML (the source sheet). `esc` makes the text safe. */
 export function bulletsHtml(text: string, esc: (s: string) => string): string {
   const pts = toPoints(text);
-  return pts.length ? `<ul class="pts">${pts.map((p) => `<li>${esc(p.text)}${p.sub.length ? `<ul>${p.sub.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ul>` : '';
+  return pts.length ? `<ul class="pts"${isHebrewText(text) ? ' dir="rtl"' : ''}>${pts.map((p) => `<li>${esc(p.text)}${p.sub.length ? `<ul>${p.sub.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ul>` : '';
 }
