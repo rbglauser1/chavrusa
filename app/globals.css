@@ -2825,9 +2825,8 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
    the lines, so it works with phrase-by-phrase too. Taps go through it. */
 .read-window { position: fixed; inset: 0; z-index: 45; pointer-events: none;
   /* A soft oval of light across the middle (Nov 14: rounder, a little larger, the rest darker). */
-  background: radial-gradient(ellipse 92% 31% at 50% 47%, transparent 0 58%, rgba(20, 20, 18, 0.30) 78%, rgba(20, 20, 18, 0.52) 100%); }
+  overflow: hidden; }
 .read-window .rw-top, .read-window .rw-bottom { display: none; }
-[data-look='midnight'] .read-window { background: radial-gradient(ellipse 92% 31% at 50% 47%, transparent 0 58%, rgba(0, 0, 0, 0.5) 78%, rgba(0, 0, 0, 0.72) 100%); }
 
 /* Hebrew written by the AI reads right to left everywhere (Nov 14): lists in Hebrew put their bullets on the right, and
    each line of AI text takes its direction from its own words. */

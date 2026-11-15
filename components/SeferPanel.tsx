@@ -1,4 +1,5 @@
 'use client';
+import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoldEn } from './BoldEn';
@@ -56,14 +57,17 @@ interface Props {
 // top of 5a): the amud above and below that were showing, and how far down he was. Kept for 10 minutes.
 const kept = new Map<string, { prev: SourceData | null; next: SourceData | null; top: number; at: number }>();
 
-// The reading window's shade (Settings → Reading window): size 1–9 sets how tall the clear oval is, shade 1–9 how dark
-// the rest is (5 and 5: the look the learner chose, Nov 14).
-function windowShade(size: number, dark: number, night: boolean): string {
-  const h = 19 + size * 2.4;               // the oval's half-height, % of the screen (5 → 31%)
-  const a = 0.16 + dark * 0.072;            // the darkest edge (5 → 0.52)
+// The reading window's shade (Settings → Reading window): size 1–9 sets how tall the clear area is, shade 1–9 how dark
+// the rest is (5 and 5: the look the learner chose). Since Nov 14 a rounded box with soft edges — between the first
+// straight band and the oval.
+function windowHole(size: number, dark: number, night: boolean): React.CSSProperties {
+  const h = 19 + size * 2.4;               // half-height, % of the screen (5 → 31%)
+  const a = Math.min(0.92, (0.16 + dark * 0.072) * (night ? 1.35 : 1)); // the shade (5 → 0.52)
   const c = night ? '0, 0, 0' : '20, 20, 18';
-  const edge = Math.min(0.92, night ? a * 1.35 : a);
-  return `radial-gradient(ellipse 92% ${h}% at 50% 47%, transparent 0 58%, rgba(${c}, ${(edge * 0.58).toFixed(2)}) 78%, rgba(${c}, ${edge.toFixed(2)}) 100%)`;
+  return {
+    position: 'absolute', left: '-2%', right: '-2%', top: `${47 - h * 0.62}%`, height: `${h * 1.24}%`, borderRadius: '44px / 56px',
+    boxShadow: `0 0 26px 14px rgba(${c}, ${(a * 0.55).toFixed(2)}), 0 0 0 300vmax rgba(${c}, ${a.toFixed(2)})`,
+  };
 }
 
 export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, onLibraryOpened, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
@@ -1105,7 +1109,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       </div>
       {hub}
       {settings.focusMode === 'window' && src && !showLib && typeof document !== 'undefined' && createPortal(
-        <div className="read-window" aria-hidden="true" style={{ background: windowShade(settings.windowSize ?? 5, settings.windowDark ?? 5, settings.theme === 'midnight') }} />, document.body)}
+        <div className="read-window" aria-hidden="true"><div style={windowHole(settings.windowSize ?? 5, settings.windowDark ?? 5, settings.theme === 'midnight')} /></div>, document.body)}
     </aside>
   );
 }
