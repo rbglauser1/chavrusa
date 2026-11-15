@@ -1,5 +1,5 @@
 import 'server-only';
-import { ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationApproved, translationRank, Verdict } from './approval';
+import { ApprovedEntry, IndexInfo, isArchaic, judgeWork, parseYear, translationOrder, Verdict } from './approval';
 import { SourceData } from './db';
 import { yeshivishEnglish } from './hebrew';
 import { getMineText, isMineRef } from './mine';
@@ -146,36 +146,26 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
   const heV = pick(versions, 'he') ?? versions.find((v) => v.versionTitle && !pick([v], 'en'));
   let enV = pick(versions, 'en');
 
-  // Use only an approved translation, and among those prefer plain modern English (e.g. Metsudah over
-  // the "thou / hath" style of the Koren Jerusalem Bible).
-  // Sefaria's default English, kept aside if it isn't approved: the learner can see it (labeled) and approve it.
+  // Nov 15: any real English translation is used — it's just a translation. When there are several, the approved
+  // ones come first, then the rest, then any on the blocked list (translationOrder); within each, plain modern English
+  // first (Metsudah before the "thou / hath" Koren Jerusalem Bible). A version marked English that isn't (Mesillat
+  // Yesharim's "community translation" is Persian) is skipped.
   const defaultEn = enV;
-  if (!translationApproved(enV?.versionTitle, list)) enV = undefined;
   const available: { versionTitle?: string; language?: string; actualLanguage?: string }[] = Array.isArray(first?.available_versions) ? first.available_versions : [];
-  const best = available
-    .filter((v) => isEnglish(v) && translationApproved(v.versionTitle, list))
-    .sort((a, b) => translationRank(a.versionTitle) - translationRank(b.versionTitle))[0];
-  if (best?.versionTitle && best.versionTitle !== enV?.versionTitle && translationRank(best.versionTitle) < translationRank(enV?.versionTitle)) {
+  const order = (t?: string) => translationOrder(t, list);
+  const ranked = available.filter((v) => isEnglish(v) && v.versionTitle).sort((a, b) => order(a.versionTitle) - order(b.versionTitle));
+  enV = undefined;
+  let tries = 0;
+  for (const o of ranked) {
+    if (defaultEn?.versionTitle === o.versionTitle) { if (readsEnglish(defaultEn)) { enV = defaultEn; break; } continue; }
+    if (++tries > 4) break;
     try {
-      const second = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${best.versionTitle}`)}`);
-      enV = pick(Array.isArray(second?.versions) ? second.versions : [], 'en') ?? enV;
-    } catch { /* keep what we have */ }
+      const got = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${o.versionTitle}`)}`);
+      const v = pick(Array.isArray(got?.versions) ? got.versions : [], 'en');
+      if (readsEnglish(v)) { enV = v; break; }
+    } catch { /* next */ }
   }
-
-  // Not really English (another language marked "en")? Try the other approved English versions, best first; else none.
-  if (enV && !readsEnglish(enV)) {
-    const bad = enV.versionTitle;
-    enV = undefined;
-    const others = available.filter((v) => isEnglish(v) && v.versionTitle !== bad && translationApproved(v.versionTitle, list))
-      .sort((a, b) => translationRank(a.versionTitle) - translationRank(b.versionTitle)).slice(0, 3);
-    for (const o of others) {
-      try {
-        const got = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${o.versionTitle}`)}`);
-        const v = pick(Array.isArray(got?.versions) ? got.versions : [], 'en');
-        if (readsEnglish(v)) { enV = v; break; }
-      } catch { /* next */ }
-    }
-  }
+  if (!enV && readsEnglish(defaultEn)) enV = defaultEn;
   const defaultEnOk = readsEnglish(defaultEn) ? defaultEn : undefined;
 
   const canonical: string = first?.ref ?? ref;

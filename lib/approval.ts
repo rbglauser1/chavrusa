@@ -139,6 +139,16 @@ export function parseYear(compDate: unknown): number | null {
 // use old-fashioned English ("thou", "hath", "unto"), so they are used only when nothing better exists.
 const MODERN_FIRST = ['Metsudah', 'William Davidson', 'Steinsaltz'];
 const OLD_STYLE = ['Koren Jerusalem Bible', 'JPS 1917', 'Rosenbaum and A.M. Silbermann'];
+/** Order for choosing among a text's English translations (Nov 15, the learner: a translation is just a translation —
+ *  it need not pass the seforim rules; the rules only decide which comes first): approved ones, then the rest, then
+ *  ones on the blocked list; within each, plain modern English before old-style. */
+export function translationOrder(versionTitle: string | null | undefined, list: ApprovedEntry[]): number {
+  const entries = list.filter((e) => e.kind === 'translation');
+  const tier = versionTitle && entries.some((e) => e.status === 'blocked' && matches(e.name, versionTitle)) ? 2
+    : translationApproved(versionTitle, list) ? 0 : 1;
+  return tier * 10 + translationRank(versionTitle);
+}
+
 export function translationRank(versionTitle: string | null | undefined): number {
   if (!versionTitle) return 9;
   if (MODERN_FIRST.some((n) => matches(n, versionTitle))) return 0;
