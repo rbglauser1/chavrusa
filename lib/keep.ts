@@ -23,9 +23,11 @@ export async function keep<T>(kind: string, key: string, make: () => Promise<T>,
   const had = await readJson<{ v: T }>(path);
   // English chosen, but the kept copy came out in Hebrew (Nov 15: Tanya, a text with no English): made again, once.
   const checkLang = lang === 'en' && !/^(translate|targum|word|literal|interlinear|pieces)/.test(kind);
-  if (had && had.v !== undefined && !(checkLang && mostlyHebrew(had.v) && !(had as { redone?: boolean }).redone)) return had.v;
-  const v = await make();
-  if (checkLang && mostlyHebrew(v)) { if (!empty?.(v)) await writeJson(path, { v, at: new Date().toISOString(), redone: true }).catch(() => {}); return v; }
+  // (redone 2, Nov 15: copies made while a text's "English" was really Persian get one more try now that it's fixed.)
+  if (had && had.v !== undefined && !(checkLang && mostlyHebrew(had.v) && (had as { redone?: unknown }).redone !== 2)) return had.v;
+  let v = await make();
+  if (checkLang && mostlyHebrew(v)) v = await make().catch(() => v); // one more try right away
+  if (checkLang && mostlyHebrew(v)) { if (!empty?.(v)) await writeJson(path, { v, at: new Date().toISOString(), redone: 2 }).catch(() => {}); return v; }
   if (empty?.(v)) return v;
   await writeJson(path, { v, at: new Date().toISOString() }).catch(() => {});
   return v;
