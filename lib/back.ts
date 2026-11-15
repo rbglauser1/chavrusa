@@ -17,7 +17,12 @@ let ready = false;
 // pushed in that moment would be the one taken back).
 function flush() {
   moving = 0;
-  for (const l of stack) if (!l.pushed) { l.pushed = true; history.pushState({ layer: l.id }, ''); }
+  // Nov 15: our own steps back can overshoot (two layers closing at once — the Library and its sefer panel — counted
+  // one step too many and landed on Home's step). Any layer still open whose step is now gone gets it back.
+  const at = Number((history.state as { layer?: number } | null)?.layer ?? 0);
+  for (const l of stack) {
+    if (!l.pushed || l.id > at) { l.pushed = true; history.pushState({ layer: l.id }, ''); }
+  }
 }
 let flushTimer: number | null = null;
 
@@ -29,8 +34,10 @@ function init() {
     // A layer the app closed itself is already off the stack, so its own step back closes nothing; and going
     // forward lands on a step of a layer that is gone, which closes nothing either.
     const landed = Number((e.state as { layer?: number } | null)?.layer ?? 0);
+    // Our own step back (a layer closed with ✕ or by choosing something): close nothing; when the last one lands,
+    // put back the step of any layer that is still open (flush).
+    if (moving > 0) { if (--moving === 0) { if (flushTimer) window.clearTimeout(flushTimer); flush(); } return; }
     while (stack.length && stack[stack.length - 1].pushed && stack[stack.length - 1].id > landed) stack.pop()!.onBack();
-    if (moving > 0 && --moving === 0) { if (flushTimer) window.clearTimeout(flushTimer); flush(); }
   });
 }
 

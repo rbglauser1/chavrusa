@@ -31,6 +31,21 @@ function useJson<T>(url: string | null): { data: T | null; err: boolean; retry: 
   return { data, err, retry: () => setTick((n) => n + 1) };
 }
 
+// The explanations, shared on the device (Nov 15: "it shouldn't take more time to show the answer"): the line's
+// explanation, and the next line's, start being made as soon as the line comes up, so Explain / Show me opens at once.
+// One request per line, ever: the prefetch and the button use the same one.
+type Explained = { text: string; sources: string[] };
+const explained = new Map<string, Promise<Explained>>();
+function getExplain(ref: string): Promise<Explained> {
+  let p = explained.get(ref);
+  if (!p) {
+    p = fetch(`/api/explain?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => { if (!d?.text) throw new Error(d?.error || 'none'); return d as Explained; });
+    explained.set(ref, p);
+    p.catch(() => explained.delete(ref));
+  }
+  return p;
+}
+
 const Wait = () => <div className="muted"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>;
 
 export default function LearnWithMe({ refText, total, start, lineEl, onNext, onClose, onVoice }: {
@@ -54,7 +69,18 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
   const [answer, setAnswer] = useState('');
   const [reply, setReply] = useState<string | null>(null); // the text, or 'wait' / 'err'
   const [hint, setHint] = useState(false);
-  const explain = useJson<{ text: string; sources: string[] }>(phase === 'learn' && !done && xOpen ? `/api/explain?ref=${encodeURIComponent(lineRef)}` : null);
+  // The explanation of this line (and the next one, ahead of time), started as soon as the line comes up.
+  const [expl, setExpl] = useState<{ ref: string; data: Explained | null; err: boolean }>({ ref: '', data: null, err: false });
+  const [xTry, setXTry] = useState(0);
+  useEffect(() => {
+    if (done) return;
+    let gone = false;
+    setExpl({ ref: lineRef, data: null, err: false });
+    getExplain(lineRef).then((d) => { if (!gone) setExpl({ ref: lineRef, data: d, err: false }); }).catch(() => { if (!gone) setExpl({ ref: lineRef, data: null, err: true }); });
+    if (n < total) void getExplain(`${refText}:${n + 1}`).catch(() => {});
+    return () => { gone = true; };
+  }, [lineRef, xTry]); // eslint-disable-line react-hooks/exhaustive-deps
+  const explain = { data: expl.ref === lineRef ? expl.data : null, err: expl.ref === lineRef && expl.err, retry: () => setXTry((k) => k + 1) };
 
   // Light the line up in the sefer and bring it into view above the strip.
   useEffect(() => {
