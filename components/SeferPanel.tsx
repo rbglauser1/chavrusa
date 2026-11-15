@@ -222,6 +222,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Explain, Sources, Ideas and the learner's own buttons: on every sefer in the Library (Gemara, Mishnah, Tanach, the
   // Rambam, Shulchan Aruch, Midrash, mussar…), not on a meforesh opened as its own text, nor on his own uploads.
   const lineX = kind !== 'none' && !!src && !/^Mine /.test(src.ref);
+  // The AI tools (Explain, Chat, a kashya, your own buttons, the map, review): on every sefer, commentaries included (Nov 14).
+  const aiX = !!src && !/^Mine /.test(src.ref);
   const [rel, setRel] = useState<{ ref: string; lines: Record<string, Groups>; tanakh: boolean } | null>(null);
   useEffect(() => {
     if (!lineX || !src || (settings.lineSources === false && settings.halachaTrail === false && settings.elsewhere === false)) return;
@@ -532,7 +534,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const hubOn = settings.aiHub !== false;
   const amudRow = (s2: SourceData, main: boolean) => {
     if (hubOn) return null; // the ✦ has them (AiHub)
-    const show = (settings.sugyaMap || settings.review || settings.listenDaf !== false || settings.sourceSheet !== false || (main && amudButtons.length > 0)) && !isComm && !/:\d+(-\d+)?$/.test(s2.ref) && !/^Mine /.test(s2.ref);
+    const show = (settings.sugyaMap || settings.review || settings.listenDaf !== false || settings.sourceSheet !== false || (main && amudButtons.length > 0)) && !/:\d+(-\d+)?$/.test(s2.ref) && !/^Mine /.test(s2.ref);
     if (!show) return null;
     const open = (what: 'map' | 'review' | 'listen') => {
       if (main) { if (what === 'map') setMapOpen(true); else if (what === 'review') setReviewOpen(true); else setListenOpen((o) => !o); return; }
@@ -671,7 +673,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const addIn = (set: (f: (x: Set<number>) => Set<number>) => void, i: number) => { showLine(i); set((x) => new Set(x).add(i)); };
   const toAmud = () => window.setTimeout(() => amudTop.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
   const hubLineActs = (i: number): HubAction[] => {
-    if (!lineX || !src) return [];
+    if (!aiX || !src) return [];
     const L = rel?.ref === src.ref ? rel.lines[partNum(i)] : undefined;
     return [
       ...(settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, i) }] : []),
@@ -681,14 +683,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       ...lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(i); setBOpen(`${i}|${b.id}`); } })),
     ];
   };
-  const hubAmud: HubAction[] = !src || isComm || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
-    ...(settings.sugyaMap ? [{ label: `🗺 ${kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}`, run: () => { setMapOpen(true); toAmud(); } }] : []),
+  const hubAmud: HubAction[] = !src || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
+    ...(settings.sugyaMap ? [{ label: `🗺 ${kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : kind === 'gemara' ? 'Sugya map' : 'Map'}`, run: () => { setMapOpen(true); toAmud(); } }] : []),
     ...(settings.review ? [{ label: '✓ Review questions', run: () => { setReviewOpen(true); toAmud(); } }] : []),
     ...(settings.sourceSheet !== false && kind !== 'none' ? [{ label: '📄 Source sheet', run: () => setSheetFor(src) }] : []),
     ...(settings.listenDaf !== false && kind !== 'none' ? [{ label: '🎧 Listen', run: () => { setListenOpen(true); toAmud(); } }] : []),
     ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
   ];
-  const hub = hubOn && src && !isComm && !showLib && (lineX || hubAmud.length > 0)
+  const hub = hubOn && src && !showLib && (aiX || hubAmud.length > 0)
     ? <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
     : null;
   return (
@@ -836,7 +838,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 onGo={(n) => { document.querySelector(`.sefer-flow [data-line="${n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }} />
             )}
             {mapOpen && (
-              <SugyaMap refText={src.ref} title={kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'} here={src.focus} onClose={() => setMapOpen(false)}
+              <SugyaMap refText={src.ref} title={kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : kind === 'gemara' ? 'Sugya map' : 'Map'} here={src.focus} onClose={() => setMapOpen(false)}
                 onGo={(n) => { const el = document.querySelector(`.sefer-flow [data-line="${n}"]`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}
                 onComm={settings.mapComms === false ? undefined : (n, x) => {
                   const i = n - 1;
@@ -917,10 +919,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {quick.map((x) => (
                           <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                         ))}
-                        {lineX && !hubOn && settings.explainLine !== false && (
+                        {aiX && !hubOn && settings.explainLine !== false && (
                           <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}>✦ Explain</button>
                         )}
-                        {lineX && !hubOn && settings.lineChat !== false && (
+                        {aiX && !hubOn && settings.lineChat !== false && (
                           <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}>✦ Chat</button>
                         )}
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
@@ -938,7 +940,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {lineX && !hubOn && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
                           <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Ideas</button>
                         )}
-                        {lineX && !hubOn && lineButtons.map((b) => (
+                        {aiX && !hubOn && lineButtons.map((b) => (
                           <button key={b.id} className={`comm-btn ai ${bOpen === `${i}|${b.id}` ? 'on' : ''}`} onClick={() => setBOpen(bOpen === `${i}|${b.id}` ? null : `${i}|${b.id}`)}>✦ {b.name}</button>
                         ))}
                         {conns === null && !fallback.length && i === 0 && connState === 'loading' && <span className="muted comm-note">Finding commentaries…</span>}

@@ -22,7 +22,7 @@ export interface IndexInfo {
 export const ALWAYS_BLOCKED: ApprovedEntry[] = [
   ...['Cassuto', 'A New Israeli Commentary', 'Brown-Driver-Briggs', 'BDB', 'Klein Dictionary', 'The Torah: A Modern Commentary', 'Siddur Sim Shalom', "Mishkan T'filah", 'Kol Haneshamah', 'Lev Shalem', 'Legends of the Jews', 'Plaut']
     .map((name) => ({ kind: 'work' as const, name, status: 'blocked' as const, lean: 'academic or non-Orthodox' })),
-  ...['Umberto Cassuto', 'Abraham Cohen', 'Abraham Joshua Heschel', 'Mordecai Kaplan', 'Martin Buber', 'Franz Rosenzweig', 'Hermann Cohen', 'Solomon Schechter', 'Louis Ginzberg', 'Gunther Plaut', 'Arthur Green', 'Zalman Schachter-Shalomi', 'Elliot Dorff', 'Shmuel Safrai', 'Francis Brown', 'Samuel Rolles Driver', 'Charles Augustus Briggs', 'Ernest Klein']
+  ...['Umberto Cassuto', 'Abraham Cohen', 'Abraham Joshua Heschel', 'Mordecai Kaplan', 'Martin Buber', 'Franz Rosenzweig', 'Hermann Cohen', 'Solomon Schechter', 'Louis Ginzberg', 'Gunther Plaut', 'Arthur Green', 'Zalman Schachter-Shalomi', 'Elliot Dorff', 'Shmuel Safrai', 'Francis Brown', 'Samuel Rolles Driver', 'Charles Augustus Briggs', 'Ernest Klein', 'Saul Lieberman', 'Joshua Kulp', 'Zeev Safrai', 'Everett Fox', 'Hayim Nahman Bialik', 'Eliezer Ben Yehuda', 'Naphtali Herz Wessely', 'Nachman Krochmal', 'Philo of Alexandria', 'Josephus', 'Yariv Ben Aharon']
     .map((name) => ({ kind: 'author' as const, name, status: 'blocked' as const, lean: 'academic or non-Orthodox' })),
   // Nov 14: the learner asked to drop Peninei Halakhah (Rav Eliezer Melamed, Religious Zionist).
   ...['Peninei Halakhah', 'Peninei Halakha'].map((name) => ({ kind: 'work' as const, name, status: 'blocked' as const, lean: 'not in the learner\'s path' })),
@@ -31,16 +31,16 @@ export const ALWAYS_BLOCKED: ApprovedEntry[] = [
 
 // Women authors (Nov 14: the learner asked that nothing written by women be used), blocked even if approved by mistake.
 // Modern works are blocked anyway unless approved (below); this covers older ones and any approved by accident.
-export const WOMEN_AUTHORS = ['Nechama Leibowitz', 'Nehama Leibowitz', 'Glückel of Hameln', 'Gluckel of Hameln', 'Glikl', 'Sarah Rebecca Rachel Leah Horowitz', 'Leah Horowitz', 'Rachel Bluwstein', 'Judith Plaskow', 'Tamar Ross', 'Rachel Adler', 'Blu Greenberg', 'Avivah Gottlieb Zornberg', 'Aviva Zornberg', 'Ruth Calderon', 'Tova Hartman', 'Bonna Devora Haberman', 'Malka Simkovich', 'Dvora Weisberg', 'Rivka Ulmer', 'Chana Kasachkoff', 'Sarah Schenirer', 'Lea Goldberg', 'Esther Jungreis', 'Hannah Senesh', 'Henrietta Szold', 'Emma Lazarus', 'Rachel Elior', 'Ilana Pardes', 'Tikva Frymer-Kensky', 'Adele Berlin', 'Ellen Frankel', 'Sandy Eisenberg Sasso', 'Danya Ruttenberg', 'Elana Stein Hain', 'Tamar Biala']
+export const WOMEN_AUTHORS = ['Nechama Leibowitz', 'Nehama Leibowitz', 'Glückel of Hameln', 'Gluckel of Hameln', 'Glikl', 'Sarah Rebecca Rachel Leah Horowitz', 'Leah Horowitz', 'Rachel Bluwstein', 'Judith Plaskow', 'Tamar Ross', 'Rachel Adler', 'Blu Greenberg', 'Avivah Gottlieb Zornberg', 'Aviva Zornberg', 'Ruth Calderon', 'Tova Hartman', 'Bonna Devora Haberman', 'Malka Simkovich', 'Dvora Weisberg', 'Rivka Ulmer', 'Chana Kasachkoff', 'Sarah Schenirer', 'Lea Goldberg', 'Esther Jungreis', 'Hannah Senesh', 'Henrietta Szold', 'Emma Lazarus', 'Rachel Elior', 'Ilana Pardes', 'Tikva Frymer-Kensky', 'Adele Berlin', 'Ellen Frankel', 'Sandy Eisenberg Sasso', 'Danya Ruttenberg', 'Elana Stein Hain', 'Tamar Biala', 'Erica Brown', 'Deena Zimmerman', 'Michal Tikochinsky', 'Chana Safrai', 'Judith Hauptman', 'Simi Peters', 'Susan Handelman', 'Tamar Weissman', 'Tamara Cohn Eskenazi', 'Nehama Weingarten Mintz', 'Yoatzot Halakhah']
   .map((name) => ({ kind: 'author' as const, name, status: 'blocked' as const, lean: 'written by a woman' }));
 
 // Works written after 1900 that are in the Orthodox, yeshiva path and may be used without asking (Nov 14). Every other
 // modern work, and anything Sefaria files as modern, needs the learner's (or his rav's) approval — even with "Allow
 // all", which now covers only the classic seforim.
 export const ORTHODOX_MODERN: ApprovedEntry[] = [
-  ...['Mishnah Berurah', 'Biur Halacha', "Sha'ar HaTziyun", 'Arukh HaShulchan', 'Aruch HaShulchan', 'Kaf HaChayim', 'Kaf HaChaim', 'Ben Ish Hai', 'Ben Ish Chai', 'Chafetz Chaim', 'Shemirat HaLashon', 'Ahavat Chesed', 'Igrot Moshe', 'Iggrot Moshe', 'Chazon Ish', 'Sefat Emet', 'Sfat Emet', 'Shem MiShmuel', 'Meshekh Chokhmah', 'Meshech Chochmah', 'Or Sameach', 'Ohr Sameach', 'Chiddushei Rabbi Chaim', 'Kovetz Shiurim', 'Kovetz Ha\'arot', 'Michtav MeEliyahu', 'Torah Temimah', 'Netivot Shalom', 'Avnei Nezer', 'Steinsaltz', 'Kehati', 'Mishnah Yomit']
+  ...['Mishnah Berurah', 'Biur Halacha', "Sha'ar HaTziyun", 'Arukh HaShulchan', 'Aruch HaShulchan', 'Kaf HaChayim', 'Kaf HaChaim', 'Ben Ish Hai', 'Ben Ish Chai', 'Chafetz Chaim', 'Shemirat HaLashon', 'Ahavat Chesed', 'Igrot Moshe', 'Iggrot Moshe', 'Chazon Ish', 'Sefat Emet', 'Sfat Emet', 'Shem MiShmuel', 'Meshekh Chokhmah', 'Meshech Chochmah', 'Or Sameach', 'Ohr Sameach', 'Chiddushei Rabbi Chaim', 'Kovetz Shiurim', 'Kovetz Ha\'arot', 'Michtav MeEliyahu', 'Torah Temimah', 'Netivot Shalom', 'Avnei Nezer', 'Steinsaltz', 'Kehati', 'Mishnah Yomit', 'Sifrei Zuta', 'Koren Shalem Siddur']
     .map((name) => ({ kind: 'work' as const, name, status: 'approved' as const, lean: 'Orthodox (built in)' })),
-  ...['Yisrael Meir Kagan', 'Moshe Feinstein', 'Avraham Yeshayahu Karelitz', 'Yehudah Aryeh Leib Alter', 'Shmuel Bornsztain', 'Meir Simcha of Dvinsk', 'Chaim Soloveitchik', 'Elchonon Wasserman', 'Eliyahu Eliezer Dessler', 'Baruch Epstein', 'Adin Even-Israel Steinsaltz', 'Adin Steinsaltz', 'Pinhas Kehati', 'Yaakov Chaim Sofer', 'Yosef Chaim of Baghdad', 'Yechiel Michel Epstein']
+  ...['Yisrael Meir Kagan', 'Moshe Feinstein', 'Avraham Yeshayahu Karelitz', 'Yehudah Aryeh Leib Alter', 'Shmuel Bornsztain', 'Meir Simcha of Dvinsk', 'Chaim Soloveitchik', 'Elchonon Wasserman', 'Eliyahu Eliezer Dessler', 'Baruch Epstein', 'Adin Even-Israel Steinsaltz', 'Adin Steinsaltz', 'Pinhas Kehati', 'Yaakov Chaim Sofer', 'Yosef Chaim of Baghdad', 'Yechiel Michel Epstein', 'Israel Meir Kagan', 'Barukh HaLevi Epstein', 'Barukh Epstein', 'Yosef Hayyim', 'Solomon Sirilio', 'Abraham Isaac HaCohen Kook', 'Avraham Yitzchak HaKohen Kook', 'Jonathan Sacks']
     .map((name) => ({ kind: 'author' as const, name, status: 'approved' as const, lean: 'Orthodox (built in)' })),
 ];
 
@@ -83,7 +83,9 @@ export function judgeWork(info: IndexInfo, list: ApprovedEntry[]): Verdict {
   const allowAll = works.some((e) => e.status === 'approved' && e.name === ALL_WORKS);
 
   // 3. Modern or reference categories need explicit approval.
-  if (info.categories.some((c) => MODERN_MARKERS.some((m) => c.includes(m)))) {
+  const oldReference = info.year !== null && info.year < CLASSIC_CUTOFF_YEAR && info.categories.some((c) => /Reference|Dictionar/.test(c))
+    && !info.categories.some((c) => /Modern|Contemporary|Second Temple|Academic/.test(c));
+  if (!oldReference && info.categories.some((c) => MODERN_MARKERS.some((m) => c.includes(m)))) {
     return { allowed: false, reason: `"${info.title}" is a modern work that is not on the approved list.`, lean: 'general' };
   }
 
@@ -93,7 +95,12 @@ export function judgeWork(info: IndexInfo, list: ApprovedEntry[]): Verdict {
     return { allowed: true, reason: 'Foundational text.', lean: 'general' };
   }
 
-  // 5. Classic by date.
+  // 5. Classic by era: Sefaria files books under Rishonim / Acharonim / Geonim by the author's era, while the date it
+  // gives is often only the first printing (Eshkol HaKofer, Gevurat Ari, Be'er Sheva "1906"…), so the era wins.
+  if (isCommentary && info.categories.some((c) => /Rishonim|Acharonim|Geonim/.test(c))) {
+    return { allowed: true, reason: 'Classic work (by era).', lean: 'general' };
+  }
+  // 6. Classic by date.
   if (info.year !== null) {
     if (info.year < CLASSIC_CUTOFF_YEAR) return { allowed: true, reason: 'Classic work.', lean: 'general' };
     return { allowed: false, reason: `"${info.title}" was written in ${info.year}, after ${CLASSIC_CUTOFF_YEAR}, and is not on the approved list.`, lean: 'general' };

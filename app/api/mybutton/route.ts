@@ -55,7 +55,7 @@ async function run(b: MyButton, ref: string): Promise<{ text: string; sources: s
 // GET ?id=<button id>&ref=Yoma 6a:3 (a line) or ref=Yoma 6a (an amud)
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id') ?? '', ref = String(req.nextUrl.searchParams.get('ref') ?? '');
-  if (!ref || / on /i.test(ref) || /^Mine /.test(ref)) return NextResponse.json({ text: '' });
+  if (!ref || /^Mine /.test(ref)) return NextResponse.json({ text: '' });
   const b = ((await getSettings()).myButtons ?? []).find((x) => x.id === id);
   if (!b || !b.prompt.trim()) return NextResponse.json({ text: '', error: 'That button no longer exists.' });
   try {

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   const msgs: Msg[] = (Array.isArray(b.messages) ? b.messages : [])
     .filter((x: Msg) => (x?.role === 'user' || x?.role === 'assistant') && typeof x.content === 'string' && x.content.trim())
     .slice(-20).map((x: Msg) => ({ role: x.role, content: x.content.slice(0, 4000) }));
-  if (!m || / on /i.test(ref) || /^Mine /.test(ref) || !msgs.length || msgs[msgs.length - 1].role !== 'user') return NextResponse.json({ error: 'Nothing to answer.' }, { status: 400 });
+  if (!m || /^Mine /.test(ref) || !msgs.length || msgs[msgs.length - 1].role !== 'user') return NextResponse.json({ error: 'Nothing to answer.' }, { status: 400 });
   try {
     await needCredit();
     const [base, n] = [m[1], Number(m[2])];

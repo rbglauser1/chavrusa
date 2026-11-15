@@ -67,7 +67,7 @@ async function makeExplain(base: string, n: number): Promise<{ text: string; sou
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   const m = ref.match(/^(.*?):(\d+)$/);
-  if (!m || / on /i.test(ref) || /^Mine /.test(ref)) return NextResponse.json({ text: '' });
+  if (!m || /^Mine /.test(ref)) return NextResponse.json({ text: '' });
   try { return NextResponse.json(await keep('explain-v2', ref, () => makeExplain(m[1], Number(m[2])), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ text: '', error: (e as Error).message }); }
 }

@@ -115,7 +115,7 @@ const cached = async (ref: string) => {
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
-  if (!ref || / on /i.test(ref)) return NextResponse.json({ overview: '', topics: [], steps: [] });
+  if (!ref) return NextResponse.json({ overview: '', topics: [], steps: [] });
   try { return NextResponse.json(await cached(ref)); }
   catch (e) { return NextResponse.json({ overview: '', topics: [], steps: [], error: (e as Error).message }); }
 }

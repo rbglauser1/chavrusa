@@ -54,7 +54,7 @@ const cached = (ref: string) => keep('review-v2-opus', ref, () => makeReview(ref
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
-  if (!ref || / on /i.test(ref) || /^Mine /.test(ref)) return NextResponse.json({ questions: [] });
+  if (!ref || /^Mine /.test(ref)) return NextResponse.json({ questions: [] });
   try { return NextResponse.json(await cached(ref)); }
   catch (e) { return NextResponse.json({ questions: [], error: (e as Error).message }); }
 }
