@@ -684,30 +684,35 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useEffect(() => { if (voiceRestart && talk && !talk.on) { setVoiceRestart(false); window.setTimeout(() => talk.toggle(), 700); } }, [voiceRestart, talk?.on]); // eslint-disable-line react-hooks/exhaustive-deps
   const voiceLead = talk ? () => { if (talk.on) { setVoiceRestart(true); talk.toggle(); } else talk.toggle(); } : undefined;
   const goLine = (n: number) => window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
-  const hubLineActs = (i: number): HubAction[] => {
-    if (!aiX || !src) return [];
-    const L = rel?.ref === src.ref ? rel.lines[partNum(i)] : undefined;
+  // The ✦ (Nov 15, simplified): four everyday tools on top, the rest under More. "Learn with me" starts at the line (or
+  // the top); "Map" opens this line's part of the map (with a Full map button), or the whole map when no line is chosen.
+  const mapOn = !!settings.sugyaMap && !!src && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref);
+  const hubMain = (at: number | null): HubAction[] => {
+    if (!src) return [];
     return [
-      ...(wholeSec ? [{ label: '✦ Learn with me from here', run: () => setLwmAt(i + 1) }] : []),
-      ...(wholeSec && settings.sugyaMap ? [{ label: '🗺 This line in the map', run: () => setPeekAt(i + 1) }] : []),
-      ...(settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, i) }] : []),
-      ...(settings.lineChat !== false ? [{ label: '✦ Chat', run: () => addIn(setCOpen, i) }] : []),
-      ...(settings.lineChat !== false ? [{ label: '✦ Ask me a kashya', run: () => { setChatAsk({ i, q: 'Ask me a kashya' }); addIn(setCOpen, i); } }] : []),
-      ...(settings.lineSources !== false && L && hasIdeas(L) ? [{ label: '✦ Ideas', run: () => addIn(setIOpen, i) }] : []),
-      ...lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(i); setBOpen(`${i}|${b.id}`); } })),
+      ...(wholeSec ? [{ label: '✦ Learn with me', run: () => setLwmAt(at != null ? at + 1 : 1) }] : []),
+      ...(at != null && aiX && settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, at) }] : []),
+      ...(at != null && aiX && settings.lineChat !== false ? [{ label: '✦ Chat', run: () => addIn(setCOpen, at) }] : []),
+      ...(mapOn ? [{ label: '🗺 Map', run: () => (at != null && wholeSec ? setPeekAt(at + 1) : (setMapOpen(true), toAmud())) }] : []),
     ];
   };
   const hubAmud: HubAction[] = !src || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
-    ...(aiX ? [{ label: '✦ Learn with me', run: () => setLwmAt(1) }] : []),
-    ...(settings.sugyaMap ? [{ label: `🗺 ${kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : kind === 'gemara' ? 'Sugya map' : 'Map'}`, run: () => { setMapOpen(true); toAmud(); } }] : []),
     ...(settings.review ? [{ label: '✓ Review questions', run: () => { setReviewOpen(true); toAmud(); } }] : []),
     ...(settings.sourceSheet !== false && kind !== 'none' ? [{ label: '📄 Source sheet', run: () => setSheetFor(src) }] : []),
     ...(settings.listenDaf !== false && kind !== 'none' ? [{ label: '🎧 Listen', run: () => { setListenOpen(true); toAmud(); } }] : []),
     ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
   ];
+  const hubMore = (at: number | null): HubAction[] => {
+    const L = at != null && src && rel?.ref === src.ref ? rel.lines[partNum(at)] : undefined;
+    return [
+      ...(at != null && aiX && settings.lineSources !== false && L && hasIdeas(L) ? [{ label: '✦ Ideas from the sources', run: () => addIn(setIOpen, at) }] : []),
+      ...(at != null && aiX ? lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(at); setBOpen(`${at}|${b.id}`); } })) : []),
+      ...hubAmud,
+    ];
+  };
   const hub = hubOn && src && !showLib && (aiX || hubAmud.length > 0)
     ? <>
-        <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
+        <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
         {lwmAt != null && <LearnWithMe refText={src.ref} he={src.he} en={src.en} start={lwmAt} onGo={goLine} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
       </>

@@ -2904,3 +2904,5 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 @keyframes thinking-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .thinking-word { animation: none; } }
 .lwm-voice { border: 1px solid color-mix(in srgb, #CC7C5E 50%, var(--rule)); background: none; border-radius: 999px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; }
+.ai-hub-more { background: none; border: 0; padding: 2px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--soft); cursor: pointer; }
+.ai-hub-more + .ai-hub-acts { margin-top: 10px; }
