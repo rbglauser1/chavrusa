@@ -125,6 +125,14 @@ function pick(versions: V3Version[], lang: 'he' | 'en'): V3Version | undefined {
 // Sefaria marks every translation "en" in `language`, Italian and German included; `actualLanguage` says what it
 // really is (Nov 10: Yehoshua 1 came up in Italian).
 const isEnglish = (v: { language?: string; actualLanguage?: string }) => (v.actualLanguage ? v.actualLanguage === 'en' : v.language === 'en');
+// Nov 15: Sefaria's "Sefaria Community Translation" of Mesillat Yesharim 1 is marked English but holds Persian. A
+// translation counts as English only if its text is mostly Latin letters.
+function readsEnglish(v?: V3Version): boolean {
+  if (!v) return false;
+  const t = flatten(v.text).join(' ');
+  const latin = (t.match(/[A-Za-z]/g) ?? []).length, other = (t.match(/[\u0590-\u06FF\u0750-\u08FF\u0400-\u04FF]/g) ?? []).length;
+  return latin > 0 && latin >= other * 2;
+}
 
 export async function getText(ref: string, list: ApprovedEntry[]): Promise<SourceData & { verdict: Verdict }> {
   // His own texts (My Seforim, lib/mine.ts) open like any sefer.
@@ -154,6 +162,22 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
     } catch { /* keep what we have */ }
   }
 
+  // Not really English (another language marked "en")? Try the other approved English versions, best first; else none.
+  if (enV && !readsEnglish(enV)) {
+    const bad = enV.versionTitle;
+    enV = undefined;
+    const others = available.filter((v) => isEnglish(v) && v.versionTitle !== bad && translationApproved(v.versionTitle, list))
+      .sort((a, b) => translationRank(a.versionTitle) - translationRank(b.versionTitle)).slice(0, 3);
+    for (const o of others) {
+      try {
+        const got = await getJson(`${BASE}/api/v3/texts/${r}?version=${encodeURIComponent(`english|${o.versionTitle}`)}`);
+        const v = pick(Array.isArray(got?.versions) ? got.versions : [], 'en');
+        if (readsEnglish(v)) { enV = v; break; }
+      } catch { /* next */ }
+    }
+  }
+  const defaultEnOk = readsEnglish(defaultEn) ? defaultEn : undefined;
+
   const canonical: string = first?.ref ?? ref;
   const indexTitle = first?.indexTitle ?? first?.book;
   const early = await earlyVerdict;
@@ -164,15 +188,15 @@ export async function getText(ref: string, list: ApprovedEntry[]): Promise<Sourc
     he: nonEmpty(flatten(heV?.text).map(stripHtml)),
     en: enV ? nonEmpty(flatten(enV.text).map(stripHtml).map(yeshivishEnglish)) : [],
     ...(() => {
-      const src = enV ?? defaultEn;
+      const src = enV ?? defaultEnOk;
       if (!src) return {};
       const b = flatten(src.text).map(stripKeepBold).map(yeshivishEnglish);
       return hasBold(b) ? { enB: b } : {};
     })(),
     translation: enV?.versionTitle ?? null,
-    credit: { he: creditOf(heV), en: creditOf(enV ?? defaultEn) },
-    ...(!enV && defaultEn?.versionTitle && nonEmpty(flatten(defaultEn.text)).length
-      ? { altEn: nonEmpty(flatten(defaultEn.text).map(stripHtml).map(yeshivishEnglish)), altTitle: defaultEn.versionTitle } : {}),
+    credit: { he: creditOf(heV), en: creditOf(enV ?? defaultEnOk) },
+    ...(!enV && defaultEnOk?.versionTitle && nonEmpty(flatten(defaultEnOk.text)).length
+      ? { altEn: nonEmpty(flatten(defaultEnOk.text).map(stripHtml).map(yeshivishEnglish)), altTitle: defaultEnOk.versionTitle } : {}),
     archaic: enV ? isArchaic(flatten(enV.text).slice(0, 40).join(' ')) : false,
     url: `${BASE}/${enc(canonical)}`,
     verdict,
