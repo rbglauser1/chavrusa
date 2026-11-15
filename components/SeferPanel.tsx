@@ -634,6 +634,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     setOpen((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
   }
 
+  // Focus on one line (Settings → Look and text → Focus on one line; Nov 14): the line you tapped — or, if none, the
+  // line the chavrusa is on — stays bright, the rest of the page dims.
+  const hereLine: number | null = picked ?? (open.size ? Math.max(...open) : src?.focus ? src.focus - 1 : null);
   // The ✦ (AiHub): which line it is about — the one you tapped, else the first line showing on the screen.
   const hubLine = (): number | null => {
     if (picked != null) return picked;
@@ -674,7 +677,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ? <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
     : null;
   return (
-    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''}`} aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''} ${settings.spotlight && hereLine != null ? 'spot' : ''}`} aria-label="Sefer">
       {full && (
         <div className="full-bar">
           {talk && (
@@ -856,7 +859,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
-                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => {
+                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${hereLine === i ? 'here' : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
                   if (active && settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he')) {

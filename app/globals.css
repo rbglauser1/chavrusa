@@ -2809,3 +2809,8 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 [data-c-intro='oceanmist'] { --intro-hue: var(--hue-oceanmist); } [data-c-intro='slategray'] { --intro-hue: var(--hue-slategray); }
 [data-look='midnight'][data-c-intro='oceanmist'] .mg-paper { --intro-hue: #356D78; } [data-look='midnight'][data-c-intro='slategray'] .mg-paper { --intro-hue: #455D70; }
 [data-aihe='times'] .lx-p.he-p { font-family: 'Times New Roman', Times, serif; } /* the AI's Hebrew in Times (Nov 13) */
+
+/* Focus on one line (Nov 14): the rest of the page dims; the line you're on (and its open boxes) stays bright. */
+.sefer.spot .sefer-body [data-line]:not(.here) { opacity: .3; transition: opacity .25s ease; }
+.sefer.spot .sefer-body [data-line].here { opacity: 1; transition: opacity .25s ease; }
+.sefer.spot .sefer-body [data-line]:not(.here):active { opacity: .55; }
