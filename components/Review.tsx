@@ -1,6 +1,7 @@
 'use client';
 // Review questions (Settings → Extras): questions on the amud or perek to test yourself. Each answer stays hidden until
 // tapped; "line n" goes to the line it is about. Made once per amud / perek by the AI and kept for good (app/api/review).
+import Thinking from './Thinking';
 import { useEffect, useState } from 'react';
 
 type Question = { q: string; a: string; line: number };
@@ -26,7 +27,7 @@ export default function Review({ refText, onGo, onClose }: { refText: string; on
     <div className="smap-back" onClick={onClose}>
       <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Review questions">
         <div className="smap-head"><span>Review · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
-        {!qs && !err && <div className="muted smap-wait"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
+        {!qs && !err && <div className="muted smap-wait"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {qs && (
           <>

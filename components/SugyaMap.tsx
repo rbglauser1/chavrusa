@@ -3,6 +3,7 @@
 // intro, the background it needs, its steps as a timeline, and where it ends up. Tap a step (or a topic) to go to its line.
 // Beside the AI's outline, straight from Sefaria (no AI): the meforshim on each step (tap one: it opens under its line),
 // and under each topic where the halacha is ruled and the pesukim it quotes (tap one: its words open right here).
+import Thinking from './Thinking';
 import { Bullets, isHebrewText } from './Bullets';
 import { useEffect, useState } from 'react';
 import { LinkRow, RefText } from './RefText';
@@ -84,7 +85,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
     <div className="smap-back" onClick={onClose}>
       <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
         <div className="smap-head"><span>{title} · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
-        {!data && !err && <div className="muted smap-wait"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
+        {!data && !err && <div className="muted smap-wait"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
         {data && (
           <>
@@ -92,7 +93,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
             {data.overview && <div className="smap-overview"><span className="smap-label">The big picture</span><Bullets text={data.overview} /></div>}
             <div className="smap-views">
               {views === null ? <button className="smap-views-btn" onClick={loadViews}>⚖ Who holds what</button>
-                : views === 'loading' ? <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>
+                : views === 'loading' ? <div className="muted"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>
                 : views === 'failed' ? <div className="muted">Couldn’t make the table just now. <button className="linklike" onClick={loadViews}>Try again</button></div>
                 : !views.disputes.length ? <div className="muted">No machlokes on this {/\d[ab]$/.test(refText) ? 'amud' : 'text'}.</div>
                 : (

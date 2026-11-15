@@ -1,4 +1,5 @@
 'use client';
+import Thinking from '@/components/Thinking';
 import { englishFor } from '@/lib/literal';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { logLine } from '@/lib/callLog';
@@ -1240,7 +1241,7 @@ export default function Home() {
               {voice.state === 'listening' ? 'Listening… pause or tap Done when you finish'
                 : voice.state === 'transcribing' ? 'Got it…'
                 : voice.state === 'speaking' ? 'Speaking… tap to interrupt'
-                : busy ? (status || 'Thinking…') : 'Ready'}
+                : busy ? (status && status !== 'Thinking…' ? status : <Thinking />) : 'Ready'}
             </span>
             {voice.state === 'listening' && <button className="btn primary" onClick={() => voice.stopListening()}>Done</button>}
             {voice.state === 'speaking' && <button className="btn" onClick={() => { voice.stopSpeaking(); voice.listen(); }}>Interrupt</button>}

@@ -9,6 +9,7 @@ import { geminiPronunciation, sayNote } from '@/lib/geminiPron';
 import { forVoice } from '@/lib/geminiSpeech';
 import { englishFor } from '@/lib/literal';
 import { voicePhrases } from '@/lib/interlinear';
+import { voiceGuide } from '@/lib/voiceGuide';
 
 export const runtime = 'nodejs';
 
@@ -85,6 +86,8 @@ export async function POST(req: NextRequest) {
       }
     } catch { /* the call still works without it */ }
   }
+  const guide = voiceGuide(req.nextUrl.searchParams); // Learn with me by voice: the chavrusa leads (lib/voiceGuide)
+  if (guide) context += guide.block;
   const resume = req.nextUrl.searchParams.get('resume') === '1';
   const placeName = context.match(/The learner is on (.*?), line \d+/)?.[1] ?? null;
   const recapBlock = recap ? `\n\n# The conversation so far in this session (most recent last)\n${recap}` : '';
@@ -148,7 +151,7 @@ export async function POST(req: NextRequest) {
       outputAudioTranscription: {},
       contextWindowCompression: { slidingWindow: {} },
     },
-    opening: resume ? resumeNote : hello, // the phone applies Gemini's spelling and list to it
+    opening: resume ? resumeNote : guide ? guide.opening : hello, // the phone applies Gemini's spelling and list to it
     speech: { spell, myWay, house, nusach: s.nusach },
   });
 }

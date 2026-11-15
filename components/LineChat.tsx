@@ -2,6 +2,7 @@
 // "Chat" on a line (Settings → Extras → Chat on each line): a written chat with the AI about this one line, right
 // under it. Each answer has "Save" (to the Notebook, on this line); "Save the chat" saves the whole conversation as one
 // note. The chat stays on this device for the line (closing it doesn't lose it); "Clear" starts over.
+import Thinking from './Thinking';
 import { useEffect, useRef, useState } from 'react';
 import { WithSources } from './LineExtras';
 import { notesChanged } from './NoteAdd';
@@ -72,7 +73,7 @@ export default function LineChat({ lineRef, onClose, follow, ask, onAsked }: { l
             ))}
         </div>
       )}
-      {busy && <div className="muted lchat-wait"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
+      {busy && <div className="muted lchat-wait"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
       {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') void send(last.content, true); }}>Try again</button></div>}
       <div ref={endRef} />
       <form className="lchat-form" onSubmit={(e) => { e.preventDefault(); void send(draft); }}>
@@ -102,7 +103,7 @@ export default function LineChat({ lineRef, onClose, follow, ask, onAsked }: { l
               <button className="lchat-keep" onClick={() => void saveOne(k)} disabled={m.saved}>{m.saved ? '✓ Saved' : '✎ Save to Notebook'}</button>
             </div>
           ))}
-        {busy && <div className="muted lchat-wait"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
+        {busy && <div className="muted lchat-wait"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
         {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') void send(last.content, true); }}>Try again</button></div>}
         <div ref={endRef} />
       </div>

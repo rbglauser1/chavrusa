@@ -2899,3 +2899,8 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .lwm-start small { color: var(--soft); }
 .lwm-end h4 { font-size: 19px; margin: 6px 0 12px; }
 .lwm-end .lwm-nav { border-top: 0; padding: 12px 0; }
+/* The moving "Thinking…" word (components/Thinking.tsx): each new word fades in */
+.thinking-word { display: inline-block; animation: thinking-in .45s ease; }
+@keyframes thinking-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .thinking-word { animation: none; } }
+.lwm-voice { border: 1px solid color-mix(in srgb, #CC7C5E 50%, var(--rule)); background: none; border-radius: 999px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; }

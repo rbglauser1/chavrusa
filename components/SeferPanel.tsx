@@ -679,6 +679,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [peekAt, setPeekAt] = useState<number | null>(null);
   useEffect(() => { setLwmAt(null); setPeekAt(null); }, [src?.ref]);
   const wholeSec = !!src && aiX && !/:\d+(-\d+)?$/.test(src.ref);
+  // Learn with me by voice: start the call; if one is on, end it and start again (the new one leads).
+  const [voiceRestart, setVoiceRestart] = useState(false);
+  useEffect(() => { if (voiceRestart && talk && !talk.on) { setVoiceRestart(false); window.setTimeout(() => talk.toggle(), 700); } }, [voiceRestart, talk?.on]); // eslint-disable-line react-hooks/exhaustive-deps
+  const voiceLead = talk ? () => { if (talk.on) { setVoiceRestart(true); talk.toggle(); } else talk.toggle(); } : undefined;
   const goLine = (n: number) => window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
   const hubLineActs = (i: number): HubAction[] => {
     if (!aiX || !src) return [];
@@ -705,7 +709,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ? <>
         <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
-        {lwmAt != null && <LearnWithMe refText={src.ref} he={src.he} en={src.en} start={lwmAt} onGo={goLine} onNext={nextRef ? () => turn(nextRef) : undefined} onClose={() => setLwmAt(null)} />}
+        {lwmAt != null && <LearnWithMe refText={src.ref} he={src.he} en={src.en} start={lwmAt} onGo={goLine} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
       </>
     : null;
   return (

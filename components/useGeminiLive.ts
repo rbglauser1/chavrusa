@@ -4,6 +4,7 @@
 // the phone talks to Google directly over a WebSocket (with a short-lived pass from our server), streams the
 // microphone, plays Gemini's voice, and hands every learning turn to the Chavrusa brain through one tool
 // (ask_backend). The brain's answer goes back as the tool's result, for Gemini to say.
+import { takeVoiceGuide } from '@/lib/voiceGuide';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { hasNikud, mildCholam, namesForSpeech, yeshivishTranslit } from '@/lib/hebrew';
 import { voicePhrases } from '@/lib/interlinear';
@@ -420,6 +421,7 @@ export function useGeminiLive(opts: Opts) {
       const q = new URLSearchParams();
       if (sid) q.set('session', sid);
       if (resuming) q.set('resume', '1');
+      else takeVoiceGuide(q); // Learn with me by voice (lib/voiceGuide)
       const res = await fetch(`/api/gemini/live${q.toString() ? `?${q}` : ''}`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (gone()) { teardown(); return; }

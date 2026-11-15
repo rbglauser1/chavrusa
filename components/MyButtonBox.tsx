@@ -1,6 +1,7 @@
 'use client';
 // The answer of one of the learner's own buttons (components/MyButtons.tsx), under the line or at the top of the amud,
 // with its sources tappable, like Explain.
+import Thinking from './Thinking';
 import { useEffect, useState } from 'react';
 import { WithSources } from './LineExtras';
 import NoteAdd from './NoteAdd';
@@ -24,7 +25,7 @@ export default function MyButtonBox({ id, name, refText, onClose }: { id: string
       {data && <div className="ai-note left">Written by AI · AI makes mistakes</div>}
       {data ? <WithSources text={data.text} sources={data.sources} />
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>
-        : <div className="muted"><span className="wait-dots"><span /><span /><span /></span>Thinking…</div>}
+        : <div className="muted"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
     </div>
   );
 }

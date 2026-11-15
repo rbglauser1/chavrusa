@@ -1,4 +1,5 @@
 import { englishFor } from '@/lib/literal';
+import { voiceGuide } from '@/lib/voiceGuide';
 import { NextRequest, NextResponse } from 'next/server';
 import { outOfCredit } from '@/lib/credits';
 import { LIVE, LIVE_VOICES, VOICE_SAMPLE, forNusach } from '@/lib/config';
@@ -137,6 +138,8 @@ export async function POST(req: NextRequest) {
   // A tapped line: the app hands it to the voice as soon as the call opens (the way a tap mid-call does). Told to read
   // it from here, the voice said "let's start right here" and waited for the app, since its text comes only from the app.
   const pointOpen = point && !oldOpen ? `Do not speak first, and do not say, read or recite any text yourself. In a moment the app hands you the line the learner chose (${point.ref}, line ${point.n}); when it arrives, begin with ${greet}, and then do exactly what it says.${recapBlock}` : '';
+  const guide = voiceGuide(req.nextUrl.searchParams); // Learn with me by voice: the chavrusa leads (lib/voiceGuide)
+  if (guide) context += guide.block;
   const hello = pointOpen ? pointOpen : autoOpen
     ? `Do not speak first, and do not say, read, recite or summarize any text yourself. In a moment the app hands you the next piece of the text${placeName ? ` (we are on ${placeName})` : ''}; when it arrives, begin with ${greet}, and then read it exactly as given, every word of it.${recapBlock}`
     : pointed
@@ -222,7 +225,7 @@ export async function POST(req: NextRequest) {
   }
   // How much text OpenAI got at the start of this call (for the call recorder: some calls never start, and it may be
   // the size or content of what a particular learning session sends).
-  const opening = preview ? '' : fv(resume ? resumeNote : hello);
+  const opening = preview ? '' : fv(resume ? resumeNote : guide ? guide.opening : hello);
   const heCount = (t: string) => (t.match(/[\u05D0-\u05EA]/g) ?? []).length;
   const instr = build(rulesFinal);
   const sizes = `instructions ${instr.length} chars (${heCount(instr)} Hebrew letters) · context ${context.length} · opening ${opening.length} (${heCount(opening)} Hebrew) · recap ${recap.length} · tapped line ${pointed ? 'yes' : 'no'}`;

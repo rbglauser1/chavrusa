@@ -11,11 +11,14 @@
 //   • A kashya at the real turning points only: try it, or just show the teretz.
 //   • At the end of a topic, where it ended up; at the end of the section, the big picture and on to the next.
 // The reading behind follows along. The question, the map and the explanation are each made once and kept.
+import Thinking from './Thinking';
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bullets, isHebrewText } from './Bullets';
 import { WithSources } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
+import { setVoiceGuide } from '@/lib/voiceGuide';
 import { getMap, placeOf, stepLabel, topicBeginsAt, topicEndsAt, type MapData } from '@/lib/mapClient';
 
 type Mode = 'ask' | 'learn';
@@ -38,11 +41,12 @@ function useJson<T>(url: string | null): { data: T | null; err: boolean; retry: 
   return { data, err, retry: () => setTick((n) => n + 1) };
 }
 
-const Wait = ({ what }: { what: string }) => <div className="muted"><span className="wait-dots"><span /><span /><span /></span>{what}</div>;
+const Wait = ({ what }: { what: React.ReactNode }) => <div className="muted"><span className="wait-dots"><span /><span /><span /></span>{what}</div>;
 
-export default function LearnWithMe({ refText, he, en, start, onGo, onNext, onClose }: {
+export default function LearnWithMe({ refText, he, en, start, onGo, onNext, onClose, onVoice }: {
   refText: string; he: string[]; en: string[]; start: number; // start: the line to begin on (1-based)
   onGo: (n: number) => void; onNext?: () => void; onClose: () => void;
+  onVoice?: () => void; // start (or restart) the voice call, which then leads from here (lib/voiceGuide)
 }) {
   useBackLayer(true, onClose);
   const total = he.length;
@@ -100,6 +104,10 @@ export default function LearnWithMe({ refText, he, en, start, onGo, onNext, onCl
             <button className={mode === 'ask' ? 'on' : ''} onClick={() => setMode('ask')}>Ask me</button>
             <button className={mode === 'learn' ? 'on' : ''} onClick={() => setMode('learn')}>Just learn</button>
           </div>
+        )}
+        {onVoice && mode && !done && (
+          <button className="lwm-voice" title="The chavrusa leads you out loud" aria-label="Learn with me by voice"
+            onClick={() => { setVoiceGuide({ mode, at: `${refText}:${n}` }); onClose(); onVoice(); }}>🎙</button>
         )}
         <button className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
       </div>
@@ -178,7 +186,7 @@ export default function LearnWithMe({ refText, he, en, start, onGo, onNext, onCl
                 <div className="lwm-label">The explanation</div>
                 {explain.data ? <WithSources text={explain.data.text} sources={explain.data.sources ?? []} />
                   : explain.err ? <div className="muted">It couldn’t be made just now. <button className="linklike" onClick={explain.retry}>Try again</button></div>
-                  : <Wait what="Thinking…" />}
+                  : <Wait what={<Thinking />} />}
               </div>
             )}
 

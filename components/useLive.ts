@@ -1,4 +1,5 @@
 'use client';
+import { takeVoiceGuide } from '@/lib/voiceGuide';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { heReadNote, voiceHe, type HeRead } from '@/lib/hebrew';
 import { splitPieces } from '@/lib/pieces';
@@ -934,6 +935,7 @@ export function useLive(opts: {
       const q = new URLSearchParams();
       if (sid) q.set('session', sid);
       if (resuming) q.set('resume', '1');
+      else takeVoiceGuide(q); // Learn with me by voice (lib/voiceGuide)
       if (retry === 'silent') q.set('plain', '1');
       const res = await fetch(`/api/live/session${q.toString() ? `?${q}` : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp ?? '' });
       const data = await res.json().catch(() => ({}));
