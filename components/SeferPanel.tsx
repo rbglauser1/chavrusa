@@ -12,6 +12,8 @@ import NoteAdd from './NoteAdd';
 import { VoiceRecord, VoicePlay } from './VoiceNote';
 import MyButtonBox from './MyButtonBox';
 import AiHub, { type HubAction } from './AiHub';
+import MapPeek from './MapPeek';
+import LearnWithMe from './LearnWithMe';
 import LineChat from './LineChat';
 import Clamp from './Clamp';
 import Elsewhere from './Elsewhere';
@@ -672,10 +674,18 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   };
   const addIn = (set: (f: (x: Set<number>) => Set<number>) => void, i: number) => { showLine(i); set((x) => new Set(x).add(i)); };
   const toAmud = () => window.setTimeout(() => amudTop.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 80);
+  // Learn with me (from a line, or from the top) and this line's piece of the map (Nov 15): whole sections only.
+  const [lwmAt, setLwmAt] = useState<number | null>(null);
+  const [peekAt, setPeekAt] = useState<number | null>(null);
+  useEffect(() => { setLwmAt(null); setPeekAt(null); }, [src?.ref]);
+  const wholeSec = !!src && aiX && !/:\d+(-\d+)?$/.test(src.ref);
+  const goLine = (n: number) => window.setTimeout(() => bodyRef.current?.querySelector(`[data-line="${n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
   const hubLineActs = (i: number): HubAction[] => {
     if (!aiX || !src) return [];
     const L = rel?.ref === src.ref ? rel.lines[partNum(i)] : undefined;
     return [
+      ...(wholeSec ? [{ label: '✦ Learn with me from here', run: () => setLwmAt(i + 1) }] : []),
+      ...(wholeSec && settings.sugyaMap ? [{ label: '🗺 This line in the map', run: () => setPeekAt(i + 1) }] : []),
       ...(settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, i) }] : []),
       ...(settings.lineChat !== false ? [{ label: '✦ Chat', run: () => addIn(setCOpen, i) }] : []),
       ...(settings.lineChat !== false ? [{ label: '✦ Ask me a kashya', run: () => { setChatAsk({ i, q: 'Ask me a kashya' }); addIn(setCOpen, i); } }] : []),
@@ -684,6 +694,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ];
   };
   const hubAmud: HubAction[] = !src || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
+    ...(aiX ? [{ label: '✦ Learn with me', run: () => setLwmAt(1) }] : []),
     ...(settings.sugyaMap ? [{ label: `🗺 ${kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : kind === 'gemara' ? 'Sugya map' : 'Map'}`, run: () => { setMapOpen(true); toAmud(); } }] : []),
     ...(settings.review ? [{ label: '✓ Review questions', run: () => { setReviewOpen(true); toAmud(); } }] : []),
     ...(settings.sourceSheet !== false && kind !== 'none' ? [{ label: '📄 Source sheet', run: () => setSheetFor(src) }] : []),
@@ -691,7 +702,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
   ];
   const hub = hubOn && src && !showLib && (aiX || hubAmud.length > 0)
-    ? <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
+    ? <>
+        <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
+        {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
+        {lwmAt != null && <LearnWithMe refText={src.ref} he={src.he} en={src.en} start={lwmAt} onGo={goLine} onNext={nextRef ? () => turn(nextRef) : undefined} onClose={() => setLwmAt(null)} />}
+      </>
     : null;
   return (
     <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''}`} aria-label="Sefer">
