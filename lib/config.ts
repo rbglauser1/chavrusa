@@ -343,6 +343,7 @@ export const FONTS_HE: { id: string; name: string; stack: string }[] = [
   { id: '', name: "The look's own", stack: '' },
   { id: 'frank', name: 'Frank Ruhl (classic sefer)', stack: "'Frank Ruhl Libre', 'Times New Roman', serif" },
   { id: 'david', name: 'David', stack: "'David Libre', 'Frank Ruhl Libre', serif" },
+  { id: 'taamey', name: 'Taamey Frank (like a siddur)', stack: "'Taamey Frank CLM', 'Frank Ruhl Libre', serif" },
   { id: 'times', name: 'Times New Roman (as Explain first showed)', stack: "'Times New Roman', Times, serif" },
   { id: 'notoserif', name: 'Noto Serif Hebrew (square, matches Source Serif)', stack: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif" },
   { id: 'bellefair', name: 'Bellefair (elegant)', stack: "'Bellefair', 'Frank Ruhl Libre', serif" },

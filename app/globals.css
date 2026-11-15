@@ -1,3 +1,6 @@
+/* Taamey Frank CLM (Culmus project, GPL with the font exception; via Wikimedia's font repository), served from the app
+   itself: a classic Frank Ruehl siddur face with full nikud and trop (Nov 14). */
+@font-face { font-family: 'Taamey Frank CLM'; src: url('/fonts/TaameyFrankCLM.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /* Three looks share one layout; each look only redefines these tokens and a few signature details.
    daf: a page of Gemara. shtender: white oak, like a beis medrash shtender. techelet: bright and modern. */
 
