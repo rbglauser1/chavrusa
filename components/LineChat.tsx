@@ -11,11 +11,19 @@ type Msg = { role: 'user' | 'assistant'; content: string; sources?: string[]; sa
 const KEY = (r: string) => `chavrusa-linechat:${r}`;
 const split = (r: string): [string, number] => { const m = r.match(/^(.*?):(\d+)$/); return m ? [m[1], Number(m[2])] : [r, 1]; };
 const plain = (t: string) => t.replace(/⟦([^⟧]+)⟧/g, '$1');
-const STARTERS = ['What is this line saying?', 'Bring another source', 'What do other meforshim say?', 'Where else does this idea come up?', 'Ask me a kashya', 'Is there a halacha from this?'];
+// The suggested questions fit the kind of text (Nov 15): a pasuk, a Mishnah, the Gemara, or any other sefer.
+const TANACH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles) \d/;
+function startersFor(ref: string): string[] {
+  if (TANACH.test(ref)) return ['What is the pasuk saying?', 'What is bothering Rashi?', 'What do other meforshim say?', 'Where else does this idea come up?', 'Ask me a kashya'];
+  if (/^Mishnah /.test(ref)) return ['What is the case?', 'What does the Bartenura add?', 'Who holds what?', 'What is the halacha?', 'Ask me a kashya'];
+  if (/^[A-Z][\w' ]* \d+[ab]:\d+$/.test(ref) && !/ on /.test(ref)) return ['Who is asking, and why?', 'What does Rashi add?', 'What does Tosafos ask?', 'What is the halacha?', 'Ask me a kashya'];
+  return ['What is he saying here?', 'Bring another source', 'Where else does this idea come up?', 'How do I live this?', 'Ask me a kashya'];
+}
 
 // follow: used inside Explain for follow-up questions (Nov 13): no title or starters, the explanation goes to the AI
 // with the question, and the follow-ups are kept apart from the line's own ✦ Chat.
 export default function LineChat({ lineRef, onClose, follow, ask, onAsked }: { lineRef: string; onClose: () => void; follow?: { about: string }; ask?: string; onAsked?: () => void }) {
+  const STARTERS = startersFor(lineRef);
   const store = follow ? `${lineRef}#explain` : lineRef;
   const [msgs, setMsgs] = useState<Msg[]>(() => { try { return JSON.parse(localStorage.getItem(KEY(store)) ?? '[]'); } catch { return []; } });
   const [draft, setDraft] = useState('');
