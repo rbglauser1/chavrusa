@@ -10,11 +10,11 @@ type Msg = { role: 'user' | 'assistant'; content: string; sources?: string[]; sa
 const KEY = (r: string) => `chavrusa-linechat:${r}`;
 const split = (r: string): [string, number] => { const m = r.match(/^(.*?):(\d+)$/); return m ? [m[1], Number(m[2])] : [r, 1]; };
 const plain = (t: string) => t.replace(/⟦([^⟧]+)⟧/g, '$1');
-const STARTERS = ['What is this line saying?', 'Why is this line needed here?', 'What does Rashi add?', 'Is there a halacha from this?'];
+const STARTERS = ['What is this line saying?', 'Ask me a kashya', 'Why is this line needed here?', 'What does Rashi add?', 'Is there a halacha from this?'];
 
 // follow: used inside Explain for follow-up questions (Nov 13): no title or starters, the explanation goes to the AI
 // with the question, and the follow-ups are kept apart from the line's own ✦ Chat.
-export default function LineChat({ lineRef, onClose, follow }: { lineRef: string; onClose: () => void; follow?: { about: string } }) {
+export default function LineChat({ lineRef, onClose, follow, ask, onAsked }: { lineRef: string; onClose: () => void; follow?: { about: string }; ask?: string; onAsked?: () => void }) {
   const store = follow ? `${lineRef}#explain` : lineRef;
   const [msgs, setMsgs] = useState<Msg[]>(() => { try { return JSON.parse(localStorage.getItem(KEY(store)) ?? '[]'); } catch { return []; } });
   const [draft, setDraft] = useState('');
@@ -25,6 +25,9 @@ export default function LineChat({ lineRef, onClose, follow }: { lineRef: string
   useEffect(() => { try { if (msgs.length) localStorage.setItem(KEY(store), JSON.stringify(msgs.slice(-40))); else localStorage.removeItem(KEY(store)); } catch { /* optional */ } }, [msgs, store]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [msgs.length, busy]);
 
+  // Opened from the ✦ with a question already chosen ("Ask me a kashya"): sent once, at once.
+  const asked = useRef(false);
+  useEffect(() => { if (!ask) { asked.current = false; return; } if (!asked.current) { asked.current = true; onAsked?.(); void send(ask); } }, [ask]); // eslint-disable-line react-hooks/exhaustive-deps
   async function send(text: string, retry = false) {
     const q = text.trim();
     if (!q || busy) return;
