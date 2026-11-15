@@ -2946,3 +2946,6 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .lwm-voice-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 16px 2px; }
 .lwm-voice-pick .btn { flex: 1 1 140px; font-size: 15px; }
 .lwm-voice-pick small { flex-basis: 100%; }
+/* Nov 15: Guided learning and the line map sit above every look's tab bar (the Guided and Sand looks' bars hid Next) */
+.lwm-strip { z-index: 88; }
+.lwm-scrim, .peek-scrim { z-index: 89; }
