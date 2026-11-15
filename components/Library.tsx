@@ -86,7 +86,7 @@ function OfflineShelf({ onPick }: { onPick: (title: string) => void }) {
   );
 }
 
-export default function Library({ onOpen, onClose, shown = true }: { onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: () => void; shown?: boolean }) {
+export default function Library({ onOpen, onClose, shown = true }: { onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: (opened?: boolean) => void; shown?: boolean }) {
   const [openParsha, setOpenParsha] = useState<number | null>(null);
   const [path, setPathState] = useState<string[]>(memory.path);
   const setPath = (p: string[]) => { memory.path = p; setPathState(p); };
@@ -131,7 +131,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
     setBusy(true); setMsg(''); setApprovable(null);
     const err = await onOpen(ref, focus);
     setBusy(false);
-    if (!err) { saveRecent({ ref, trail: libraryTrail() }); onClose(); return; }
+    if (!err) { saveRecent({ ref, trail: libraryTrail() }); onClose(true); return; } // opened: not "close the sefer"
     if (typeof err === 'string') { setMsg(err); return; }
     setMsg(err.message);
     if (err.approvable) setApprovable({ work: err.approvable, ref });

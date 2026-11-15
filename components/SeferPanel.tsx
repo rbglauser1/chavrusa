@@ -99,8 +99,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useEffect(() => { if (showLib) setLibUsed(true); }, [showLib]);
   // Closing the Library (✕ or back): back to the text, or, when no text is open yet, out of the Sefer altogether
   // (Nov 10: ✕ left a blank page with no way out).
-  const closeLib = () => { setShowLib(false); if (!sources.length) onClose(); };
-  useBackLayer(showLib, closeLib); // back closes the Library
+  // Nov 15: after a text was opened from the Library, closing it never means "close the sefer" (the new text hasn't
+  // reached `sources` yet on a fresh start, which sent the learner back to Home).
+  const closeLib = (opened?: boolean) => { setShowLib(false); if (!opened && !sources.length) onClose(); };
+  useBackLayer(showLib, () => closeLib()); // back closes the Library
   // Open the Library only when the page asks anew; not again whenever the Sefer comes back on screen (review, Nov 11:
   // it reopened over the text after Settings and on resume).
   useEffect(() => {
