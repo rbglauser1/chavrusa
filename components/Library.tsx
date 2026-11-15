@@ -167,7 +167,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
         {crumbs.map((c, i) => (
           <span key={i}>{i > 0 && <span className="sep">›</span>}<button onClick={() => goCrumb(i)} disabled={i === crumbs.length - 1}>{c}</button></span>
         ))}
-        <button className="lib-close" onClick={onClose} aria-label="Close library">✕</button>
+        <button className="lib-close" onClick={() => onClose()} aria-label="Close library">✕</button>
       </div>
       {msg && <div className="goto-msg">{msg}</div>}
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
