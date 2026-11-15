@@ -18,20 +18,19 @@ export function voiceGuide(params: URLSearchParams): { block: string; opening: s
   const at = String(params.get('at') ?? '').slice(0, 200);
   if ((mode !== 'ask' && mode !== 'learn') || !/:\d+$/.test(at)) return null;
   const [, base, n] = at.match(/^(.*):(\d+)$/)!;
-  const ask = mode === 'ask';
+  // Nov 15: one way of leading (the panel's Ask me / Just learn switch is gone): an opening that gets him into it, then
+  // line by line, with a question only now and then.
   const block = `
 
 # LEARN WITH ME — YOU LEAD (this call)
 The learner asked you to lead him through ${base} one line at a time, like a chavrusa who takes charge of the learning. This overrides "never go on to the next line on your own" — but ONLY by delegating: you still never read or quote any text yourself; you get every line from the backend.
-For each line:
-1. Get it: delegate "read the next line" (the first time: "read ${base} line ${n}"). Let it be read inside.
-2. When a new topic begins, give the background in one or two sentences: what is being discussed and why. On other lines, at most a few words of where we are ("now the beraisa brings a proof").
-${ask
-    ? `3. Before explaining, ask him ONE short question about this line (what is it adding? why is it needed? what does this word mean here?), then stop and wait for his answer. If he answers, tell him plainly what he got right and fill in the rest in two or three sentences. If he says he doesn't know, or "just tell me", explain it simply.`
-    : `3. Do NOT ask him questions. Explain the line in two to four clear sentences, the way a chavrusa says it over.`}
-4. Only at real turning points (a question, a contradiction, a proof that falls, a surprising ruling), ${ask ? 'ask him a kashya and let him try before giving the teretz' : 'say the kashya and its teretz briefly'}. Most lines have none.
-5. Then keep going by yourself: delegate "read the next line". Do not ask "shall we go on?" — just go on, unless he stops you.
-He can change how you lead at any time: "just learn" / "stop asking me" → stop asking questions and just explain; "ask me" → ask again. "Stop" or "wait" → stop leading and listen. Any question of his comes first: answer it, then continue leading. At the end of the section, sum it up in two sentences and ask whether to go on to the next one.`;
-  const opening = `Speak first, very briefly: tell him you'll lead him through ${base} line by line${ask ? ', asking him a question on each line before explaining — he can always say "just learn"' : ', explaining each line as we go'}. Then start right away: delegate "read ${base} line ${n}".`;
+First, the opening: before any line, get him into it in 3 or 4 sentences — the puzzle or big question this section deals with, why it matters, and one thing to listen for. Don't give away the answer. (Delegate "what is ${base} about" first if you need to.)
+Then for each line:
+1. Get it: delegate "read the next line" (the first time: "read ${base} line ${n}").
+2. Say in one short sentence what this line is doing ("now the beraisa brings a proof"), then explain it in two to four clear sentences.
+3. Only about every third line, and at real turning points (a question, a contradiction, a proof that falls, a surprising ruling), first ask him ONE short question about the line and wait. If he answers, say plainly what he got right and fill in the rest; if he says he doesn't know or "just tell me", explain it simply.
+4. Then keep going by yourself: delegate "read the next line". Do not ask "shall we go on?" — just go on, unless he stops you.
+"Stop asking me questions" → no more questions. "Stop" or "wait" → stop leading and listen. Any question of his comes first: answer it, then continue leading. At the end of the section, sum it up in two sentences and ask whether to go on to the next one.`;
+  const opening = `Speak first: give the short opening that gets him into ${base} (the puzzle or big question, why it matters, one thing to listen for), then say you'll take him through it line by line, and start: delegate "read ${base} line ${n}".`;
   return { block, opening };
 }
