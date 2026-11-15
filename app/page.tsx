@@ -929,7 +929,7 @@ export default function Home() {
             look={settings.theme}
             cont={cont}
             onContinue={() => void homeContinue()}
-            onLibrary={() => { goLearn(); openLibrary(); }}
+            onLibrary={() => { goLearn(); openLibrary(); setTextTick((n) => n + 1); }} // keep the text area up once the Library has opened
             onRecent={() => { refreshSessions(); setView('recent'); }}
             onThemes={() => setView('themes')}
             onSettings={() => { setSettingsFrom('home'); setView('settings'); }}
