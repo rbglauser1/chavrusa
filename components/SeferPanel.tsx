@@ -8,6 +8,7 @@ import Review from './Review';
 import { Dibbur } from './Dibbur';
 import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
+import { VoiceRecord, VoicePlay } from './VoiceNote';
 import MyButtonBox from './MyButtonBox';
 import AiHub, { type HubAction } from './AiHub';
 import LineChat from './LineChat';
@@ -496,7 +497,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
   const nextRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? nextSection(src.ref) : null;
   // Notes on the line (Settings → Extras): this text's notes, an open editor, and reload when one is added by voice.
-  type LineNote = { id: string; ref: string; n: number; text: string; created: string; on?: string; quote?: string };
+  type LineNote = { id: string; ref: string; n: number; text: string; created: string; on?: string; quote?: string; audio?: string };
   const [notes, setNotes] = useState<LineNote[]>([]);
   const [noteFor, setNoteFor] = useState<number | null>(null);
   const [mapOpen, setMapOpen] = useState(false); // the sugya map (Settings → Extras)
@@ -535,14 +536,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     );
   };
   const [noteText, setNoteText] = useState('');
+  const [noteAudio, setNoteAudio] = useState<string | null>(null); // a voice note recorded in the box (VoiceNote)
   const loadNotes = () => { if (settings.notes !== false && src?.ref) fetch(`/api/notes?ref=${encodeURIComponent(src.ref)}`).then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => {}); else setNotes([]); };
   useEffect(loadNotes, [src?.ref, settings.notes]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const f = () => loadNotes(); window.addEventListener('notes-changed', f); window.addEventListener('chavrusa-notes', f); return () => { window.removeEventListener('notes-changed', f); window.removeEventListener('chavrusa-notes', f); }; }); // eslint-disable-line react-hooks/exhaustive-deps
   const saveNote = async (n: number) => {
     const text = noteText.trim();
-    if (!text || !src) return;
-    await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: src.ref, n, text }) }).catch(() => {});
-    setNoteFor(null); setNoteText(''); loadNotes();
+    if ((!text && !noteAudio) || !src) return;
+    await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: src.ref, n, text, ...(noteAudio ? { audio: noteAudio } : {}) }) }).catch(() => {});
+    setNoteFor(null); setNoteText(''); setNoteAudio(null); loadNotes();
   };
   const dropNote = async (id: string) => { await fetch(`/api/notes?id=${id}`, { method: 'DELETE' }).catch(() => {}); loadNotes(); };
   const [nextSrc, setNextSrc] = useState<SourceData | null>(restoring.current?.next ?? null);
@@ -880,12 +882,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     return (
                       <div className="line-notes" onClick={(e) => e.stopPropagation()}>
                         {mine.map((x) => (
-                          <div key={x.id} className="line-note"><span className="ln-mark">✎</span><span className="ln-text" dir="auto">{x.on && <b className="ln-on">On {x.on}: </b>}<Clamp text={x.text} lines={3} /></span><button className="ln-x" aria-label="Delete this note" onClick={() => { if (window.confirm('Delete this note?')) void dropNote(x.id); }}>×</button></div>
+                          <div key={x.id} className="line-note"><span className="ln-mark">✎</span><span className="ln-text" dir="auto">{x.on && <b className="ln-on">On {x.on}: </b>}<Clamp text={x.text} lines={3} />{x.audio && <VoicePlay path={x.audio} />}</span><button className="ln-x" aria-label="Delete this note" onClick={() => { if (window.confirm('Delete this note?')) void dropNote(x.id); }}>×</button></div>
                         ))}
                         {noteFor === i ? (
                           <div className="ln-edit">
                             <textarea autoFocus rows={3} dir="auto" placeholder="Your note on this line" value={noteText} onChange={(e) => setNoteText(e.target.value)} />
-                            <div className="ln-btns"><button className="btn" disabled={!noteText.trim()} onClick={() => void saveNote(i + 1)}>Save</button><button className="btn ghost" onClick={() => { setNoteFor(null); setNoteText(''); }}>Cancel</button></div>
+                            <div className="ln-btns"><button className="btn" disabled={!noteText.trim() && !noteAudio} onClick={() => void saveNote(i + 1)}>Save</button><button className="btn ghost" onClick={() => { setNoteFor(null); setNoteText(''); setNoteAudio(null); }}>Cancel</button><VoiceRecord onDone={(a, t) => { setNoteAudio(a); setNoteText((x) => (x.trim() ? `${x.trim()}\n` : '') + t); }} />{noteAudio && <span className="muted vn-on">🎙 Recording attached</span>}</div>
                           </div>
                         ) : showAdd ? <button className="ln-add" onClick={() => { setNoteFor(i); setNoteText(''); }}>✎ Add a note</button> : null}
                       </div>

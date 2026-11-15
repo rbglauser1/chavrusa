@@ -2814,3 +2814,10 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 .sefer.spot .sefer-body [data-line]:not(.here) { opacity: .3; transition: opacity .25s ease; }
 .sefer.spot .sefer-body [data-line].here { opacity: 1; transition: opacity .25s ease; }
 .sefer.spot .sefer-body [data-line]:not(.here):active { opacity: .55; }
+/* Voice notes (Nov 14) */
+.ln-btns { flex-wrap: wrap; align-items: center; }
+.vn-rec { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vn-stop { background: #B5482A; color: #fff; border-color: #B5482A; }
+.vn-err, .vn-on { font-size: 12.5px; }
+.vn-play { display: block; margin-top: 4px; font-size: 14px; }
+.vn-audio { display: block; width: 100%; max-width: 360px; margin-top: 6px; height: 36px; }

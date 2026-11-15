@@ -1,4 +1,5 @@
 'use client';
+import { VoiceRecord, VoicePlay } from './VoiceNote';
 // The Notebook: every note in one place, filed three ways at once, with nothing to file by hand:
 //   By sefer  — like the Library (Yoma → 6a → line 4; the note on Rashi under its line); pages of their own at the end.
 //   Topics    — every #word in a note (#kashya, #halacha, #chazara…), pinned topics first.
@@ -7,7 +8,7 @@
 import Clamp from './Clamp';
 import { useEffect, useMemo, useState } from 'react';
 
-type Note = { id: string; ref: string; n: number; text: string; created: string; updated?: string; on?: string; quote?: string };
+type Note = { id: string; ref: string; n: number; text: string; created: string; updated?: string; on?: string; quote?: string; audio?: string };
 type View = 'sefer' | 'topics' | 'newest';
 
 const tagsOf = (text: string) => [...new Set((text.match(/#[\p{L}\p{N}_-]+/gu) ?? []).map((t) => t.slice(1).toLowerCase()))];
@@ -30,6 +31,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
   const [openBook, setOpenBook] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ id: string; text: string } | null>(null);
   const [newPage, setNewPage] = useState<string | null>(null);
+  const [pageAudio, setPageAudio] = useState<string | null>(null); // a voice note recorded for a new page
   const load = () => fetch('/api/notes').then((r) => r.json()).then((d) => setNotes(d.notes ?? [])).catch(() => setNotes([]));
   useEffect(() => { void load(); }, []);
   useEffect(() => { try { localStorage.setItem('chavrusa-nb-view', view); } catch { /* optional */ } }, [view]);
@@ -67,9 +69,9 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
     void load();
   };
   const addPage = async () => {
-    if (!newPage?.trim()) return;
-    await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: newPage }) }).catch(() => null);
-    setNewPage(null); void load();
+    if (!newPage?.trim() && !pageAudio) return;
+    await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: newPage ?? '', ...(pageAudio ? { audio: pageAudio } : {}) }) }).catch(() => null);
+    setNewPage(null); setPageAudio(null); void load();
   };
   // Share or print what is shown now.
   const asText = (list: Note[]) => list.map((x) => `${where(x)}${x.quote ? `\n  “${x.quote}”` : ''}\n${x.text}`).join('\n\n');
@@ -116,6 +118,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
           <div className="ln-btns"><button className="btn" disabled={!edit.text.trim()} onClick={() => void save(x.id, edit.text)}>Save</button><button className="btn ghost" onClick={() => setEdit(null)}>Cancel</button></div>
         </div>
       ) : <Clamp text={x.text} lines={6}><Text text={x.text} onTag={(t) => { setTag(t); setView('topics'); }} /></Clamp>}
+      {x.audio && <VoicePlay path={x.audio} />}
       <div className="nb-actions">
         {x.ref && <button className="linklike" onClick={() => onOpen(x.ref, x.n || 1)}>Open ↗</button>}
         <button className="linklike" onClick={() => setEdit({ id: x.id, text: x.text })}>Edit</button>
@@ -143,7 +146,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
       {newPage !== null && (
         <div className="ln-edit">
           <textarea autoFocus rows={4} dir="auto" placeholder="A page of your own: a thought, a question for your rebbi, a chiddush… (#topic to file it)" value={newPage} onChange={(e) => setNewPage(e.target.value)} />
-          <div className="ln-btns"><button className="btn" disabled={!newPage.trim()} onClick={() => void addPage()}>Save</button><button className="btn ghost" onClick={() => setNewPage(null)}>Cancel</button></div>
+          <div className="ln-btns"><button className="btn" disabled={!newPage.trim() && !pageAudio} onClick={() => void addPage()}>Save</button><VoiceRecord onDone={(a, t) => { setPageAudio(a); setNewPage((x) => ((x ?? '').trim() ? `${(x ?? '').trim()}\n` : '') + t); }} />{pageAudio && <span className="muted vn-on">🎙 Recording attached</span>}<button className="btn ghost" onClick={() => { setNewPage(null); setPageAudio(null); }}>Cancel</button></div>
         </div>
       )}
       <div className="nb-body">
