@@ -692,9 +692,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const hubMain = (at: number | null): HubAction[] => {
     if (!src) return [];
     return [
-      ...(wholeSec ? [{ label: '✦ Learn with me', run: () => setLwmAt(at != null ? at + 1 : 1) }] : []),
+      ...(wholeSec ? [{ label: '✦ Guided learning', run: () => setLwmAt(at != null ? at + 1 : 1) }] : []),
       ...(at != null && aiX && settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, at) }] : []),
-      ...(at != null && aiX && settings.lineChat !== false ? [{ label: '✦ Chat', run: () => addIn(setCOpen, at) }] : []),
+      ...(at != null && aiX && settings.lineChat !== false ? [{ label: '✦ Back and forth', run: () => addIn(setCOpen, at) }] : []),
       ...(mapOn ? [{ label: '🗺 Map', run: () => (at != null && wholeSec ? setPeekAt(at + 1) : (setMapOpen(true), toAmud())) }] : []),
     ];
   };
@@ -949,7 +949,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}>✦ Explain</button>
                         )}
                         {aiX && !hubOn && settings.lineChat !== false && (
-                          <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}>✦ Chat</button>
+                          <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}>✦ Back and forth</button>
                         )}
                         {lineX && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
                           <button className={`comm-btn ${sOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setSOpen, i)}>Sources ({sourcesCount(rel.lines[partNum(i)])})</button>

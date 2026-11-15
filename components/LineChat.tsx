@@ -11,7 +11,7 @@ type Msg = { role: 'user' | 'assistant'; content: string; sources?: string[]; sa
 const KEY = (r: string) => `chavrusa-linechat:${r}`;
 const split = (r: string): [string, number] => { const m = r.match(/^(.*?):(\d+)$/); return m ? [m[1], Number(m[2])] : [r, 1]; };
 const plain = (t: string) => t.replace(/⟦([^⟧]+)⟧/g, '$1');
-const STARTERS = ['What is this line saying?', 'Ask me a kashya', 'Why is this line needed here?', 'What does Rashi add?', 'Is there a halacha from this?'];
+const STARTERS = ['What is this line saying?', 'Bring another source', 'What do other meforshim say?', 'Where else does this idea come up?', 'Ask me a kashya', 'Is there a halacha from this?'];
 
 // follow: used inside Explain for follow-up questions (Nov 13): no title or starters, the explanation goes to the AI
 // with the question, and the follow-ups are kept apart from the line's own ✦ Chat.
@@ -86,7 +86,7 @@ export default function LineChat({ lineRef, onClose, follow, ask, onAsked }: { l
   );
   return (
     <div className="comm line-x lchat" onClick={(e) => e.stopPropagation()}>
-      <div className="comm-title">✦ Chat about this line
+      <div className="comm-title">✦ Back and forth on this line
         {msgs.some((m) => m.role === 'assistant') && <button className="lchat-save" onClick={() => void saveAll()} disabled={savedAll}>{savedAll ? '✓ Saved to Notebook' : 'Save the chat'}</button>}
         <button className="comm-x" aria-label="Close the chat" onClick={onClose}>✕</button>
       </div>

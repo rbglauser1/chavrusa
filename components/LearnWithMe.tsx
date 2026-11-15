@@ -111,9 +111,9 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
   if (phase === 'intro') {
     return createPortal(
       <div className="lwm-scrim" onClick={onClose}>
-        <div className="lwm-intro" role="dialog" aria-label="Learn with me" onClick={(e) => e.stopPropagation()}>
+        <div className="lwm-intro" role="dialog" aria-label="Guided learning" onClick={(e) => e.stopPropagation()}>
           <button className="icon-btn lwm-x" onClick={onClose} aria-label="Close">✕</button>
-          <div className="lwm-kicker">✦ Before we start</div>
+          <div className="lwm-kicker">✦ Guided learning · before we start</div>
           {intro.data ? (
             <>
               <p className="lwm-hook" dir="auto">{intro.data.hook}</p>
@@ -134,7 +134,7 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
   }
 
   return createPortal(
-    <div className="lwm-strip" role="region" aria-label="Learn with me">
+    <div className="lwm-strip" role="region" aria-label="Guided learning">
       <div className="lwm-strip-top">
         <span className="lwm-count">{done ? 'Finished' : `Line ${n} of ${total}`}</span>
         <div className="lwm-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, ((done ? total : n - 1) / Math.max(1, total)) * 100)}%` }} /></div>

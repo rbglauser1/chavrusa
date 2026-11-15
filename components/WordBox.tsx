@@ -83,12 +83,12 @@ export default function WordBox({ word, raw, lineRef, at, onClose }: { word: str
             <div className="wp-head"><span className="he">{raw}</span><i>abbreviation</i></div>
             {abbr!.readings.length ? abbr!.readings.map(([he, en], k) => (
               <div key={k} className="wp-abbr"><span className="he">{abbr!.prefix}{he}</span><span>{en}</span></div>
-            )) : <div className="wp-short muted">Not in the list. Ask in ✦ Chat.</div>}
+            )) : <div className="wp-short muted">Not in the list. Ask in ✦ Back and forth.</div>}
             {abbr!.readings.length > 1 && <div className="wp-note">Which one depends on the place.</div>}
           </>
         ) : err ? <div className="wp-short muted">Couldn’t look it up just now.</div>
           : !entries ? <div className="wp-short muted">…</div>
-          : !first ? <div className="wp-short muted">Not in the dictionary. Ask in ✦ Chat.</div>
+          : !first ? <div className="wp-short muted">Not in the dictionary. Ask in ✦ Back and forth.</div>
           : !full ? (
             <>
               <div className="wp-head"><span className="he">{first.headword}</span>{first.morphology && <i>{first.morphology}</i>}</div>
