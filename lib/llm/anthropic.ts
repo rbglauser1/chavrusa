@@ -6,7 +6,9 @@ import { RunOptions, RunResult } from './types';
 import { aiLang, langRule } from '../aiLang';
 
 export async function runAnthropic(o: RunOptions): Promise<RunResult> {
-  if (o.lang) { const extra = langRule(await aiLang()); if (extra) o = { ...o, system: o.system + extra }; }
+  // Hebrew takes about two and a half times the tokens of English, and both languages more again: more room to write,
+  // so a map or a list isn't cut off half-way (which broke the JSON: "didn't come back in the right form").
+  if (o.lang) { const l = await aiLang(); const extra = langRule(l); if (extra) o = { ...o, system: o.system + extra, maxTokens: Math.min(16000, Math.round((o.maxTokens ?? 4000) * (l === 'both' ? 3.2 : 2.5))) }; }
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set.');
 

@@ -71,7 +71,7 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   const run = runAnthropic;
   const r = await run({
     lang: true, model: model.id, system: promptFor(k), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
-    tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
+    tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000,
   });
   await logCost({ sessionId: null, kind: 'map', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const n = s.he.length;
