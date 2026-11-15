@@ -262,9 +262,17 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Justified: the Hebrew and the English fill the whole width of each line, with even edges on both sides, like a printed sefer. The last line of each stays as usual.</div>
             </div>
             <div className="field">
-              <label>Focus</label>
-              <Seg value={s.focusMode ?? (s.spotlight ? 'line' : 'off')} options={[['off', 'Off'], ['window', 'Reading window'], ['line', 'Tapped line']]} onPick={(v) => onChange({ focusMode: v as 'off' | 'line' | 'window', spotlight: v === 'line' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Reading window: a clear band across the middle of the screen; everything above and below it is shaded. Scroll the words into the band. Tapped line: the line you tap stays bright and the rest of the page fades.</div>
+              <label>Reading window</label>
+              <Seg value={s.focusMode === 'window' ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ focusMode: v === 'on' ? 'window' : 'off', spotlight: false })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A clear oval across the middle of the screen; above and below it is shaded. Scroll the words you're on into it.</div>
+              {s.focusMode === 'window' && (
+                <>
+                  <label style={{ marginTop: 10 }}>Window size</label>
+                  <div className="range"><input type="range" min={1} max={9} value={s.windowSize ?? 5} onChange={(e) => onChange({ windowSize: Number(e.target.value) })} /><span>{s.windowSize ?? 5}</span></div>
+                  <label style={{ marginTop: 6 }}>Shade</label>
+                  <div className="range"><input type="range" min={1} max={9} value={s.windowDark ?? 5} onChange={(e) => onChange({ windowDark: Number(e.target.value) })} /><span>{s.windowDark ?? 5}</span></div>
+                </>
+              )}
             </div>
             <div className="field">
               <label>Space between parts</label>

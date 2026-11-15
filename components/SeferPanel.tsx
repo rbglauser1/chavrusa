@@ -56,6 +56,16 @@ interface Props {
 // top of 5a): the amud above and below that were showing, and how far down he was. Kept for 10 minutes.
 const kept = new Map<string, { prev: SourceData | null; next: SourceData | null; top: number; at: number }>();
 
+// The reading window's shade (Settings → Reading window): size 1–9 sets how tall the clear oval is, shade 1–9 how dark
+// the rest is (5 and 5: the look the learner chose, Nov 14).
+function windowShade(size: number, dark: number, night: boolean): string {
+  const h = 19 + size * 2.4;               // the oval's half-height, % of the screen (5 → 31%)
+  const a = 0.16 + dark * 0.072;            // the darkest edge (5 → 0.52)
+  const c = night ? '0, 0, 0' : '20, 20, 18';
+  const edge = Math.min(0.92, night ? a * 1.35 : a);
+  return `radial-gradient(ellipse 92% ${h}% at 50% 47%, transparent 0 58%, rgba(${c}, ${(edge * 0.58).toFixed(2)}) 78%, rgba(${c}, ${edge.toFixed(2)}) 100%)`;
+}
+
 export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, onLibraryOpened, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
   const [goto, setGoto] = useState('');
   const [gotoBusy, setGotoBusy] = useState(false);
@@ -637,10 +647,6 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     setOpen((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
   }
 
-  // Focus on one line (Settings → Look and text → Focus on one line; Nov 14): the line you tapped — or, if none, the
-  // line the chavrusa is on — stays bright, the rest of the page dims.
-  // Only a line you tapped yourself: following the call's place could leave the whole screen faded (Nov 14).
-  const hereLine: number | null = picked ?? (open.size ? Math.max(...open) : null);
   // The ✦ (AiHub): which line it is about — the one you tapped, else the first line showing on the screen.
   const hubLine = (): number | null => {
     if (picked != null) return picked;
@@ -682,7 +688,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ? <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
     : null;
   return (
-    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''} ${(settings.focusMode ?? (settings.spotlight ? 'line' : 'off')) === 'line' && hereLine != null ? 'spot' : ''}`} aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''}`} aria-label="Sefer">
       {full && (
         <div className="full-bar">
           {talk && (
@@ -864,7 +870,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
-                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${hereLine === i ? 'here' : ''}`} onClick={(e) => {
+                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
                   if (active && settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he')) {
@@ -1099,7 +1105,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       </div>
       {hub}
       {settings.focusMode === 'window' && src && !showLib && typeof document !== 'undefined' && createPortal(
-        <div className="read-window" aria-hidden="true"><div className="rw-top" /><div className="rw-bottom" /></div>, document.body)}
+        <div className="read-window" aria-hidden="true" style={{ background: windowShade(settings.windowSize ?? 5, settings.windowDark ?? 5, settings.theme === 'midnight') }} />, document.body)}
     </aside>
   );
 }

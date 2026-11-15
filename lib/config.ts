@@ -442,8 +442,10 @@ export interface Settings {
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
   mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
-  focusMode?: 'off' | 'line' | 'window'; // dim the page around the tapped line, or shade all but a band in the middle of the screen
-  spotlight?: boolean; // focus on one line: the line you're on bright, the others dimmed
+  focusMode?: 'off' | 'window' | 'line'; // the reading window: a clear oval in the middle, the rest shaded ('line' was removed Nov 14: treated as off)
+  windowSize?: number;  // 1–9: how tall the clear oval is (5 = normal)
+  windowDark?: number;  // 1–9: how dark the shaded part is (5 = normal)
+  spotlight?: boolean;  // old; no longer used // focus on one line: the line you're on bright, the others dimmed
   aiHeFont?: 'text' | 'times'; // the font of the AI's Hebrew: the text's Hebrew font, or Times New Roman
   aiSize?: number; // px: what the AI writes (Explain, Chat, Ideas, outlines…); unset: follows the English size
   aiHub?: boolean; // the AI tools in one floating ✦ (default) instead of buttons under each line and atop the amud
@@ -603,7 +605,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
+export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
 
 export const OWNER_ID = 'owner';
 
