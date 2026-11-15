@@ -8,7 +8,7 @@ import { aiLang, langRule } from '../aiLang';
 export async function runOpenAI(o: RunOptions): Promise<RunResult> {
   // Hebrew takes about two and a half times the tokens of English, and both languages more again: more room to write,
   // so a map or a list isn't cut off half-way (which broke the JSON: "didn't come back in the right form").
-  if (o.lang) { const l = await aiLang(); const extra = langRule(l); if (extra) o = { ...o, system: o.system + extra, maxTokens: Math.min(16000, Math.round((o.maxTokens ?? 4000) * (l === 'both' ? 3.2 : 2.5))) }; }
+  if (o.lang) { const l = await aiLang(); const extra = langRule(l); if (extra) o = { ...o, system: o.system + extra, maxTokens: l === 'en' ? o.maxTokens : Math.min(16000, Math.round((o.maxTokens ?? 4000) * (l === 'both' ? 3.2 : 2.5))) }; }
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('OPENAI_API_KEY is not set.');
 

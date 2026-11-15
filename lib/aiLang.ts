@@ -27,7 +27,19 @@ Write everything you write in English, and give each part again in clear, simple
 - Quotes from the text and the meforshim stay exactly as they are written, once.
 - Keep every required format exactly: JSON keys, "- " bullets, labels the app reads.
 - Inside JSON, write Hebrew abbreviations with the Hebrew mark ״ (רש״י, חז״ל), never a plain " , which would break the JSON.`;
-  return '';
+  // English (Nov 15): said outright, since a text with no English translation (Tanya, many seforim) pulled the AI into
+  // writing Hebrew though English was chosen.
+  return `
+
+# Language: English
+Write in English, even when the text in front of you is only in Hebrew or Aramaic and has no translation. Hebrew letters only for quoting the text and the meforshim and for the learning terms a yeshiva learner knows.`;
+}
+
+/** Mostly Hebrew letters? (A kept answer that should be in English but came out in Hebrew is made again.) */
+export function mostlyHebrew(v: unknown): boolean {
+  const t = JSON.stringify(v ?? '');
+  const he = (t.match(/[\u05D0-\u05EA]/g) ?? []).length, en = (t.match(/[A-Za-z]/g) ?? []).length;
+  return he > 150 && he > en * 1.5;
 }
 
 /** The AI's JSON, read safely when it writes Hebrew: a Hebrew abbreviation with a plain " inside a string (רש"י, חז"ל)

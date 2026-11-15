@@ -1,5 +1,5 @@
 import 'server-only';
-import { aiLang } from './aiLang';
+import { aiLang, mostlyHebrew } from './aiLang';
 import { readJson, safeKey, writeJson } from './store';
 import { getSettings } from './db';
 
@@ -21,8 +21,11 @@ export async function keep<T>(kind: string, key: string, make: () => Promise<T>,
   const kinded = `${kind}${lang === 'en' ? '' : `-${lang}`}`;
   const path = pathOf(sonnet ? `${kinded}-sonnet` : kinded, key);
   const had = await readJson<{ v: T }>(path);
-  if (had && had.v !== undefined) return had.v;
+  // English chosen, but the kept copy came out in Hebrew (Nov 15: Tanya, a text with no English): made again, once.
+  const checkLang = lang === 'en' && !/^(translate|targum|word|literal|interlinear|pieces)/.test(kind);
+  if (had && had.v !== undefined && !(checkLang && mostlyHebrew(had.v) && !(had as { redone?: boolean }).redone)) return had.v;
   const v = await make();
+  if (checkLang && mostlyHebrew(v)) { if (!empty?.(v)) await writeJson(path, { v, at: new Date().toISOString(), redone: true }).catch(() => {}); return v; }
   if (empty?.(v)) return v;
   await writeJson(path, { v, at: new Date().toISOString() }).catch(() => {});
   return v;
