@@ -24,6 +24,9 @@ export const ALWAYS_BLOCKED: ApprovedEntry[] = [
     .map((name) => ({ kind: 'work' as const, name, status: 'blocked' as const, lean: 'academic or non-Orthodox' })),
   ...['Umberto Cassuto', 'Abraham Cohen', 'Abraham Joshua Heschel', 'Mordecai Kaplan', 'Martin Buber', 'Franz Rosenzweig', 'Hermann Cohen', 'Solomon Schechter', 'Louis Ginzberg', 'Gunther Plaut', 'Arthur Green', 'Zalman Schachter-Shalomi', 'Elliot Dorff', 'Shmuel Safrai', 'Francis Brown', 'Samuel Rolles Driver', 'Charles Augustus Briggs', 'Ernest Klein']
     .map((name) => ({ kind: 'author' as const, name, status: 'blocked' as const, lean: 'academic or non-Orthodox' })),
+  // Nov 14: the learner asked to drop Peninei Halakhah (Rav Eliezer Melamed, Religious Zionist).
+  ...['Peninei Halakhah', 'Peninei Halakha'].map((name) => ({ kind: 'work' as const, name, status: 'blocked' as const, lean: 'not in the learner\'s path' })),
+  { kind: 'author' as const, name: 'Eliezer Melamed', status: 'blocked' as const, lean: 'not in the learner\'s path' },
 ];
 
 // Women authors (Nov 14: the learner asked that nothing written by women be used), blocked even if approved by mistake.
@@ -35,7 +38,7 @@ export const WOMEN_AUTHORS = ['Nechama Leibowitz', 'Nehama Leibowitz', 'Glückel
 // modern work, and anything Sefaria files as modern, needs the learner's (or his rav's) approval — even with "Allow
 // all", which now covers only the classic seforim.
 export const ORTHODOX_MODERN: ApprovedEntry[] = [
-  ...['Mishnah Berurah', 'Biur Halacha', "Sha'ar HaTziyun", 'Arukh HaShulchan', 'Aruch HaShulchan', 'Kaf HaChayim', 'Kaf HaChaim', 'Ben Ish Hai', 'Ben Ish Chai', 'Chafetz Chaim', 'Shemirat HaLashon', 'Ahavat Chesed', 'Igrot Moshe', 'Iggrot Moshe', 'Chazon Ish', 'Sefat Emet', 'Sfat Emet', 'Shem MiShmuel', 'Meshekh Chokhmah', 'Meshech Chochmah', 'Or Sameach', 'Ohr Sameach', 'Chiddushei Rabbi Chaim', 'Kovetz Shiurim', 'Kovetz Ha\'arot', 'Michtav MeEliyahu', 'Torah Temimah', 'Netivot Shalom', 'Avnei Nezer', 'Steinsaltz', 'Kehati', 'Mishnah Yomit', 'Peninei Halakhah']
+  ...['Mishnah Berurah', 'Biur Halacha', "Sha'ar HaTziyun", 'Arukh HaShulchan', 'Aruch HaShulchan', 'Kaf HaChayim', 'Kaf HaChaim', 'Ben Ish Hai', 'Ben Ish Chai', 'Chafetz Chaim', 'Shemirat HaLashon', 'Ahavat Chesed', 'Igrot Moshe', 'Iggrot Moshe', 'Chazon Ish', 'Sefat Emet', 'Sfat Emet', 'Shem MiShmuel', 'Meshekh Chokhmah', 'Meshech Chochmah', 'Or Sameach', 'Ohr Sameach', 'Chiddushei Rabbi Chaim', 'Kovetz Shiurim', 'Kovetz Ha\'arot', 'Michtav MeEliyahu', 'Torah Temimah', 'Netivot Shalom', 'Avnei Nezer', 'Steinsaltz', 'Kehati', 'Mishnah Yomit']
     .map((name) => ({ kind: 'work' as const, name, status: 'approved' as const, lean: 'Orthodox (built in)' })),
   ...['Yisrael Meir Kagan', 'Moshe Feinstein', 'Avraham Yeshayahu Karelitz', 'Yehudah Aryeh Leib Alter', 'Shmuel Bornsztain', 'Meir Simcha of Dvinsk', 'Chaim Soloveitchik', 'Elchonon Wasserman', 'Eliyahu Eliezer Dessler', 'Baruch Epstein', 'Adin Even-Israel Steinsaltz', 'Adin Steinsaltz', 'Pinhas Kehati', 'Yaakov Chaim Sofer', 'Yosef Chaim of Baghdad', 'Yechiel Michel Epstein']
     .map((name) => ({ kind: 'author' as const, name, status: 'approved' as const, lean: 'Orthodox (built in)' })),
