@@ -639,7 +639,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
 
   // Focus on one line (Settings → Look and text → Focus on one line; Nov 14): the line you tapped — or, if none, the
   // line the chavrusa is on — stays bright, the rest of the page dims.
-  const hereLine: number | null = picked ?? (open.size ? Math.max(...open) : src?.focus ? src.focus - 1 : null);
+  // Only a line you tapped yourself: following the call's place could leave the whole screen faded (Nov 14).
+  const hereLine: number | null = picked ?? (open.size ? Math.max(...open) : null);
   // The ✦ (AiHub): which line it is about — the one you tapped, else the first line showing on the screen.
   const hubLine = (): number | null => {
     if (picked != null) return picked;
