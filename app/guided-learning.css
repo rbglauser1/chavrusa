@@ -115,7 +115,7 @@
 [data-look='guided-learning'] .gl-tools-menu { position:absolute; right:16px; top:62px; width:260px; z-index:90; border:1px solid var(--rule); border-radius:18px; padding:8px; background:var(--surface); box-shadow:var(--shadow); }
 [data-look='guided-learning'] .gl-tools-menu button { display:block; width:100%; border:0; background:none; color:var(--ink); text-align:left; min-height:46px; border-radius:10px; padding:12px; font:12px var(--f-ui); }
 [data-look='guided-learning'] .gl-tools-menu button:hover { background:var(--accent-soft); }
-[data-look='guided-learning'] .daf-dock .daf-bar { bottom:calc(160px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:60; }
+[data-look='guided-learning'] .daf-dock .daf-bar { bottom:calc(84px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:60; } /* Nov 15: just above the tab bar (was 160px, over the text) */
 /* Library, Notebook and preferences keep their real handlers with new surfaces. */
 [data-look='guided-learning'] .hpage { height:100%; max-width:1120px; padding:0; display:flex; flex-direction:column; min-height:0; }
 [data-look='guided-learning'] .hpage-head { padding:18px 22px; background:none; flex-shrink:0; }
