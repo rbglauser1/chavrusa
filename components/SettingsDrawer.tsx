@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { ALL_STARTERS } from '@/lib/starters';
 import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_COMM, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
@@ -589,6 +590,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => { try { void navigator.clipboard.writeText(`${window.location.origin}/?talk=1`); } catch { /* optional */ } }}>Copy the address</button>
             </div>
             <MyQuestions list={s.myQuestions ?? []} onChange={(l) => onChange({ myQuestions: l })} />
+            <HideQuestions hidden={s.hideQuestions ?? []} onChange={(l) => onChange({ hideQuestions: l })} />
             <MyButtons list={s.myButtons ?? []} onChange={(l) => onChange({ myButtons: l })} />
           </Group>
 
@@ -790,6 +792,28 @@ function MyQuestions({ list, onChange }: { list: string[]; onChange: (l: string[
         <input dir="auto" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') add(); }} placeholder="Write a question" style={{ flex: 1 }} />
         <button className="btn" onClick={add} disabled={!draft.trim()}>Add</button>
       </div>
+    </div>
+  );
+}
+
+// Back and forth: take out suggested questions you don't want (Nov 15). Tap one to hide it; tap again to bring it back.
+function HideQuestions({ hidden, onChange }: { hidden: string[]; onChange: (l: string[]) => void }) {
+  return (
+    <div style={{ margin: '4px 0 16px' }}>
+      <label>Suggested questions in Back and forth</label>
+      <div className="muted" style={{ fontSize: 12, margin: '4px 0 8px' }}>Tap a question to take it out; tap it again to bring it back. Crossed out ones don’t show.</div>
+      {ALL_STARTERS.map(([kind, qs]) => (
+        <div key={kind} style={{ marginBottom: 8 }}>
+          <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>{kind}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {qs.map((q) => {
+              const off = hidden.includes(q);
+              return <button key={kind + q} className="btn ghost" style={{ fontSize: 13, textDecoration: off ? 'line-through' : 'none', opacity: off ? 0.55 : 1 }} aria-pressed={!off}
+                onClick={() => onChange(off ? hidden.filter((x) => x !== q) : [...hidden, q])}>{q}</button>;
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

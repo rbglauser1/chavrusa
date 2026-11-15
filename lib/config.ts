@@ -463,7 +463,8 @@ export interface Settings {
   halachaTrail?: boolean;   // a Halacha button on each line: from the Gemara to the Rambam, Shulchan Aruch and Mishnah Berurah (components/HalachaTrail); default on
   tosSteps?: boolean;       // a Steps button on each long Tosafos: the piece cut into its steps, punctuated (app/api/commsteps); default on
   wordTap?: boolean;        // tap a word in an open line for its meaning (Jastrow / BDB via Sefaria, app/api/word); default on
-  myQuestions?: string[];  // Back and forth: the learner's own questions, added to the suggested ones (Nov 15)
+  myQuestions?: string[];
+  hideQuestions?: string[];  // Back and forth: suggested questions the learner took out (Nov 15)  // Back and forth: the learner's own questions, added to the suggested ones (Nov 15)
   lineChat?: boolean;       // a Chat button by each line: a written chat with the AI on that line (app/api/linechat); default on
   explainLine?: boolean;    // an Explain button by each line's meforshim (AI, app/api/explain); default on
   lineSources?: boolean;    // a Sources button by each line's meforshim (Sefaria's links, app/api/related); default on
@@ -606,7 +607,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
+export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify'] as const;
 
 export const OWNER_ID = 'owner';
 
