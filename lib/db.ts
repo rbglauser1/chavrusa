@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { ALL_WORKS, ALWAYS_BLOCKED } from './approval';
+import { ALL_WORKS, ALWAYS_BLOCKED, WOMEN_AUTHORS } from './approval';
 import { DEFAULT_SETTINGS, LIVE_VOICES, normalizeLook, OWNER_ID, Settings, VOICES } from './config';
 
 let client: SupabaseClient | null = null;
@@ -223,7 +223,7 @@ export async function approvedList(): Promise<ApprovedRow[]> {
     getSettings().catch(() => null),
   ]);
   // The fixed block list (lib/approval.ts) always applies, even with "Allow all".
-  rows.push(...ALWAYS_BLOCKED);
+  rows.push(...ALWAYS_BLOCKED, ...WOMEN_AUTHORS);
   // "Allow all seforim" (Settings): blocked entries still win; everything else is allowed.
   if (s?.approveAll) rows.push({ kind: 'work', name: ALL_WORKS, status: 'approved', lean: 'general' });
   approvedCache = { at: Date.now(), rows };

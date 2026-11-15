@@ -9,6 +9,7 @@ import { keep } from '@/lib/keep';
 import { clipWords } from '@/lib/clip';
 import { needCredit } from '@/lib/credits';
 import { keptModel } from '@/lib/keptModel';
+import { LIBRARY_TOOLS, libraryExecutor } from '@/lib/libraryTools';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -26,6 +27,20 @@ For each dispute give:
 Only what this text says and its plain meaning according to Rashi; never invent an opinion, a reason or a source. Write in plain, clear English; learning terms a yeshiva learner knows and words the text learns from in Hebrew letters (גזירה שוה, קל וחומר); names in English (Rabbi Yochanan, Rav Pappa). Call God "Hashem".
 Reply with JSON only: {"disputes": [{"question": "...", "line": 1, "sides": [{"who": "...", "holds": "...", "reason": "...", "source": "..."}], "halacha": ""}]}. No dispute in the text: {"disputes": []}.`;
 
+// Tanach (Nov 14): the pesukim themselves rarely argue, so here it is the meforshim — where Rashi, the Ramban, Ibn
+// Ezra, the Radak, the Abarbanel, the Malbim and others read a pasuk differently. The AI opens them before writing.
+const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles)\b/;
+const PROMPT_TANAKH = `You lay out where the classic meforshim disagree on a perek of Tanach, for a learner, as tables of who holds what.
+You get the perek with numbered pesukim, and the library: "links" shows the meforshim on a pasuk, "read" opens one. Open the main meforshim on the pesukim that matter (Rashi, Ramban, Ibn Ezra, Radak, Sforno, Abarbanel, Malbim, Metzudat David, Ohr HaChaim, Targum) before you write.
+Find each real disagreement: two or more of them reading the same words or event differently (who did it, what a word means, why it happened, the order of events). Not one adding to another without arguing. At most 6, the most important first.
+For each give:
+- "question": what they disagree about, as one clear question (at most 20 words).
+- "line": the pasuk number it is on.
+- "sides": each reading (2 to 4): "who" (the meforesh: "Rashi", "the Ramban"…), "holds" (his reading, one short sentence), "reason" (why, as he says, one short sentence; empty if he gives none), "source" (his exact reference as you opened it, e.g. "Ramban on Joshua 1:8").
+- "halacha": always empty here.
+Only what the meforshim you read actually say; never invent a reading or a reference. Plain, clear English; Hebrew terms in Hebrew letters. Call God "Hashem".
+Reply with JSON only: {"disputes": [{"question": "...", "line": 1, "sides": [{"who": "...", "holds": "...", "reason": "...", "source": "..."}], "halacha": ""}]}. None found: {"disputes": []}.`;
+
 type Side = { who: string; holds: string; reason: string; source: string };
 type Dispute = { question: string; line: number; sides: Side[]; halacha: string };
 
@@ -37,7 +52,10 @@ async function makeViews(ref: string): Promise<{ disputes: Dispute[]; made: bool
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const model = await keptModel();
-  const r = await runAnthropic({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  const tanakh = TANAKH.test(s.ref);
+  const r = await runAnthropic(tanakh
+    ? { lang: true, model: model.id, system: PROMPT_TANAKH, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }], tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, new Set<string>()), effort: model.effort, thinking: 'disabled', maxSteps: 8, maxTokens: 5000 }
+    : { lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'mapviews', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const str = (x: unknown, max: number) => clipWords(x, max);
   let d: { disputes?: unknown };
@@ -56,6 +74,6 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   if (!ref || / on /i.test(ref) || /^Mine /.test(ref)) return NextResponse.json({ disputes: [] });
   // "No dispute here" is a real answer and is kept; only a text that couldn't be read is not.
-  try { return NextResponse.json(await keep('map-views-v1', ref, () => makeViews(ref), (x) => !x.made)); }
+  try { return NextResponse.json(await keep(TANAKH.test(ref) ? 'map-views-tanakh-v1' : 'map-views-v1', ref, () => makeViews(ref), (x) => !x.made)); }
   catch (e) { return NextResponse.json({ disputes: [], error: (e as Error).message }); }
 }

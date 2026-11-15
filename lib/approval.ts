@@ -26,6 +26,21 @@ export const ALWAYS_BLOCKED: ApprovedEntry[] = [
     .map((name) => ({ kind: 'author' as const, name, status: 'blocked' as const, lean: 'academic or non-Orthodox' })),
 ];
 
+// Women authors (Nov 14: the learner asked that nothing written by women be used), blocked even if approved by mistake.
+// Modern works are blocked anyway unless approved (below); this covers older ones and any approved by accident.
+export const WOMEN_AUTHORS = ['Nechama Leibowitz', 'Nehama Leibowitz', 'Glückel of Hameln', 'Gluckel of Hameln', 'Glikl', 'Sarah Rebecca Rachel Leah Horowitz', 'Leah Horowitz', 'Rachel Bluwstein', 'Judith Plaskow', 'Tamar Ross', 'Rachel Adler', 'Blu Greenberg', 'Avivah Gottlieb Zornberg', 'Aviva Zornberg', 'Ruth Calderon', 'Tova Hartman', 'Bonna Devora Haberman', 'Malka Simkovich', 'Dvora Weisberg', 'Rivka Ulmer', 'Chana Kasachkoff', 'Sarah Schenirer', 'Lea Goldberg', 'Esther Jungreis', 'Hannah Senesh', 'Henrietta Szold', 'Emma Lazarus', 'Rachel Elior', 'Ilana Pardes', 'Tikva Frymer-Kensky', 'Adele Berlin', 'Ellen Frankel', 'Sandy Eisenberg Sasso', 'Danya Ruttenberg', 'Elana Stein Hain', 'Tamar Biala']
+  .map((name) => ({ kind: 'author' as const, name, status: 'blocked' as const, lean: 'written by a woman' }));
+
+// Works written after 1900 that are in the Orthodox, yeshiva path and may be used without asking (Nov 14). Every other
+// modern work, and anything Sefaria files as modern, needs the learner's (or his rav's) approval — even with "Allow
+// all", which now covers only the classic seforim.
+export const ORTHODOX_MODERN: ApprovedEntry[] = [
+  ...['Mishnah Berurah', 'Biur Halacha', "Sha'ar HaTziyun", 'Arukh HaShulchan', 'Aruch HaShulchan', 'Kaf HaChayim', 'Kaf HaChaim', 'Ben Ish Hai', 'Ben Ish Chai', 'Chafetz Chaim', 'Shemirat HaLashon', 'Ahavat Chesed', 'Igrot Moshe', 'Iggrot Moshe', 'Chazon Ish', 'Sefat Emet', 'Sfat Emet', 'Shem MiShmuel', 'Meshekh Chokhmah', 'Meshech Chochmah', 'Or Sameach', 'Ohr Sameach', 'Chiddushei Rabbi Chaim', 'Kovetz Shiurim', 'Kovetz Ha\'arot', 'Michtav MeEliyahu', 'Torah Temimah', 'Netivot Shalom', 'Avnei Nezer', 'Steinsaltz', 'Kehati', 'Mishnah Yomit', 'Peninei Halakhah']
+    .map((name) => ({ kind: 'work' as const, name, status: 'approved' as const, lean: 'Orthodox (built in)' })),
+  ...['Yisrael Meir Kagan', 'Moshe Feinstein', 'Avraham Yeshayahu Karelitz', 'Yehudah Aryeh Leib Alter', 'Shmuel Bornsztain', 'Meir Simcha of Dvinsk', 'Chaim Soloveitchik', 'Elchonon Wasserman', 'Eliyahu Eliezer Dessler', 'Baruch Epstein', 'Adin Even-Israel Steinsaltz', 'Adin Steinsaltz', 'Pinhas Kehati', 'Yaakov Chaim Sofer', 'Yosef Chaim of Baghdad', 'Yechiel Michel Epstein']
+    .map((name) => ({ kind: 'author' as const, name, status: 'approved' as const, lean: 'Orthodox (built in)' })),
+];
+
 // A marker in the approved list meaning "allow every sefer" (from Settings).
 export const ALL_WORKS = '__all_sefaria__';
 
@@ -54,14 +69,15 @@ export function judgeWork(info: IndexInfo, list: ApprovedEntry[]): Verdict {
   const blockedAuthor = authors.find((e) => e.status === 'blocked' && info.authors.some((a) => matches(e.name, a)));
   if (blockedAuthor) return { allowed: false, reason: `The author of "${info.title}" is on the blocked list.`, lean: blockedAuthor.lean };
 
-  // 1b. The learner chose to allow every sefer on Sefaria (Settings).
-  if (works.some((e) => e.status === 'approved' && e.name === ALL_WORKS)) return { allowed: true, reason: 'All Sefaria seforim allowed (Settings).', lean: 'general' };
-
-  // 2. Explicitly approved work or author.
-  const okWork = works.find((e) => e.status === 'approved' && matches(e.name, info.title));
+  // 2. Explicitly approved work or author (the learner's list, then the built-in Orthodox modern list).
+  const okWork = works.find((e) => e.status === 'approved' && e.name !== ALL_WORKS && matches(e.name, info.title));
   if (okWork) return { allowed: true, reason: 'Approved work.', lean: okWork.lean };
   const okAuthor = authors.find((e) => e.status === 'approved' && info.authors.some((a) => matches(e.name, a)));
   if (okAuthor) return { allowed: true, reason: 'Approved author.', lean: okAuthor.lean };
+
+  const builtIn = ORTHODOX_MODERN.find((e) => (e.kind === 'work' ? matches(e.name, info.title) : info.authors.some((a) => matches(e.name, a))));
+  if (builtIn) return { allowed: true, reason: 'Orthodox work (built in).', lean: builtIn.lean };
+  const allowAll = works.some((e) => e.status === 'approved' && e.name === ALL_WORKS);
 
   // 3. Modern or reference categories need explicit approval.
   if (info.categories.some((c) => MODERN_MARKERS.some((m) => c.includes(m)))) {
@@ -85,6 +101,8 @@ export function judgeWork(info: IndexInfo, list: ApprovedEntry[]): Verdict {
   if (info.categories.some((c) => /Rishonim|Acharonim|Geonim|Tannaim|Amoraim/.test(c)) || CLASSIC_ROOTS.includes(info.categories[0] ?? '') || /^(Musar|Chasidut|Halakhah|Kabbalah|Liturgy)$/.test(info.categories[0] ?? '')) {
     return { allowed: true, reason: 'Classic work (by category).', lean: 'general' };
   }
+  // 7. "Allow all" (Settings): the rest — of unknown date and not filed as modern.
+  if (allowAll) return { allowed: true, reason: 'All classic Sefaria seforim allowed (Settings).', lean: 'general' };
   return { allowed: false, reason: `Could not confirm that "${info.title}" is a classic work, and it is not on the approved list.`, lean: 'general' };
 }
 
