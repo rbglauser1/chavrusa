@@ -57,3 +57,30 @@
  [data-look='midnight-sefer'] .ms-shortcuts small { display:none; }
  [data-look='midnight-sefer'] .ms-resume { padding-block:16px; }
 }
+
+/* Continue learning: a soft candle-gold light that travels around the card's edge (Nov 14). Stops with "Pause the room". */
+@property --ms-glow { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+[data-look='midnight-sefer'] .ms-resume::before,
+[data-look='midnight-sefer'] .ms-resume::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+  background: conic-gradient(from var(--ms-glow), transparent 0deg, transparent 250deg, #d7b77722 285deg, #f3d9a0 335deg, #fff3d6 350deg, transparent 360deg);
+  animation: ms-glow-run 6s linear infinite;
+}
+/* the sharp light on the border line */
+[data-look='midnight-sefer'] .ms-resume::before {
+  padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+/* its soft halo, just outside */
+[data-look='midnight-sefer'] .ms-resume::after {
+  inset: -7px; border-radius: 20px; padding: 9px; filter: blur(5px); opacity: .6;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+@keyframes ms-glow-run { to { --ms-glow: 360deg; } }
+[data-look='midnight-sefer'] .ms-still .ms-resume::before,
+[data-look='midnight-sefer'] .ms-still .ms-resume::after { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  [data-look='midnight-sefer'] .ms-resume::before, [data-look='midnight-sefer'] .ms-resume::after { animation: none; }
+}
