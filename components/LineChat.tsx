@@ -22,8 +22,8 @@ function startersFor(ref: string): string[] {
 
 // follow: used inside Explain for follow-up questions (Nov 13): no title or starters, the explanation goes to the AI
 // with the question, and the follow-ups are kept apart from the line's own ✦ Chat.
-export default function LineChat({ lineRef, onClose, follow, ask, onAsked, onVoice }: { lineRef: string; onClose: () => void; onVoice?: () => void; follow?: { about: string }; ask?: string; onAsked?: () => void }) {
-  const STARTERS = startersFor(lineRef);
+export default function LineChat({ lineRef, onClose, follow, ask, onAsked, onVoice, mine }: { lineRef: string; onClose: () => void; onVoice?: () => void; mine?: string[]; follow?: { about: string }; ask?: string; onAsked?: () => void }) {
+  const STARTERS = [...startersFor(lineRef), ...(mine ?? [])];
   const store = follow ? `${lineRef}#explain` : lineRef;
   const [msgs, setMsgs] = useState<Msg[]>(() => { try { return JSON.parse(localStorage.getItem(KEY(store)) ?? '[]'); } catch { return []; } });
   const [draft, setDraft] = useState('');

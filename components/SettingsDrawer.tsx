@@ -588,6 +588,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               </div>
               <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => { try { void navigator.clipboard.writeText(`${window.location.origin}/?talk=1`); } catch { /* optional */ } }}>Copy the address</button>
             </div>
+            <MyQuestions list={s.myQuestions ?? []} onChange={(l) => onChange({ myQuestions: l })} />
             <MyButtons list={s.myButtons ?? []} onChange={(l) => onChange({ myButtons: l })} />
           </Group>
 
@@ -766,6 +767,29 @@ function Credits({ on, onToggle }: { on: boolean; onToggle: (on: boolean) => voi
           ) : <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Stripe isn’t connected yet (STRIPE_SECRET_KEY in Vercel).</div>}
         </div>
       )}
+    </div>
+  );
+}
+
+
+// Back and forth: your own questions (Nov 15). Each shows with the suggested questions when Back and forth opens.
+function MyQuestions({ list, onChange }: { list: string[]; onChange: (l: string[]) => void }) {
+  const [draft, setDraft] = useState('');
+  const add = () => { const q = draft.trim().slice(0, 120); if (!q || list.includes(q)) return; onChange([...list, q].slice(0, 12)); setDraft(''); };
+  return (
+    <div style={{ margin: '4px 0 16px' }}>
+      <label>Your own questions in Back and forth</label>
+      <div className="muted" style={{ fontSize: 12, margin: '4px 0 8px' }}>They show with the suggested questions every time Back and forth opens, on any sefer. For example: “How does the Chazon Ish learn this?” or “What would my rebbi ask here?”</div>
+      {list.map((q, i) => (
+        <div key={q} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <span style={{ flex: 1, fontSize: 14 }} dir="auto">{q}</span>
+          <button className="btn ghost" onClick={() => onChange(list.filter((_, k) => k !== i))} aria-label={`Remove ${q}`}>Remove</button>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input dir="auto" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') add(); }} placeholder="Write a question" style={{ flex: 1 }} />
+        <button className="btn" onClick={add} disabled={!draft.trim()}>Add</button>
+      </div>
     </div>
   );
 }
