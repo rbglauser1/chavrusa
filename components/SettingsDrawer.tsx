@@ -262,9 +262,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Justified: the Hebrew and the English fill the whole width of each line, with even edges on both sides, like a printed sefer. The last line of each stays as usual.</div>
             </div>
             <div className="field">
-              <label>Focus on one line</label>
-              <Seg value={s.spotlight ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ spotlight: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The line you tap stays bright and the rest of the page dims, so your eye stays on it. With no line tapped, the line your chavrusa is on. Tap another line to move the focus.</div>
+              <label>Focus</label>
+              <Seg value={s.focusMode ?? (s.spotlight ? 'line' : 'off')} options={[['off', 'Off'], ['window', 'Reading window'], ['line', 'Tapped line']]} onPick={(v) => onChange({ focusMode: v as 'off' | 'line' | 'window', spotlight: v === 'line' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Reading window: a clear band across the middle of the screen; everything above and below it is shaded. Scroll the words into the band. Tapped line: the line you tap stays bright and the rest of the page fades.</div>
             </div>
             <div className="field">
               <label>Space between parts</label>

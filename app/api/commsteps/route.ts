@@ -1,4 +1,5 @@
 import { clipWords } from '@/lib/clip';
+import { parseAiJson } from '@/lib/aiLang';
 import { NextRequest, NextResponse } from 'next/server';
 import { keep } from '@/lib/keep';
 import { costUsd } from '@/lib/config';
@@ -55,7 +56,7 @@ async function makeSteps(ref: string): Promise<{ steps: Step[] }> {
     });
     await logCost({ sessionId: null, kind: 'commsteps', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
     let arr: unknown = [];
-    try { arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]'); } catch { arr = []; }
+    try { arr = parseAiJson(r.text, '['); } catch { arr = []; }
     const steps: Step[] = (Array.isArray(arr) ? arr : [])
       .map((x) => ({ label: String(x?.label ?? '').trim().slice(0, 30), he: String(x?.he ?? '').replace(/\s+/g, ' ').trim(), en: clipWords(x?.en, 500) }))
       .filter((x) => x.he);

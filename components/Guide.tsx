@@ -111,7 +111,7 @@ export const SET_PAGES: SetPage[] = [
     { label: 'Rashi, Tosafos and other commentaries', opts: ['Regular letters', 'Rashi script'], on: 1, text: 'Show the meforshim in Rashi script, as in a printed Gemara, or in regular letters.' },
   ] },
   { id: 'set-space', chapter: 'Look', title: 'Spacing', rows: [
-    { label: 'Focus on one line', opts: ['Off', 'On'], on: 0, text: 'The line you tap stays bright; the rest of the page dims.' },
+    { label: 'Focus', opts: ['Off', 'Reading window', 'Tapped line'], on: 0, text: 'A clear band in the middle with the rest shaded, or the tapped line bright and the rest faded.' },
     { label: 'Space between parts', opts: ['Normal', 'More', 'Most'], on: 0, text: 'More room after the English before the next Hebrew.' },
     { label: 'Side margins', opts: ['Normal', 'Wider', 'Widest'], on: 0, text: 'The text a little further in from the edges.' },
   ] },

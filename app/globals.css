@@ -2821,3 +2821,11 @@ body[data-full] .ai-hub-btn, [data-xfull] .ai-hub-btn, [data-st-full] .ai-hub-bt
 .vn-err, .vn-on { font-size: 12.5px; }
 .vn-play { display: block; margin-top: 4px; font-size: 14px; }
 .vn-audio { display: block; width: 100%; max-width: 360px; margin-top: 6px; height: 36px; }
+
+/* Reading window (Nov 14): a clear band across the middle of the screen, the rest shaded; it follows the screen, not
+   the lines, so it works with phrase-by-phrase too. Taps go through it. */
+.read-window { position: fixed; inset: 0; z-index: 45; pointer-events: none; }
+.read-window .rw-top, .read-window .rw-bottom { position: absolute; left: 0; right: 0; background: rgba(20, 20, 18, 0.30); }
+.read-window .rw-top { top: 0; height: 34%; -webkit-mask: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); mask: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); }
+.read-window .rw-bottom { bottom: 0; height: 38%; -webkit-mask: linear-gradient(to top, #000 calc(100% - 22px), transparent); mask: linear-gradient(to top, #000 calc(100% - 22px), transparent); }
+[data-look='midnight'] .read-window .rw-top, [data-look='midnight'] .read-window .rw-bottom { background: rgba(0, 0, 0, 0.5); }

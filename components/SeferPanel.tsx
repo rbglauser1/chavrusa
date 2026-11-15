@@ -681,7 +681,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ? <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} line={hubLineActs} amud={hubAmud} />
     : null;
   return (
-    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''} ${settings.spotlight && hereLine != null ? 'spot' : ''}`} aria-label="Sefer">
+    <aside className={`sefer ${full ? 'full' : ''} ${home ? 'home' : ''} ${embedded ? 'embedded' : ''} ${embedded && settings.lineRules ? 'rules' : ''} ${(settings.focusMode ?? (settings.spotlight ? 'line' : 'off')) === 'line' && hereLine != null ? 'spot' : ''}`} aria-label="Sefer">
       {full && (
         <div className="full-bar">
           {talk && (
@@ -1097,6 +1097,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       </div>
       {hub}
+      {settings.focusMode === 'window' && src && !showLib && typeof document !== 'undefined' && createPortal(
+        <div className="read-window" aria-hidden="true"><div className="rw-top" /><div className="rw-bottom" /></div>, document.body)}
     </aside>
   );
 }

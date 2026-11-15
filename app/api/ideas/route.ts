@@ -1,4 +1,5 @@
 import { clipWords } from '@/lib/clip';
+import { parseAiJson } from '@/lib/aiLang';
 import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
@@ -54,7 +55,7 @@ async function makeIdeas(base: string, n: number): Promise<{ points: { text: str
   let points: { text: string; refs: string[] }[] = [];
   let answered = false; // a proper answer came back, even if it was "nothing to add"
   try {
-    const arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? 'x');
+    const arr = parseAiJson(r.text, '[');
     answered = Array.isArray(arr);
     points = (Array.isArray(arr) ? arr : []).filter((p) => p && typeof p.text === 'string').map((p) => ({
       text: clipWords(p.text, 900),

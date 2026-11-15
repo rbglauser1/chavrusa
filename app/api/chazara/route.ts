@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { parseAiJson } from '@/lib/aiLang';
 import { costUsd } from '@/lib/config';
 import { listMessages, listSessions, logCost, type MessageRow, type SessionRow } from '@/lib/db';
 import { runAnthropic } from '@/lib/llm/anthropic';
@@ -36,7 +37,7 @@ async function recapOf(sess: SessionRow): Promise<Recap | null> {
   const r = await run({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: convo }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: sess.id, kind: 'chazara', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   try {
-    const j = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
+    const j = parseAiJson<any>(r.text, '{');
     const rec: Recap = {
       sessionId: sess.id, title: String(j.title ?? sess.title ?? 'Last time').slice(0, 80), when: sess.updated_at,
       points: (Array.isArray(j.points) ? j.points : []).map(String).slice(0, 6),

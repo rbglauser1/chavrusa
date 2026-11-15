@@ -15,7 +15,8 @@ export function langRule(l: AiLang): string {
 Write everything you write in clear, simple Hebrew, the Hebrew of seforim and the yeshiva (לשון הקודש as a learner reads it; no modern slang). This overrides any instruction above to write in English.
 - Quotes from the text and the meforshim stay exactly as they are written.
 - Names of seforim and people as a yeshiva learner says them (רש"י, תוספות, רבי יוחנן).
-- Keep every required format exactly: JSON keys, "- " bullets and their nesting, labels the app reads. Only the words you write are in Hebrew. A short English label the app asks for (like a step's "label") may stay in English.`;
+- Keep every required format exactly: JSON keys, "- " bullets and their nesting, labels the app reads. Only the words you write are in Hebrew. A short English label the app asks for (like a step's "label") may stay in English.
+- Inside JSON, write Hebrew abbreviations with the Hebrew mark ״ (רש״י, חז״ל), never a plain " , which would break the JSON.`;
   if (l === 'both') return `
 
 # Language: English and Hebrew
@@ -24,6 +25,16 @@ Write everything you write in English, and give each part again in clear, simple
 - Bullet lists: each point in English, then, as the first smaller point under it ("  - "), the same point in Hebrew. Smaller points the same way, with the Hebrew right after each as a line of its own at the same level.
 - A one-line field (like a step's "en", a question or an answer): the English, then " / ", then the Hebrew.
 - Quotes from the text and the meforshim stay exactly as they are written, once.
-- Keep every required format exactly: JSON keys, "- " bullets, labels the app reads.`;
+- Keep every required format exactly: JSON keys, "- " bullets, labels the app reads.
+- Inside JSON, write Hebrew abbreviations with the Hebrew mark ״ (רש״י, חז״ל), never a plain " , which would break the JSON.`;
   return '';
+}
+
+/** The AI's JSON, read safely when it writes Hebrew: a Hebrew abbreviation with a plain " inside a string (רש"י, חז"ל)
+ *  would end the string early, so such a " between two Hebrew letters becomes the Hebrew ״ before reading. */
+export function parseAiJson<T = unknown>(text: string, open: '{' | '['): T {
+  const m = text.match(open === '{' ? /\{[\s\S]*\}/ : /\[[\s\S]*\]/)?.[0];
+  if (!m) throw new Error('no JSON');
+  try { return JSON.parse(m) as T; }
+  catch { return JSON.parse(m.replace(/([\u05D0-\u05EA])"([\u05D0-\u05EA])/g, '$1״$2').replace(/([\u05D0-\u05EA])'([\u05D0-\u05EA])/g, '$1׳$2')) as T; }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseAiJson } from '@/lib/aiLang';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -81,7 +82,7 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   let overview = '';
   let topics: Topic[] = [];
   try {
-    const d = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{}') as { overview?: unknown; topics?: unknown };
+    const d = parseAiJson(r.text, '{') as { overview?: unknown; topics?: unknown };
     overview = pts(d.overview, 1200);
     topics = (Array.isArray(d.topics) ? d.topics : []).filter((t) => t && typeof t === 'object').map((t: Record<string, unknown>) => {
       const steps: Step[] = (Array.isArray(t.steps) ? t.steps : [])

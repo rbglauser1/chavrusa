@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseAiJson } from '@/lib/aiLang';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
@@ -40,7 +41,7 @@ async function makeViews(ref: string): Promise<{ disputes: Dispute[]; made: bool
   await logCost({ sessionId: null, kind: 'mapviews', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const str = (x: unknown, max: number) => clipWords(x, max);
   let d: { disputes?: unknown };
-  try { d = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? ''); } catch { throw new Error('The table did not come back in the right form.'); }
+  try { d = parseAiJson(r.text, '{'); } catch { throw new Error('The table did not come back in the right form.'); }
   if (!Array.isArray(d.disputes)) throw new Error('The table did not come back in the right form.');
   const n = s.he.length;
   const disputes: Dispute[] = d.disputes.filter((x) => x && typeof x === 'object').map((x: Record<string, unknown>) => ({

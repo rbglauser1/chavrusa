@@ -1001,7 +1001,7 @@ export default function Home() {
             inlineComm={inlineComm}
             onMenu={() => (newUI ? setView('home') : setDrawer('sessions'))}
             onSettings={() => { if (newUI) { setSettingsFrom('learn'); setView('settings'); } else setDrawer('settings'); }}
-            onLibrary={openLibrary}
+            onLibrary={() => { setTextTick((n) => n + 1); openLibrary(); }} // the text area must stay up once the Library has opened (it acknowledges and clears libReq)
             onSefer={() => { if (quietSefer) setTextTick((n) => n + 1); else { setSeferOpen(true); setLibReq(0); } }}
             onNewSession={newSession}
             starters={STARTERS}

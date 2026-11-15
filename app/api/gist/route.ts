@@ -1,4 +1,5 @@
 import { clipWords } from '@/lib/clip';
+import { parseAiJson } from '@/lib/aiLang';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { keep } from '@/lib/keep';
@@ -31,7 +32,7 @@ async function makeGists(title: string, refs: string[]): Promise<Record<string, 
   const r = await run({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${title}\n\n${body}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'gist', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   let arr: unknown = [];
-  try { arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]'); } catch { arr = []; }
+  try { arr = parseAiJson(r.text, '['); } catch { arr = []; }
   const out: Record<string, string> = {};
   if (Array.isArray(arr)) items.forEach((x, i) => { const g = arr[i]; if (typeof g === 'string' && g.trim()) out[x.ref] = clipWords(g, 700); });
   if (!Object.keys(out).length) throw new Error('The summaries did not come back in the right form.'); // not kept: tried again

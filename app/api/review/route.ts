@@ -1,4 +1,5 @@
 import { clipWords } from '@/lib/clip';
+import { parseAiJson } from '@/lib/aiLang';
 import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
@@ -39,7 +40,7 @@ async function makeReview(ref: string): Promise<{ questions: Question[] }> {
   await logCost({ sessionId: null, kind: 'review', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   let questions: Question[] = [];
   try {
-    const arr = JSON.parse(r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]');
+    const arr = parseAiJson(r.text, '[');
     questions = (Array.isArray(arr) ? arr : []).filter((x) => x && typeof x.q === 'string' && typeof x.a === 'string').map((x) => ({
       q: clipWords(x.q, 400), a: clipWords(x.a, 900),
       line: Math.min(Math.max(1, Math.round(Number(x.line) || 1)), s.he.length),
