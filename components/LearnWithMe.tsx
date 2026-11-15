@@ -48,11 +48,12 @@ function getExplain(ref: string): Promise<Explained> {
 
 const Wait = () => <div className="muted"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>;
 
-export default function LearnWithMe({ refText, total, start, lineEl, onNext, onClose, onVoice }: {
+export default function LearnWithMe({ refText, total, start, lineEl, onNext, onClose, onVoice, onVoiceTalk }: {
   refText: string; total: number; start: number;         // start: the line to begin on (1-based)
   lineEl: (n: number) => HTMLElement | null;            // the line in the sefer, to light it up
   onNext?: () => void; onClose: () => void;
   onVoice?: () => void;                                 // the voice call leads instead (lib/voiceGuide)
+  onVoiceTalk?: (n: number) => void;                    // an ordinary voice call (back and forth) from line n
 }) {
   useBackLayer(true, onClose);
   const [phase, setPhase] = useState<'intro' | 'learn'>('intro');
@@ -69,6 +70,7 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
   const [answer, setAnswer] = useState('');
   const [reply, setReply] = useState<string | null>(null); // the text, or 'wait' / 'err'
   const [hint, setHint] = useState(false);
+  const [voicePick, setVoicePick] = useState(false); // the 🎙 in the strip: guided or back and forth, by voice
   // The explanation of this line (and the next one, ahead of time), started as soon as the line comes up.
   const [expl, setExpl] = useState<{ ref: string; data: Explained | null; err: boolean }>({ ref: '', data: null, err: false });
   const [xTry, setXTry] = useState(0);
@@ -138,8 +140,16 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
       <div className="lwm-strip-top">
         <span className="lwm-count">{done ? 'Finished' : `Line ${n} of ${total}`}</span>
         <div className="lwm-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, ((done ? total : n - 1) / Math.max(1, total)) * 100)}%` }} /></div>
+        {(voice || onVoiceTalk) && !done && <button className="lwm-mic" onClick={() => setVoicePick((v) => !v)} aria-label="Switch to voice" aria-expanded={voicePick}>🎙</button>}
         <button className="icon-btn" onClick={onClose} aria-label="Stop learning with me">✕</button>
       </div>
+      {voicePick && !done && (
+        <div className="lwm-voice-pick">
+          {voice && <button className="btn primary" onClick={voice}>🎙 Guided, by voice</button>}
+          {onVoiceTalk && <button className="btn" onClick={() => { onClose(); onVoiceTalk(n); }}>🎙 Back and forth, by voice</button>}
+          <small className="muted">From line {n}. The voice reads the text to you.</small>
+        </div>
+      )}
       <div className="lwm-strip-body">
         {done ? (
           <p className="lwm-where">Well learned! You finished this section.</p>

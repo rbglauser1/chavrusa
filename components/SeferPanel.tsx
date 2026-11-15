@@ -716,7 +716,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ? <>
         <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
-        {lwmAt != null && <LearnWithMe refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
+        {lwmAt != null && <LearnWithMe refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onVoiceTalk={talk && onPoint ? (n) => { onPoint(src, n); if (!talk.on) talk.toggle(); } : undefined} onClose={() => setLwmAt(null)} />}
       </>
     : null;
   return (
@@ -990,7 +990,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {xOpen.has(i) && <ExplainBox lineRef={partRef(i)} onClose={() => flipIn(setXOpen, i)} />}
                   {wordOn?.i === i && <WordBox key={`${wordOn.w}|${wordOn.at.top}|${wordOn.at.left}`} word={wordOn.w} raw={wordOn.raw} lineRef={partRef(i)} at={wordOn.at} onClose={closeWord} />}
-                  {cOpen.has(i) && <LineChat lineRef={partRef(i)} onClose={() => flipIn(setCOpen, i)} ask={chatAsk?.i === i ? chatAsk.q : undefined} onAsked={() => setChatAsk(null)} />}
+                  {cOpen.has(i) && <LineChat lineRef={partRef(i)} onClose={() => flipIn(setCOpen, i)} ask={chatAsk?.i === i ? chatAsk.q : undefined} onAsked={() => setChatAsk(null)} onVoice={talk && onPoint && src && !/:\d+(-\d+)?$/.test(src.ref) ? () => { onPoint(src, i + 1); if (!talk.on) talk.toggle(); } : undefined} />}
                   {bOpen?.startsWith(`${i}|`) && (() => { const b = lineButtons.find((x) => x.id === bOpen.slice(bOpen.indexOf('|') + 1)); return b ? <MyButtonBox key={b.id} id={b.id} name={b.name} refText={partRef(i)} onClose={() => setBOpen(null)} /> : null; })()}
                   {iOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
                     <IdeasBox groups={rel.lines[partNum(i)]} lineRef={partRef(i)} onClose={() => flipIn(setIOpen, i)} />

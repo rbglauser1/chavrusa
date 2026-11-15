@@ -22,7 +22,7 @@ function startersFor(ref: string): string[] {
 
 // follow: used inside Explain for follow-up questions (Nov 13): no title or starters, the explanation goes to the AI
 // with the question, and the follow-ups are kept apart from the line's own ✦ Chat.
-export default function LineChat({ lineRef, onClose, follow, ask, onAsked }: { lineRef: string; onClose: () => void; follow?: { about: string }; ask?: string; onAsked?: () => void }) {
+export default function LineChat({ lineRef, onClose, follow, ask, onAsked, onVoice }: { lineRef: string; onClose: () => void; onVoice?: () => void; follow?: { about: string }; ask?: string; onAsked?: () => void }) {
   const STARTERS = startersFor(lineRef);
   const store = follow ? `${lineRef}#explain` : lineRef;
   const [msgs, setMsgs] = useState<Msg[]>(() => { try { return JSON.parse(localStorage.getItem(KEY(store)) ?? '[]'); } catch { return []; } });
@@ -96,6 +96,7 @@ export default function LineChat({ lineRef, onClose, follow, ask, onAsked }: { l
     <div className="comm line-x lchat" onClick={(e) => e.stopPropagation()}>
       <div className="comm-title">✦ Back and forth on this line
         {msgs.some((m) => m.role === 'assistant') && <button className="lchat-save" onClick={() => void saveAll()} disabled={savedAll}>{savedAll ? '✓ Saved to Notebook' : 'Save the chat'}</button>}
+        {onVoice && <button className="lchat-save" onClick={onVoice} aria-label="Go on by voice from this line">🎙 By voice</button>}
         <button className="comm-x" aria-label="Close the chat" onClick={onClose}>✕</button>
       </div>
       <div className="ai-note left">Written by AI · AI makes mistakes · ask your rav for halacha</div>

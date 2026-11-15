@@ -2942,3 +2942,7 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .line.lwm-on { background: color-mix(in srgb, #CC7C5E 11%, transparent); border-radius: 10px; box-shadow: 0 0 0 6px color-mix(in srgb, #CC7C5E 11%, transparent); transition: background .3s ease; }
 /* room under the last lines, so they can come up above the strip */
 .lwm-learning .sefer-body { padding-bottom: 55dvh !important; }
+.lwm-mic { border: 1px solid color-mix(in srgb, #CC7C5E 50%, var(--rule)); background: none; border-radius: 999px; width: 34px; height: 34px; font-size: 15px; cursor: pointer; flex: 0 0 auto; }
+.lwm-voice-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 16px 2px; }
+.lwm-voice-pick .btn { flex: 1 1 140px; font-size: 15px; }
+.lwm-voice-pick small { flex-basis: 100%; }
