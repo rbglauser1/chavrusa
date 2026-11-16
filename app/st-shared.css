@@ -186,3 +186,13 @@
 
 /* Full screen (Nov 16): the ✦ sits just above the mic and exit buttons, not up where the bars were. */
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { bottom:calc(74px + env(safe-area-inset-bottom)) !important; }
+
+/* Phones and tablets (Nov 16): no "Learn the text / Hebrew + English" bar over the text (English on or off is in
+   Settings), and the daf counter sits in the bottom row, level with the chat and mic buttons, on the left. */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-reading-toolbar { display:none; }
+  :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(102px + env(safe-area-inset-bottom)); left:16px; right:auto; transform:none; }
+}
+@media (max-height:760px) and (max-width:699px) {
+  :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(92px + env(safe-area-inset-bottom)); }
+}
