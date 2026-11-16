@@ -4,8 +4,9 @@
 // same one the full map shows (made once per section and kept; lib/mapClient keeps it on the device too).
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bullets, isHebrewText } from './Bullets';
+import { Bullets, GoodToKnow } from './Bullets';
 import { useBackLayer } from '@/lib/back';
+import { useSwipeDown } from '@/lib/swipeDown';
 import { getMap, placeOf, stepLabel, type MapData } from '@/lib/mapClient';
 
 export default function MapPeek({ refText, line, onGo, onFull, onClose }: {
@@ -15,6 +16,7 @@ export default function MapPeek({ refText, line, onGo, onFull, onClose }: {
   const [err, setErr] = useState('');
   const [tick, setTick] = useState(0);
   useBackLayer(true, onClose);
+  const sheet = useSwipeDown<HTMLDivElement>(onClose);
   useEffect(() => {
     let gone = false;
     setErr('');
@@ -26,7 +28,7 @@ export default function MapPeek({ refText, line, onGo, onFull, onClose }: {
   const t = at?.topic;
   return createPortal(
     <div className="peek-scrim" onClick={onClose}>
-      <div className="peek" role="dialog" aria-label="This line in the map" onClick={(e) => e.stopPropagation()}>
+      <div ref={sheet} className="peek" role="dialog" aria-label="This line in the map" onClick={(e) => e.stopPropagation()}>
         <div className="peek-head">
           <span>🗺 Line {line} in the map</span>
           <button className="linklike" onClick={() => { onClose(); onFull(); }}>Full map</button>
@@ -42,7 +44,7 @@ export default function MapPeek({ refText, line, onGo, onFull, onClose }: {
             {t.background.length > 0 && (
               <div className="smap-bg">
                 <span className="smap-label">Good to know</span>
-                <ul dir={isHebrewText(t.background.join(' ')) ? 'rtl' : undefined}>{t.background.map((b, i) => { const m = b.match(/^([^:]{1,40}):\s*(.*)$/); return <li key={i}>{m ? <><b>{m[1]}</b>: {m[2]}</> : b}</li>; })}</ul>
+                <GoodToKnow items={t.background} />
               </div>
             )}
             <ol className="peek-steps">

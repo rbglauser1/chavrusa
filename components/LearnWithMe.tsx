@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import Thinking from './Thinking';
 import { WithSources } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
+import { useSwipeDown } from '@/lib/swipeDown';
 import { setVoiceGuide } from '@/lib/voiceGuide';
 
 type Row = { n: number; where: string; ask: string; hint: string };
@@ -56,6 +57,7 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
   onVoiceTalk?: (n: number) => void;                    // an ordinary voice call (back and forth) from line n
 }) {
   useBackLayer(true, onClose);
+  const introSheet = useSwipeDown<HTMLDivElement>(onClose);
   const [phase, setPhase] = useState<'intro' | 'learn'>('intro');
   const [n, setN] = useState(Math.min(Math.max(1, start), total));
   const done = n > total;
@@ -113,7 +115,7 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
   if (phase === 'intro') {
     return createPortal(
       <div className="lwm-scrim" onClick={onClose}>
-        <div className="lwm-intro" role="dialog" aria-label="Guided learning" onClick={(e) => e.stopPropagation()}>
+        <div ref={introSheet} className="lwm-intro" role="dialog" aria-label="Guided learning" onClick={(e) => e.stopPropagation()}>
           <button className="icon-btn lwm-x" onClick={onClose} aria-label="Close">✕</button>
           <div className="lwm-kicker">✦ Guided learning · before we start</div>
           {intro.data ? (

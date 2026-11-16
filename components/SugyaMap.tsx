@@ -4,7 +4,8 @@
 // Beside the AI's outline, straight from Sefaria (no AI): the meforshim on each step (tap one: it opens under its line),
 // and under each topic where the halacha is ruled and the pesukim it quotes (tap one: its words open right here).
 import Thinking from './Thinking';
-import { Bullets, isHebrewText } from './Bullets';
+import { useSwipeDown } from '@/lib/swipeDown';
+import { Bullets, GoodToKnow } from './Bullets';
 import { useEffect, useState } from 'react';
 import { LinkRow, RefText } from './RefText';
 import NoteAdd from './NoteAdd';
@@ -80,10 +81,11 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
   const [moreFor, setMoreFor] = useState<string | null>(null);
   const [openComm, setOpenComm] = useState<string | null>(null); // the meforesh opened right in the map
   // Escape closes it (review, Nov 11).
+  const sheet = useSwipeDown<HTMLDivElement>(onClose);
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
   return (
     <div className="smap-back" onClick={onClose}>
-      <div className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
+      <div ref={sheet} className="smap" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
         <div className="smap-head"><span>{title} · {refText}</span><button className="smap-x" onClick={onClose} aria-label="Close">×</button></div>
         {!data && !err && <div className="muted smap-wait"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
         {err && <div className="muted smap-wait">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>}
@@ -132,7 +134,7 @@ export default function SugyaMap({ refText, title = 'Sugya map', here, onGo, onC
                 {t.background.length > 0 && (
                   <div className="smap-bg">
                     <span className="smap-label">Good to know</span>
-                    <ul dir={isHebrewText(t.background.join(' ')) ? 'rtl' : undefined}>{t.background.map((b, i) => { const m = b.match(/^([^:]{1,40}):\s*(.*)$/); return <li key={i}>{m ? <><b>{m[1]}</b>: {m[2]}</> : b}</li>; })}</ul>
+                    <GoodToKnow items={t.background} />
                   </div>
                 )}
                 <ol className="smap-list">

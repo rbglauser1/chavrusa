@@ -2959,3 +2959,13 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .lib-recent > .lib-item.category { display: flex; align-items: center; gap: 12px; }
 .lib-recent > .lib-item.category .en { white-space: nowrap; }
 .lib-recent .lib-sub { margin-left: auto; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Good to know (Nov 16): each line keeps its own direction (set on the li), bullets on the side it reads from. */
+.smap-bg ul.gtk { padding: 0; margin: 4px 0 0; list-style: none; }
+.smap-bg ul.gtk li { unicode-bidi: isolate; text-align: start; position: relative; padding-inline-start: 16px; margin: 4px 0; }
+.smap-bg ul.gtk li::before { content: '•'; position: absolute; inset-inline-start: 2px; color: var(--soft); }
+
+/* Library header (Nov 16): the list scrolls under it with no gap above. The scroller's top padding moved into the
+   sticky header, so nothing shows through between the header and the top of the pane. */
+.lib { padding-top: 0 !important; }
+.lib-crumbs { padding-top: 16px; margin-top: 0; }

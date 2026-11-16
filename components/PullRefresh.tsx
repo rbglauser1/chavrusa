@@ -19,7 +19,7 @@ export function PullRefresh() {
   const [going, setGoing] = useState(false);
   const start = useRef<{ y: number; x: number } | null>(null);
   useEffect(() => {
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
+    const standalone = window.matchMedia('(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
     if (!standalone) return; // in the browser, Safari's own pull-to-refresh does it
     const down = (e: TouchEvent) => {
       start.current = null;
@@ -29,15 +29,19 @@ export function PullRefresh() {
       if (t.closest('input, textarea, select, [contenteditable], .no-pull, .smap')) return;
       // The Library opens inside the sefer's pane, but it isn't the sefer: pulling down there refreshes (Nov 16).
       if (t.closest('.sefer-body, .min-text') && !t.closest('.lib')) return;
-      const sc = scrollerAt(t);
-      if ((sc && sc.scrollTop > 0) || window.scrollY > 0) return;
+      // Every box that scrolls, from the finger up, has to be at its top (a pixel or two of iPhone bounce is still
+      // the top). The page itself counts only when nothing inside it scrolls (Nov 16: a stray page offset on the
+      // iPhone was blocking the pull everywhere).
+      let sc = scrollerAt(t), inner = false;
+      for (; sc; sc = scrollerAt(sc.parentElement)) { inner = true; if (sc.scrollTop > 2) return; }
+      if (!inner && window.scrollY > 2) return;
       start.current = { y: e.touches[0].clientY, x: e.touches[0].clientX };
     };
     const move = (e: TouchEvent) => {
       if (!start.current || e.touches.length !== 1) { if (start.current) { start.current = null; setPull(0); } return; }
       const dy = e.touches[0].clientY - start.current.y, dx = Math.abs(e.touches[0].clientX - start.current.x);
       if (dy <= 0 || dx > dy) { setPull(0); return; }
-      setPull(Math.min(dy * 0.6, NEED * 1.4));
+      setPull(Math.min(dy * 0.75, NEED * 1.4)); // about 120px of finger travel
     };
     const reset = () => { start.current = null; setPull(0); setGoing(false); };
     const up = (e: TouchEvent) => {

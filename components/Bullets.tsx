@@ -40,3 +40,18 @@ export function bulletsHtml(text: string, esc: (s: string) => string): string {
   const pts = toPoints(text);
   return pts.length ? `<ul class="pts"${isHebrewText(text) ? ' dir="rtl"' : ''}>${pts.map((p) => `<li>${esc(p.text)}${p.sub.length ? `<ul>${p.sub.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ul>` : '';
 }
+
+// "Good to know" lines (Nov 16): "term: what it means". Each line reads in the direction of its explanation, not of
+// its first word, so an English line that starts with a Hebrew term stays left to right (the term is isolated).
+export function GoodToKnow({ items }: { items: string[] }) {
+  return (
+    <ul className="gtk">
+      {items.map((b, i) => {
+        const m = b.match(/^([^:]{1,40}):\s*(.*)$/);
+        const body = m ? m[2] : b;
+        const rtl = isHebrewText(body);
+        return <li key={i} dir={rtl ? 'rtl' : 'ltr'}>{m ? <><b><bdi>{m[1]}</bdi></b>: {m[2]}</> : b}</li>;
+      })}
+    </ul>
+  );
+}
