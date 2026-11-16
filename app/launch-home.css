@@ -232,3 +232,6 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent-soft:#3a2e2a; }
 /* Nov 16: on White and Cream the Continue button stays terracotta. */
 [data-look='clay']:is([data-paper='white'],[data-paper='cream']) .split-panel .launch-primary { background:#a85235; color:#fff; }
+/* Nov 16, Off-white and White: the reading screen's back arrow and ⋯ are black; the title (e.g. Yoma 3a) is terracotta. */
+[data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header .st-icon { color:#131313; }
+[data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#a85235; }
