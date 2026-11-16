@@ -2949,3 +2949,8 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 /* Nov 15: Guided learning and the line map sit above every look's tab bar (the Guided and Sand looks' bars hid Next) */
 .lwm-strip { z-index: 88; }
 .lwm-scrim, .peek-scrim { z-index: 89; }
+/* Nov 16: Recent seforim are full-width cards with a small gap, like the seforim below */
+.lib-recent { display: flex; flex-direction: column; gap: 10px; }
+.lib-recent > .lib-item { width: 100%; box-sizing: border-box; text-align: start; }
+.lib-recent > .lib-recent-head, .lib-recent > .lib-hint { width: 100%; }
+.lib-mine-bottom { margin-top: 22px; }

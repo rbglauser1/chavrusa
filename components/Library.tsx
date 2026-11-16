@@ -3,7 +3,6 @@ import { useMineTitles } from './useMineTitles';
 import { useEffect, useState } from 'react';
 import { useBackLayer } from '@/lib/back';
 import MySeforim from './MySeforim';
-import MyNotes from './MyNotes';
 import { getBook, listBooks, offlineOn, putBook, putText, removeBook, type OfflineBook } from '@/lib/offlineStore';
 
 // Offline reading (Settings → Extras): download a whole masechta or sefer to the phone.
@@ -172,8 +171,6 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
       {msg && <div className="goto-msg">{msg}</div>}
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
-      {!book && !path.length && <MySeforim busy={busy} onOpen={(ref) => open(ref)} />}
-      {!book && !path.length && <MyNotes />}
       {!book && !path.length && offlineOn() && <OfflineShelf onPick={(t) => setBook({ title: t })} />}
       {!book && !path.length && recent.length > 0 && (
         <div className="lib-recent">
@@ -203,6 +200,8 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
           {items && !items.length && !msg && <div className="muted">Nothing here.</div>}
         </div>
       )}
+      {/* Nov 16: your own seforim moved down here, under the library (the Notebook has its own tab) */}
+      {!book && !path.length && <div className="lib-mine-bottom"><MySeforim busy={busy} onOpen={(ref) => open(ref)} /></div>}
 
       {book && (
         <div className="lib-book">
