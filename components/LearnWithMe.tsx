@@ -40,7 +40,7 @@ const explained = new Map<string, Promise<Explained>>();
 function getExplain(ref: string): Promise<Explained> {
   let p = explained.get(ref);
   if (!p) {
-    p = fetch(`/api/explain?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => { if (!d?.text) throw new Error(d?.error || 'none'); return d as Explained; });
+    p = fetch(`/api/explain?ref=${encodeURIComponent(ref)}&short=1`).then((r) => r.json()).then((d) => { if (!d?.text) throw new Error(d?.error || 'none'); return d as Explained; });
     explained.set(ref, p);
     p.catch(() => explained.delete(ref));
   }

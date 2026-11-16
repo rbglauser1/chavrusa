@@ -33,7 +33,12 @@ const MAIN_COMM = (base: string) => (/^Mishnah /.test(base) ? 'Bartenura' : 'Ras
 const HAS_MAIN = (base: string) => /^Mishnah /.test(base) || /\d+[ab]$/.test(base) || TANAKH.test(base);
 const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles) /;
 
-async function makeExplain(base: string, n: number): Promise<{ text: string; sources: string[] }> {
+// Learn with me (Nov 16): the learner found the full explanation far too long there. A short one: this line only.
+const SHORT = `
+
+FOR THIS REQUEST: the learner is going line by line (Learn with me). Write only about the marked line, 2 to 4 short sentences, at most 80 words, one paragraph: what it says and why it is said here. Do not go on to the next lines or the rest of the sugya. At most one source, only if it is essential.`;
+
+async function makeExplain(base: string, n: number, short = false): Promise<{ text: string; sources: string[] }> {
   await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(base, approved);
@@ -54,13 +59,19 @@ async function makeExplain(base: string, n: number): Promise<{ text: string; sou
   } catch { /* optional */ }
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const r = await runAnthropic({
-    lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n} (the line's own reference: ${s.ref}:${n})\n\n${lines.slice(0, 26000)}${comm}` }],
-    tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: 6,
+    lang: true, model: model.id, system: short ? PROMPT + SHORT : PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n} (the line's own reference: ${s.ref}:${n})\n\n${lines.slice(0, 26000)}${comm}` }],
+    tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: short ? 3 : 6,
   });
   await logCost({ sessionId: null, kind: 'explain', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__/g, '').trim();
   if (text.length < 60) throw new Error('The explanation did not come back.'); // not kept: tried again next time
-  return { text: text.slice(0, 3500), sources: sourcesNamed(text, used) };
+  let out = text;
+  if (short) { // a firm limit: whole sentences up to about 90 words
+    const sents = out.replace(/\n+/g, ' ').match(/[^.!?]+[.!?]+["')\]]*\s*/g) ?? [out];
+    out = ''; for (const s1 of sents) { if (out && (out + s1).split(/\s+/).length > 95) break; out += s1; }
+    out = out.trim();
+  }
+  return { text: out.slice(0, 3500), sources: sourcesNamed(out, used) };
 }
 
 // GET ?ref=Yoma 6a:3  (a line of an amud / perek)
@@ -68,6 +79,7 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   const m = ref.match(/^(.*?):(\d+)$/);
   if (!m || /^Mine /.test(ref)) return NextResponse.json({ text: '' });
-  try { return NextResponse.json(await keep('explain-v2', ref, () => makeExplain(m[1], Number(m[2])), (x) => !x.text)); }
+  const short = req.nextUrl.searchParams.get('short') === '1';
+  try { return NextResponse.json(await keep(short ? 'explain-short-v1' : 'explain-v2', ref, () => makeExplain(m[1], Number(m[2]), short), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ text: '', error: (e as Error).message }); }
 }

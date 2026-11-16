@@ -2977,3 +2977,5 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .wig-head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
 .wig-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .wig > :is(.line-x, div):not(.wig-head):not(.wig-tabs) { margin-top: 6px; }
+/* Learn with me (Nov 16): the explanation reads at the same size as the rest of the strip. */
+.lwm-strip :is(.lwm-x-box .lx-p, .lwm-ask p, .lwm-where, .lwm-reply) { font-size: var(--ai-size, max(17px, var(--en-size, 18px))); line-height: 1.5; }
