@@ -178,3 +178,6 @@
 
 /* Settings, Recent and Look pages (Nov 16): no "Chavrusa ⚙" bar over them, so their own back arrow shows. */
 :is([data-look='clay'],[data-look='chatgpt']) .home-shell.inner { padding-top:0 !important; }
+/* Opening a group scrolled the whole frame up and pushed the "‹ Settings" header off the screen (Nov 16): only the
+   page body scrolls, the frame and the header can't be scrolled away. */
+:is([data-look='clay'],[data-look='chatgpt']) .home-shell.inner, :is([data-look='clay'],[data-look='chatgpt']) .home-shell.inner .hpage { overflow:clip; }
