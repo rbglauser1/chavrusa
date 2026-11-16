@@ -196,3 +196,10 @@
 @media (max-height:760px) and (max-width:699px) {
   :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(92px + env(safe-area-inset-bottom)); }
 }
+
+/* Nov 16: the round chat button is gone on phones (the ✦ has Back and forth; the whole-page chat is in the ⋯ menu),
+   and the ✦ hides in that chat so it never covers the send button. */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-footer .st-ask { display:none; }
+}
+:is([data-look='clay'],[data-look='chatgpt']) body:has(.st-discussing) .ai-hub-btn { display:none; }
