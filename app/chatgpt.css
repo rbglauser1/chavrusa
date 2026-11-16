@@ -132,6 +132,8 @@
  [data-look='chatgpt'] .cg-home-bottom { min-height:38px; }
 }
 /* Keep the Home composer visible when the phone keyboard opens. */
-[data-look='chatgpt'] .cg-home:has(textarea:focus) :is(.cg-intro,.cg-home-suggestions,.cg-home-return,.cg-home-bottom) { display:none; }
+@media (max-height:580px) {
+ [data-look='chatgpt'] .cg-home:has(.cg-home-composer:focus-within) :is(.cg-intro,.cg-home-suggestions,.cg-home-return,.cg-home-bottom) { display:none; }
+}
 
 [data-look='chatgpt'] .cg-home-wait { color:var(--soft); font:12px/1.5 var(--f-ui); margin:0; }
