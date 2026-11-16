@@ -213,3 +213,20 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'][data-c-en='ink'] :is(.sefer .line .en, .sefer .il-en, .min-en) { color:#d6cfc2 !important; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] .daf-dock .daf-bar { background:var(--surface) !important; border-color:var(--rule) !important; color:var(--ink); }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] { --hue-terracotta:#E89A7C; --hue-teal:#7FCFCF; --hue-charcoal:#CFCFC8; --hue-oceanmist:#8FC3CC; --hue-slategray:#A9BCCB; }
+
+/* Nov 16: each background brings its own accent, so buttons, headings, cards and the chosen tab follow it.
+   Only the AI stays terracotta: the ✦ and everything it opens (Guided learning, map, line sheets). */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='white'] { --accent:#1F1F1F; --accent-ink:#ffffff; --accent-soft:#EFEFEF; --pc:#FFFFFF; --pcb:#E3E3E3; --pn:#F2F2F2; --pnb:#E6E6E6; --pb:#FFFFFF; --pbb:#E3E3E3; --pe:#555555; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='cream'] { --accent:#8A5A2B; --accent-ink:#ffffff; --accent-soft:#F0E4D2; --pc:#FBF7EE; --pcb:#E2D6C0; --pn:#EFE4D0; --pnb:#E4D6BD; --pb:#FBF7EE; --pbb:#E2D6C0; --pe:#8A5A2B; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='blue'] { --accent:#2F5D8A; --accent-ink:#ffffff; --accent-soft:#DDE8F3; --pc:#F7FAFD; --pcb:#CCDAE8; --pn:#DDE8F3; --pnb:#CCDAE8; --pb:#F7FAFD; --pbb:#CCDAE8; --pe:#2F5D8A; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='green'] { --accent:#3E6B4A; --accent-ink:#ffffff; --accent-soft:#DCEAD8; --pc:#F7FAF6; --pcb:#CADBC6; --pn:#DCEAD8; --pnb:#CADBC6; --pb:#F7FAF6; --pbb:#CADBC6; --pe:#3E6B4A; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] { --accent:#d7b777; --accent-ink:#17202a; }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-panel { background:var(--pc); border-color:var(--pcb); }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-new { background:var(--pn); border-color:var(--pnb); }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-new button { background:var(--pb); border-color:var(--pbb); }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-home .launch-eyebrow { color:var(--pe); }
+[data-look='clay']:not([data-paper='look']) .split-panel .launch-primary { background:var(--accent); color:var(--accent-ink); }
+[data-look='clay']:not([data-paper='look']) .home-talk-btn { background:var(--accent); box-shadow:none; }
+/* The AI keeps its terracotta whatever the background. */
+:is([data-look='clay'],[data-look='chatgpt']) :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent:#CC7C5E; --accent-ink:#ffffff; --accent-soft:#F5E9E3; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent-soft:#3a2e2a; }
