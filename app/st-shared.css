@@ -270,4 +270,9 @@
    - --ios-gap (components/ViewportFix) makes up for iOS 26 laying the page out short: everything pinned to the bottom
      moves down by it, and full-height boxes grow by it. */
 :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(12px + env(safe-area-inset-top)); }
-:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-top:0; }
+
+/* Nov 16, full screen as it was this morning: the whole page scrolls (not a box inside it), so on the iPhone the words
+   slide up under the clock at the very top. (Quiet chat's full screen did this; the reading screen had lost it.) */
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full], :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body { height:auto; min-height:100%; overflow:visible; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] :is(.app, .app.is-min, .main, .st-study, .st-study-content, .st-source, .st-source .sefer.embedded) { height:auto !important; min-height:100dvh; overflow:visible !important; display:block !important; padding-top:0 !important; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-source .sefer-body { overflow:visible !important; height:auto !important; padding-top:calc(env(safe-area-inset-top) + 10px); padding-bottom:110px; -webkit-mask-image:none; mask-image:none; }
