@@ -218,3 +218,16 @@
 @media (max-width:1049px) {
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .daf-dock .daf-bar { left:16px; right:auto; transform:none; bottom:calc(21px + env(safe-area-inset-bottom)); }
 }
+
+/* Nov 16, evened out: the counter, the mic and the ✦ are all pinned to the same line (each centred on it), a little
+   lower, just above the tab bar. The mic is black, like Claude's voice button. */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']) { --row-mid:calc(110px + env(safe-area-inset-bottom)); }
+  :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) body:has(.st-study:not(.st-discussing)) .ai-hub-btn { bottom:calc(var(--row-mid) - 24px) !important; }
+  :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(var(--row-mid) - 17px); }
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-study-footer .st-mic { position:fixed; z-index:61; right:74px; bottom:calc(var(--row-mid) - 24px); width:48px; height:48px; }
+}
+@media (max-height:760px) and (max-width:699px) {
+  :is([data-look='clay'],[data-look='chatgpt']) { --row-mid:calc(100px + env(safe-area-inset-bottom)); }
+}
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .st-mic:not(.st-live) { background:var(--ink); color:var(--bg); border-color:var(--ink); }
