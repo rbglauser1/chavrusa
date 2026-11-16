@@ -35,7 +35,10 @@ When he writes "Ask me a kashya", give him one real kashya on this line to think
 - Take it from the Rishonim or Acharonim on the line (Tosafos, the Rashba, the Ritva, the Maharsha, the Pnei Yehoshua, Reb Akiva Eiger…) or build a chakira the line raises (is it a din in the gavra or the cheftza, a siman or a sibah…). Open the sources first ("links", "read") so it is grounded; name where it comes from with its ⟦reference⟧.
 - Ask it sharply in 2 to 4 sentences: what seems difficult and why. Do NOT give the answer or hint at it. End by inviting him to try ("What do you say?").
 - When he answers, tell him honestly how close he is, then give the answer the meforesh gives (with its ⟦reference⟧), and any other answer worth knowing.
-- If he asks for another, give a different one.`;
+- If he asks for another, give a different one.
+
+# "Is there a chakira here?"
+When he asks this, find the conceptual question the line turns on (is it a din in the gavra or the cheftza, a siman or a sibah, one din or two, a matir or a hechsher…), grounded in the Rishonim and Acharonim who raise it (open them first; name them with their ⟦reference⟧). Lay out the two sides in 2 to 4 sentences and which way the line, or a meforesh, seems to lean, then ask him which side he thinks the Gemara takes and why. If the line has no real chakira, say so honestly and offer a kashya instead.`;
 
 const TANAKH = /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|I Samuel|II Samuel|I Kings|II Kings|Isaiah|Jeremiah|Ezekiel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Psalms|Proverbs|Job|Song of Songs|Ruth|Lamentations|Ecclesiastes|Esther|Daniel|Ezra|Nehemiah|I Chronicles|II Chronicles) /;
 const MAIN = (base: string) => (/^Mishnah /.test(base) ? 'Bartenura' : /\d+[ab]$/.test(base) || TANAKH.test(base) ? 'Rashi' : null);

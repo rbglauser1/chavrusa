@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Thinking from './Thinking';
 import { WithSources } from './LineExtras';
+import LineChat from './LineChat';
 import { useBackLayer } from '@/lib/back';
 import { useSwipeDown } from '@/lib/swipeDown';
 import { setVoiceGuide } from '@/lib/voiceGuide';
@@ -37,12 +38,15 @@ function useJson<T>(url: string | null): { data: T | null; err: boolean; retry: 
 // One request per line, ever: the prefetch and the button use the same one.
 type Explained = { text: string; sources: string[] };
 const explained = new Map<string, Promise<Explained>>();
-function getExplain(ref: string): Promise<Explained> {
-  let p = explained.get(ref);
+// Nov 16: "Show me" gives the short one (this line only); "✦ Explain" the full one, with the meforshim, and the learner
+// can keep asking under it.
+function getExplain(ref: string, short = true): Promise<Explained> {
+  const k = `${short ? 's' : 'f'}|${ref}`;
+  let p = explained.get(k);
   if (!p) {
-    p = fetch(`/api/explain?ref=${encodeURIComponent(ref)}&short=1`).then((r) => r.json()).then((d) => { if (!d?.text) throw new Error(d?.error || 'none'); return d as Explained; });
-    explained.set(ref, p);
-    p.catch(() => explained.delete(ref));
+    p = fetch(`/api/explain?ref=${encodeURIComponent(ref)}${short ? '&short=1' : ''}`).then((r) => r.json()).then((d) => { if (!d?.text) throw new Error(d?.error || 'none'); return d as Explained; });
+    explained.set(k, p);
+    p.catch(() => explained.delete(k));
   }
   return p;
 }
@@ -85,6 +89,18 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
     return () => { gone = true; };
   }, [lineRef, xTry]); // eslint-disable-line react-hooks/exhaustive-deps
   const explain = { data: expl.ref === lineRef ? expl.data : null, err: expl.ref === lineRef && expl.err, retry: () => setXTry((k) => k + 1) };
+  // ✦ Explain: the full explanation of the line, and the back and forth under it.
+  const [deep, setDeep] = useState(false);
+  const [full, setFull] = useState<{ ref: string; data: Explained | null; err: boolean }>({ ref: '', data: null, err: false });
+  const [fTry, setFTry] = useState(0);
+  useEffect(() => { setDeep(false); }, [lineRef]);
+  useEffect(() => {
+    if (!deep) return;
+    let gone = false;
+    setFull({ ref: lineRef, data: null, err: false });
+    getExplain(lineRef, false).then((d) => { if (!gone) setFull({ ref: lineRef, data: d, err: false }); }).catch(() => { if (!gone) setFull({ ref: lineRef, data: null, err: true }); });
+    return () => { gone = true; };
+  }, [deep, lineRef, fTry]);
 
   // Light the line up in the sefer and bring it into view above the strip.
   useEffect(() => {
@@ -183,7 +199,15 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
                   )}
               </div>
             )}
-            {xOpen && (
+            {deep && (
+              <div className="lwm-x-box lwm-deep">
+                {full.ref === lineRef && full.data ? <WithSources text={full.data.text} sources={full.data.sources ?? []} />
+                  : full.ref === lineRef && full.err ? <p className="muted">It couldn’t be made just now. <button className="linklike" onClick={() => setFTry((k) => k + 1)}>Try again</button></p>
+                  : <Wait />}
+                {full.ref === lineRef && full.data && <LineChat key={lineRef} lineRef={lineRef} onClose={() => setDeep(false)} />}
+              </div>
+            )}
+            {xOpen && !deep && (
               <div className="lwm-x-box">
                 {explain.data ? <WithSources text={explain.data.text} sources={explain.data.sources ?? []} />
                   : explain.err ? <p className="muted">It couldn’t be made just now. <button className="linklike" onClick={explain.retry}>Try again</button></p>
@@ -202,7 +226,7 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
         ) : (
           <>
             <button className="btn lwm-back" disabled={n <= 1} onClick={() => setN(n - 1)} aria-label="Back a line">‹</button>
-            <button className="btn" onClick={() => setXOpen((v) => !v)}>{xOpen ? 'Hide' : '✦ Explain'}</button>
+            <button className="btn" onClick={() => { if (deep || xOpen) { setDeep(false); setXOpen(false); } else setDeep(true); }}>{deep || xOpen ? 'Hide' : '✦ Explain'}</button>
             <button className="btn primary" onClick={() => setN(n + 1)}>{n === total ? 'Finish' : 'Next ›'}</button>
           </>
         )}
