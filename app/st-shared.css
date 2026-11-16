@@ -276,3 +276,6 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full], :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body { height:auto; min-height:100%; overflow:visible; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] :is(.app, .app.is-min, .main, .st-study, .st-study-content, .st-source, .st-source .sefer.embedded) { height:auto !important; min-height:100dvh; overflow:visible !important; display:block !important; padding-top:0 !important; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-source .sefer-body { overflow:visible !important; height:auto !important; padding-top:calc(env(safe-area-inset-top) + 10px); padding-bottom:110px; -webkit-mask-image:none; mask-image:none; }
+
+/* Nov 16: no faint dotted lines between the phrases of a line. */
+:is([data-look='clay'],[data-look='chatgpt']) .sefer.rules .il-pair + .il-pair { border-top: 0; }
