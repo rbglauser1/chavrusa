@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useLab, setLab } from '@/lib/lab';
 import { ALL_STARTERS } from '@/lib/starters';
 import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_COMM, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
@@ -32,6 +33,7 @@ function Seg<T extends string>({ value, options, onPick }: { value: T; options: 
 export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive, part = 'all', asPage = false }: Props) {
   const themes = part !== 'settings', rest = part !== 'themes';
   const [editing, setEditing] = useState<CustomStyle | null>(null);
+  const lab = useLab(); // the testing options are in the Lab only (Nov 15)
   const [voiceMore, setVoiceMore] = useState(false); // voice tests and fine-tuning: hidden until asked for (Nov 13)
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [newMem, setNewMem] = useState('');
@@ -452,8 +454,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 </div>
               )}
             </Group>
-            <button className="show-all" onClick={() => setVoiceMore(!voiceMore)}>{voiceMore ? 'Hide voice tests and fine-tuning ▴' : 'Voice tests and fine-tuning ▾'}</button>
-            {voiceMore && (
+            {lab && <button className="show-all" onClick={() => setVoiceMore(!voiceMore)}>{voiceMore ? 'Hide voice tests and fine-tuning ▴' : 'Voice tests and fine-tuning ▾'}</button>}
+            {lab && voiceMore && (
               <>
             <Group id="voice-pron" level={2} title="Pronunciation and tests" hint={`Vowel key ${({ key: 'A', keyB: 'B', keyC: 'C', keyD: 'D' } as Record<string, string>)[(s.liveRules?.length ? s.liveRules : ['key']).find((r) => /^key[BCD]?$/.test(r)) ?? 'key'] ?? 'A'} · tests · say it my way`}>
               {(() => {
@@ -622,6 +624,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <p className="muted" style={{ fontSize: 13 }}><a href="/privacy" target="_blank" rel="noreferrer">Privacy</a> · <a href="/terms" target="_blank" rel="noreferrer">Terms of use</a> · <a href="/credits">Credits and licenses</a> · <a href="/contact">Contact us</a> · <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('chavrusa-guide-go')); }}>How to use the app</a></p>
             <button className="btn" onClick={() => { window.location.href = '/api/logout'; }}>Log out</button>
           </Group>
+          <div style={{ margin: '18px 4px 8px' }}>
+            <button className="linklike" onClick={() => setLab(!lab)}>{lab ? 'Leave the Lab' : 'Lab: other looks and voice tests'}</button>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{lab ? 'The Lab is on for this phone: every look and all the voice tests and fine-tuning show.' : 'Every other look and the voice tests are kept in the Lab, on this phone only.'}</div>
+          </div>
           </>}
           </GroupList>
         </div>
