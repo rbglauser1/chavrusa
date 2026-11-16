@@ -29,13 +29,38 @@ function Overview({ children, onClose }: { children: ReactNode; onClose: () => v
   return <div className="launch-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}><section ref={panel} className="launch-overview" role="dialog" aria-modal="true" aria-label="Your learning" onKeyDown={e => { if (e.key === 'Escape') onClose(); if (e.key === 'Tab') { const items = Array.from(panel.current?.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea') ?? []).filter(x => !x.hasAttribute('disabled')); if (e.shiftKey && document.activeElement === items[0]) { e.preventDefault(); items.at(-1)?.focus(); } else if (!e.shiftKey && document.activeElement === items.at(-1)) { e.preventDefault(); items[0]?.focus(); } } }}><header><h2>Your learning</h2><button ref={close} className="launch-icon" aria-label="Close learning overview" onClick={onClose}><SandIcon name="close"/></button></header>{children}</section></div>;
 }
 const titleOf = (c: ContinueInfo | null) => (c?.ref || c?.title || c?.heRef || 'Choose a sefer').replace('Berakhot', 'Berachos');
-// Nov 15: the Home animations — the heading writes itself in word by word and the line under it fades in; the ✦ above
-// breathes, and spins once when you start (tap the sefer card or Learn aloud). All still with "reduce motion".
-const W = ({ t, i }: { t: string; i: number }) => <>{t.split(' ').map((w, k) => <span key={k}><span className="rd-w" style={{ animationDelay: `${0.15 + (i + k) * 0.18}s` }}>{w}</span>{' '}</span>)}</>;
-const spin = () => { const el = document.querySelector('.rd-spark'); if (!el) return; el.classList.remove('spin'); void (el as HTMLElement).offsetWidth; el.classList.add('spin'); };
-export function ReadingDeskHome(p: LaunchHomeProps) {
+export function SplitCanvasHome(p: LaunchHomeProps) {
   const [overview, setOverview] = useState(false);
-  return <main className="launch-home rd-home no-pull" aria-label="Claude reading desk Home"><header className="rd-intro"><span className="launch-eyebrow"><span className="rd-spark" aria-hidden="true">✦</span> YOUR READING DESK</span><h1 className="rd-write"><W t="Your place" i={0}/><br/><W t="is waiting." i={2}/></h1><p className="rd-fade">An open sefer.<br/>A little time to think.</p></header><div className="rd-book-wrap"><div className="rd-pages" aria-hidden="true"/><section className="rd-book" aria-label="Your current learning" onPointerDown={spin}><SandIcon name="book" size={31}/><div><span className="launch-eyebrow">{p.cont ? 'CONTINUE LEARNING' : 'BEGIN LEARNING'}</span><h2 dir="auto">{titleOf(p.cont)}</h2></div><span className="rd-rule" aria-hidden="true"/><p>{p.cont ? 'Return to your place' : 'Find your next page'}</p><button className="launch-primary" onClick={p.cont ? p.onContinue : p.onLibrary}>{p.cont ? 'Continue learning' : 'Open the Library'}<SandIcon name="arrow" size={19}/></button></section></div><div className="rd-quick"><button onClick={p.onLibrary}><SandIcon name="book"/><span>Library</span></button>{p.talkSupported ? <button onClick={() => { spin(); p.onTalk(); }}><SandIcon name="mic"/><span>{p.talkOn ? 'Return to call' : 'Learn aloud'}</span></button> : <button onClick={p.onRecent}><SandIcon name="chat"/><span>Recent sessions</span></button>}<button onClick={() => window.dispatchEvent(new Event('chavrusa-notebook'))}><SandIcon name="notes"/><span>Notebook</span></button></div><footer className="launch-home-footer"><button onClick={p.onRecent}>Recent sessions</button><button onClick={() => setOverview(true)}>Your learning</button><button onClick={p.onGuide}>Learning guide</button></footer>{overview && <Overview onClose={() => setOverview(false)}>{p.extras}</Overview>}</main>;
+
+  return (
+    <main className="launch-home split-home no-pull" aria-label="Claude split canvas Home">
+      <header className="split-intro">
+        <span className="launch-eyebrow">Your next moment of learning</span>
+        <h1>Make time{' '}<br />to learn.</h1>
+      </header>
+      <div className="split-panels">
+        <section className="split-panel">
+          <span className="launch-eyebrow">{p.cont ? 'Return to your learning' : 'Begin your learning'}</span>
+          <h2 dir="auto">{titleOf(p.cont)}</h2>
+          {p.cont && <p>Your place, ready when you are.</p>}
+          <button className="launch-primary" onClick={p.cont ? p.onContinue : p.onLibrary}>
+            {p.cont ? 'Continue' : 'Open the Library'} <SandIcon name="arrow" size={18} />
+          </button>
+        </section>
+        <section className="split-panel split-new">
+          <h2>Begin something new</h2>
+          <button onClick={p.onLibrary}><SandIcon name="book" size={20} />Choose a sefer</button>
+          <button onClick={p.onRecent}><SandIcon name="review" size={20} />Recents</button>
+        </section>
+      </div>
+      <footer className="split-footer">
+        {p.talkSupported && <button onClick={p.onTalk}>{p.talkOn ? 'Return to call' : 'Learn aloud'}</button>}
+        <button onClick={() => setOverview(true)}>Your learning</button>
+        <button onClick={p.onGuide}>Learning guide</button>
+      </footer>
+      {overview && <Overview onClose={() => setOverview(false)}>{p.extras}</Overview>}
+    </main>
+  );
 }
 export function ChatGPTHome(p: LaunchHomeProps) {
   const [tools, setTools] = useState(false);

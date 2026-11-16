@@ -1,6 +1,6 @@
 'use client';
 import ExperienceHome from './ExperienceHome';
-import { ReadingDeskHome, ChatGPTHome } from './LaunchHome';
+import { SplitCanvasHome, ChatGPTHome } from './LaunchHome';
 import { isExperience } from '@/lib/experiences';
 import type { Look } from '@/lib/config';
 import { useMineTitles } from './useMineTitles';
@@ -81,7 +81,7 @@ export function Home(p: {
     ['settings', 'Settings', 'Look, learning style, voice, display', p.onSettings],
   ];
   if (p.look === 'clay' || p.look === 'chatgpt') {
-    const Screen = p.look === 'clay' ? ReadingDeskHome : ChatGPTHome;
+    const Screen = p.look === 'clay' ? SplitCanvasHome : ChatGPTHome;
     return <><Screen {...p} onGuide={() => setGuide(true)}/>{guide && <Guide onClose={() => setGuide(false)}/ >}{howTo && <HowTo onClose={() => setHowTo(false)}/>}</>;
   }
   if (isExperience(p.look)) return <>
@@ -164,9 +164,9 @@ export function RecentList({ sessions, currentId, onOpen, onDelete, onClearAll, 
 }) {
   // The 8 newest; the rest stay one tap away.
   const [all, setAll] = useState(false);
+  const nice = useMineTitles(sessions.some((x) => /^Mine /.test(x.title ?? '')));
   if (!sessions.length) return <div className="recent-empty">Nothing here yet. Tap Talk on the main screen, or open the Library, to begin.</div>;
   const shown = all ? sessions : sessions.slice(0, 8);
-  const nice = useMineTitles(sessions.some((x) => /^Mine /.test(x.title ?? '')));
   return (
     <>
       <ul className="recent-list">

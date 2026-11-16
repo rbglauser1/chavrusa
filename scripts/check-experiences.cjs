@@ -64,7 +64,7 @@ try {
     assert.equal((html.match(/experience-tool-number/g) || []).length,4);
   }
   const launch = require(path.join(temp,'LaunchHome.js'));
-  for (const Screen of [launch.ReadingDeskHome,launch.ChatGPTHome]) {
+  for (const Screen of [launch.SplitCanvasHome,launch.ChatGPTHome]) {
     for (const cont of [null,{ref:'Exodus 12',heRef:'שמות י״ב',line:3}]) {
       const html=renderToStaticMarkup(React.createElement(Screen,{cont,onContinue:noop,onLibrary:noop,onRecent:noop,onThemes:noop,onTalk:noop,onGuide:noop,onAsk:noop,onReview:noop,talkSupported:true,talkOn:false}));
       assert(html.includes('Library') || html.includes('Choose a sefer'));
