@@ -238,3 +238,15 @@
 @media (max-width:1049px) {
   :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-study-footer .ascroll { position:fixed; z-index:61; right:132px; bottom:calc(var(--row-mid) - 24px); }
 }
+
+/* Nov 16: less empty space under the tab bar (it kept the whole home-indicator area plus 12px), and everything that
+   sits above the tab bar follows it down. The reading screen's title sits a little lower, clear of the soft blur the
+   iPhone draws just under the clock. */
+:is([data-look='clay'],[data-look='chatgpt']) { --dock-pad:max(6px, calc(env(safe-area-inset-bottom) - 14px)); --dock-h:calc(64px + var(--dock-pad)); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-dock { height:var(--dock-h) !important; padding-bottom:var(--dock-pad) !important; }
+:is([data-look='clay'],[data-look='chatgpt']) .home-shell { padding-bottom:var(--dock-h); }
+:is([data-look='clay'],[data-look='chatgpt']) .app.is-min { padding-bottom:var(--dock-h); }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-bottom:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage { padding-bottom:var(--dock-h); }
+@media (max-width:1049px) { :is([data-look='clay'],[data-look='chatgpt']) { --row-mid:calc(var(--dock-h) + 32px); } }
+@media (display-mode: standalone) and (max-width:1049px) { :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:26px; } }
