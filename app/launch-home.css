@@ -34,7 +34,7 @@
 [data-look='clay'] .rd-book:before { content:''; position:absolute; inset:12px 11px 12px 16px; border:1px solid #ceb38b; outline:1px solid #d7bf9d; outline-offset:3px; border-radius:3px 8px 8px 3px; pointer-events:none; }
 [data-look='clay'] .rd-book>* { position:relative; z-index:1; }
 [data-look='clay'] .rd-book>svg { color:#956443; }
-[data-look='clay'] .rd-book h2 { font:500 clamp(24px,7.5vw,34px)/1.2 var(--f-brand); letter-spacing:-.7px; overflow-wrap:anywhere; margin:8px 0 0; max-height:3.6em; overflow:auto; }
+[data-look='clay'] .rd-book h2 { font:500 clamp(24px,7.5vw,34px)/1.35 var(--f-brand); letter-spacing:-.7px; overflow-wrap:anywhere; margin:8px 0 0; max-height:calc(4.05em + 3px); padding-bottom:3px; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
 [data-look='clay'] .rd-rule { height:1px; width:38px; background:#c8a57d; }
 [data-look='clay'] .rd-book p { font:italic 14px var(--f-body); color:#7d6a59; margin:0; }
 [data-look='clay'] .rd-book .launch-primary { width:100%; min-height:45px; font-size:13px; background:#b95f3e; color:#fffaf3; }
