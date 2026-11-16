@@ -183,3 +183,6 @@
 :is([data-look='clay'],[data-look='chatgpt']) .st-mic { width:46px; height:46px; border-radius:50%; }
 :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study) .ai-hub-btn { bottom:calc(150px + env(safe-area-inset-bottom)); }
 @media(min-width:1050px) { :is([data-look='clay'],[data-look='chatgpt']) .st-study-footer { min-height:0; padding:10px 24px; } }
+
+/* Full screen (Nov 16): the ✦ sits just above the mic and exit buttons, not up where the bars were. */
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { bottom:calc(74px + env(safe-area-inset-bottom)) !important; }
