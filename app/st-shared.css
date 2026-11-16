@@ -166,3 +166,20 @@
 /* the ✦ sits above "Ask your chavrusa" instead of over its button */
 :is([data-look='clay'],[data-look='chatgpt']) .st-type-settings { border:0; background:none; color:var(--accent); font:22px Georgia,serif; min-width:38px; min-height:44px; padding:0; }
 :is([data-look='clay'],[data-look='chatgpt']) .is-min ~ .ai-hub-btn, :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study) .ai-hub-btn { bottom:calc(196px + env(safe-area-inset-bottom)); }
+
+/* Nov 16: double-tap full screen hides the bars (this rule was lost when the screen was shared) */
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .launch-dock,
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-study-header,
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-reading-toolbar,
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-study-footer,
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-conversation { display:none; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-bottom:0; }
+
+/* Nov 16: no big "Ask your chavrusa" bar — a slim row with two small round buttons on the right (ask, mic), so the text
+   gets the room; the ✦ sits just above them. */
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-footer { justify-content:flex-end; gap:10px; padding:8px 16px; border-top:0; background:transparent; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-ask { flex:0 0 auto; width:46px; height:46px; min-height:0; padding:0; border-radius:50%; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-ask > span, :is([data-look='clay'],[data-look='chatgpt']) .st-ask > svg:last-child { display:none !important; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-mic { width:46px; height:46px; border-radius:50%; }
+:is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study) .ai-hub-btn { bottom:calc(150px + env(safe-area-inset-bottom)); }
+@media(min-width:1050px) { :is([data-look='clay'],[data-look='chatgpt']) .st-study-footer { min-height:0; padding:10px 24px; } }
