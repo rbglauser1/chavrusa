@@ -2979,3 +2979,7 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .wig > :is(.line-x, div):not(.wig-head):not(.wig-tabs) { margin-top: 6px; }
 /* Learn with me (Nov 16): the explanation reads at the same size as the rest of the strip. */
 .lwm-strip :is(.lwm-x-box .lx-p, .lwm-ask p, .lwm-where, .lwm-reply) { font-size: var(--ai-size, max(17px, var(--en-size, 18px))); line-height: 1.5; }
+
+/* Nov 16: the Learn with me strip floats a little in from the edges. An edge-to-edge bar pinned to the bottom makes
+   iOS 26 paint the strip under the clock in a solid color, which hid the text sliding up there in full screen. */
+.lwm-strip { left: 6px; right: 6px; bottom: max(6px, calc(env(safe-area-inset-bottom) - 18px)); border-radius: 18px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
