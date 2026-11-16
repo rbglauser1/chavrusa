@@ -930,6 +930,7 @@ export default function Home() {
         {view === 'home' && (
           <HomeScreen
             look={settings.theme}
+            busy={busy}
             cont={cont}
             onContinue={() => void homeContinue()}
             onReview={() => setSandReview(true)}

@@ -56,6 +56,7 @@ export function Home(p: {
   onTalk: () => void;
   talkSupported: boolean;
   talkOn: boolean;
+  busy?: boolean;
   onAsk?: (text: string) => void | Promise<void>;
   onReview?: () => void;
   extras?: ReactNode; // the optional cards (Settings → Extras): chazara, progress
