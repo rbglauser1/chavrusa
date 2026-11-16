@@ -20,7 +20,8 @@ export function PullRefresh() {
   const start = useRef<{ y: number; x: number } | null>(null);
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
-    if (!standalone) return; // in the browser, Safari's own pull-to-refresh does it
+    let test = false; try { test = localStorage.getItem('chavrusa-ptr') === '1'; } catch { /* ignore */ }
+    if (!standalone && !test) return; // in the browser, Safari's own pull-to-refresh does it (chavrusa-ptr=1 turns it on, for testing)
     const down = (e: TouchEvent) => {
       start.current = null;
       if (e.touches.length !== 1 || document.body.dataset.dafull || document.querySelector('.ht, .daf-full')) return;
