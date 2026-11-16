@@ -191,8 +191,8 @@
    Settings), and the daf counter sits in the bottom row, level with the chat and mic buttons, on the left. */
 @media (max-width:1049px) {
   :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-reading-toolbar { display:none; }
-  :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(102px + env(safe-area-inset-bottom)); left:16px; right:auto; transform:none; }
+  :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(102px + env(safe-area-inset-bottom)); left:16px; right:auto; transform:none; }
 }
 @media (max-height:760px) and (max-width:699px) {
-  :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(92px + env(safe-area-inset-bottom)); }
+  :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) body:has(.st-study:not(.st-discussing)) .daf-dock .daf-bar { bottom:calc(92px + env(safe-area-inset-bottom)); }
 }
