@@ -249,20 +249,12 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-bottom:0; }
 :is([data-look='clay'],[data-look='chatgpt']) .hpage { padding-bottom:var(--dock-h); }
 @media (max-width:1049px) { :is([data-look='clay'],[data-look='chatgpt']) { --row-mid:calc(var(--dock-h) + 32px); } }
-@media (display-mode: standalone) and (max-width:1049px) { :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:26px; } }
 
 /* Side margins in the Claude/ChatGPT reading screen (Nov 16): the look zeroes the text's own margins, so the choice is
    made on the text area's padding instead (Normal stays 22px). */
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='narrow'] .st-source .sefer-body { padding-left:8px; padding-right:8px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='wider'] .st-source .sefer-body { padding-left:34px; padding-right:34px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='widest'] .st-source .sefer-body { padding-left:48px; padding-right:48px; }
-
-/* Nov 16: full screen on the phone keeps a thin solid band at the top, the page's own color, so the text starts below
-   the iPhone's blur and slides under the band (not into the blur) when scrolled. */
-@media (max-width:1049px) {
-  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-top:calc(env(safe-area-inset-top) + 34px); }
-  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body::after { content:''; position:fixed; top:0; left:0; right:0; height:calc(env(safe-area-inset-top) + 34px); background:var(--bg); z-index:59; pointer-events:none; }
-}
 
 /* Nov 16: full screen's bottom row sits lower, near the bottom edge (it kept the whole home-indicator area). */
 @media (max-width:1049px) {
@@ -272,3 +264,13 @@
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-full-ctl .st-mic { width:48px; height:48px; }
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .daf-dock .daf-bar { bottom:calc(var(--full-mid) - 17px); }
 }
+
+/* Nov 16, drawing under the clock again (the way full screen ran to the top):
+   - the reading screen's top bar starts below the clock; full screen runs right to the top, under it;
+   - --ios-gap (components/ViewportFix) makes up for iOS 26 laying the page out short: everything pinned to the bottom
+     moves down by it, and full-height boxes grow by it. */
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(12px + env(safe-area-inset-top)); }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-top:0; }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.launch-dock, .ai-hub-btn, .st-full-ctl, .daf-dock .daf-bar, .st-study-footer .st-mic, .st-study-footer .ascroll) { translate:0 calc(var(--vv-shift, 0px) + var(--ios-gap, 0px)); }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.app, .home-shell) { height:calc(100dvh + var(--ios-gap, 0px)); }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage { height:calc(100dvh + var(--ios-gap, 0px)); }

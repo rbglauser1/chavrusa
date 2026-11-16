@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   description: 'An AI learning partner for Torah study',
   manifest: '/manifest.webmanifest',
   icons: { icon: '/icon.svg', apple: '/icon.svg' },
-  appleWebApp: { capable: true, title: 'Chavrusa', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: 'Chavrusa', statusBarStyle: 'black-translucent' },
 };
 
 export const viewport: Viewport = {
