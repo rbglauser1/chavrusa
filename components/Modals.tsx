@@ -4,9 +4,9 @@ import { isExperience } from '@/lib/experiences';
 import { Look, LOOKS } from '@/lib/config';
 import { useLab } from '@/lib/lab';
 
-// Nov 15: the learner narrowed it down — only Midnight Sefer, Claude and The Daf (Nov 16) show (and the look in use, if it's another one);
+// Nov 15: the learner narrowed it down; Nov 16: only Claude shows (and the look in use, if it's another one);
 // every other look is put away under "Other looks", one tap away.
-const MAIN_LOOKS = ['midnight-sefer', 'clay', 'daf'];
+const MAIN_LOOKS = ['clay'];
 export function LookPicker({ value, onPick }: { value: Look; onPick: (l: Look) => void }) {
   const [all, setAll] = useState(false);
   const lab = useLab(); // the other looks are in the Lab only
