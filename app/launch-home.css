@@ -203,3 +203,9 @@
 .paper-dot { width:34px; height:34px; border-radius:50%; border:1px solid #0000001f; }
 .paper-look .paper-dot { background:#F9F9F7; } .paper-white .paper-dot { background:#FFFFFF; } .paper-cream .paper-dot { background:#F7F2E7; }
 .paper-blue .paper-dot { background:#EEF4F9; } .paper-green .paper-dot { background:#EFF5EE; } .paper-night .paper-dot { background:radial-gradient(circle at 50% 20%,#1f3542,#09141e 70%); }
+/* Night on the Claude Home: the cards go dark too. */
+[data-look='clay'][data-paper='night'] .split-panel { background:var(--surface); border-color:var(--rule); color:var(--ink); }
+[data-look='clay'][data-paper='night'] .split-panel p { color:var(--soft); }
+[data-look='clay'][data-paper='night'] .split-home .launch-eyebrow { color:#d7b777; }
+[data-look='clay'][data-paper='night'] .split-new { background:var(--surface-2); border-color:var(--rule); }
+[data-look='clay'][data-paper='night'] .split-new button { background:var(--surface); border-color:var(--rule); }
