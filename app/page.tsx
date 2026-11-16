@@ -958,7 +958,7 @@ export default function Home() {
           </HomePage>
         )}
         {view === 'themes' && (
-          <HomePage title="Themes" onBack={() => setView(settingsFrom)}>
+          <HomePage title="Colors and fonts" onBack={() => setView(settingsFrom)}>
             <SettingsDrawer part="themes" asPage settings={settings} onChange={updateSettings} onClose={() => setView(settingsFrom)} onHelp={() => setHelp(true)} liveActive={live.active} />
           </HomePage>
         )}

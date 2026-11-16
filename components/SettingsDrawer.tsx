@@ -170,13 +170,15 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           </>}
           {themes && (
-          <Group id="look" title={asPage ? 'Look' : 'Look and text'} hint="Look, fonts, colors, sizes, commentaries" flat={part === 'themes'}>
-            <Group id="look-look" level={2} title="Look and fonts">
+          <Group id="look" title={asPage ? 'Look' : 'Look and text'} hint="Background, fonts, text colors, sizes, page layout" flat={part === 'themes'}>
+            {/* Nov 16, rethought: Background first, then Fonts, Text colors, Sizes, Commentaries, Page layout. The look
+                itself (Claude) is fixed; choosing another look is in the Lab. */}
+            <Group id="look-look" level={2} title="Background" hint={(s.theme === 'clay' || s.theme === 'chatgpt') ? ({ look: 'Off-white', white: 'White', cream: 'Cream', blue: 'Light blue', green: 'Light green', night: 'Night' } as Record<string, string>)[s.paper ?? 'look'] : undefined}>
             {s.theme === 'guided-learning' && <div className="field"><label>Guided Learning colors</label><GuidedPalettePicker value={s.guidedPalette} onChange={guidedPalette=>onChange({guidedPalette})}/><p className="muted" style={{fontSize:12}}>Changes the workspace, cards and buttons for Guided Learning. Your text colors and fonts stay independent.</p></div>}
-            <div className="field">
-              <label>Look</label>
+            {(lab || (s.theme !== 'clay' && s.theme !== 'chatgpt')) && <div className="field">
+              <label>Look{lab ? ' (Lab)' : ''}</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
-            </div>
+            </div>}
             {(s.theme === 'clay' || s.theme === 'chatgpt') && (
               <div className="field">
                 <label>Background color</label>
@@ -189,19 +191,21 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 </div>
               </div>
             )}
+            </Group>
+            <Group id="look-fonts" level={2} title="Fonts">
             <div className="field">
-              <label>English font for this look</label>
+              <label>English font</label>
               <FontPicker list={FONTS_EN} sample="Let's learn the Gemara together" value={s.fonts?.[s.theme]?.en ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), en: id } } })} />
-              <label style={{ marginTop: 10 }}>Hebrew font for this look</label>
+              <label style={{ marginTop: 10 }}>Hebrew font</label>
               <FontPicker list={FONTS_HE} sample="בְּרֵאשִׁית בָּרָא אֱלֹקִים" rtl value={s.fonts?.[s.theme]?.he ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), he: id } } })} />
               <label style={{ marginTop: 10 }}>Hebrew font for the commentaries</label>
               <FontPicker list={FONTS_COMM} sample="וַיִּהְיוּ חַיֵּי שָׂרָה – לכך נכתב שנה" rtl value={s.fonts?.[s.theme]?.comm || (s.rashiScript ? 'rashi' : 'same')} onPick={(id) => onChange({ rashiScript: id === 'rashi', fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), comm: id } } })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Each look remembers its own fonts. The commentaries&apos; font is for Rashi, Tosafos and all the meforshim.</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The commentaries&apos; font is for Rashi, Tosafos and all the meforshim.</div>
             </div>
             </Group>
-            <Group id="look-colors" level={2} title="Colors and bold">
+            <Group id="look-colors" level={2} title="Text colors and bold">
             <div className="field">
-              <label>Colors and bold</label>
+              <label>The color and weight of each part of the text</label>
               {COLOR_PARTS.map((part) => {
                 const cur = colorOf(s, part.id);
                 return (
@@ -267,10 +271,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Rashi, Tosafos and other commentaries</label>
               <Seg value={s.rashiScript ? 'rashi' : 'regular'} options={[['regular', 'Regular letters'], ['rashi', 'Rashi script']]} onPick={(v) => onChange({ rashiScript: v === 'rashi', fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), comm: v === 'rashi' ? 'rashi' : 'same' } } })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Any other font: Look and fonts → Hebrew font for the commentaries.</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Any other font: Look → Fonts → Hebrew font for the commentaries.</div>
             </div>
             </Group>
-            <Group id="look-lines" level={2} title="Lines and the English">
+            <Group id="look-lines" level={2} title="Page layout">
             <div className="field">
               <label>Alignment</label>
               <Seg value={s.justify ? 'on' : 'off'} options={[['off', 'As usual'], ['on', 'Justified']]} onPick={(v) => onChange({ justify: v === 'on' })} />
