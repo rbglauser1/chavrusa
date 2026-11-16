@@ -209,3 +209,6 @@
 [data-look='clay'][data-paper='night'] .split-home .launch-eyebrow { color:#d7b777; }
 [data-look='clay'][data-paper='night'] .split-new { background:var(--surface-2); border-color:var(--rule); }
 [data-look='clay'][data-paper='night'] .split-new button { background:var(--surface); border-color:var(--rule); }
+/* Night in the text: plain-colored English turns light, as in Midnight Sefer; the daf counter goes dark. */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'][data-c-en='ink'] :is(.sefer .line .en, .sefer .il-en, .min-en) { color:#d6cfc2 !important; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] .daf-dock .daf-bar { background:var(--surface) !important; border-color:var(--rule) !important; color:var(--ink); }
