@@ -15,7 +15,7 @@ export const maxDuration = 90;
 // "Outline" on a Tosafos (Nov 13: the learner wants the outline first, before Steps): a short bulleted outline of the
 // piece's argument in plain English — main points with smaller points under them. Made once per piece and kept.
 const PROMPT = `You make a short outline of one piece of a classic meforesh (usually Tosafos) for a yeshiva learner, to read BEFORE he works through it inside.
-You get the line of the Gemara it is on (for context), then the piece itself.
+You get the line of the text it is on (Gemara, Chumash, Mishnah, Tanach…; for context), then the piece itself.
 Write a bulleted outline of the piece's argument, in order:
 - "- " starts a main point; "  - " (two spaces) starts a smaller point under it.
 - 3 to 7 main points, each with 0 to 3 smaller points. Each point is one short line, not a paragraph.

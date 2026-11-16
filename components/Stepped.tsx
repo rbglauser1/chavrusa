@@ -11,6 +11,9 @@ const cache = new Map<string, Step[]>();
 const outlines = new Map<string, string>();
 /** Long enough to be worth breaking up (about 30 words). */
 export const longPiece = (he: string[]) => he.join(' ').replace(/[^א-ת ]/g, '').length >= 170;
+// Nov 16: Outline and Steps on every meforesh (Rashi, Tosafos, Bartenura, Ramban…) on any text, unless the piece is
+// only a few words.
+export const stepsPiece = (he: string[]) => he.join(' ').replace(/[^א-ת ]/g, '').length >= 80;
 
 export default function Stepped({ refText, children, heClass = 'he rashi' }: { refText: string; children: ReactNode; heClass?: string }) {
   const [on, setOn] = useState(false);

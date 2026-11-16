@@ -22,7 +22,7 @@ import Marks from './Marks';
 import SheetView from './SheetView';
 import HalachaTrail from './HalachaTrail';
 import ListenBox from './ListenBox';
-import Stepped, { longPiece } from './Stepped';
+import Stepped, { stepsPiece } from './Stepped';
 import WordBox, { wordAt } from './WordBox';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
@@ -1105,7 +1105,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             return (
                               <div key={k2} className="comm-line">
                                 {/* A long piece can be broken into its steps: Tosafos always (Extras → Tosafos steps); any other meforesh when Steps is on. */}
-                                {longPiece(pt.he) && ((/^Tosa/i.test(c.title ?? label) && settings.tosSteps !== false) || settings.outline)
+                                {stepsPiece(pt.he) && (settings.tosSteps !== false || settings.outline)
                                   ? <Stepped refText={pt.ref}>{pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}</Stepped>
                                   : pt.he.map((h, k3) => <div key={k3} className="he rashi"><Dibbur text={settings.nikud ? h : stripNikud(h)} /></div>)}
                                 {settings.commSummary && c.title && (gists[pt.ref] ? <div className="gist"><span>AI summary</span> {gists[pt.ref]}</div>
