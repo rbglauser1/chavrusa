@@ -215,3 +215,6 @@
 }
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { bottom:calc(15px + env(safe-area-inset-bottom)) !important; right:16px; }
 :is([data-look='clay'],[data-look='chatgpt']) .st-full-ctl { right:74px; }
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .daf-dock .daf-bar { left:16px; right:auto; transform:none; bottom:calc(21px + env(safe-area-inset-bottom)); }
+}
