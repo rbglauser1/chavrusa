@@ -208,6 +208,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const [wordOn, setWordOn] = useState<{ i: number; w: string; raw: string; at: DOMRect } | null>(null); // a word tapped for its meaning
   const [sOpen, setSOpen] = useState<Set<number>>(new Set());
   const [iOpen, setIOpen] = useState<Set<number>>(new Set());
+  // "Where it goes" (Nov 16): Sources, Elsewhere, Halacha and the map for a line, in one box with tabs.
+  const [wOpen, setWOpen] = useState<number | null>(null);
+  const [wTab, setWTab] = useState<'sources' | 'elsewhere' | 'halacha'>('sources');
   const [chatAsk, setChatAsk] = useState<{ i: number; q: string } | null>(null); // a question the ✦ sends into a line's Chat
   useEffect(() => { // remember the open AI boxes on this text (above)
     if (!src?.ref) return;
@@ -691,13 +694,32 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // The ✦ (Nov 15, simplified): four everyday tools on top, the rest under More. "Learn with me" starts at the line (or
   // the top); "Map" opens this line's part of the map (with a Full map button), or the whole map when no line is chosen.
   const mapOn = !!settings.sugyaMap && !!src && !/:\d+(-\d+)?$/.test(src.ref) && !/^Mine /.test(src.ref);
+  // Nov 16, simplified: three things about the line — learn it with me, ask about it, see where it goes.
+  // (What it was before: project doc "AI menu and line buttons before simplifying".)
+  const whereCounts = (at: number) => {
+    const L = src && rel?.ref === src.ref ? rel.lines[partNum(at)] : undefined;
+    const gm = kind === 'gemara' || kind === 'mishnah';
+    return {
+      sources: L && settings.lineSources !== false ? sourcesCount(L) : 0,
+      elsewhere: L && gm && settings.elsewhere !== false ? L.parallels.length : 0,
+      halacha: L && gm && settings.halachaTrail !== false ? L.halacha.length : 0,
+    };
+  };
+  const openWhere = (at: number) => {
+    const c = whereCounts(at);
+    setWTab(c.sources ? 'sources' : c.elsewhere ? 'elsewhere' : 'halacha');
+    showLine(at); setWOpen(at);
+  };
   const hubMain = (at: number | null): HubAction[] => {
     if (!src) return [];
+    const c = at != null ? whereCounts(at) : null;
+    const askOn = at != null && aiX && (settings.explainLine !== false || settings.lineChat !== false);
     return [
-      ...(wholeSec ? [{ label: '✦ Guided learning', run: () => setLwmAt(at != null ? at + 1 : 1) }] : []),
-      ...(at != null && aiX && settings.explainLine !== false ? [{ label: '✦ Explain', run: () => addIn(setXOpen, at) }] : []),
-      ...(at != null && aiX && settings.lineChat !== false ? [{ label: '✦ Back and forth', run: () => addIn(setCOpen, at) }] : []),
-      ...(mapOn ? [{ label: '🗺 Map', run: () => (at != null && wholeSec ? setPeekAt(at + 1) : (setMapOpen(true), toAmud())) }] : []),
+      ...(wholeSec ? [{ label: '✦ Learn with me', run: () => setLwmAt(at != null ? at + 1 : 1) }] : []),
+      ...(askOn ? [{ label: '✦ Ask about this line', run: () => { if (settings.explainLine !== false) addIn(setXOpen, at!); if (settings.lineChat !== false) addIn(setCOpen, at!); } }] : []),
+      ...(at != null && c && (c.sources || c.elsewhere || c.halacha || mapOn) ? [{ label: '⇄ Where it goes', run: () => openWhere(at) }] : []),
+      ...(at != null && lineX && settings.byHeart !== false && (kind === 'mishnah' || /^Pirkei Avot/.test(src.ref) || (kind === 'tanakh' && settings.byHeart === true)) ? [{ label: '🧠 By heart', run: () => addIn(setHeartOpen, at) }] : []),
+      ...(at == null && mapOn ? [{ label: '🗺 Map', run: () => { setMapOpen(true); toAmud(); } }] : []),
     ];
   };
   const hubAmud: HubAction[] = !src || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
@@ -706,14 +728,21 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ...(settings.listenDaf !== false && kind !== 'none' ? [{ label: '🎧 Listen', run: () => { setListenOpen(true); toAmud(); } }] : []),
     ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
   ];
-  const hubMore = (at: number | null): HubAction[] => {
-    const L = at != null && src && rel?.ref === src.ref ? rel.lines[partNum(at)] : undefined;
-    return [
-      ...(at != null && aiX && settings.lineSources !== false && L && hasIdeas(L) ? [{ label: '✦ Ideas from the sources', run: () => addIn(setIOpen, at) }] : []),
-      ...(at != null && aiX ? lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(at); setBOpen(`${at}|${b.id}`); } })) : []),
-      ...hubAmud,
-    ];
-  };
+  const hubMore = (at: number | null): HubAction[] => [
+    ...(at != null && aiX ? lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(at); setBOpen(`${at}|${b.id}`); } })) : []),
+    ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
+  ];
+  // The page's own tools (Source sheet, Listen, Review questions) are in the reading screen's ⋯ menu (Nov 16).
+  useEffect(() => {
+    if (!embedded) return;
+    const on = (e: Event) => {
+      const what = (e as CustomEvent<string>).detail;
+      const act = hubAmud.find((x) => (what === 'sheet' && /Source sheet/.test(x.label)) || (what === 'listen' && /Listen/.test(x.label)) || (what === 'review' && /Review questions/.test(x.label)));
+      act?.run();
+    };
+    window.addEventListener('chavrusa-page-tool', on);
+    return () => window.removeEventListener('chavrusa-page-tool', on);
+  });
   const hub = hubOn && src && !showLib && (aiX || hubAmud.length > 0)
     ? <>
         <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
@@ -955,16 +984,16 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {aiX && !hubOn && settings.lineChat !== false && (
                           <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}>✦ Back and forth</button>
                         )}
-                        {lineX && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
+                        {lineX && !hubOn && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
                           <button className={`comm-btn ${sOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setSOpen, i)}>Sources ({sourcesCount(rel.lines[partNum(i)])})</button>
                         )}
-                        {lineX && settings.elsewhere !== false && (kind === 'gemara' || kind === 'mishnah') && rel?.ref === src.ref && (rel.lines[partNum(i)]?.parallels.length ?? 0) > 0 && (
+                        {lineX && !hubOn && settings.elsewhere !== false && (kind === 'gemara' || kind === 'mishnah') && rel?.ref === src.ref && (rel.lines[partNum(i)]?.parallels.length ?? 0) > 0 && (
                           <button className={`comm-btn ${eOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setEOpen, i)}>⇄ Elsewhere ({rel.lines[partNum(i)].parallels.length})</button>
                         )}
-                        {lineX && settings.byHeart !== false && (kind === 'mishnah' || /^Pirkei Avot/.test(src.ref) || (kind === 'tanakh' && settings.byHeart === true)) && (
+                        {lineX && !hubOn && settings.byHeart !== false && (kind === 'mishnah' || /^Pirkei Avot/.test(src.ref) || (kind === 'tanakh' && settings.byHeart === true)) && (
                           <button className={`comm-btn ${heartOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setHeartOpen, i)}>🧠 By heart</button>
                         )}
-                        {lineX && settings.halachaTrail !== false && (kind === 'gemara' || kind === 'mishnah') && rel?.ref === src.ref && (rel.lines[partNum(i)]?.halacha.length ?? 0) > 0 && (
+                        {lineX && !hubOn && settings.halachaTrail !== false && (kind === 'gemara' || kind === 'mishnah') && rel?.ref === src.ref && (rel.lines[partNum(i)]?.halacha.length ?? 0) > 0 && (
                           <button className={`comm-btn ${hOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setHOpen, i)}>⚖ Halacha</button>
                         )}
                         {lineX && !hubOn && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
@@ -1008,6 +1037,33 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     <HalachaTrail halacha={rel.lines[partNum(i)].halacha} lineLabel={`${partRef(i)}`} onClose={() => flipIn(setHOpen, i)}
                       onOpen={onOpenExact ? (r) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined} />
                   )}
+                  {wOpen === i && (() => {
+                    const c = whereCounts(i);
+                    const L = rel?.ref === src.ref ? rel.lines[partNum(i)] : undefined;
+                    const go = onOpenExact ? (r: string) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined;
+                    const tab = (id: 'sources' | 'elsewhere' | 'halacha', label: string, n: number) => n > 0 && (
+                      <button className={`comm-btn ${wTab === id ? 'on' : ''}`} onClick={() => setWTab(id)}>{label} ({n})</button>
+                    );
+                    return (
+                      <div className="wig" onClick={(e) => e.stopPropagation()}>
+                        <div className="wig-head">
+                          <b>⇄ Where it goes</b>
+                          <button className="icon-btn" onClick={() => setWOpen(null)} aria-label="Close">✕</button>
+                        </div>
+                        <div className="wig-tabs">
+                          {tab('sources', 'Sources', c.sources)}
+                          {tab('elsewhere', 'Elsewhere in Shas', c.elsewhere)}
+                          {tab('halacha', 'Halacha', c.halacha)}
+                          {mapOn && <button className="comm-btn" onClick={() => (wholeSec ? setPeekAt(i + 1) : (setMapOpen(true), toAmud()))}>🗺 Map</button>}
+                          {aiX && wTab === 'sources' && L && hasIdeas(L) && <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Summarize</button>}
+                        </div>
+                        {L && wTab === 'sources' && c.sources > 0 && <SourcesBox groups={L} tanakh={rel!.tanakh} onClose={() => setWOpen(null)} onOpen={go} />}
+                        {L && wTab === 'elsewhere' && c.elsewhere > 0 && <Elsewhere items={L.parallels} lineRef={partRef(i)} onClose={() => setWOpen(null)} onOpen={go} />}
+                        {L && wTab === 'halacha' && c.halacha > 0 && <HalachaTrail halacha={L.halacha} lineLabel={`${partRef(i)}`} onClose={() => setWOpen(null)} onOpen={go} />}
+                        {!c.sources && !c.elsewhere && !c.halacha && <div className="muted" style={{ fontSize: 13 }}>No linked sources for this line; the map shows where it sits in the sugya.</div>}
+                      </div>
+                    );
+                  })()}
                   {sOpen.has(i) && rel?.ref === src.ref && rel.lines[partNum(i)] && (
                     <SourcesBox groups={rel.lines[partNum(i)]} tanakh={rel.tanakh} onClose={() => flipIn(setSOpen, i)}
                       onOpen={onOpenExact ? (r) => { const m = r.match(/^(.*?):(\d+)(?:-\d+)?$/); void (m ? onOpenExact(m[1], Number(m[2])) : onOpenExact(r)); } : undefined} />

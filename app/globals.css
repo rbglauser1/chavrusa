@@ -2971,3 +2971,9 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .lib-crumbs { padding-top: 16px; margin-top: 0; }
 /* Narrow margins (Nov 16): the text closer to the screen's edges than Normal (about 24px in from each side). */
 [data-margin='narrow'] .sefer .sefer-flow { margin-inline: -12px; }
+
+/* Where it goes (Nov 16): Sources, Elsewhere in Shas, Halacha and the map for a line, in one box with tabs. */
+.wig { margin: 10px 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 14px; background: var(--surface); font-family: var(--f-ui); }
+.wig-head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+.wig-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.wig > :is(.line-x, div):not(.wig-head):not(.wig-tabs) { margin-top: 6px; }
