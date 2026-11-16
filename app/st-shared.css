@@ -203,3 +203,15 @@
   :is([data-look='clay'],[data-look='chatgpt']) .st-study-footer .st-ask { display:none; }
 }
 :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-discussing) .ai-hub-btn { display:none; }
+
+/* One bottom row (Nov 16): daf counter on the left, then the mic, then the ✦ in the corner, all level.
+   Full screen the same, with no exit button (double-tap the text to come back). */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) body:has(.st-study:not(.st-discussing)) .ai-hub-btn { bottom:calc(95px + env(safe-area-inset-bottom)) !important; right:16px; }
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-footer { padding-right:74px; }
+}
+@media (max-height:760px) and (max-width:699px) {
+  :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) body:has(.st-study:not(.st-discussing)) .ai-hub-btn { bottom:calc(85px + env(safe-area-inset-bottom)) !important; }
+}
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { bottom:calc(15px + env(safe-area-inset-bottom)) !important; right:16px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-full-ctl { right:74px; }
