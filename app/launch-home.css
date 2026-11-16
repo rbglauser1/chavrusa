@@ -175,3 +175,6 @@
   [data-look='clay'] .split-new { animation-delay: .1s; }
 }
 @keyframes split-panel-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Settings, Recent and Look pages (Nov 16): no "Chavrusa ⚙" bar over them, so their own back arrow shows. */
+:is([data-look='clay'],[data-look='chatgpt']) .home-shell.inner { padding-top:0 !important; }

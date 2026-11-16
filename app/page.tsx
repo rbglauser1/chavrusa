@@ -859,7 +859,7 @@ export default function Home() {
   // Back (the phone's or browser's) steps back inside the app (lib/back): away from Home → Home; Settings opened from
   // learning → back to learning; and it closes Help, the driving screen and the side drawers.
   useBackLayer(view !== 'home', () => setView('home'));
-  useBackLayer(view === 'settings' && settingsFrom === 'learn', () => setView('learn'));
+  useBackLayer((view === 'settings' || view === 'recent' || view === 'themes') && settingsFrom === 'learn', () => setView('learn'));
   useBackLayer(help, () => setHelp(false));
   useBackLayer(driving, () => setDriving(false));
   // The dark call screen (Settings → Extras): it opens when a call starts and closes when the call ends; "Text" or back closes it.
@@ -891,7 +891,7 @@ export default function Home() {
   const reviewRef=current?.ref || contInfo?.ref;
   const sandReviewPanel=sandReview && (reviewRef ? <Review refText={reviewRef} onClose={()=>setSandReview(false)} onGo={n=>{setSandReview(false);setView('learn');void openExact(reviewRef,n);}}/> : <div className="st-overlay"><section className="st-details" role="dialog" aria-label="Review"><h2>A little learning first.</h2><p>Open a sefer, then return here to review it.</p><button className="btn" onClick={()=>{setSandReview(false);setView('learn');openLibrary();}}>Choose a sefer</button><button className="btn ghost" onClick={()=>setSandReview(false)}>Close</button></section></div>);
 
-  const experienceNav = (look === 'clay' || look === 'chatgpt') ? (<LaunchNav dockOnly={view === 'learn'} view={view} onHome={() => setView('home')} onLibrary={() => { setView('learn'); openLibrary(); setTextTick(n => n + 1); }} onNotebook={() => setNotebook(true)} onRecent={() => { refreshSessions(); setView('recent'); }} onThemes={() => setView('themes')} onSettings={() => { setSettingsFrom('home'); setView('settings'); }} onReview={() => setSandReview(true)}/>) : <ExperienceNav look={look} view={view}
+  const experienceNav = (look === 'clay' || look === 'chatgpt') ? (<LaunchNav dockOnly={view !== 'home'} view={view} onHome={() => setView('home')} onLibrary={() => { setView('learn'); openLibrary(); setTextTick(n => n + 1); }} onNotebook={() => setNotebook(true)} onRecent={() => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); refreshSessions(); setView('recent'); }} onThemes={() => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); setView('themes'); }} onSettings={() => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); setView('settings'); }} onReview={() => setSandReview(true)}/>) : <ExperienceNav look={look} view={view}
     onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal'||look==='guided-learning'||look==='paper-ink'||look==='midnight-sefer') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
     onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
     onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} onReview={() => setSandReview(true)} onSettings={() => {setSettingsFrom(view==='learn'?'learn':'home');setView('settings');}} />;
@@ -921,7 +921,7 @@ export default function Home() {
       goLearn();
     };
     return (
-      <div className="home-shell">
+      <div className={`home-shell${view !== 'home' ? ' inner' : ''}`}>
         {experienceNav}
         {sandReviewPanel}
         {quickTalkCard}
@@ -946,7 +946,7 @@ export default function Home() {
           />
         )}
         {view === 'recent' && (
-          <HomePage title="Recent" onBack={() => setView('home')}>
+          <HomePage title="Recent" onBack={() => setView(settingsFrom)}>
             <RecentList
               sessions={sessions} currentId={sessionId} clearArmed={clearArmed}
               onOpen={(id) => { void openSession(id).then(goLearn); }}
@@ -956,8 +956,8 @@ export default function Home() {
           </HomePage>
         )}
         {view === 'themes' && (
-          <HomePage title="Themes" onBack={() => setView('home')}>
-            <SettingsDrawer part="themes" asPage settings={settings} onChange={updateSettings} onClose={() => setView('home')} onHelp={() => setHelp(true)} liveActive={live.active} />
+          <HomePage title="Themes" onBack={() => setView(settingsFrom)}>
+            <SettingsDrawer part="themes" asPage settings={settings} onChange={updateSettings} onClose={() => setView(settingsFrom)} onHelp={() => setHelp(true)} liveActive={live.active} />
           </HomePage>
         )}
         {view === 'settings' && (
