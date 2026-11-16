@@ -164,3 +164,5 @@
 
 /* Nov 15: open group headings no longer float over the controls (they stacked: "Look" over "Look and fonts"). */
 /* the ✦ sits above "Ask your chavrusa" instead of over its button */
+:is([data-look='clay'],[data-look='chatgpt']) .st-type-settings { border:0; background:none; color:var(--accent); font:22px Georgia,serif; min-width:38px; min-height:44px; padding:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .is-min ~ .ai-hub-btn, :is([data-look='clay'],[data-look='chatgpt']) body:has(.st-study) .ai-hub-btn { bottom:calc(196px + env(safe-area-inset-bottom)); }
