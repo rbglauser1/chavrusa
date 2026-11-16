@@ -263,3 +263,12 @@
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-top:calc(env(safe-area-inset-top) + 34px); }
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body::after { content:''; position:fixed; top:0; left:0; right:0; height:calc(env(safe-area-inset-top) + 34px); background:var(--bg); z-index:59; pointer-events:none; }
 }
+
+/* Nov 16: full screen's bottom row sits lower, near the bottom edge (it kept the whole home-indicator area). */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] { --full-mid:calc(var(--dock-pad) + 28px); }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { bottom:calc(var(--full-mid) - 24px) !important; }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-full-ctl { bottom:calc(var(--full-mid) - 24px); align-items:center; }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-full-ctl .st-mic { width:48px; height:48px; }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .daf-dock .daf-bar { bottom:calc(var(--full-mid) - 17px); }
+}
