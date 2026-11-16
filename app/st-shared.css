@@ -250,3 +250,9 @@
 :is([data-look='clay'],[data-look='chatgpt']) .hpage { padding-bottom:var(--dock-h); }
 @media (max-width:1049px) { :is([data-look='clay'],[data-look='chatgpt']) { --row-mid:calc(var(--dock-h) + 32px); } }
 @media (display-mode: standalone) and (max-width:1049px) { :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:26px; } }
+
+/* Side margins in the Claude/ChatGPT reading screen (Nov 16): the look zeroes the text's own margins, so the choice is
+   made on the text area's padding instead (Normal stays 22px). */
+:is([data-look='clay'],[data-look='chatgpt'])[data-margin='narrow'] .st-source .sefer-body { padding-left:8px; padding-right:8px; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-margin='wider'] .st-source .sefer-body { padding-left:34px; padding-right:34px; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-margin='widest'] .st-source .sefer-body { padding-left:48px; padding-right:48px; }
