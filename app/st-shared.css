@@ -238,3 +238,6 @@
 @media (max-width:1049px) {
   :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-study-footer .ascroll { position:fixed; z-index:61; right:132px; bottom:calc(var(--row-mid) - 24px); }
 }
+
+/* Nov 16: the app now draws under the iPhone's clock and battery; the reading screen's top bar starts below them. */
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(12px + env(safe-area-inset-top)); }
