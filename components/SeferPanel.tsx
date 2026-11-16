@@ -171,7 +171,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // perek / amud / siman; tapping one opens its words right under the line (free, straight from Sefaria, no AI).
   type Comm = { loading?: boolean; he?: string[]; en?: string[]; empty?: boolean; error?: string; refs?: string[]; title?: string; parts?: { ref: string; he: string[]; en: string[] }[] };
   const [comm, setComm] = useState<Record<string, Comm>>({});
-  const [conns, setConns] = useState<Record<string, { title: string; refs: string[] }[]> | null>(null);
+  const [conns, setConns] = useState<Record<string, { title: string; refs: string[]; era?: number; year?: number | null }[]> | null>(null);
   const [connState, setConnState] = useState<'loading' | 'ok' | 'failed'>('loading');
   const [connTry, setConnTry] = useState(0);
   const [listOpen, setListOpen] = useState<number | null>(null);
@@ -254,7 +254,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const rank = (t: string) => { const k = FIRST.indexOf(t); return k < 0 ? 99 : k; };
   function lineComms(i: number) {
     const list = [...(conns?.[partNum(i)] ?? [])];
-    return list.sort((x, y) => rank(x.title) - rank(y.title) || x.title.localeCompare(y.title));
+    // Nov 16: the usual first ones (Rashi, Tosafos…), then Rishonim before Acharonim, each by date.
+    const top = (t: string) => (rank(t) <= 2 ? rank(t) : 99);
+    return list.sort((x, y) => top(x.title) - top(y.title) || (x.era ?? 3) - (y.era ?? 3) || (x.year ?? 9999) - (y.year ?? 9999) || rank(x.title) - rank(y.title) || x.title.localeCompare(y.title));
   }
   async function openComm(i: number, label: string, url: string, refs?: string[], title?: string) {
     const key = `${i}:${label}`;
@@ -936,7 +938,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     if (kind === 'none') return null;
                     if (embedded && !settings.autoComms && picked !== i) return null;
                     const all = conns ? lineComms(i) : [];
-                    const quick = conns ? all.slice(0, 2) : []; // Nov 16: just the two (Rashi and Tosafos on the Gemara); the rest under one button
+                    // Nov 16: on the Gemara only Rashi and Tosafos (whichever this line has); elsewhere the first two. The rest
+                    // under one button.
+                    const quick = conns ? (kind === 'gemara' ? all.filter((x) => x.title === 'Rashi' || x.title === 'Tosafot') : all.slice(0, 2)) : [];
                     return (
                       <div className="comm-btns" onClick={(e) => e.stopPropagation()}>
                         {conns === null && fallback.map(([who, label]) => (
@@ -983,7 +987,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   })()}
                   {listOpen === i && (!embedded || settings.autoComms || picked === i) && (
                     <div className="comm-list" onClick={(e) => e.stopPropagation()}>
-                      {lineComms(i).slice(2).map((x) => (
+                      {lineComms(i).filter((x) => !(kind === 'gemara' ? x.title === 'Rashi' || x.title === 'Tosafot' : lineComms(i).slice(0, 2).includes(x))).map((x) => (
                         <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                       ))}
                     </div>
