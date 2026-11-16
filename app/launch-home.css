@@ -246,3 +246,5 @@
 [data-look='clay'][data-paper='look'] .split-panel .launch-primary { background:#a85235; color:#fff; }
 [data-look='clay'][data-paper='look'] .home-talk-btn { background:var(--accent); box-shadow:none; }
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#131313; }
+/* Nov 16: the Home card's title (e.g. Yoma 3a) was clipped top and bottom: a little more line height and room. */
+[data-look='clay'] .split-panel h2 { line-height:1.25; padding-block:2px; flex-shrink:0; }
