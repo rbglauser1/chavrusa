@@ -45,7 +45,8 @@ function openLayer(onBack: () => void): number {
   init();
   const id = ++seq;
   const pushed = moving === 0;
-  stack.push({ id, onBack, pushed });
+  stack.push({ id, onBack, pushed, at: new Error().stack?.split('\n').slice(2, 5).join(' | ') } as Layer);
+  (window as unknown as { __layers?: Layer[] }).__layers = stack; // for checking what is open (Nov 16)
   if (pushed) history.pushState({ layer: id }, '');
   return id;
 }
