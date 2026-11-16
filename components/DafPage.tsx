@@ -1,6 +1,7 @@
 'use client';
 // Tzuras hadaf: the printed Vilna page of the amud you're on, drawn by the app itself so you can zoom in right here
 // (pinch, double-tap, or + / −) while the Talk button stays on screen. The amud before and after are one tap away.
+import { tintStatus } from '@/lib/statusTint';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 // A message about the voice not starting is shown even in full screen (the chat with it is hidden).
 const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live|Your OpenAI)/.test(t);
@@ -71,10 +72,11 @@ export default function DafPage({ start, onClose, talk, status }: { start: Amud;
   // the page runs from the very top of the phone to the very bottom.
   useEffect(() => {
     document.body.toggleAttribute('data-dafull', full);
+    tintStatus(full ? '#ffffff' : null); // the phone's top strip matches the white page (Nov 16)
     // In full screen the page's width is counted against the screen (the document scrolls), not against a box.
     if (canvas.current) canvas.current.style.width = `${zoomRef.current * 100}${full ? 'vw' : '%'}`;
     window.scrollTo(0, 0);
-    return () => document.body.removeAttribute('data-dafull');
+    return () => { document.body.removeAttribute('data-dafull'); if (full) tintStatus(null); };
   }, [full]);
   const prev = stepAmud(a, -1), next = stepAmud(a, 1);
 
