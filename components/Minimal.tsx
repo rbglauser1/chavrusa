@@ -214,7 +214,7 @@ export default function Minimal(p: Props) {
   }, [xFull]); // eslint-disable-line react-hooks/exhaustive-deps
   // Sand and Teal: a double tap on the text (or ⋯ → Full screen) shows just the text; again, ⤡, Esc or Back to return.
   const [stFullOn, setStFull] = useState(false);
-  const stFull = p.settings.theme === 'sand-teal' && stFullOn && tab === 'text' && !!p.sefer;
+  const stFull = (p.settings.theme === 'sand-teal' || p.settings.theme === 'clay' || p.settings.theme === 'chatgpt') && stFullOn && tab === 'text' && !!p.sefer;
   useEffect(() => {
     document.documentElement.toggleAttribute('data-st-full', stFull);
     return () => document.documentElement.removeAttribute('data-st-full');
