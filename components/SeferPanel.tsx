@@ -936,7 +936,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     if (kind === 'none') return null;
                     if (embedded && !settings.autoComms && picked !== i) return null;
                     const all = conns ? lineComms(i) : [];
-                    const quick = conns ? all.slice(0, 3) : [];
+                    const quick = conns ? all.slice(0, 2) : []; // Nov 16: just the two (Rashi and Tosafos on the Gemara); the rest under one button
                     return (
                       <div className="comm-btns" onClick={(e) => e.stopPropagation()}>
                         {conns === null && fallback.map(([who, label]) => (
@@ -975,7 +975,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         )}
                         {all.length > quick.length && (
                           <button className={`comm-btn more ${listOpen === i ? 'on' : ''}`} onClick={() => setListOpen((v) => (v === i ? null : i))}>
-                            Commentaries ({all.length}) {listOpen === i ? '▴' : '▾'}
+                            More commentaries ({all.length - quick.length}) {listOpen === i ? '▴' : '▾'}
                           </button>
                         )}
                       </div>
@@ -983,7 +983,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   })()}
                   {listOpen === i && (!embedded || settings.autoComms || picked === i) && (
                     <div className="comm-list" onClick={(e) => e.stopPropagation()}>
-                      {lineComms(i).map((x) => (
+                      {lineComms(i).slice(2).map((x) => (
                         <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                       ))}
                     </div>
