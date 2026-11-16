@@ -27,7 +27,8 @@ export function PullRefresh() {
       if (e.touches.length !== 1 || document.body.dataset.dafull || document.querySelector('.ht, .daf-full')) return;
       const t = e.target as Element;
       // Not in the Sefer: pulling down at the top there brings in the amud before.
-      if (t.closest('input, textarea, select, [contenteditable], .no-pull, .smap')) return;
+      // The Home screens are marked no-pull to stop them bouncing; that doesn't stop the refresh (Nov 16).
+      if (t.closest('input, textarea, select, [contenteditable], .no-pull:not(main), .smap')) return;
       // The Library opens inside the sefer's pane, but it isn't the sefer: pulling down there refreshes (Nov 16).
       if (t.closest('.sefer-body, .min-text') && !t.closest('.lib')) return;
       // Every box that scrolls, from the finger up, has to be at its top (a pixel or two of iPhone bounce is still
