@@ -107,3 +107,29 @@
 :is([data-look='clay'],[data-look='chatgpt']) .hpage-body .sg { scroll-margin-top:8px; }
 :is([data-look='clay'],[data-look='chatgpt']) .hpage-body .sg.open > .sg-head { position:static; top:auto; z-index:auto; box-shadow:none; }
 :is([data-look='clay'],[data-look='chatgpt']) .sg-hint { margin-top:5px; }
+
+/* Nov 15: the Library and the Notebook in the Claude and ChatGPT looks, the Sand and teal way: every row a rounded card,
+   roomy, with the Notebook's tabs as a soft segmented control. */
+:is([data-look='clay'],[data-look='chatgpt']) .lib { padding:20px 16px calc(96px + env(safe-area-inset-bottom)); }
+:is([data-look='clay'],[data-look='chatgpt']) .lib-crumbs { font-size:12px; background:var(--bg); }
+:is([data-look='clay'],[data-look='chatgpt']) .lib-list { gap:10px; }
+:is([data-look='clay'],[data-look='chatgpt']) .lib-item { position:relative; border:1px solid var(--rule); background:var(--surface); border-radius:16px; min-height:68px; padding:16px 18px; }
+:is([data-look='clay'],[data-look='chatgpt']) .lib-item .en { font-size:15px; }
+:is([data-look='clay'],[data-look='chatgpt']) .lib-item .he { font-size:18px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb { padding:24px 18px calc(96px + env(safe-area-inset-bottom)); background:var(--bg); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb > * { max-width:1000px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-head { margin-bottom:22px; align-items:center; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-head h1 { font-size:28px; font-weight:500; letter-spacing:-.5px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-head > .muted { font-size:12px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-head > .linklike { font-size:13px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-tabs { background:color-mix(in srgb, var(--rule) 55%, var(--bg)); padding:5px; border-radius:14px; gap:4px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-tabs button { border:0; border-radius:10px; font-size:12px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-tabs button.on { background:var(--surface); color:var(--accent); box-shadow:0 2px 6px rgba(0,0,0,.06); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb .notes-search { margin-top:18px; background:var(--surface); border-radius:14px; border:1px solid var(--rule); padding:14px 16px; font-size:15px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-note { border-radius:18px; padding:22px; border:1px solid var(--rule); background:var(--surface); box-shadow:0 5px 18px rgba(0,0,0,.03); }
+@media (min-width: 900px) {
+  :is([data-look='clay'],[data-look='chatgpt']) .lib { padding:32px 48px; }
+  :is([data-look='clay'],[data-look='chatgpt']) .lib-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  :is([data-look='clay'],[data-look='chatgpt']) .nb-head h1 { font-size:36px; }
+  :is([data-look='clay'],[data-look='chatgpt']) .nb-body { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px; }
+}
