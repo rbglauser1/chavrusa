@@ -3,6 +3,9 @@
 // phone paints it with the page's background color. While the reading window shades the screen, or the daf is full
 // screen, we tint that strip to match (Nov 16), and put it back after.
 let meta: HTMLMetaElement | null = null;
+let held: string | null = null; // a tint in force (the daf, the reading window)
+
+const pageBg = () => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || getComputedStyle(document.body).backgroundColor || '#ffffff';
 
 export function tintStatus(color: string | null) {
   if (typeof document === 'undefined') return;
@@ -11,8 +14,16 @@ export function tintStatus(color: string | null) {
     meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
   }
+  held = color;
   if (color) { root.style.backgroundColor = color; meta.content = color; }
-  else { root.style.removeProperty('background-color'); meta.content = getComputedStyle(document.body).backgroundColor || '#ffffff'; }
+  else { root.style.removeProperty('background-color'); meta.content = pageBg(); }
+}
+
+/** Nov 16: the strip always has the page's own color (not only while the daf or the reading window tints it); without
+ *  one, iOS 26 draws a soft blur under the clock that reaches into the text. Called when the look or background changes. */
+export function baseStatus() {
+  if (typeof document === 'undefined' || held) return;
+  tintStatus(null);
 }
 
 /** The page's background with a shade of `rgb` at `alpha` laid over it, as one solid color. */
