@@ -296,7 +296,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>Side margins</label>
-              <Seg value={s.sideMargin ?? 'normal'} options={[['normal', 'Normal'], ['wider', 'Wider'], ['widest', 'Widest']]} onPick={(v) => onChange({ sideMargin: v as 'normal' | 'wider' | 'widest' })} />
+              <Seg value={s.sideMargin ?? 'normal'} options={[['narrow', 'Narrow'], ['normal', 'Normal'], ['wider', 'Wider'], ['widest', 'Widest']]} onPick={(v) => onChange({ sideMargin: v as 'narrow' | 'normal' | 'wider' | 'widest' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The text a little further in from the edges of the screen.</div>
             </div>
             <div className="field">

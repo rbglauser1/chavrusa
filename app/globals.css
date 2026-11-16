@@ -2972,3 +2972,5 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 
 /* Nov 16: no frosted band under the iPhone's clock; the text runs clear to the top. */
 .min-full-veil { display: none; }
+/* Narrow margins (Nov 16): the text closer to the screen's edges than Normal (about 24px in from each side). */
+[data-margin='narrow'] .sefer .sefer-flow { margin-inline: -12px; }

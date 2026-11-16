@@ -453,7 +453,7 @@ export interface Settings {
   aiHub?: boolean; // the AI tools in one floating ✦ (default) instead of buttons under each line and atop the amud
   aiLang?: 'en' | 'he' | 'both'; // the language the AI writes in for the screen (not the voice, not translations)
   partGap?: 'normal' | 'more' | 'most';   // room between the parts of the text (after the English, before the next Hebrew)
-  sideMargin?: 'normal' | 'wider' | 'widest'; // the text a little further in from the screen's edges
+  sideMargin?: 'narrow' | 'normal' | 'wider' | 'widest'; // the text a little further in from the screen's edges
   justify?: boolean;        // the text's Hebrew and English justified (even edges on both sides), like a printed sefer
   elsewhere?: boolean;      // "⇄ Elsewhere" on a line of Gemara / Mishnah: the same sugya in other places in Shas (Sefaria links); default on
   byHeart?: boolean;        // "🧠 By heart" on Mishnah and Avos lines (true: on pesukim too); default on
