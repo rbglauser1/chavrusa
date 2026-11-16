@@ -26,7 +26,6 @@ import Stepped, { longPiece } from './Stepped';
 import WordBox, { wordAt } from './WordBox';
 import { ExplainBox, IdeasBox, SourcesBox, hasIdeas, sourcesCount, type Groups } from './LineExtras';
 import { useBackLayer } from '@/lib/back';
-import { tintStatus, shaded } from '@/lib/statusTint';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
@@ -104,15 +103,6 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // reached `sources` yet on a fresh start, which sent the learner back to Home).
   const closeLib = (opened?: boolean) => { setShowLib(false); if (!opened && !sources.length) onClose(); };
   useBackLayer(showLib, () => closeLib()); // back closes the Library
-  // The reading window shades the screen: the phone's top strip (clock, battery) takes the same shade (Nov 16).
-  const windowOn = settings.focusMode === 'window' && !!sources[selected] && !showLib;
-  useEffect(() => {
-    if (!windowOn) return;
-    const dark = settings.windowDark ?? 5, night = settings.theme === 'midnight';
-    const a = Math.min(0.92, (0.16 + dark * 0.072) * (night ? 1.35 : 1));
-    tintStatus(shaded(night ? [0, 0, 0] : [20, 20, 18], a));
-    return () => tintStatus(null);
-  }, [windowOn, settings.windowDark, settings.theme, settings.paper]);
   // Open the Library only when the page asks anew; not again whenever the Sefer comes back on screen (review, Nov 11:
   // it reopened over the text after Settings and on resume).
   useEffect(() => {
