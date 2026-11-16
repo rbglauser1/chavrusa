@@ -90,3 +90,18 @@
  :is([data-look='clay'],[data-look='chatgpt']) .launch-header { height:calc(54px + env(safe-area-inset-top)); }
  :is([data-look='clay'],[data-look='chatgpt']) .home-shell { padding-top:calc(54px + env(safe-area-inset-top)); }
 }
+
+/* Nov 15: Settings in the Claude and ChatGPT looks, done the Sand and teal way (the learner's pick): the page scrolls in
+   its own pane between the top bar and the tab bar, each group is a rounded card, and no heading floats over the
+   controls. */
+:is([data-look='clay'],[data-look='chatgpt']) .hpage { display:flex; flex-direction:column; height:100dvh; min-height:0; max-width:none; padding:0 0 calc(78px + env(safe-area-inset-bottom)); }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-head { position:static; flex-shrink:0; border:0; background:var(--bg); padding:max(18px, env(safe-area-inset-top)) 20px 14px; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-head h1 { font-size:24px; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-body { min-height:0; overflow:auto; padding:4px 18px 28px; --sg-top:0px; width:100%; max-width:640px; margin:0 auto; box-sizing:border-box; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-1 { margin-bottom:12px; border:1px solid var(--rule); border-radius:18px; background:var(--surface); overflow:clip; scroll-margin-top:8px; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-1 > .sg-head { background:var(--surface); padding:18px; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-1.open > .sg-head { background:var(--accent-soft); }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-body { background:var(--surface); padding-left:16px; padding-right:16px; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-body .sg { scroll-margin-top:8px; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-body .sg.open > .sg-head { position:static; top:auto; z-index:auto; box-shadow:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-hint { margin-top:5px; }
