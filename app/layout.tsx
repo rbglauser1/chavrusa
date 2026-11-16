@@ -10,6 +10,8 @@ import './sand-teal.css';
 import './guided-learning.css';
 import './paper-ink.css';
 import './midnight-home.css';
+import './launch-home.css';
+import './chatgpt.css';
 import { guidedPalette } from '@/lib/guided';
 import { EXPERIENCES, isExperience } from '@/lib/experiences';
 import { PullRefresh } from '@/components/PullRefresh';
@@ -31,7 +33,7 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz
 
 // The look and text sizes are remembered in a cookie, so the page opens in your colors right away
 // (instead of flashing the default colors until Settings load).
-const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp', 'clay', 'plain', 'cream', ...EXPERIENCES.map((x) => x.id)];
+const LOOKS = ['daf', 'shtender', 'techelet', 'midnight', 'stone', 'leather', 'vilna', 'ink', 'sharp', 'clay', 'plain', 'cream', 'chatgpt', ...EXPERIENCES.map((x) => x.id)];
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [look, he, en, rashi, comm, fEn, fHe, cols, bolds, fComm, palette] = ((await cookies()).get('ui')?.value ?? '').split('|');
   // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).

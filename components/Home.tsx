@@ -1,5 +1,6 @@
 'use client';
 import ExperienceHome from './ExperienceHome';
+import { ReadingDeskHome, ChatGPTHome } from './LaunchHome';
 import { isExperience } from '@/lib/experiences';
 import type { Look } from '@/lib/config';
 import { useMineTitles } from './useMineTitles';
@@ -55,6 +56,9 @@ export function Home(p: {
   onTalk: () => void;
   talkSupported: boolean;
   talkOn: boolean;
+  busy?: boolean;
+  onAsk?: (text: string) => void | Promise<void>;
+  onReview?: () => void;
   extras?: ReactNode; // the optional cards (Settings → Extras): chazara, progress
 }) {
   const c = p.cont;
@@ -76,6 +80,10 @@ export function Home(p: {
     ['notebook', 'Notebook', 'Your notes, by sefer and topic', () => window.dispatchEvent(new Event('chavrusa-notebook'))], // shown in the Sharp look only
     ['settings', 'Settings', 'Look, learning style, voice, display', p.onSettings],
   ];
+  if (p.look === 'clay' || p.look === 'chatgpt') {
+    const Screen = p.look === 'clay' ? ReadingDeskHome : ChatGPTHome;
+    return <><Screen {...p} onGuide={() => setGuide(true)}/>{guide && <Guide onClose={() => setGuide(false)}/ >}{howTo && <HowTo onClose={() => setHowTo(false)}/>}</>;
+  }
   if (isExperience(p.look)) return <>
     <ExperienceHome {...p} look={p.look} onGuide={() => setGuide(true)} onFilm={() => { unlockNarration(); setHowTo(true); }} />
     {guide && <Guide onClose={() => setGuide(false)} />}

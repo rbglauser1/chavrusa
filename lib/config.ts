@@ -287,7 +287,7 @@ export function styleById(id: string | undefined, custom?: CustomStyle[] | null)
   return allStyles(custom).find((s) => s.id === id) ?? STYLES[0];
 }
 
-export type Look = Experience | 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink' | 'sharp' | 'clay' | 'plain' | 'cream';
+export type Look = Experience | 'daf' | 'shtender' | 'techelet' | 'midnight' | 'stone' | 'leather' | 'vilna' | 'ink' | 'sharp' | 'clay' | 'plain' | 'cream' | 'chatgpt';
 
 // Colors of the different things on the page (Settings → Look → Colors). "ink" = the same as the text.
 export type ColorPart = 'he' | 'en' | 'comm' | 'intro';
@@ -306,6 +306,7 @@ export const colorOf = (s: { colors?: Partial<Record<ColorPart, ColorId>> }, p: 
 
 export const LOOKS: { id: Look; name: string; blurb: string }[] = [
   ...EXPERIENCES,
+  { id: 'chatgpt', name: 'ChatGPT', blurb: 'A clean, conversation-first Home with the ChatGPT web palette and system typography.' },
   { id: 'plain', name: 'Plain chat (new)', blurb: 'Clean white, black buttons and a simple sans-serif, like ChatGPT' },
   { id: 'clay', name: 'Claude (new)', blurb: 'Warm off-white, soft near-black, round buttons and a terracotta accent, like the Claude app' },
   { id: 'sharp', name: 'Sharp', blurb: 'Crisp paper white and black hairlines, square corners, one deep blue. Numbered lines, like a well-set page' },
@@ -366,7 +367,7 @@ export const fontStack = (list: { id: string; stack: string }[], id?: string) =>
 // Older saved values from the first version map onto the new looks.
 export function normalizeLook(v: unknown): Look {
   if (isExperience(v)) return v;
-  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink' || v === 'sharp' || v === 'clay' || v === 'plain' || v === 'cream') return v;
+  if (v === 'daf' || v === 'shtender' || v === 'techelet' || v === 'midnight' || v === 'stone' || v === 'leather' || v === 'vilna' || v === 'ink' || v === 'sharp' || v === 'clay' || v === 'plain' || v === 'cream' || v === 'chatgpt') return v;
   if (v === 'dark') return 'shtender';
   if (v === 'light') return 'techelet';
   return 'daf';

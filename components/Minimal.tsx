@@ -29,6 +29,8 @@ type Msg = { kind: string; text: string };
 type InlineComm = { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null;
 
 interface Props {
+  discussionRequested?: boolean;
+  onDiscussionOpened?: () => void;
   layout: Layout;
   settings: Settings;
   current: SourceData | null;
@@ -184,6 +186,7 @@ export default function Minimal(p: Props) {
   }, [experience, tab, p.settings.theme, p.items.length, p.busy, p.textTick]);
   // The Library or the Sefer was asked for, or a new place opened: show the text.
   useEffect(() => { if (p.textTick) setTab('text'); }, [p.textTick]);
+  useEffect(() => { if (p.discussionRequested) { setTab('talk'); p.onDiscussionOpened?.(); } }, [p.discussionRequested, p.onDiscussionOpened]);
   // Quiet chat: the daf counter (in the bottom row) only shows with the text, not over the conversation or the keyboard.
   useEffect(() => {
     document.body.toggleAttribute('data-hide-daf', p.layout === 'quiet' && (tab !== 'text' || typing));
