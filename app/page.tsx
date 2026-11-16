@@ -1,5 +1,4 @@
 'use client';
-import { baseStatus } from '@/lib/statusTint';
 import Thinking from '@/components/Thinking';
 import { englishFor } from '@/lib/literal';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -413,7 +412,6 @@ export default function Home() {
     if (isExperience(settings.theme)) root.dataset.experience = settings.theme; else delete root.dataset.experience;
     try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}|${settings.fonts?.[settings.theme]?.comm ?? ''}|${guidedPalette(settings.guidedPalette)}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.paper = settings.paper ?? 'look';
-    requestAnimationFrame(() => baseStatus()); // the clock strip takes the page's color (Nov 16)
     try { document.cookie = `paper=${settings.paper ?? 'look'}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.dataset.justify = settings.justify ? 'on' : 'off';
