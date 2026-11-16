@@ -72,3 +72,12 @@ export function useBackLayer(open: boolean, onBack: () => void) {
     return () => closeLayer(id);
   }, [open]);
 }
+
+/** The app's own ‹ (Nov 16): close the top open layer directly, not through the browser's history (a leftover step
+ *  there could make history.back() close nothing). Its own closing removes its history step. False if none is open. */
+export function closeTop(): boolean {
+  const top = stack[stack.length - 1];
+  if (!top) return false;
+  top.onBack();
+  return true;
+}
