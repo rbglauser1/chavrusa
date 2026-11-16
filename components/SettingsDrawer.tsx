@@ -177,6 +177,18 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Look</label>
               <LookPicker value={s.theme} onPick={(v) => onChange({ theme: v })} />
             </div>
+            {(s.theme === 'clay' || s.theme === 'chatgpt') && (
+              <div className="field">
+                <label>Background color</label>
+                <div className="paper-pick" role="radiogroup" aria-label="Background color">
+                  {([['look', 'As is'], ['white', 'White'], ['cream', 'Cream'], ['blue', 'Light blue'], ['green', 'Light green'], ['night', 'Night']] as const).map(([id, name]) => (
+                    <button key={id} role="radio" aria-checked={(s.paper ?? 'look') === id} className={`paper-sw paper-${id}`} onClick={() => onChange({ paper: id })}>
+                      <span className="paper-dot" aria-hidden="true" /><span>{name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="field">
               <label>English font for this look</label>
               <FontPicker list={FONTS_EN} sample="Let's learn the Gemara together" value={s.fonts?.[s.theme]?.en ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), en: id } } })} />

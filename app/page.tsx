@@ -411,6 +411,8 @@ export default function Home() {
     if(settings.theme==='guided-learning') root.dataset.guidedPalette=guidedPalette(settings.guidedPalette); else delete root.dataset.guidedPalette;
     if (isExperience(settings.theme)) root.dataset.experience = settings.theme; else delete root.dataset.experience;
     try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}|${settings.fonts?.[settings.theme]?.comm ?? ''}|${guidedPalette(settings.guidedPalette)}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
+    root.dataset.paper = settings.paper ?? 'look';
+    try { document.cookie = `paper=${settings.paper ?? 'look'}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
     root.dataset.justify = settings.justify ? 'on' : 'off';
     root.dataset.gap = settings.partGap ?? 'normal';

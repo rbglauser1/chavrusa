@@ -488,6 +488,7 @@ export interface Settings {
   colors?: Partial<Record<ColorPart, ColorId>>;
   bold?: Partial<Record<ColorPart, boolean>>;    // Settings → Look → Colors: bold for any of the four
   // Settings → Look → Colors: the color of each kind of thing on the page
+  paper?: 'look' | 'white' | 'cream' | 'blue' | 'green' | 'night'; // the app's background color (Claude and ChatGPT looks), Nov 16
   enBold?: boolean;         // Sefaria's word-for-word translation in bold, as on Sefaria (default on)
   ilEn?: 'full' | 'only';   // phrase by phrase: under each phrase Sefaria's full English, or only its word-for-word translation (unset: as the English setting)
   interlinear?: boolean;    // the English phrase by phrase: each short Hebrew phrase with its English right under it

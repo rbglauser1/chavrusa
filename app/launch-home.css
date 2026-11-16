@@ -181,3 +181,25 @@
 /* Opening a group scrolled the whole frame up and pushed the "‹ Settings" header off the screen (Nov 16): only the
    page body scrolls, the frame and the header can't be scrolled away. */
 :is([data-look='clay'],[data-look='chatgpt']) .home-shell.inner, :is([data-look='clay'],[data-look='chatgpt']) .home-shell.inner .hpage { overflow:clip; }
+
+/* Background color (Settings → Look → Look and fonts, Nov 16), Claude and ChatGPT looks. "As is" keeps the look's own. */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='white'] { --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F3F3F1; --src-bg:#FFFFFF; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='cream'] { --bg:#F7F2E7; --surface:#FBF7EE; --surface-2:#EFE8DA; --rule:#E2D9C8; --src-bg:#FBF7EE; --src-rule:#E2D9C8; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='blue'] { --bg:#EEF4F9; --surface:#F6F9FC; --surface-2:#E3ECF4; --rule:#D5E0EA; --src-bg:#F6F9FC; --src-rule:#D5E0EA; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='green'] { --bg:#EFF5EE; --surface:#F6FAF5; --surface-2:#E3EDE1; --rule:#D3E2D0; --src-bg:#F6FAF5; --src-rule:#D3E2D0; }
+/* Night: the Midnight Sefer colors; the text colors switch to their light versions. */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] {
+  --bg:#09141e; --surface:#101f2b; --surface-2:#1b2b37; --ink:#f3eee3; --soft:#bac5cb; --rule:#344653;
+  --accent-soft:#293747; --me:#bac5cb; --src-bg:#101f2b; --src-ink:#f3eee3; --src-rule:#344653; --danger:#ffb49c;
+  --scrim:rgba(0,0,0,.48); --hue-sepia:#f0ad62; --hue-slate:#86c4ec; --hue-maroon:#f2909b; --hue-green:#7fdcb3;
+  --hue-bronze:#e8c35a; --hue-navy:#a9b9ff; --hue-gray:#b9b9b2; color-scheme:dark;
+}
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] body { background:radial-gradient(ellipse at top,#1f3542,var(--bg) 60%) fixed; }
+
+/* The picker */
+.paper-pick { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.paper-sw { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 4px; border:1px solid var(--rule); border-radius:14px; background:var(--surface); color:var(--ink); font:13px var(--f-ui); cursor:pointer; }
+.paper-sw[aria-checked='true'] { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.paper-dot { width:34px; height:34px; border-radius:50%; border:1px solid #0000001f; }
+.paper-look .paper-dot { background:#F9F9F7; } .paper-white .paper-dot { background:#FFFFFF; } .paper-cream .paper-dot { background:#F7F2E7; }
+.paper-blue .paper-dot { background:#EEF4F9; } .paper-green .paper-dot { background:#EFF5EE; } .paper-night .paper-dot { background:radial-gradient(circle at 50% 20%,#1f3542,#09141e 70%); }
