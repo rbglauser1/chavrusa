@@ -1,0 +1,92 @@
+/* Dedicated non-scrolling launch screens; the existing learning UI stays shared. */
+:is([data-look='clay'],[data-look='chatgpt']) .home-shell { height:100dvh; padding:62px 0 calc(78px + env(safe-area-inset-bottom)); overflow:hidden; }
+:is([data-look='clay'],[data-look='chatgpt']) .home-shell:has(>.launch-home) { position:fixed; inset:0; }
+:is([data-look='clay'],[data-look='chatgpt']) body:has(.launch-home) { overflow:clip; overscroll-behavior:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-home { height:100%; min-height:0; width:100%; max-width:1100px; margin:auto; overflow:clip; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-home:not(:has(.launch-overlay)) { touch-action:pinch-zoom; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-header { position:fixed; inset:0 0 auto; height:62px; display:flex; align-items:center; justify-content:space-between; padding:8px 24px; background:var(--bg); z-index:65; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-brand { font:600 27px var(--f-brand); letter-spacing:-.7px; background:none; border:0; color:var(--ink); padding:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-icon { display:inline-grid; place-items:center; height:44px; width:44px; flex-shrink:0; border:0; border-radius:50%; background:none; color:var(--ink); padding:0; font:20px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-dock { position:fixed; inset:auto 0 0; display:grid; grid-template-columns:repeat(4,1fr); height:calc(78px + env(safe-area-inset-bottom)); padding:7px 12px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--rule); background:var(--bg); z-index:65; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-dock button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:3px; border:0; background:none; color:var(--soft); font:10px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-dock button[aria-current] { color:var(--accent); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-more { position:fixed; bottom:calc(84px + env(safe-area-inset-bottom)); right:16px; width:min(290px,calc(100vw - 32px)); max-height:70dvh; overflow:auto; background:var(--surface); border:1px solid var(--rule); border-radius:16px; box-shadow:var(--shadow); padding:8px; z-index:70; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-more :is(button,a) { display:flex; align-items:center; width:100%; min-height:44px; padding:12px; border:0; background:none; text-decoration:none; color:var(--ink); font:13px var(--f-ui); text-align:left; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-primary { display:flex; align-items:center; justify-content:center; gap:10px; min-height:48px; border:0; border-radius:12px; padding:13px 15px; background:var(--accent); color:var(--accent-ink); font:500 14px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-eyebrow { display:block; font:600 9px/1.5 var(--f-ui); letter-spacing:1.6px; color:var(--accent); }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage { height:100%; max-width:1100px; min-height:0; display:flex; flex-direction:column; padding:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-head { flex-shrink:0; position:static; padding:15px 24px; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-body { min-height:0; overflow:auto; padding:10px 24px 30px; --sg-top:0px; }
+:is([data-look='clay'],[data-look='chatgpt']) .hpage-body .sg.open>.sg-head { position:static; top:auto; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-enfont='chosen'] { --f-brand:var(--f-body); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-overlay { position:fixed; inset:0; z-index:160; padding:20px; display:grid; place-items:center; background:var(--scrim); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-overview { width:min(650px,100%); max-height:85dvh; overflow:auto; padding:22px; background:var(--bg); color:var(--ink); border-radius:18px; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-overview>header { display:flex; align-items:center; justify-content:space-between; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-overview h2 { font:500 27px var(--f-brand); }
+/* #5: the book is an actual continuation control, never sample source text. */
+[data-look='clay'] .rd-home { display:flex; flex-direction:column; gap:16px; padding:10px 24px 18px; }
+[data-look='clay'] .rd-intro { flex:.7; min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; }
+[data-look='clay'] .rd-intro h1 { font:500 39px/1.1 var(--f-brand); letter-spacing:-1.1px; margin:0; }
+[data-look='clay'] .rd-intro p { font:12px/1.6 var(--f-ui); color:var(--soft); margin:0; }
+[data-look='clay'] .rd-book-wrap { position:relative; flex:1.6; min-height:210px; max-height:390px; margin:0 6px 3px 13px; perspective:1000px; }
+[data-look='clay'] .rd-pages { position:absolute; inset:6px -5px -5px 0; border:1px solid #cfb797; border-radius:5px 15px 15px 5px; background:repeating-linear-gradient(0deg,#e8dac3 0px,#e8dac3 1px,#fbf0db 2px,#fbf0db 4px); transform:rotate(1deg); box-shadow:0 13px 23px #6e4b1f12; }
+[data-look='clay'] .rd-book { height:100%; position:relative; border:1px solid #cdb28e; border-radius:6px 13px 13px 6px; background:linear-gradient(95deg,#ddc19c 0,#f5e4c9 5%,#fff2dc 13%,#f7e7cd 100%); padding:24px 21px 20px 26px; display:flex; flex-direction:column; align-items:center; text-align:center; justify-content:space-between; gap:12px; box-shadow:inset 7px 0 9px #8f61322a,0 3px 6px #9b703523; animation:rd-book-in .8s ease both; transform-origin:left center; color:#30271f; }
+[data-look='clay'] .rd-book:before { content:''; position:absolute; inset:12px 11px 12px 16px; border:1px solid #ceb38b; outline:1px solid #d7bf9d; outline-offset:3px; border-radius:3px 8px 8px 3px; pointer-events:none; }
+[data-look='clay'] .rd-book>* { position:relative; z-index:1; }
+[data-look='clay'] .rd-book>svg { color:#956443; }
+[data-look='clay'] .rd-book h2 { font:500 clamp(24px,7.5vw,34px)/1.2 var(--f-brand); letter-spacing:-.7px; overflow-wrap:anywhere; margin:8px 0 0; max-height:3.6em; overflow:auto; }
+[data-look='clay'] .rd-rule { height:1px; width:38px; background:#c8a57d; }
+[data-look='clay'] .rd-book p { font:italic 14px var(--f-body); color:#7d6a59; margin:0; }
+[data-look='clay'] .rd-book .launch-primary { width:100%; min-height:45px; font-size:13px; background:#b95f3e; color:#fffaf3; }
+[data-look='clay'] .rd-book .launch-eyebrow { color:#a45736; }
+[data-look='clay'] .rd-quick { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+[data-look='clay'] .rd-quick button { min-width:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; border:1px solid var(--rule); border-radius:15px; background:linear-gradient(#fffaf2,#f4e9d9); color:var(--ink); padding:12px 7px; min-height:76px; font:12px var(--f-ui); }
+[data-look='clay'] .rd-quick svg { color:#8f5c3c; }
+[data-look='clay'] .launch-home-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+[data-look='clay'] .launch-home-footer button { border:0; background:none; color:var(--soft); font:9px var(--f-ui); padding:3px 0; min-height:28px; }
+@media(min-width:700px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .launch-header { height:80px; padding-inline:40px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .home-shell { padding-top:80px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .launch-dock { display:flex; justify-content:center; gap:75px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .launch-dock button { min-width:65px; }
+ [data-look='clay'] .rd-home { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr auto auto; align-items:center; max-width:1050px; padding:30px 45px; gap:24px; }
+ [data-look='clay'] .rd-intro { grid-column:1; grid-row:1; align-items:flex-start; text-align:left; }
+ [data-look='clay'] .rd-intro h1 { font-size:56px; }
+ [data-look='clay'] .rd-intro p { font-size:14px; }
+ [data-look='clay'] .rd-book-wrap { grid-column:2; grid-row:1 / 4; width:100%; height:100%; min-height:320px; max-height:570px; margin:0; max-width:390px; justify-self:center; }
+ [data-look='clay'] .rd-book { padding:40px 30px 32px; gap:20px; }
+ [data-look='clay'] .rd-book h2 { font-size:38px; }
+ [data-look='clay'] .rd-book .launch-primary { min-height:50px; }
+ [data-look='clay'] .rd-quick { grid-column:1; grid-row:2; }
+ [data-look='clay'] .launch-home-footer { grid-column:1; grid-row:3; }
+}
+@media(max-height:760px) and (max-width:699px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .launch-header { height:54px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .launch-dock { height:calc(68px + env(safe-area-inset-bottom)); padding-bottom:calc(8px + env(safe-area-inset-bottom)); }
+ :is([data-look='clay'],[data-look='chatgpt']) .home-shell { padding-top:54px; padding-bottom:calc(68px + env(safe-area-inset-bottom)); }
+ [data-look='clay'] .rd-home { gap:12px; padding:4px 21px 15px; }
+ [data-look='clay'] .rd-intro { min-height:90px; gap:7px; flex:.55; }
+ [data-look='clay'] .rd-intro h1 { font-size:33px; }
+ [data-look='clay'] .rd-intro p { font-size:11px; }
+ [data-look='clay'] .rd-book-wrap { min-height:185px; max-height:320px; }
+ [data-look='clay'] .rd-book { padding:18px 18px 16px 23px; gap:8px; }
+ [data-look='clay'] .rd-book h2 { font-size:28px; }
+ [data-look='clay'] .rd-book .launch-primary { padding:10px; font-size:12px; min-height:40px; }
+ [data-look='clay'] .rd-quick { gap:8px; }
+ [data-look='clay'] .rd-quick button { min-height:64px; font-size:11px; padding:9px 4px; }
+ [data-look='clay'] .launch-home-footer button { min-height:24px; font-size:8px; }
+}
+@keyframes rd-book-in { from { opacity:0; transform:rotateY(-12deg) translateY(10px); } to { opacity:1; transform:none; } }
+@media(prefers-reduced-motion:reduce) { [data-look='clay'] .rd-book { animation:none; } }
+/* Standalone iPhone safe areas also apply when there is no Safari toolbar. */
+:is([data-look='clay'],[data-look='chatgpt']) .launch-header { height:calc(62px + env(safe-area-inset-top)); padding-top:calc(8px + env(safe-area-inset-top)); }
+:is([data-look='clay'],[data-look='chatgpt']) .home-shell { padding-top:calc(62px + env(safe-area-inset-top)); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-overview-actions { display:flex; gap:10px; flex-wrap:wrap; margin-block:16px; }
+@media(min-width:700px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .launch-header { height:calc(80px + env(safe-area-inset-top)); }
+ :is([data-look='clay'],[data-look='chatgpt']) .home-shell { padding-top:calc(80px + env(safe-area-inset-top)); }
+}
+@media(max-height:760px) and (max-width:699px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .launch-header { height:calc(54px + env(safe-area-inset-top)); }
+ :is([data-look='clay'],[data-look='chatgpt']) .home-shell { padding-top:calc(54px + env(safe-area-inset-top)); }
+}

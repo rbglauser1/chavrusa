@@ -1,14 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { isExperience, type Experience } from '@/lib/experiences';
+import { isExperience } from '@/lib/experiences';
 import styles from './preview.module.css';
 const SIZES = { phone: { width:390,height:844 }, compact: { width:320,height:720 }, tablet: { width:834,height:1112 }, landscape: { width:1112,height:834 }, desktop: { width:1280,height:800 } } as const;
 /** Authenticated developer tool: the real app in an iframe with a genuine CSS viewport. */
 export default function DesignPreview() {
   const [size,setSize] = useState<keyof typeof SIZES>('desktop');
   const [reload,setReload] = useState(0);
-  const [previewLook,setPreviewLook]=useState<Experience|null>(null);
-  useEffect(()=>{const look=new URLSearchParams(window.location.search).get('preview-look');setPreviewLook(isExperience(look)?look:null);},[]);
+  const [previewLook,setPreviewLook]=useState<string|null>(null);
+  useEffect(()=>{const look=new URLSearchParams(window.location.search).get('preview-look');setPreviewLook(isExperience(look)||look==='clay'||look==='chatgpt'?look:null);},[]);
   const appHref=previewLook?`/?preview-look=${previewLook}`:'/';
   const viewport=SIZES[size];
   const stage=useRef<HTMLDivElement>(null);

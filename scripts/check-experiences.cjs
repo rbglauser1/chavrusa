@@ -16,20 +16,21 @@ try {
   assert.equal(EXPERIENCES.length, 8);
   assert.equal(new Set(LOOKS.map(x => x.id)).size, LOOKS.length);
   assert.equal(DEFAULT_SETTINGS.theme, 'daf');
-  for (const id of ['daf','shtender','techelet','midnight','stone','leather','vilna','ink','sharp']) {
+  for (const id of ['daf','shtender','techelet','midnight','stone','leather','vilna','ink','sharp','clay','plain','cream','chatgpt']) {
     assert(LOOKS.some(x => x.id === id)); assert.equal(normalizeLook(id), id); assert.equal(isExperience(id), false);
   }
   for (const item of EXPERIENCES) { assert.equal(normalizeLook(item.id), item.id); assert.equal(isExperience(item.id), true); }
   assert.equal(normalizeLook('unknown'), 'daf');
   assert.equal(normalizeLook('dark'), 'shtender'); assert.equal(normalizeLook('light'), 'techelet');
-  const css = ['app/experiences.css','app/sand-teal.css','app/guided-learning.css','app/paper-ink.css','app/midnight-home.css'].map(p=>fs.readFileSync(path.join(root,p),'utf8')).join('\n');
+  const css = ['app/experiences.css','app/sand-teal.css','app/guided-learning.css','app/paper-ink.css','app/midnight-home.css','app/launch-home.css','app/chatgpt.css'].map(p=>fs.readFileSync(path.join(root,p),'utf8')).join('\n');
   // A new stylesheet must not accidentally restyle a legacy look or introduce a global selector.
   const rules = css.replace(/\/\*[\s\S]*?\*\//g,'').replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]|\{[^{}]*\})*\}/g,'').matchAll(/([^{}]+)\{([^{}]*)\}/g);
   let checked = 0;
   for (const [, selectors] of rules) {
     if (selectors.trim().startsWith('@')) continue;
+    if (selectors.trim().startsWith(":is([data-look='clay'],[data-look='chatgpt'])")) { checked++; continue; }
     for (const selector of selectors.trim().split(/,\s*(?=\[data-|\.mini)/)) {
-      assert(/^(\[data-experience\]|\[data-look='(?:paper-ink|midnight-sefer|beis-medrash|sand-teal|editorial|guided-learning|living-page|study-workspace)'\]|\.mini\.)/.test(selector), `Unscoped experience rule: ${selector}`);
+      assert(/^(\[data-experience\]|\[data-look='(?:paper-ink|midnight-sefer|beis-medrash|sand-teal|editorial|guided-learning|living-page|study-workspace|clay|chatgpt)'\]|\.mini\.)/.test(selector), `Unscoped experience rule: ${selector}`);
       checked++;
     }
   }
@@ -39,7 +40,7 @@ try {
   const iconJs = ts.transpileModule(fs.readFileSync(path.join(root,'components','ExperienceIcon.tsx'),'utf8'), { compilerOptions: { module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020 } }).outputText.replace('require("react/jsx-runtime")', 'require(' + JSON.stringify(require.resolve('react/jsx-runtime')) + ')');
   fs.writeFileSync(iconFile,iconJs);
   fs.writeFileSync(path.join(temp,'Library.js'),'exports.browseLibrary = () => {};'); // browser navigation does not run in SSR
-  const dependencies = { PaperInk:'components/PaperInk.tsx', AmbientMotion:'components/AmbientMotion.tsx', MidnightHome:'components/MidnightHome.tsx', GuidedLearning:'components/GuidedLearning.tsx', SandTeal:'components/SandTeal.tsx', Message:'components/Message.tsx', hebrew:'lib/hebrew.ts', back:'lib/back.ts' };
+  const dependencies = { LaunchHome:'components/LaunchHome.tsx', PaperInk:'components/PaperInk.tsx', AmbientMotion:'components/AmbientMotion.tsx', MidnightHome:'components/MidnightHome.tsx', GuidedLearning:'components/GuidedLearning.tsx', SandTeal:'components/SandTeal.tsx', Message:'components/Message.tsx', hebrew:'lib/hebrew.ts', back:'lib/back.ts' };
   for (const [name,file] of Object.entries(dependencies)) {
     let js=ts.transpileModule(fs.readFileSync(path.join(root,file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
     for (const [key,target] of Object.entries({'react':require.resolve('react'),'react/jsx-runtime':require.resolve('react/jsx-runtime'),'./Library':path.join(temp,'Library.js'),'./AmbientMotion':path.join(temp,'AmbientMotion.js'),'./PaperInk':path.join(temp,'PaperInk.js'),'./SandTeal':path.join(temp,'SandTeal.js'),'./GuidedLearning':path.join(temp,'GuidedLearning.js'),'./Message':path.join(temp,'Message.js'),'@/lib/hebrew':path.join(temp,'hebrew.js'),'@/lib/back':path.join(temp,'back.js')})) js=js.split('require('+JSON.stringify(key)+')').join('require('+JSON.stringify(target)+')');
@@ -62,10 +63,19 @@ try {
     for (const text of ['Berakhot 2a','Library','Notebook','Look and fonts','Start voice session']) assert(html.includes(text), `${item.id}: missing ${text}`);
     assert.equal((html.match(/experience-tool-number/g) || []).length,4);
   }
+  const launch = require(path.join(temp,'LaunchHome.js'));
+  for (const Screen of [launch.ReadingDeskHome,launch.ChatGPTHome]) {
+    for (const cont of [null,{ref:'Exodus 12',heRef:'שמות י״ב',line:3}]) {
+      const html=renderToStaticMarkup(React.createElement(Screen,{cont,onContinue:noop,onLibrary:noop,onRecent:noop,onThemes:noop,onTalk:noop,onGuide:noop,onAsk:noop,onReview:noop,talkSupported:true,talkOn:false}));
+      assert(html.includes('Library') || html.includes('Choose a sefer'));
+      assert(!html.includes('Berachos 2a'),'No fabricated continue place');
+      assert(html.includes(cont?'Exodus 12':'Choose a sefer'));
+    }
+  }
   const { GUIDED_PALETTES, guidedPalette } = require(path.join(temp,'guided'));
   for(const p of GUIDED_PALETTES) assert.equal(guidedPalette(p.id),p.id);
   assert.equal(guidedPalette('unknown'),'iris'); assert.equal(guidedPalette(null),'iris');
   const { OPTIONAL_SETTING_KEYS } = require(path.join(temp,'config'));
   assert(OPTIONAL_SETTING_KEYS.includes('guidedPalette'), 'Palette must survive settings API writes');
-  console.log(`PASS: 8 experiences, 9 legacy looks, normalization, unchanged default, ${checked} scoped CSS selectors, 8 server-rendered homes`);
+  console.log(`PASS: 8 experiences, 13 standalone looks, normalization, unchanged default, ${checked} scoped CSS selectors, 10 server-rendered homes`);
 } finally { fs.rmSync(temp, {recursive:true,force:true}); }

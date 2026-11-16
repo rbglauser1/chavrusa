@@ -9,6 +9,7 @@ import { Formatted } from '@/components/Message';
 import { guidedPalette } from '@/lib/guided';
 import { isExperience } from '@/lib/experiences';
 import ExperienceNav from '@/components/ExperienceNav';
+import { LaunchNav } from '@/components/LaunchHome';
 import Review from '@/components/Review';
 import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
@@ -380,7 +381,7 @@ export default function Home() {
   // ---------- Load ----------
   useEffect(() => {
     const requestedLook = new URLSearchParams(window.location.search).get('preview-look');
-    const previewLook = isExperience(requestedLook) ? requestedLook : null;
+    const previewLook = isExperience(requestedLook) || requestedLook === 'clay' || requestedLook === 'chatgpt' ? requestedLook : null;
     designPreviewOnly.current = !!previewLook;
     try {
       const kept = localStorage.getItem('chavrusa_settings');
@@ -879,6 +880,8 @@ export default function Home() {
     if (view === 'learn' && isExperience(settings.theme)) window.scrollTo({ top: 0 });
   }, [view, settings.theme]);
 
+  const [discussionRequested, setDiscussionRequested] = useState(false);
+  const acknowledgeDiscussion = useCallback(() => setDiscussionRequested(false), []);
   const resumeLearning = async () => {
     const c=contInfo;
     if (c?.id && c.id!==sessionId) await openSession(c.id);
@@ -888,7 +891,7 @@ export default function Home() {
   const reviewRef=current?.ref || contInfo?.ref;
   const sandReviewPanel=sandReview && (reviewRef ? <Review refText={reviewRef} onClose={()=>setSandReview(false)} onGo={n=>{setSandReview(false);setView('learn');void openExact(reviewRef,n);}}/> : <div className="st-overlay"><section className="st-details" role="dialog" aria-label="Review"><h2>A little learning first.</h2><p>Open a sefer, then return here to review it.</p><button className="btn" onClick={()=>{setSandReview(false);setView('learn');openLibrary();}}>Choose a sefer</button><button className="btn ghost" onClick={()=>setSandReview(false)}>Close</button></section></div>);
 
-  const experienceNav = <ExperienceNav look={look} view={view}
+  const experienceNav = (look === 'clay' || look === 'chatgpt') ? (view !== 'learn' ? <LaunchNav view={view} onHome={() => setView('home')} onLibrary={() => { setView('learn'); openLibrary(); setTextTick(n => n + 1); }} onNotebook={() => setNotebook(true)} onRecent={() => { refreshSessions(); setView('recent'); }} onThemes={() => setView('themes')} onSettings={() => { setSettingsFrom('home'); setView('settings'); }} onReview={() => setSandReview(true)}/> : null) : <ExperienceNav look={look} view={view}
     onHome={() => setView('home')} onLearn={() => { if(look==='sand-teal'||look==='guided-learning'||look==='paper-ink'||look==='midnight-sefer') void resumeLearning(); else { setView('learn'); setTextTick((n) => n + 1); } }}
     onLibrary={() => { setView('learn'); openLibrary(); setTextTick((n) => n + 1); }}
     onNotebook={() => setNotebook(true)} onThemes={() => setView('themes')} onReview={() => setSandReview(true)} onSettings={() => {setSettingsFrom(view==='learn'?'learn':'home');setView('settings');}} />;
@@ -929,6 +932,8 @@ export default function Home() {
             look={settings.theme}
             cont={cont}
             onContinue={() => void homeContinue()}
+            onReview={() => setSandReview(true)}
+            onAsk={async text => { await resumeLearning(); setDiscussionRequested(true); spokeLast.current = false; void send(text); }}
             onLibrary={() => { goLearn(); openLibrary(); setTextTick((n) => n + 1); }} // keep the text area up once the Library has opened
             onRecent={() => { refreshSessions(); setView('recent'); }}
             onThemes={() => setView('themes')}
@@ -988,6 +993,8 @@ export default function Home() {
         <div className="main">
           <Minimal
             layout="quiet"
+            discussionRequested={discussionRequested}
+            onDiscussionOpened={acknowledgeDiscussion}
             settings={settings}
             current={current ?? null}
             items={items}
