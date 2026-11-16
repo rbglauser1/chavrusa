@@ -20,22 +20,6 @@ export function ViewportFix() {
       });
     };
     fit();
-    // Nov 16: the app draws under the clock (black-translucent). On iOS 26 the screen it lays out against can then come
-    // out shorter than the phone's screen, leaving a gap under everything pinned to the bottom. Measure how much is
-    // missing and hand it to the page as --ios-gap; the bottom bar and buttons move down by it and full-height boxes
-    // grow by it. Only when the page really is under the clock (a top safe area) and in portrait.
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
-    document.body.appendChild(probe);
-    const gapFit = () => {
-      const underClock = probe.getBoundingClientRect().height > 0;
-      const portrait = window.innerHeight > window.innerWidth;
-      const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
-      const gap = underClock && portrait && standalone && vv.scale < 1.05 && vv.height > window.innerHeight * 0.8 ? Math.round(screen.height - window.innerHeight) : 0;
-      if (gap > 4 && gap < 200) root.style.setProperty('--ios-gap', `${gap}px`); else root.style.removeProperty('--ios-gap');
-    };
-    gapFit(); window.setTimeout(gapFit, 400);
-    window.addEventListener('resize', gapFit); window.addEventListener('orientationchange', gapFit);
     vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit);
     window.addEventListener('scroll', fit, { passive: true }); window.addEventListener('orientationchange', fit);
     return () => { cancelAnimationFrame(raf); vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); window.removeEventListener('scroll', fit); window.removeEventListener('orientationchange', fit); };

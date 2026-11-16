@@ -271,6 +271,3 @@
      moves down by it, and full-height boxes grow by it. */
 :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(12px + env(safe-area-inset-top)); }
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-top:0; }
-:is([data-look='clay'],[data-look='chatgpt']) :is(.launch-dock, .ai-hub-btn, .st-full-ctl, .daf-dock .daf-bar, .st-study-footer .st-mic, .st-study-footer .ascroll) { translate:0 calc(var(--vv-shift, 0px) + var(--ios-gap, 0px)); }
-:is([data-look='clay'],[data-look='chatgpt']) :is(.app, .home-shell) { height:calc(100dvh + var(--ios-gap, 0px)); }
-:is([data-look='clay'],[data-look='chatgpt']) .hpage { height:calc(100dvh + var(--ios-gap, 0px)); }
