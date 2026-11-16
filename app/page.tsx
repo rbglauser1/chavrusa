@@ -439,7 +439,7 @@ export default function Home() {
     root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
     const cs = fontStack(FONTS_COMM, cf);
     if (cf !== 'rashi' && cf !== 'same' && cs) root.style.setProperty('--f-comm', cs); else root.style.removeProperty('--f-comm');
-  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin]);
+  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin, settings.paper]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 
