@@ -235,3 +235,14 @@
 /* Nov 16, Off-white and White: the reading screen's back arrow and ⋯ are black; the title (e.g. Yoma 3a) is terracotta. */
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header .st-icon { color:#131313; }
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#a85235; }
+
+/* Nov 16: Off-white works like White: black and greys throughout, only Continue in terracotta (and the AI). The
+   reading screen's title is black on both. */
+[data-look='clay'][data-paper='look'] { --accent:#1F1F1F; --accent-ink:#ffffff; --accent-soft:#EFEFED; }
+[data-look='clay'][data-paper='look'] .split-panel { background:#FAFAF8; border-color:#E3E3E1; }
+[data-look='clay'][data-paper='look'] .split-new { background:#F0EFEC; border-color:#E6E5E2; }
+[data-look='clay'][data-paper='look'] .split-new button { background:#FAFAF8; border-color:#E3E3E1; }
+[data-look='clay'][data-paper='look'] .split-home .launch-eyebrow { color:#555555; }
+[data-look='clay'][data-paper='look'] .split-panel .launch-primary { background:#a85235; color:#fff; }
+[data-look='clay'][data-paper='look'] .home-talk-btn { background:var(--accent); box-shadow:none; }
+[data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#131313; }
