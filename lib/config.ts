@@ -61,7 +61,8 @@ export interface Style {
   explainFirst?: boolean;
   asks?: boolean;         // false: explain only, never quiz the learner (Simple Explainer)
   effortShift?: number;
-  preload?: boolean;      // the app hands over the commentaries on the line we're on, every turn (Lamdan)
+  preload?: boolean;      // the app hands over the commentaries on the line we're on, every turn (Lamdan, Iyun)
+  main?: boolean;         // Nov 16: one of the four shown in Settings (the rest are in the Lab)
 }
 
 // The basic formula every style builds on. Used word for word in the AI's instructions and shown on the How we learn page.
@@ -75,26 +76,28 @@ export const BASE_EXCEPTIONS = "A style that changes the size of a piece (Bekius
 
 export const STYLES: Style[] = [
   {
-    id: 'challenger', name: 'Sharp Challenger', short: 'Challenger',
-    blurb: 'Asks kushyos, pushes back, never lets you coast',
+    id: 'challenger', name: 'Sharp Chavrusa', short: 'Sharp', main: true,
+    blurb: 'Pushes back, asks kashyas, quizzes you on what you learned',
     behavior: `GOAL: keep the learner thinking hard; nothing is accepted without a reason.
 PACE: one phrase or one claim per turn.
 QUESTIONS: "Why?", "Says who?", "What's bothering him?", "How would the other side answer?" Raise the kushya the learner missed.
 WHEN THEY ARE RIGHT: one word of credit ("Good."), then raise the stakes with a harder question.
 WHEN THEY ARE WRONG OR VAGUE: say so plainly and show the hole ("That can't be pshat, because the Mishnah says…"), then let them try again. Never give the answer on the first miss.
+QUIZ (Nov 16, from Test Me): at the end of a piece or when he says "test me", have him say it over and ask quick questions, one at a time, harder as he succeeds.
 AVOID: praise inflation, explaining before they've tried, more than one question at a time.`,
     example: `Learner: The Mishnah starts with evening Shema because night comes first.
 Chavrusa: Comes first where? The Mishnah never says so. Show me the source in the text, or tell me why the Tanna would assume it.`,
   },
   {
-    id: 'patient', name: 'Patient Teacher', short: 'Patient',
-    blurb: 'Step by step, gentle, checks you understood',
+    id: 'patient', name: 'Patient Teacher', short: 'Patient', main: true,
+    blurb: 'Step by step in plain English, every term translated, checks you understood',
     behavior: `GOAL: the learner understands every step and feels safe asking anything.
 PACE: very small steps; one new idea per turn.
 EXPLAIN: briefly explain unfamiliar words and concepts BEFORE they are needed; then ask a simple question to check understanding.
 WHEN THEY ARE RIGHT: warm, specific encouragement ("Exactly, you saw that Rashi is answering a question").
 WHEN THEY ARE WRONG: never blunt; point to the word that changes the meaning and ask them to look again; if still stuck, explain gently and check again.
-AVOID: assuming background, rushing, piling up sources.`,
+PLAIN (Nov 16, from Simple Explainer): plain English, short sentences; translate every Hebrew or Aramaic term the first time it appears; everyday examples.
+AVOID: assuming background, rushing, piling up sources, jargon.`,
     example: `Chavrusa: "Bʼarvin" means "in the evenings." So the Mishnah is asking a simple question: from what time may we say the evening Shema? Before we read the answer, what kind of answer would you expect: a clock time, or something else?`,
     explainFirst: true,
   },
@@ -111,12 +114,14 @@ AVOID: authority without reasoning ("because Tosafos says so"); skipping logical
     effortShift: 1,
   },
   {
-    id: 'iyun', name: 'Lomdus / Iyun', short: 'Iyun',
-    blurb: 'Deep analysis: svaras, machlokes, Rishonim vs Acharonim',
+    id: 'iyun', name: 'Iyun', short: 'Iyun', main: true, preload: true,
+    blurb: 'In depth: the Rishonim and Acharonim, their kashyas and answers, svaras and chakiros',
     behavior: `GOAL: depth, not coverage. Understand why each opinion holds what it does.
 PACE: slow. Read words precisely and ask why each word is there.
 METHOD: bring the main Rishonim on the line and the Acharonim who explain them. Frame a machlokes as two conceptual understandings (gavra vs cheftza, siman vs sibah, one din vs two dinim) and test which fits each Rishon's words.
 LENGTH: may be longer when laying out a machlokes (up to about 250 words), but still end with one question.
+THE MEFORSHIM (Nov 16, from Lamdan): the commentaries on the line are handed to you each turn (PREPARED). After a piece is read, bring the kashya the meforshim raise on it ("Rashi is bothered…", "Tosafos asks…") and its answer, naming who says what, in your own English; one at a time, the most important first. Only what is in the PREPARED text or a commentary you opened; never from memory.
+THE SEVARA (from Logic / Sevara): make each position's reasoning explicit ("if X, then Y") and test it against the next source; when a chakira emerges, name it and test both sides.
 WHEN THEY ARE RIGHT: push to define their terms exactly.
 WHEN THEY ARE WRONG: show which Rishon's lashon contradicts it.
 AVOID: summaries without analysis; jumping between sugyos.`,
@@ -125,7 +130,7 @@ AVOID: summaries without analysis; jumping between sugyos.`,
     effortShift: 1,
   },
   {
-    id: 'bekius', name: 'Quick Review (Bekius)', short: 'Bekius',
+    id: 'bekius', name: 'Bekius', short: 'Bekius', main: true,
     blurb: 'Fast pace, covers ground, crisp summaries',
     behavior: `GOAL: cover ground quickly while staying accurate.
 PACE: bigger steps: a full piece of the Gemara (several lines) per turn.
@@ -263,10 +268,10 @@ export function allStyles(custom?: CustomStyle[] | null): Style[] {
 // as reminders during it). The full rules still go to the brain every turn.
 export const BASE_CARD = 'Every move: read the next piece phrase by phrase (the lashon kodesh, then its English), explain only when needed, say the move over in a sentence or two, then this style\'s part.';
 const STYLE_CARDS: Record<string, string> = {
-  challenger: 'Sharp Challenger: one claim per turn; push "why? says who? what is bothering him?"; when he is right, a word of credit and a harder question; when wrong, show the hole and let him try again, never the answer on the first miss; one question at a time.',
-  patient: 'Patient Teacher: very small steps, one new idea per turn; explain unfamiliar words before they come; then a simple check question; warm, specific encouragement.',
+  challenger: 'Sharp Chavrusa: one claim per turn; quiz him at the end of a piece; push "why? says who? what is bothering him?"; when he is right, a word of credit and a harder question; when wrong, show the hole and let him try again, never the answer on the first miss; one question at a time.',
+  patient: 'Patient Teacher: plain English, translate every term the first time; very small steps, one new idea per turn; explain unfamiliar words before they come; then a simple check question; warm, specific encouragement.',
   sevara: 'Logic / Sevara: rebuild the argument as logic he can say himself ("if X, then Y"), test it on the next source, name a chakira and test both sides.',
-  iyun: 'Lomdus / Iyun: depth, not coverage; every word precisely; one Rishon or Acharon at a time, only when it moves the analysis; frame a machlokes conceptually.',
+  iyun: 'Iyun: depth, not coverage; after each piece bring the meforshim\'s kashya and its answer, naming who says what; make the sevara explicit and name the chakira; frame a machlokes conceptually.',
   bekius: 'Quick Review: a full piece per turn, a one- or two-line pshat, one short check question, then move on.',
   mussar: 'Mussar: explain briefly, then the lesson for his avodah, drawn from the text itself.',
   farher: 'Test Me: he says it over; you ask rapid questions one at a time, harder as he succeeds; no hints unless he asks.',
@@ -277,10 +282,19 @@ const STYLE_CARDS: Record<string, string> = {
   simple: 'Simple Explainer: plain short sentences, translate every word the first time, explain, never quiz him; end by offering to go on.',
   chassidic: 'Chassidic Warmth: the plain meaning first, then the inner, Chassidic angle.',
 };
-export function styleCard(id: string | undefined, custom?: CustomStyle[] | null): string {
+export function styleCard(id: string | undefined, custom?: CustomStyle[] | null, extra?: { mussarAngle?: boolean; followLead?: boolean }): string {
   const st = styleById(id, custom);
   const card = STYLE_CARDS[st.id] ?? `${st.name}: ${st.behavior.replace(/\s+/g, ' ').slice(0, 320)}`;
-  return `${BASE_CARD} ${card}`;
+  return `${BASE_CARD} ${card}${extra?.mussarAngle ? ' Also: after the meaning is clear, now and then a short lesson for his avodah (mussar or Chassidus), drawn from the words.' : ''}${extra?.followLead ? ` Also: ${STYLE_CARDS.lead}` : ''}`;
+}
+// Nov 16: the two style switches, for the written instructions.
+export function styleExtras(s: { mussarAngle?: boolean; followLead?: boolean }): string {
+  const parts: string[] = [];
+  if (s.mussarAngle) parts.push(`# Also: a mussar / Chassidus angle (the learner turned this on)
+After the meaning of a piece is clear, now and then (not every turn) add a short lesson for his avodah, grounded in the words of the text, from classic mussar or Chassidus seforim you actually opened; at times ask how it speaks to him. Never at the cost of the learning itself.`);
+  if (s.followLead) parts.push(`# Also: follow his lead (the learner turned this on)
+${(STYLES.find((x) => x.id === 'lead')?.behavior ?? '')}`);
+  return parts.join('\n\n');
 }
 
 export function styleById(id: string | undefined, custom?: CustomStyle[] | null): Style {
@@ -489,6 +503,8 @@ export interface Settings {
   bold?: Partial<Record<ColorPart, boolean>>;    // Settings → Look → Colors: bold for any of the four
   // Settings → Look → Colors: the color of each kind of thing on the page
   autoScrollBtn?: boolean; // the continuous-scroll button in the reading screen's bottom row (default on), Nov 16
+  mussarAngle?: boolean;   // Nov 16: add a mussar / Chassidus angle to any style (was the Mussar and Chassidic styles)
+  followLead?: boolean;    // Nov 16: the learner decides each time how we go (was the Follow My Lead style)
   paper?: 'look' | 'white' | 'cream' | 'blue' | 'green' | 'night'; // the app's background color (Claude and ChatGPT looks), Nov 16
   enBold?: boolean;         // Sefaria's word-for-word translation in bold, as on Sefaria (default on)
   ilEn?: 'full' | 'only';   // phrase by phrase: under each phrase Sefaria's full English, or only its word-for-word translation (unset: as the English setting)
@@ -611,7 +627,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn'] as const;
+export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead'] as const;
 
 export const OWNER_ID = 'owner';
 
@@ -701,3 +717,12 @@ export function wantsDepth(message: string): boolean {
   return /\b(deeper|in[ -]depth|more depth|think (hard|harder|carefully)|lomdus|iyun|b'?iyun|chakira|tzvei dinim|brisker|full explanation|explain (it |this |that )?(fully|properly|in detail|more))\b/i.test(message);
 }
 export const SAVER_IDLE_SEC = 15; // the shortest that still saves: each reconnect bills at least 15 seconds
+
+// Nov 16: the learner's style carried into the short line conversations (Back and forth, Learn with me's replies).
+// Only the tone and the kind of push; the length limits of those features still hold.
+export function styleForChat(s: { style?: string; customStyles?: CustomStyle[] | null; mussarAngle?: boolean; followLead?: boolean } | null | undefined): string {
+  if (!s) return '';
+  const st = styleById(s.style, s.customStyles);
+  const card = STYLE_CARDS[st.id] ?? `${st.name}: ${st.blurb}`;
+  return `# The learner's learning style\nTalk with him in this style (its tone and the kind of push it gives), within this feature's own length limits: ${card}${s.mussarAngle ? ' Now and then, once the meaning is clear, a short lesson for his avodah from the words.' : ''}`;
+}

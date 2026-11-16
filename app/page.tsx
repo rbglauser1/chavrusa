@@ -198,7 +198,7 @@ export default function Home() {
     // What the voice is reminded of during a call: the style in a few lines, and the learner's instructions for this session.
     reminder: () => {
       const st = settingsRef.current;
-      const card = styleCard(st.style, st.customStyles) + (st.blend ? ` Also: ${styleCard(st.blend, st.customStyles).replace(/^.*?this style's part\. /, '')}` : '');
+      const card = styleCard(st.style, st.customStyles, st) + (st.blend ? ` Also: ${styleCard(st.blend, st.customStyles).replace(/^.*?this style's part\. /, '')}` : '');
       const reqs = requestsRef.current.map((r) => r.content).filter(Boolean);
       return `Stay in this style every move. ${card}${reqs.length ? ` The learner's instructions for this session (they come before everything else): ${reqs.map((r) => `"${r}"`).join('; ')}.` : ''}`;
     },

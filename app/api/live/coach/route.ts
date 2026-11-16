@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   if (!log.length || !String(log[log.length - 1]?.said ?? '').trim()) return NextResponse.json({ note: '' });
   const [s, memories] = await Promise.all([getSettings(), listMemories().catch(() => [])]);
   const st = styleById(s.style, s.customStyles);
-  const card = styleCard(s.style, s.customStyles) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles)}` : '');
+  const card = styleCard(s.style, s.customStyles, s) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles)}` : '');
   const requests: string[] = Array.isArray(b.requests) ? b.requests.map(String).filter(Boolean).slice(0, 12) : [];
   const saved = memories.filter((m) => m.kind === 'instruction' && !m.scope?.startsWith('session:')).map((m) => m.content).slice(0, 12);
   const clip = (t: unknown, n: number) => { const x = String(t ?? '').replace(/\s+/g, ' ').trim(); return x.length > n ? `${x.slice(0, n)}…` : x; };

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MODELS, costUsd } from '@/lib/config';
+import { MODELS, costUsd, styleForChat } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     const model = MODELS[settings.provider][settings.tier];
     const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
     const r = await run({
-      lang: true, model: model.id, system: `${REPLY}\n\n${SCOPE}`,
+      lang: true, model: model.id, system: `${REPLY}\n\n${styleForChat(settings)}\n\n${SCOPE}`,
       history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lineText(s.he, s.en, n)}\n\n---\nYou asked: ${String(b.question ?? '').slice(0, 500)}\nHe answered: ${answer}` }],
       tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 500,
     });

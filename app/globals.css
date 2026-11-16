@@ -2983,3 +2983,12 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 /* Nov 16: the Learn with me strip floats a little in from the edges. An edge-to-edge bar pinned to the bottom makes
    iOS 26 paint the strip under the clock in a solid color, which hid the text sliding up there in full screen. */
 .lwm-strip { left: 6px; right: 6px; bottom: max(6px, calc(env(safe-area-inset-bottom) - 18px)); border-radius: 18px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+
+/* Learn with me, Nov 16: a handle on top. Drag up: bigger; down: smaller (just the top row); down again: closed. */
+.lwm-grab { display: flex; justify-content: center; padding: 6px 0 2px; touch-action: none; cursor: grab; }
+.lwm-grab span { width: 38px; height: 5px; border-radius: 3px; background: var(--rule); }
+.lwm-strip .lwm-strip-top { touch-action: none; }
+.lwm-strip { transition: max-height .25s ease, transform .2s ease; }
+.lwm-strip.lwm-max { max-height: 86dvh; }
+.lwm-strip.lwm-min { max-height: none; }
+.lwm-strip.lwm-min :is(.lwm-strip-body, .lwm-strip-nav) { display: none; }

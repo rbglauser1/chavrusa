@@ -1,6 +1,6 @@
 // The Chavrusa's instructions. This is the heart of the app: edit the wording here to change how it learns.
 
-import { BASE_EXCEPTIONS, BASE_FORMULA, Settings, styleById } from './config';
+import { BASE_EXCEPTIONS, BASE_FORMULA, Settings, styleById, styleExtras } from './config';
 import { Memory } from './db';
 
 import { SCOPE } from "./scope";
@@ -137,7 +137,7 @@ Length for this style: up to about ${style.maxWords ?? 150} words per message.
 ${style.asks === false ? 'This style explains and does not quiz: ignore any instruction in this document to ask the learner questions, push back, or have them explain first (unless the learner asks for that).' : style.explainFirst ? 'This style explains briefly before asking (unless the learner has chosen to explain first, or asks otherwise).' : ''}
 Sample of the tone (illustration only: never quote it or treat it as a source):
 ${style.example}
-${blend ? `\n# Blended with: ${blend.name}\nCombine with the above where they don't conflict; where they do, the main style wins.\n${blend.behavior}\nSample of the tone (illustration only):\n${blend.example}` : ''}
+${styleExtras(s) ? `\n${styleExtras(s)}\n` : ''}${blend ? `\n# Blended with: ${blend.name}\nCombine with the above where they don't conflict; where they do, the main style wins.\n${blend.behavior}\nSample of the tone (illustration only):\n${blend.example}` : ''}
 Who leads: ${style.asks === false ? 'YOU explain (this style does not ask the learner to explain).' : s.leads === 'learner'
     ? 'The LEARNER reads and explains first. After bringing a source, ask them to explain it before you say anything about its content.'
     : 'YOU explain first, briefly, then ask the learner a question to check and deepen understanding.'}

@@ -75,7 +75,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           <Group id="style" title="Learning style" hint={`${styleById(s.style, s.customStyles).name} · ${s.leads === 'learner' ? 'you explain first' : 'chavrusa explains first'} · ${s.nusach === 'sephardi' ? 'Sephardi' : 'Ashkenaz'}`}>
             <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Or just tell your chavrusa: “be gentler,” “quiz me,” “go deeper.” <a href="/guide">How we learn</a> · <a href="#" onClick={(e) => { e.preventDefault(); onHelp(); }}>What can I ask for?</a> · <a href="/lab">Compare styles</a></p>
             <div className="style-list">
-              {STYLES.map((st) => (
+              {STYLES.filter((st) => lab || st.main || st.id === s.style).map((st) => (
                 <button key={st.id} className={`style-opt ${s.style === st.id ? 'on' : ''}`} onClick={() => onChange({ style: st.id, blend: null })}>
                   <b>{st.name}</b><span>{st.blurb}</span>
                 </button>
@@ -91,6 +91,17 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   </span>
                 </div>
               ))}
+            </div>
+            {/* Nov 16: two switches that go with any style (they were the Mussar, Chassidic and Follow My Lead styles). */}
+            <div className="field">
+              <label>Add a mussar / Chassidus angle</label>
+              <Seg value={s.mussarAngle ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ mussarAngle: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, once the meaning is clear, a short lesson for your avodah from the words.</div>
+            </div>
+            <div className="field">
+              <label>Follow my lead</label>
+              <Seg value={s.followLead ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ followLead: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>You decide each time: it reads and explains, you read and it listens, or it asks you questions.</div>
             </div>
             {editing ? (
               <StyleMaker key={editing.id || 'new'} start={editing} onCancel={() => setEditing(null)} onSave={(c) => {

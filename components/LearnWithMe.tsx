@@ -8,7 +8,7 @@
 //   3. Every few lines, and at the turning points, the strip asks one question: answer it, "Show me", or just Next.
 //   4. At the end: well learned, and on to the next section.
 // The opening, the line guide and the explanations are each made once and kept.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type TouchEvent as RTouch } from 'react';
 import { createPortal } from 'react-dom';
 import Thinking from './Thinking';
 import { WithSources } from './LineExtras';
@@ -62,6 +62,19 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
 }) {
   useBackLayer(true, onClose);
   const introSheet = useSwipeDown<HTMLDivElement>(onClose);
+  // Nov 16: drag the strip's top edge: up to make it bigger, down to make it smaller, down again from small to close.
+  const [size, setSize] = useState<'min' | 'mid' | 'max'>('mid');
+  const [drag, setDrag] = useState(0);
+  const dragFrom = useRef<number | null>(null);
+  const grab = {
+    onTouchStart: (e: RTouch) => { dragFrom.current = e.touches[0].clientY; },
+    onTouchMove: (e: RTouch) => { if (dragFrom.current != null) setDrag(e.touches[0].clientY - dragFrom.current); },
+    onTouchEnd: () => {
+      const d = drag; dragFrom.current = null; setDrag(0);
+      if (d < -50) setSize((v) => (v === 'min' ? 'mid' : 'max'));
+      else if (d > 50) { if (size === 'min') onClose(); else setSize((v) => (v === 'max' ? 'mid' : 'min')); }
+    },
+  };
   const [phase, setPhase] = useState<'intro' | 'learn'>('intro');
   const [n, setN] = useState(Math.min(Math.max(1, start), total));
   const done = n > total;
@@ -154,8 +167,9 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
   }
 
   return createPortal(
-    <div className="lwm-strip" role="region" aria-label="Guided learning">
-      <div className="lwm-strip-top">
+    <div className={`lwm-strip lwm-${size}`} role="region" aria-label="Guided learning" style={drag ? { transform: `translateY(${Math.max(-80, drag)}px)`, transition: 'none' } : undefined}>
+      <div className="lwm-grab" {...grab} onClick={() => setSize((v) => (v === 'min' ? 'mid' : v))} aria-label="Drag up to make bigger, down to make smaller or close"><span /></div>
+      <div className="lwm-strip-top" {...grab}>
         <span className="lwm-count">{done ? 'Finished' : `Line ${n} of ${total}`}</span>
         <div className="lwm-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, ((done ? total : n - 1) / Math.max(1, total)) * 100)}%` }} /></div>
         {(voice || onVoiceTalk) && !done && <button className="lwm-mic" onClick={() => setVoicePick((v) => !v)} aria-label="Switch to voice" aria-expanded={voicePick}>🎙</button>}

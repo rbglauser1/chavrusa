@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         requests: memories.filter((m) => m.scope === `session:${sid}`).map((m) => m.content),
         saved: memories.filter((m) => m.kind === 'instruction' && !m.scope?.startsWith('session:')).map((m) => m.content),
         noticed: memories.filter((m) => m.kind === 'observation').map((m) => m.content),
-        card: styleCard(s.style, s.customStyles) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles).replace(/^.*?this style's part\. /, '')}` : ''),
+        card: styleCard(s.style, s.customStyles, s) + (s.blend ? ` Also: ${styleCard(s.blend, s.customStyles).replace(/^.*?this style's part\. /, '')}` : ''),
       });
       // The conversation so far, so a new or resumed call picks up exactly where we were.
       // The text read in earlier turns is left out of what the voice sees (only "[read the text inside]"): otherwise it
