@@ -35,7 +35,6 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
   return (
     <main className="launch-home split-home no-pull" aria-label="Claude split canvas Home">
       <header className="split-intro">
-        <span className="launch-eyebrow">Your next moment of learning</span>
         <h1>Make time{' '}<br />to learn.</h1>
       </header>
       <div className="split-panels">
