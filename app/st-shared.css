@@ -1,0 +1,166 @@
+/* Nov 15: the Sand and teal learning screen, shared by the Claude and ChatGPT looks (generated from sand-teal.css:
+   the study rules only, in each look's own colors). Home, Settings, Library and Notebook are styled in launch-home.css. */
+/* Sand and Teal is a dedicated interface. It does not alter the other looks. */
+:is([data-look='clay'],[data-look='chatgpt']) button { -webkit-tap-highlight-color:transparent; }
+:is([data-look='clay'],[data-look='chatgpt']) button:focus-visible, :is([data-look='clay'],[data-look='chatgpt']) a:focus-visible, :is([data-look='clay'],[data-look='chatgpt']) select:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+:is([data-look='clay'],[data-look='chatgpt']) .app.is-min { padding:0 0 calc(78px + env(safe-area-inset-bottom)); }
+:is([data-look='clay'],[data-look='chatgpt']) .app.is-min>.main { min-height:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-icon { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; padding:0; flex:none; border:0; background:transparent; color:var(--accent); border-radius:50%; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-icon:hover { background:var(--accent-soft); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-primary { display:flex; align-items:center; justify-content:center; gap:12px; padding:14px 20px; min-height:50px; border:0; border-radius:14px; background:var(--accent); color:white; font:500 15px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-secondary { padding:12px 18px; min-height:44px; border:1px solid var(--rule); border-radius:12px; background:var(--surface); color:var(--accent); font:14px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-eyebrow { font:500 10px/1.4 var(--f-ui); letter-spacing:1.8px; }
+/* A four-destination phone dock becomes a full desktop rail. */
+/* Home fits the viewport. Long histories, goals and recaps open on their own surfaces. */
+:is([data-look='clay'],[data-look='chatgpt']) .st-book-art { display:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-resume { position:relative; display:flex; flex-direction:column; text-align:left; min-width:0; padding:23px 24px 16px; border:0; border-radius:22px; background:#195d55; color:#fffdf4; box-shadow:0 10px 30px #17554d12; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-resume-top { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#d0ded0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-resume-top .st-eyebrow { font-size:8px; letter-spacing:1.3px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-resume strong { display:block; font-family:var(--f-he); font-size:32px; font-weight:500; line-height:1.25; margin:auto 0 5px; text-align:start; overflow-wrap:anywhere; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-resume-place { color:#d4e2d6; font:12px/1.5 var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-resume-bottom { display:flex; align-items:center; justify-content:space-between; border-top:1px solid #ffffff25; padding-top:12px; margin-top:auto; font:500 13px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-resume-bottom>span { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#f3f0df; color:var(--accent); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-new-book { display:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-voice-start { display:flex; align-items:center; gap:13px; width:100%; border:0; border-radius:15px; padding:12px 16px; background:#e7ebdf; color:var(--accent); font:500 13px var(--f-ui); text-align:left; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-voice-start span { flex:1; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-voice-start small { display:block; font-weight:400; font-size:10px; margin-top:4px; color:var(--soft); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-overlay { position:fixed; z-index:350; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; background:#142c2866; backdrop-filter:blur(8px); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-details { max-width:660px; width:100%; max-height:85dvh; overflow:auto; padding:28px; background:var(--bg); border-radius:24px; box-shadow:0 28px 80px #173e3329; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-details>header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-details h2 { font:500 30px var(--f-ui); margin:8px 0; }
+/* Reading is a new workspace, not the legacy Quiet layout with a new palette. */
+:is([data-look='clay'],[data-look='chatgpt']) .st-study { flex:1; min-height:0; display:flex; flex-direction:column; position:relative; background:var(--bg); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header { position:relative; display:flex; align-items:center; gap:6px; padding:12px 16px 8px; flex-shrink:0; background:var(--bg); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header>div:not(.st-tools-menu) { flex:1; min-width:0; text-align:center; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header h1 { margin:0; font:600 19px var(--f-ui); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:-.5px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header>div>span { display:block; margin-top:4px; color:var(--soft); font-family:var(--f-he); font-size:12px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header>.st-icon:last-of-type { width:32px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-tools-menu { position:absolute; right:18px; top:65px; width:260px; z-index:120; padding:8px; background:var(--surface); border:1px solid var(--rule); border-radius:16px; box-shadow:0 16px 45px #1d352327; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-tools-menu button { display:block; width:100%; text-align:left; padding:13px; border:0; border-radius:9px; background:none; font:13px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-tools-menu button:hover { background:var(--accent-soft); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-reading-toolbar { display:flex; gap:10px; align-items:center; justify-content:space-between; padding:12px 22px; border-block:1px solid var(--rule); flex-shrink:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-reading-toolbar>.st-eyebrow { color:var(--soft); font-size:9px; letter-spacing:1.2px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-language select { max-width:160px; padding:8px 10px; color:var(--accent); background:transparent; border:1px solid #aac3bb; border-radius:9px; font:11px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-view-switch { display:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-content { flex:1; min-height:0; display:flex; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source { display:flex; flex:1; min-width:0; min-height:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source>.sefer { width:100%; min-height:0; background:none; border:0; border-radius:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .sefer-flow { margin:0; padding:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .line { padding:16px 14px; margin:0 0 12px; border:0; border-radius:16px; transition:background .15s; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .line.focus { background:none; box-shadow:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .line .he { line-height:1.5; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .line .en, :is([data-look='clay'],[data-look='chatgpt']) .st-source .il-en { font-family:var(--f-ui); font-weight:400; line-height:1.6; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .line .en { border:0; padding-top:0; margin-top:12px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .smap-bar { gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .smap-btn { border:1px solid var(--rule); background:var(--surface); border-radius:9px; padding:8px 10px; font:11px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-source .comm { background:var(--surface); border:1px solid #c8d5c9; border-radius:16px; padding:18px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-footer { display:flex; flex-shrink:0; align-items:center; gap:12px; padding:14px 22px; background:var(--bg); border-top:1px solid var(--rule); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-ask { flex:1; min-width:0; font-size:14px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-ask>svg:last-child { display:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-mic { display:flex; align-items:center; justify-content:center; width:51px; height:51px; border-radius:14px; background:var(--accent-soft); color:var(--accent); border:1px solid #b7cfc5; flex:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-live { background:var(--accent); color:white; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-footer>p { display:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-conversation { display:none; flex-direction:column; min-height:0; min-width:0; flex:1; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-conversation>header { display:flex; align-items:center; gap:12px; padding:20px 22px; border-bottom:1px solid var(--rule); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-conversation>header h2 { font:500 17px var(--f-ui); margin:0 0 5px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-conversation>header>div { flex:1; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-conversation>header>div>span { color:var(--soft); font:11px var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-chat-avatar { width:43px; height:43px; display:flex; align-items:center; justify-content:center; border:1px solid #d1d8ca; color:var(--accent); background:#e7ebdf; border-radius:50%; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-conversation-scroll { flex:1; min-height:0; overflow:auto; padding:18px 24px; scroll-behavior:auto; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-ai-note { color:var(--soft); font:10px/1.6 var(--f-ui); margin:0 0 22px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-message { font-size:var(--en-size,16px); line-height:1.7; overflow-wrap:anywhere; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-message p { margin:0 0 13px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-message-you { max-width:92%; width:fit-content; margin:0 0 24px auto; padding:16px 18px; border-radius:18px 18px 4px 18px; background:#e1e9df; color:#30473e; font-size:calc(var(--en-size,16px) - 2px); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-message-ai { margin-bottom:28px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-message-label { display:block; font:500 9px var(--f-ui); letter-spacing:1.5px; color:var(--accent); margin-bottom:12px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-chat-welcome { padding:40px 10px; color:var(--accent); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-chat-welcome h3 { font-size:22px; font-weight:500; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-chat-welcome p { color:var(--soft); font-size:14px; line-height:1.8; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-composer { position:relative; margin:12px 20px 18px; border:1px solid #c8d1c3; border-radius:18px; background:var(--surface); padding:12px 54px 12px 14px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-composer textarea { display:block; width:100%; resize:none; min-height:44px; max-height:140px; border:0; background:transparent; color:var(--ink); outline:0; font:16px/1.5 var(--f-ui); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-send { display:flex; align-items:center; justify-content:center; position:absolute; right:10px; bottom:10px; width:40px; height:40px; border:0; background:var(--accent); color:#fff; border-radius:12px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-send:disabled { background:#dce2d7; color:#7b8d7e; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-chat-error { padding:14px; font-size:13px; color:var(--danger); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-chat-error button { display:block; margin-top:10px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-thinking { display:flex; align-items:center; gap:10px; color:var(--soft); font:13px var(--f-ui); padding:12px 0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-thinking>span { width:8px; height:8px; border-radius:50%; background:var(--accent); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-discussing .st-source { display:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-discussing .st-conversation { display:flex; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-discussing .st-study-footer { display:none; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; width:100%; padding:30px; color:var(--accent); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-empty h2 { font-size:26px; font-weight:500; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-empty p { font-size:14px; color:var(--soft); line-height:1.7; margin-bottom:24px; }
+:is([data-look='clay'],[data-look='chatgpt']) .daf-dock .daf-bar { bottom:calc(164px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:60; }
+/* The surrounding tools have their own spacious surfaces and restrained controls. */
+:is([data-look='clay'],[data-look='chatgpt']) .looks { gap:22px; }
+:is([data-look='clay'],[data-look='chatgpt']) .smap { border-radius:24px; }
+:is([data-look='clay'],[data-look='chatgpt']) .smap-head { padding:22px; background:var(--accent); color:#fff; border-radius:22px 22px 0 0; }
+:is([data-look='clay'],[data-look='chatgpt']) .smap-head button { color:white; }
+:is([data-look='clay'],[data-look='chatgpt']) .rv-list { padding:0 20px 20px; }
+:is([data-look='clay'],[data-look='chatgpt']) .rv-q { background:var(--surface); border:1px solid var(--rule); border-radius:16px; padding:16px; }
+@media(min-width:700px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .st-book-art { display:block; width:48%; max-height:290px; margin-left:auto; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-new-book { display:flex; align-items:flex-start; flex-direction:column; justify-content:center; position:relative; gap:15px; padding:28px; background:#e9e7db; border:1px solid #deded0; border-radius:22px; text-align:left; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-new-book strong { font-size:19px; font-weight:500; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-new-book small { display:block; color:var(--soft); font-size:12px; margin-top:8px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-new-book>svg { position:absolute; right:24px; bottom:24px; color:var(--accent); }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-new-icon { color:var(--accent); }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-resume strong { font-size:42px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-voice-start { max-width:420px; margin-inline:auto; }
+}
+@media(min-width:1050px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .app.is-min { padding:0 0 0 224px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-brand { display:flex; gap:12px; text-align:left; align-items:flex-start; border:0; background:none; color:var(--accent); padding:0 5px; margin-bottom:54px; font:500 24px var(--f-brand); letter-spacing:-1px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-brand>span>span { display:block; font:11px var(--f-ui); letter-spacing:0; color:var(--soft); margin-top:10px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-resume { padding:25px 30px 18px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-resume-top .st-eyebrow { font-size:9px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-voice-start { max-width:310px; margin:0; background:none; border:1px solid var(--rule); }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding:18px 24px; gap:14px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-study-header>div:not(.st-tools-menu) { text-align:left; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-study-header h1 { font-size:24px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-study-header>div>span { text-align:left; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-reading-toolbar { padding:14px 32px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-language { margin-right:auto; margin-left:20px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-view-switch { display:flex; gap:4px; padding:4px; background:#e9ebdf; border-radius:11px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-view-switch button { padding:8px 15px; border:0; background:none; border-radius:8px; font:11px var(--f-ui); }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-view-switch button[aria-pressed=true] { background:var(--surface); color:var(--accent); }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-study-content { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr); }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-source { padding-bottom:90px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-conversation { display:flex; border-left:1px solid var(--rule); background:#eeeee4; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-chat-close { display:none; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-study-footer { position:absolute; left:0; bottom:0; width:55.56%; min-height:90px; padding:18px 32px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-ask>svg:last-child { display:block; margin-left:auto; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-discussing .st-study-content { display:flex; justify-content:center; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-discussing .st-conversation { border-left:0; max-width:900px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .daf-dock .daf-bar { bottom:112px; left:calc(224px + (100vw - 224px)*.2778); right:auto; }
+}
+@media(max-height:740px) and (max-width:1049px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .st-resume { padding:17px 20px 12px; }
+}
+@media(max-height:760px) and (min-width:1050px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .st-book-art { max-height:190px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-resume strong { font-size:34px; }
+}
+@media(max-width:370px) {
+ :is([data-look='clay'],[data-look='chatgpt']) .st-resume strong { font-size:28px; }
+ :is([data-look='clay'],[data-look='chatgpt']) .st-conversation>header { padding:14px; }
+}
+@media(max-width:1049px) {
+ :is([data-look='clay'],[data-look='chatgpt'])[data-experience-keyboard] .app.is-min { padding-bottom:0; }
+}
+
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-footer.st-has-voice-status { flex-wrap:wrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-footer.st-has-voice-status>p { display:block; flex-basis:100%; margin:0; color:var(--soft); font:11px/1.5 var(--f-ui); }
+
+/* Full screen (double-tap the text, or ⋯ → Full screen): just the text, with Talk and ⤡ at the bottom right. */
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding:env(safe-area-inset-top) 0 0; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-study-content { display:flex; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-source { padding-bottom:0; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .daf-dock .daf-bar { bottom:calc(20px + env(safe-area-inset-bottom)); left:50%; right:auto; transform:translateX(-50%); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-full-ctl { position:fixed; z-index:80; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); display:flex; gap:10px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-full-ctl button { width:46px; height:46px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--rule); background:var(--surface); color:var(--accent); font:18px var(--f-ui); box-shadow:0 2px 10px #0000001a; padding:0; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-full-ctl .st-mic.st-live { background:var(--accent); color:#fff; border-color:var(--accent); }
+:is([data-look='clay'],[data-look='chatgpt']) .st-tools-menu button small { color:var(--soft); font-size:11px; margin-left:6px; }
+
+/* Nov 15: open group headings no longer float over the controls (they stacked: "Look" over "Look and fonts"). */
+/* the ✦ sits above "Ask your chavrusa" instead of over its button */

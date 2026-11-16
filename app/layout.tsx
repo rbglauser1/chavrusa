@@ -12,6 +12,7 @@ import './paper-ink.css';
 import './midnight-home.css';
 import './launch-home.css';
 import './chatgpt.css';
+import './st-shared.css';
 import { guidedPalette } from '@/lib/guided';
 import { EXPERIENCES, isExperience } from '@/lib/experiences';
 import { PullRefresh } from '@/components/PullRefresh';
