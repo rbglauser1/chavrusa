@@ -97,6 +97,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
   const [approvable, setApprovable] = useState<{ work: string; ref: string } | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
   const [showRecent, setShowRecent] = useState(false);
+  const [showMine, setShowMine] = useState(false); // Nov 16: "My seforim" is one card; it opens your own texts
   useEffect(() => { setRecent(loadRecent()); }, [path, book]);
   const nice = useMineTitles(recent.some((r) => /^Mine /.test(r.ref)));
   // Jumps from the trail shown in the Sefer.
@@ -173,8 +174,24 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
       {!book && !path.length && offlineOn() && <OfflineShelf onPick={(t) => setBook({ title: t })} />}
+      {!book && !path.length && !showRecent && (
+        <div className="lib-recent">
+          {!showMine ? (
+            <button className="lib-item category" onClick={() => setShowMine(true)}>
+              <span className="en">My seforim</span>
+              <span className="muted" style={{ fontSize: 13 }}>Add your own: a PDF, Word file, photo or web page</span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+          ) : (
+            <>
+              <div className="lib-recent-head"><button className="linklike" onClick={() => setShowMine(false)}>‹ My seforim</button></div>
+              <MySeforim busy={busy} onOpen={(ref) => open(ref)} />
+            </>
+          )}
+        </div>
+      )}
       {/* Nov 16: one "Recent" card; it opens your last 8 places */}
-      {!book && !path.length && recent.length > 0 && (
+      {!book && !path.length && !showMine && recent.length > 0 && (
         <div className="lib-recent">
           {!showRecent ? (
             <button className="lib-item category" onClick={() => setShowRecent(true)}>
@@ -198,7 +215,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
           )}
         </div>
       )}
-      {!book && (
+      {!book && !showMine && !showRecent && (
         <div className="lib-list">
           {!items && !msg && <div className="muted">Opening the library…</div>}
           {items?.map((it) => (
@@ -211,8 +228,6 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
           {items && !items.length && !msg && <div className="muted">Nothing here.</div>}
         </div>
       )}
-      {/* Nov 16: your own seforim moved down here, under the library (the Notebook has its own tab) */}
-      {!book && !path.length && <div className="lib-mine-bottom"><MySeforim busy={busy} onOpen={(ref) => open(ref)} /></div>}
 
       {book && (
         <div className="lib-book">
