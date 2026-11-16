@@ -96,6 +96,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
   const [msg, setMsg] = useState('');
   const [approvable, setApprovable] = useState<{ work: string; ref: string } | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
+  const [showRecent, setShowRecent] = useState(false);
   useEffect(() => { setRecent(loadRecent()); }, [path, book]);
   const nice = useMineTitles(recent.some((r) => /^Mine /.test(r.ref)));
   // Jumps from the trail shown in the Sefer.
@@ -172,19 +173,29 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
       {!book && !path.length && offlineOn() && <OfflineShelf onPick={(t) => setBook({ title: t })} />}
+      {/* Nov 16: one "Recent" card; it opens your last 8 places */}
       {!book && !path.length && recent.length > 0 && (
         <div className="lib-recent">
-          <div className="lib-recent-head">
-            <span className="muted lib-hint">Recent</span>
-            <button className="clear-all" onClick={() => { try { localStorage.removeItem('lib-recent'); } catch { /* optional */ } setRecent([]); }}>Clear</button>
-          </div>
-          {recent.slice(0, 5).map((r) => (
-            <button key={r.ref} className="lib-item book" disabled={busy} onClick={() => open(r.ref)}>
-              <span className="en">{nice(r.ref)}</span>
-              <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{r.trail.slice(0, -1).join(' › ')}</span>
+          {!showRecent ? (
+            <button className="lib-item category" onClick={() => setShowRecent(true)}>
+              <span className="en">Recent</span>
+              <span className="muted" style={{ fontSize: 13 }}>{nice(recent[0].ref)}{recent.length > 1 ? ` and ${recent.length - 1} more` : ''}</span>
+              <span className="chev" aria-hidden="true">›</span>
             </button>
-          ))}
-          <div className="muted lib-hint" style={{ marginTop: 14 }}>All seforim</div>
+          ) : (
+            <>
+              <div className="lib-recent-head">
+                <button className="linklike" onClick={() => setShowRecent(false)}>‹ Recent</button>
+                <button className="clear-all" onClick={() => { try { localStorage.removeItem('lib-recent'); } catch { /* optional */ } setRecent([]); setShowRecent(false); }}>Clear</button>
+              </div>
+              {recent.slice(0, 8).map((r) => (
+                <button key={r.ref} className="lib-item book" disabled={busy} onClick={() => open(r.ref)}>
+                  <span className="en">{nice(r.ref)}</span>
+                  <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{r.trail.slice(0, -1).join(' › ')}</span>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
       {!book && (
