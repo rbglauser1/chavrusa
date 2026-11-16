@@ -181,7 +181,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="field">
                 <label>Background color</label>
                 <div className="paper-pick" role="radiogroup" aria-label="Background color">
-                  {([['look', 'As is'], ['white', 'White'], ['cream', 'Cream'], ['blue', 'Light blue'], ['green', 'Light green'], ['night', 'Night']] as const).map(([id, name]) => (
+                  {([['white', 'White'], ['look', 'Off-white'], ['cream', 'Cream'], ['blue', 'Light blue'], ['green', 'Light green'], ['night', 'Night']] as const).map(([id, name]) => (
                     <button key={id} role="radio" aria-checked={(s.paper ?? 'look') === id} className={`paper-sw paper-${id}`} onClick={() => onChange({ paper: id })}>
                       <span className="paper-dot" aria-hidden="true" /><span>{name}</span>
                     </button>
