@@ -231,3 +231,10 @@
   :is([data-look='clay'],[data-look='chatgpt']) { --row-mid:calc(100px + env(safe-area-inset-bottom)); }
 }
 :is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .st-mic:not(.st-live) { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+
+/* Continuous scroll (Nov 16): its button sits in the bottom row, left of the mic, the same size. */
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .ascroll { margin:0; }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .ascroll-btn { width:48px; height:48px; background:var(--surface); box-shadow:0 2px 10px #0000001a; }
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-study-footer .ascroll { position:fixed; z-index:61; right:132px; bottom:calc(var(--row-mid) - 24px); }
+}

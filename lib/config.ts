@@ -488,6 +488,7 @@ export interface Settings {
   colors?: Partial<Record<ColorPart, ColorId>>;
   bold?: Partial<Record<ColorPart, boolean>>;    // Settings → Look → Colors: bold for any of the four
   // Settings → Look → Colors: the color of each kind of thing on the page
+  autoScrollBtn?: boolean; // the continuous-scroll button in the reading screen's bottom row (default on), Nov 16
   paper?: 'look' | 'white' | 'cream' | 'blue' | 'green' | 'night'; // the app's background color (Claude and ChatGPT looks), Nov 16
   enBold?: boolean;         // Sefaria's word-for-word translation in bold, as on Sefaria (default on)
   ilEn?: 'full' | 'only';   // phrase by phrase: under each phrase Sefaria's full English, or only its word-for-word translation (unset: as the English setting)
@@ -610,7 +611,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper'] as const;
+export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn'] as const;
 
 export const OWNER_ID = 'owner';
 

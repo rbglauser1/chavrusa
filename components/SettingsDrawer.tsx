@@ -339,6 +339,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English under each line of the text. Also in the ⋯ menu as “Translation”.</div>
             </div>
             <div className="field">
+              <label>Continuous scroll button</label>
+              <Seg value={s.autoScrollBtn !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ autoScrollBtn: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The ⇊ button by the mic: tap and the text glides up by itself; tap again to stop. Press and hold it to pick the speed.</div>
+            </div>
+            <div className="field">
               <label>Onkelos (Chumash)</label>
               <Seg value={s.onkelos ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ onkelos: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Onkelos under each pasuk, with its English when Sefaria has one. Straight from Sefaria, no AI, free. Also in Quiet chat&apos;s ⋯ menu.</div>
