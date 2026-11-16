@@ -26,7 +26,9 @@ export function PullRefresh() {
       if (e.touches.length !== 1 || document.body.dataset.dafull || document.querySelector('.ht, .daf-full')) return;
       const t = e.target as Element;
       // Not in the Sefer: pulling down at the top there brings in the amud before.
-      if (t.closest('input, textarea, select, [contenteditable], .no-pull, .sefer-body, .min-text, .smap')) return;
+      if (t.closest('input, textarea, select, [contenteditable], .no-pull, .smap')) return;
+      // The Library opens inside the sefer's pane, but it isn't the sefer: pulling down there refreshes (Nov 16).
+      if (t.closest('.sefer-body, .min-text') && !t.closest('.lib')) return;
       const sc = scrollerAt(t);
       if ((sc && sc.scrollTop > 0) || window.scrollY > 0) return;
       start.current = { y: e.touches[0].clientY, x: e.touches[0].clientX };

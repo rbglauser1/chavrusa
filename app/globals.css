@@ -2954,3 +2954,8 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .lib-recent > .lib-item { width: 100%; box-sizing: border-box; text-align: start; }
 .lib-recent > .lib-recent-head, .lib-recent > .lib-hint { width: 100%; }
 .lib-mine-bottom { margin-top: 22px; }
+/* Nov 16: My seforim and Recent are cards the same size as the seforim below, with the same gap */
+.lib-recent { margin-bottom: 10px; }
+.lib-recent > .lib-item.category { display: flex; align-items: center; gap: 12px; }
+.lib-recent > .lib-item.category .en { white-space: nowrap; }
+.lib-recent .lib-sub { margin-left: auto; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

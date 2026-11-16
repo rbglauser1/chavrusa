@@ -179,7 +179,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
           {!showMine ? (
             <button className="lib-item category" onClick={() => setShowMine(true)}>
               <span className="en">My seforim</span>
-              <span className="muted" style={{ fontSize: 13 }}>Add your own: a PDF, Word file, photo or web page</span>
+              <span className="muted lib-sub">Add your own</span>
               <span className="chev" aria-hidden="true">›</span>
             </button>
           ) : (
@@ -196,7 +196,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
           {!showRecent ? (
             <button className="lib-item category" onClick={() => setShowRecent(true)}>
               <span className="en">Recent</span>
-              <span className="muted" style={{ fontSize: 13 }}>{nice(recent[0].ref)}{recent.length > 1 ? ` and ${recent.length - 1} more` : ''}</span>
+              <span className="muted lib-sub">{recent.length} {recent.length === 1 ? 'place' : 'places'}</span>
               <span className="chev" aria-hidden="true">›</span>
             </button>
           ) : (
