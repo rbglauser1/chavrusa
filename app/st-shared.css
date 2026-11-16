@@ -256,3 +256,10 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='narrow'] .st-source .sefer-body { padding-left:8px; padding-right:8px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='wider'] .st-source .sefer-body { padding-left:34px; padding-right:34px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='widest'] .st-source .sefer-body { padding-left:48px; padding-right:48px; }
+
+/* Nov 16: full screen on the phone keeps a thin solid band at the top, the page's own color, so the text starts below
+   the iPhone's blur and slides under the band (not into the blur) when scrolled. */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-top:calc(env(safe-area-inset-top) + 34px); }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body::after { content:''; position:fixed; top:0; left:0; right:0; height:calc(env(safe-area-inset-top) + 34px); background:var(--bg); z-index:59; pointer-events:none; }
+}
