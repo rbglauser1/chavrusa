@@ -256,3 +256,6 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='narrow'] .st-source .sefer-body { padding-left:8px; padding-right:8px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='wider'] .st-source .sefer-body { padding-left:34px; padding-right:34px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-margin='widest'] .st-source .sefer-body { padding-left:48px; padding-right:48px; }
+
+/* Nov 16: full screen runs to the very top again (the text slides under the clock; only that strip is blurred). */
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .app.is-min { padding-top:0; }
