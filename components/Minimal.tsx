@@ -219,39 +219,6 @@ export default function Minimal(p: Props) {
     document.documentElement.toggleAttribute('data-st-full', stFull);
     return () => document.documentElement.removeAttribute('data-st-full');
   }, [stFull]);
-  // Nov 16: in full screen the whole page scrolls (so the words slide up under the clock), and on the iPhone the
-  // bottom row (daf counter, scroll, mic, ✦) then vanishes when it is pinned to the screen. So in full screen the row
-  // is part of the page: while the page moves it fades out, and when it stops the row comes back at the bottom of
-  // what is on screen (so it never jumps around in the middle of the text).
-  useEffect(() => {
-    if (!stFull) return;
-    const root = document.documentElement, vv = window.visualViewport;
-    const SEL = '.st-full-ctl, .ai-hub-btn, .daf-dock .daf-bar';
-    root.setAttribute('data-st-abs', '');
-    const place = () => {
-      const h = vv ? vv.height : window.innerHeight;
-      const mid = parseFloat(getComputedStyle(root).getPropertyValue('--full-mid')) || 32;
-      document.querySelectorAll<HTMLElement>(SEL).forEach((el) => {
-        const cb = el.offsetParent as HTMLElement | null;
-        const cbTop = cb && cb !== document.body ? cb.getBoundingClientRect().top + window.scrollY : 0;
-        el.style.top = `${Math.round(window.scrollY + (vv ? vv.offsetTop : 0) + h - mid - el.offsetHeight / 2 - cbTop)}px`;
-      });
-    };
-    let settle = 0;
-    const moving = () => {
-      root.setAttribute('data-st-moving', '');
-      window.clearTimeout(settle);
-      settle = window.setTimeout(() => { place(); root.removeAttribute('data-st-moving'); }, 180);
-    };
-    place(); const t1 = window.setTimeout(place, 300), t2 = window.setTimeout(place, 1200);
-    vv?.addEventListener('resize', moving); vv?.addEventListener('scroll', moving); window.addEventListener('scroll', moving, { passive: true }); window.addEventListener('resize', moving);
-    return () => {
-      window.clearTimeout(t1); window.clearTimeout(t2); window.clearTimeout(settle);
-      vv?.removeEventListener('resize', moving); vv?.removeEventListener('scroll', moving); window.removeEventListener('scroll', moving); window.removeEventListener('resize', moving);
-      root.removeAttribute('data-st-abs'); root.removeAttribute('data-st-moving');
-      document.querySelectorAll<HTMLElement>(SEL).forEach((el) => { el.style.top = ''; });
-    };
-  }, [stFull]);
   // Guided Learning uses the same Sefer double-tap gesture as the other reading experiences.
   const [glFullOn, setGlFull] = useState(false);
   const glFull = p.settings.theme === 'guided-learning' && glFullOn && tab === 'text' && !!p.sefer;
