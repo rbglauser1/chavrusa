@@ -3021,3 +3021,8 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
   body > *:not(#sheet-print) { display: none !important; }
   #sheet-print { display: block !important; }
 }
+/* Nov 16: the speed choices are always round raised buttons (as they came out in full screen), wherever the
+   scroll button is: a white circle with a soft shadow, the dot inside. */
+.ascroll-pick { gap: 8px; padding: 10px 8px; }
+.ascroll-pick .ascroll-tap { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--rule); background: var(--surface); box-shadow: 0 2px 10px #0000001a; }
+.ascroll-pick .ascroll-dot { width: 12px; height: 12px; }
