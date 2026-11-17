@@ -170,6 +170,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <FontPicker list={FONTS_EN} sample="Let's learn the Gemara together" value={s.fonts?.[s.theme]?.en ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), en: id } } })} />
               <label style={{ marginTop: 10 }}>Hebrew font</label>
               <FontPicker list={FONTS_HE} sample="בְּרֵאשִׁית בָּרָא אֱלֹקִים" rtl value={s.fonts?.[s.theme]?.he ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), he: id } } })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In Chumash and Tanach, only Taamey Frank and Noto Serif Hebrew can show the trop. With any other font the trop is left off (the vowels stay), so the font you picked is the one you see.</div>
               <label style={{ marginTop: 10 }}>Hebrew font for the commentaries</label>
               <FontPicker list={FONTS_COMM} sample="וַיִּהְיוּ חַיֵּי שָׂרָה – לכך נכתב שנה" rtl value={s.fonts?.[s.theme]?.comm || (s.rashiScript ? 'rashi' : 'same')} onPick={(id) => onChange({ rashiScript: id === 'rashi', fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), comm: id } } })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The commentaries&apos; font is for Rashi, Tosafos and all the meforshim.</div>

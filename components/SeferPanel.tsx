@@ -30,7 +30,7 @@ import { tintStatus, shaded } from '@/lib/statusTint';
 import type { SourceData } from '@/lib/db';
 import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
-import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
+import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, useTargum } from './useOutline';
 import FocusHelp from './FocusHelp';
@@ -77,6 +77,7 @@ function windowHole(size: number, dark: number, night: boolean): React.CSSProper
 
 export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, onLibraryOpened, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
   const [goto, setGoto] = useState('');
+  const showHe = heShower(settings); // vowels on/off; trop only when the chosen Hebrew font can draw it
   const [gotoBusy, setGotoBusy] = useState(false);
   const [gotoMsg, setGotoMsg] = useState('');
   async function submitGoto(e: React.FormEvent) {
@@ -642,7 +643,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const tgBox = (t: { he: string[]; en: string[] }, i: number) => (t.he[i] ? (
     <div className="tg" onClick={(e) => { e.stopPropagation(); if (dbl && !(e.target as HTMLElement).closest("button")) tap(() => {}); }}>
       <span className="tg-label">Onkelos</span>
-      <div className="he tg-he">{settings.nikud ? t.he[i] : stripNikud(t.he[i])}</div>
+      <div className="he tg-he">{showHe(t.he[i])}</div>
       {canTranslate && showAll && t.en[i] && <div className="tg-en">{yeshivishEnglish(t.en[i])}</div>}
     </div>
   ) : null);
@@ -903,9 +904,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`pm${k}`} className="move">{m}</div>)}
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); }); } else { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); } }}>
                           {pairs
-                            ? <Interlinear pairs={pairs} heClass="" show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
+                            ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
                             : <>
-                              <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                              <div className="he">{showHe(line)}<span className="num">{i + 1}</span></div>
                               {canTranslate && showAll && en && <div className="en">{prevSrc.enB?.[i] ? <BoldEn text={prevSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
                             </>}
                           {tgBox(prevTg, i)}
@@ -983,8 +984,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   }
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
-                    ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
-                    : <div className={`he ${rashi ? 'rashi' : ''}`}>{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>}
+                    ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} />
+                    : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
                     const mine = notes.filter((x) => x.n === i + 1 && x.on !== 'a mark'); // color marks show as color, not as a note here
@@ -1199,9 +1200,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`nm${k}`} className="move">{m}</div>)}
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); }); } else { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); } }}>
                           {pairs
-                            ? <Interlinear pairs={pairs} heClass="" show={(h) => (settings.nikud ? h : stripNikud(h))} num={i + 1} />
+                            ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
                             : <>
-                              <div className="he">{settings.nikud ? line : stripNikud(line)}<span className="num">{i + 1}</span></div>
+                              <div className="he">{showHe(line)}<span className="num">{i + 1}</span></div>
                               {canTranslate && showAll && en && <div className="en">{nextSrc.enB?.[i] ? <BoldEn text={nextSrc.enB[i]} /> : yeshivishEnglish(en)}</div>}
                             </>}
                           {tgBox(nextTg, i)}

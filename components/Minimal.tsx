@@ -13,7 +13,7 @@ import { SandTealStudy } from './SandTeal';
 import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
-import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
+import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
@@ -82,6 +82,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
   src: SourceData; settings: Settings; pointAt: (s: SourceData, n: number) => void; dimOthers: boolean; englishAll: boolean; inlineComm: InlineComm;
 }) {
   const box = useRef<HTMLDivElement | null>(null);
+  const showHe = heShower(settings);
   const focus = src.focus ?? 1;
   useEffect(() => {
     const t = window.setTimeout(() => box.current?.querySelector(`[data-n="${focus}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
@@ -101,7 +102,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''}`}>
             {(outline.byLine[n] ?? []).map((m, k) => <div key={k} className="move">{m}</div>)}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
-              {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={(h) => (settings.nikud ? h : stripNikud(h))} /> : settings.nikud ? line : stripNikud(line)}
+              {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} /> : showHe(line)}
             </button>
             {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}</p>}
             {c && (

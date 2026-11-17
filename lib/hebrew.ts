@@ -3,6 +3,20 @@ export function stripNikud(s: string): string {
   return s.replace(/[֑-ֽֿ-ׂׄ-ׇ]/g, '');
 }
 
+// Nov 17: the trop alone (and the meteg), keeping the vowels. Most Hebrew fonts have no trop marks; the phone then
+// draws every word that carries one in another font, so a chosen font never showed in Chumash. With such a font the
+// trop is left off, so the font he picked is the one he sees. Taamey Frank and Noto Serif Hebrew have the full set.
+export function stripTrop(s: string): string {
+  return s.replace(/[\u0591-\u05AF\u05BD]/g, '');
+}
+const TROP_FONTS = ['taamey', 'notoserif'];
+/** How the main text's Hebrew is shown: vowels on or off, and the trop only when the chosen font can draw it. */
+export function heShower(s: { nikud?: boolean; theme: string; fonts?: Record<string, { he?: string } | undefined> }): (t: string) => string {
+  const id = s.fonts?.[s.theme]?.he;
+  const noTrop = !!id && !TROP_FONTS.includes(id);
+  return (t) => (!s.nikud ? stripNikud(t) : noTrop ? stripTrop(t) : t);
+}
+
 export function hasHebrew(s: string): boolean {
   return /[א-ת]/.test(s);
 }
