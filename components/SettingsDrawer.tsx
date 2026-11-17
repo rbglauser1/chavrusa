@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useLab, setLab } from '@/lib/lab';
 import { ALL_STARTERS } from '@/lib/starters';
-import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_COMM, FONTS_EN, FONTS_HE, LIVE_VOICES, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_COMM, FONTS_EN, FONTS_HE, GEMINI_VOICES, LIVE_VOICES, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -455,16 +455,24 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           {rest && <>
           <Group id="voice" title="Voice" hint={`${s.liveEngine === 'gemini' ? 'Gemini Live' : (LIVE_VOICES.find((v) => v.id === s.liveVoice)?.name ?? (s.customVoices ?? []).find((v) => v.id === s.liveVoice)?.name ?? s.liveVoice).replace(/ \(.*\)$/, '')} · ${({ slow: 'Slow', relaxed: 'Relaxed', natural: 'Normal', brisk: 'Brisk' } as Record<string, string>)[s.livePace ?? 'natural']} · pauses ${s.livePauses ?? 'normal'}`}>
-            <div className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>Live voice: natural, answers almost instantly, and can be interrupted. About $0.05 per minute for the voice, plus the AI model.</div>
-            <Group id="voice-which" level={2} title="Which voice" hint={(LIVE_VOICES.find((v) => v.id === s.liveVoice)?.name ?? (s.customVoices ?? []).find((v) => v.id === s.liveVoice)?.name ?? s.liveVoice).replace(/ \(.*\)$/, '')}>
-              {(
+            <div className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>Live voice: natural, answers almost instantly, and can be interrupted. Choose GPT-Live or Gemini Live and the voice under Which voice.</div>
+            <Group id="voice-which" level={2} title="Which voice" hint={s.liveEngine === 'gemini' ? `Gemini · ${GEMINI_VOICES.find((v) => v.id === s.geminiVoice)?.name ?? GEMINI_VOICES[0].name}` : (LIVE_VOICES.find((v) => v.id === s.liveVoice)?.name ?? (s.customVoices ?? []).find((v) => v.id === s.liveVoice)?.name ?? s.liveVoice).replace(/ \(.*\)$/, '')}>
+              <div className="field">
+                <label>Voice service for calls</label>
+                <Seg value={s.liveEngine === 'gemini' ? 'gemini' : 'gpt'} options={[['gpt', 'GPT-Live'], ['gemini', 'Gemini Live']]} onPick={(v) => onChange({ liveEngine: v as 'gpt' | 'gemini' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveEngine === 'gemini'
+                  ? 'Gemini Live (Google): about 1–2¢ a minute for the voice, plus the AI model for learning turns.'
+                  : 'GPT-Live (OpenAI): about 5¢ a minute for the voice, plus the AI model for learning turns.'}</div>
+              </div>
+              {s.liveEngine === 'gemini' ? (
+                <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
+              ) : (
                 <div className="field">
-                  <label>Live voice (tap ▶ to hear it; a sample costs about 1 cent)</label>
+                  <label>GPT-Live voice (tap ▶ to hear it; a sample costs about 1 cent)</label>
                   <VoicePicker kind="live" voices={[...(s.customVoices ?? []).map((v) => ({ id: v.id, name: `${v.name} (your design)` })), ...LIVE_VOICES]} value={s.liveVoice} onPick={(v) => onChange({ liveVoice: v })} disabled={liveActive} />
-                  <VoiceDesigner onCreated={(p) => onChange(p)} hasCustom={(s.customVoices ?? []).length > 0} />
-                  <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
                 </div>
               )}
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A new voice applies the next time you tap Talk.</div>
             </Group>
             <Group id="voice-speed" level={2} title="Speed and pauses" hint={`${({ slow: 'Slow', relaxed: 'Relaxed', natural: 'Normal', brisk: 'Brisk' } as Record<string, string>)[s.livePace ?? 'natural']} · pauses ${s.livePauses ?? 'normal'}`}>
               {(
@@ -604,17 +612,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <Group id="voice-rec" level={2} title="Call recorder" hint="Send me a call's log">
               <CallLogs />
             </Group>
-            <Group id="voice-gemini" level={2} title="GPT-Live or Gemini Live" hint={s.liveEngine === 'gemini' ? 'Gemini Live (test)' : 'GPT-Live'}>
-              <div className="field">
-                <label>Live voice for calls</label>
-                <Seg value={s.liveEngine === 'gemini' ? 'gemini' : 'gpt'} options={[['gpt', 'GPT-Live (current)'], ['gemini', 'Gemini Live (test)']]} onPick={(v) => onChange({ liveEngine: v as 'gpt' | 'gemini' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{s.liveEngine === 'gemini'
-                  ? 'Gemini Live (Google), a test: about 1–2¢ a minute for the voice, plus the AI model for learning turns. Applies the next time you tap Talk; switch back any time.'
-                  : 'GPT-Live (OpenAI): about 5¢ a minute for the voice, plus the AI model for learning turns. Gemini Live is cheaper; try it side by side.'}</div>
-              </div>
-              <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
+            {s.liveEngine === 'gemini' && <Group id="voice-gemini" level={2} title="Gemini pronunciation" hint="How Gemini says the words">
               <GeminiPronunciation s={s} onChange={onChange} />
-            </Group>
+            </Group>}
             <Group id="voice-call" level={2} title="During a call" hint={s.blankCall ? 'blank screen' : 'shows the conversation'}>
             <div className="field">
               <label>Screen during voice conversations</label>
