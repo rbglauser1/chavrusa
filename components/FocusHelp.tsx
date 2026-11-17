@@ -12,13 +12,18 @@ import { createPortal } from 'react-dom';
 import type { Settings } from '@/lib/config';
 import { cheer, markLearned, streak } from '@/lib/focus';
 
-type Props = { settings: Settings; refText: string; total: number; focus?: number; picked: number | null };
+type Props = { settings: Settings; refText: string; total: number; focus?: number; picked: number | null; talkOn?: boolean };
 
 const lineEl = (n: number) => document.querySelector<HTMLElement>(`.sefer-flow [data-line="${n}"]`);
 const numbered = () => Array.from(document.querySelectorAll<HTMLElement>('.sefer-flow [data-line]')).filter((e) => /^\d+$/.test(e.dataset.line ?? ''));
 
-export default function FocusHelp({ settings, refText, total, focus, picked }: Props) {
-  const one = !!settings.oneLine, glow = !!settings.glowLine, wins = settings.wins !== false, where = settings.whereWasI !== false;
+const GOAL_KEY = 'chavrusa-goal';
+const dayKey = () => new Date().toLocaleDateString('en-CA');
+
+export default function FocusHelp({ settings, refText, total, focus, picked, talkOn }: Props) {
+  const quiet = !!settings.quietMode, bar = !!settings.amudBar, goal = settings.goal && settings.goal !== 'off' ? settings.goal : null;
+  const along = !!settings.readAlong && !!talkOn; // in a call: the line the voice is on is lit and followed
+  const one = !!settings.oneLine, glow = !!settings.glowLine || along, wins = settings.wins !== false, where = settings.whereWasI !== false;
   const base = refText.replace(/:\d+(-\d+)?$/, '');
   const [cur, setCur] = useState<number | null>(null);
   const curRef = useRef<number | null>(null); curRef.current = cur;
@@ -68,8 +73,40 @@ export default function FocusHelp({ settings, refText, total, focus, picked }: P
     const root = document.documentElement;
     root.toggleAttribute('data-fh-one', one);
     root.toggleAttribute('data-fh-glow', glow);
-    return () => { root.removeAttribute('data-fh-one'); root.removeAttribute('data-fh-glow'); };
-  }, [one, glow]);
+    root.toggleAttribute('data-fh-quiet', quiet);
+    return () => { root.removeAttribute('data-fh-one'); root.removeAttribute('data-fh-glow'); root.removeAttribute('data-fh-quiet'); };
+  }, [one, glow, quiet]);
+  // Read along: when the voice moves to a line, bring it to the middle of the screen.
+  useEffect(() => {
+    if (!along || !focus) return;
+    const t = window.setTimeout(() => lineEl(focus)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 200);
+    return () => window.clearTimeout(t);
+  }, [along, focus]);
+  // Today's goal: so many new lines (or one Step) from where you started today. Kept for the day on this phone.
+  const [goalDone, setGoalDone] = useState(false);
+  const [goalAt, setGoalAt] = useState(0);
+  const goalStart = useRef<number | null>(null), stepsSeen = useRef(0);
+  useEffect(() => { try { setGoalDone(localStorage.getItem(GOAL_KEY) === `${dayKey()}|${goal}`); } catch { /* optional */ } goalStart.current = null; stepsSeen.current = 0; setGoalAt(0); }, [goal, base]);
+  const goalN = goal === 'step' ? 1 : Number(goal) || 0;
+  useEffect(() => {
+    if (!goal || goalDone || cur == null) return;
+    if (goalStart.current == null) { goalStart.current = cur; return; }
+    if (cur <= goalStart.current + goalAt && goal !== 'step') return;
+    let at = Math.max(0, cur - goalStart.current);
+    if (goal === 'step') {
+      const hasSteps = !!document.querySelector('.sefer-flow .move');
+      if (hasSteps) { const el = lineEl(cur); if (cur > goalStart.current && (el?.previousElementSibling as HTMLElement | null)?.classList.contains('move')) stepsSeen.current = 1; at = stepsSeen.current; }
+      else at = cur - goalStart.current >= 5 ? 1 : 0; // no Steps on this page: five lines stand for a Step
+    }
+    at = Math.min(at, goalN);
+    if (at > goalAt) setGoalAt(at);
+    if (at >= goalN) {
+      setGoalDone(true);
+      try { localStorage.setItem(GOAL_KEY, `${dayKey()}|${goal}`); } catch { /* optional */ }
+      markLearned();
+      say(`🎯 Today’s goal reached · ${cheer()}`);
+    }
+  }, [cur, goal, goalDone]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     document.querySelectorAll('.fh-cur').forEach((e) => e.classList.remove('fh-cur'));
     if (cur == null) return;
@@ -77,12 +114,12 @@ export default function FocusHelp({ settings, refText, total, focus, picked }: P
     mark(); const t = window.setTimeout(mark, 400); // the page may still be drawing
     return () => window.clearTimeout(t);
   }, [cur, base, one, glow]);
-  // One line at a time starts on the line in view.
+  // One line at a time (and Quiet mode) starts on the line in view.
   useEffect(() => {
-    if (!one || cur != null) return;
+    if (!(one || quiet) || cur != null) return;
     const t = window.setTimeout(() => { const l = numbered().find((e) => e.getBoundingClientRect().bottom > 140); if (l) setCur(Number(l.dataset.line)); }, 500);
     return () => window.clearTimeout(t);
-  }, [one, cur, base]);
+  }, [one, quiet, cur, base]);
 
   // Small wins: going forward to new lines.
   const say = (t: string) => { setToast(t); window.setTimeout(() => setToast((x) => (x === t ? null : x)), 2800); };
@@ -113,7 +150,7 @@ export default function FocusHelp({ settings, refText, total, focus, picked }: P
     window.setTimeout(() => lineEl(n)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 30);
   };
   useEffect(() => {
-    if (!one) return;
+    if (!one && !quiet) return;
     let x0 = 0, y0 = 0;
     const start = (e: TouchEvent) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; };
     const end = (e: TouchEvent) => {
@@ -124,7 +161,7 @@ export default function FocusHelp({ settings, refText, total, focus, picked }: P
     document.addEventListener('touchstart', start, { passive: true });
     document.addEventListener('touchend', end, { passive: true });
     return () => { document.removeEventListener('touchstart', start); document.removeEventListener('touchend', end); };
-  }, [one, total]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [one, quiet, total]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Where was I?
   const ask = (n?: number) => {
@@ -156,7 +193,9 @@ export default function FocusHelp({ settings, refText, total, focus, picked }: P
   if (typeof document === 'undefined') return null;
   return createPortal(
     <>
-      {one && <div className="fh-nav" role="group" aria-label="One line at a time">
+      {bar && <div className="fh-bar" role="progressbar" aria-label="How far through" aria-valuemin={0} aria-valuemax={total} aria-valuenow={Math.max(best.current, cur ?? 0)}><i style={{ width: `${Math.min(100, (Math.max(best.current, cur ?? 0) / Math.max(1, total)) * 100)}%` }} /></div>}
+      {goal && <div className={`fh-goal ${goalDone ? 'done' : ''}`}>🎯 {goalDone ? '✓' : goal === 'step' ? 'one Step' : `${goalAt}/${goalN}`}</div>}
+      {(one || quiet) && <div className="fh-nav" role="group" aria-label="One line at a time">
         <button onClick={() => go(-1)} disabled={(cur ?? 1) <= 1} aria-label="Previous line">‹ Back</button>
         <span>Line {cur ?? '–'} of {total}</span>
         <button onClick={() => go(1)} disabled={(cur ?? 1) >= total} aria-label="Next line">Next ›</button>

@@ -372,6 +372,26 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Sit with me: check in after</label>
               <Seg value={String(s.sitCheck ?? 5)} options={[['3', '3 min'], ['5', '5 min'], ['10', '10 min']]} onPick={(v) => onChange({ sitCheck: Number(v) })} />
             </div>}
+            <div className="field">
+              <label>Progress line</label>
+              <Seg value={s.amudBar ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ amudBar: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line across the top of the reading screen that fills as you go through the amud or perek, so the end always feels reachable.</div>
+            </div>
+            <div className="field">
+              <label>Today’s goal</label>
+              <Seg value={s.goal ?? 'off'} options={[['off', 'Off'], ['3', '3 lines'], ['5', '5 lines'], ['10', '10 lines'], ['step', 'One Step']]} onPick={(v) => onChange({ goal: v as 'off' | '3' | '5' | '10' | 'step' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small, clear finish line for the day. A 🎯 at the top counts the new lines from where you start; when you get there it says so, and that’s enough for today (or keep going). One Step needs Steps on (The AI → What it adds to the page); without them, 5 lines count as a Step.</div>
+            </div>
+            <div className="field">
+              <label>Read along with the voice</label>
+              <Seg value={s.readAlong ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ readAlong: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In a voice call, the line the voice is on is gently lit and kept in the middle of the screen, so your eyes and ears stay together.</div>
+            </div>
+            <div className="field">
+              <label>Quiet mode</label>
+              <Seg value={s.quietMode ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ quietMode: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Only the text, with Next and Back. The ✦, the mic, the scroll button, the daf counter, the tabs at the bottom and the buttons under each line are hidden. The back arrow and ⋯ at the top stay, to get out.</div>
+            </div>
           </Group>
           {/* Nov 16: everything the AI does, in one place. */}
           <Group id="ai" title="The AI" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''} · ${s.aiHub === false ? 'tools under each line' : 'tools in the ✦'}`}>

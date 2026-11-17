@@ -511,6 +511,10 @@ export interface Settings {
   fiveMin?: boolean;    // Nov 16, Focus help: "Just 5 minutes" on Home (on unless off)
   sitWithMe?: boolean;  // Nov 16, Focus help: "Sit with me" in the ✦, a quiet voice call while he reads (on unless off)
   sitCheck?: number;    // minutes of quiet before the chavrusa checks in during "Sit with me" (default 5)
+  amudBar?: boolean;    // Nov 16, Focus help: a thin line at the top showing how far through the amud you are
+  goal?: 'off' | '3' | '5' | '10' | 'step'; // Nov 16, Focus help: today's small goal (lines, or one Step)
+  readAlong?: boolean;  // Nov 16, Focus help: in a call, the line the voice is on is lit and kept in view
+  quietMode?: boolean;  // Nov 16, Focus help: only the text and Next / Back (no bottom buttons, tabs, or line buttons)
   mySeforim?: boolean; // Nov 16: the "My seforim" card in the Library (your own texts); off unless turned on
   showSteinsaltz?: boolean; // Nov 16: Steinsaltz among the commentaries on a Gemara line (off: the English already is his)
   mussarAngle?: boolean;   // Nov 16: add a mussar / Chassidus angle to any style (was the Mussar and Chassidic styles)
@@ -637,7 +641,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck'] as const;
+export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode'] as const;
 
 export const OWNER_ID = 'owner';
 

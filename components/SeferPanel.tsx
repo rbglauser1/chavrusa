@@ -787,7 +787,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ? <>
         <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
-        {embedded && src && !isComm && !showLib && wholeSec && <FocusHelp settings={settings} refText={src.ref} total={src.he.length} focus={src.focus} picked={picked} />}
+        {embedded && src && !isComm && !showLib && wholeSec && <FocusHelp settings={settings} refText={src.ref} total={src.he.length} focus={src.focus} picked={picked} talkOn={!!talk?.on} />}
         {lwmAt != null && <LearnWithMe refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onVoiceTalk={talk && onPoint ? (n) => { onPoint(src, n); if (!talk.on) talk.toggle(); } : undefined} onClose={() => setLwmAt(null)} />}
       </>
     : null;
