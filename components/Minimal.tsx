@@ -237,11 +237,12 @@ export default function Minimal(p: Props) {
         el.style.top = `${Math.round(window.scrollY + (vv ? vv.offsetTop : 0) + h - mid - 24 - cbTop)}px`;
       });
     };
-    const soon = () => { if (!raf) raf = requestAnimationFrame(place); };
+    let settle = 0;
+    const soon = () => { place(); window.clearTimeout(settle); settle = window.setTimeout(place, 150); };
     place(); const t1 = window.setTimeout(place, 300), t2 = window.setTimeout(place, 1200);
     vv?.addEventListener('resize', soon); vv?.addEventListener('scroll', soon); window.addEventListener('scroll', soon, { passive: true }); window.addEventListener('resize', soon);
     return () => {
-      window.clearTimeout(t1); window.clearTimeout(t2); if (raf) cancelAnimationFrame(raf);
+      window.clearTimeout(t1); window.clearTimeout(t2); window.clearTimeout(settle); if (raf) cancelAnimationFrame(raf);
       vv?.removeEventListener('resize', soon); vv?.removeEventListener('scroll', soon); window.removeEventListener('scroll', soon); window.removeEventListener('resize', soon);
       root.removeAttribute('data-st-abs');
       document.querySelectorAll<HTMLElement>('.st-full-ctl, .ai-hub-btn').forEach((el) => { el.style.top = ''; });
