@@ -283,3 +283,4 @@
 /* Nov 16: in the home-screen app, the reading screen's top bar sits a little lower, below the soft blur iOS 26 draws
    just under the clock (the title "Yoma 4a" was caught in it). */
 @media (display-mode: standalone) { :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(30px + env(safe-area-inset-top)); } }
+:is([data-look='clay'],[data-look='chatgpt']) .st-new-chat { margin-left:auto; border:1px solid var(--rule); background:var(--surface); color:var(--ink); border-radius:999px; padding:6px 12px; font:13px var(--f-ui); }

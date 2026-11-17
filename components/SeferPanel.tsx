@@ -729,7 +729,6 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       ...(askOn ? [{ label: '✦ Ask about this line (you lead)', run: () => { if (settings.explainLine !== false) addIn(setXOpen, at!); if (settings.lineChat !== false) addIn(setCOpen, at!); } }] : []),
       ...(at != null && c && (c.sources || c.elsewhere || c.halacha || mapOn) ? [{ label: '⇄ Where it goes', run: () => openWhere(at) }] : []),
       ...(at != null && lineX && settings.byHeart !== false && (kind === 'mishnah' || /^Pirkei Avot/.test(src.ref) || (kind === 'tanakh' && settings.byHeart === true)) ? [{ label: '🧠 By heart', run: () => addIn(setHeartOpen, at) }] : []),
-      ...(at == null && mapOn ? [{ label: '🗺 Map', run: () => { setMapOpen(true); toAmud(); } }] : []),
     ];
   };
   const hubAmud: HubAction[] = !src || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
@@ -738,7 +737,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ...(settings.listenDaf !== false && kind !== 'none' ? [{ label: '🎧 Listen', run: () => { setListenOpen(true); toAmud(); } }] : []),
     ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
   ];
+  // Nov 16: every AI tool is in the ✦. The page's own: the sugya map, a chat about the whole page, review, listen.
   const hubMore = (at: number | null): HubAction[] => [
+    ...(src && embedded && kind !== 'none' ? [
+      { label: `🗺 ${kind === 'tanakh' || kind === 'mishnah' ? 'Perek map' : 'Sugya map'}`, run: () => { setMapOpen(true); toAmud(); } },
+      { label: '✦ Ask about the whole page', run: () => window.dispatchEvent(new Event('chavrusa-ask-page')) },
+      { label: '✓ Review this passage', run: () => window.dispatchEvent(new Event('sand-review')) },
+      ...(settings.listenDaf !== false ? [{ label: '🎧 Listen to this page', run: () => { setListenOpen(true); toAmud(); } }] : []),
+    ] : []),
     ...(at != null && aiX ? lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(at); setBOpen(`${at}|${b.id}`); } })) : []),
     ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
   ];

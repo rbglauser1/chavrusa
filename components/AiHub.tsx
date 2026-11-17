@@ -38,7 +38,7 @@ export default function AiHub({ lineLabel, pickLine, main, more }: {
             </section>
             {extra.length > 0 && (
               <section>
-                <button className="ai-hub-more" onClick={() => setShowMore((v) => !v)} aria-expanded={showMore}>{showMore ? 'Less ▴' : 'More ▾'}</button>
+                <button className="ai-hub-more" onClick={() => setShowMore((v) => !v)} aria-expanded={showMore}>{showMore ? 'Less ▴' : 'This page and more ▾'}</button>
                 {showMore && btns(extra)}
               </section>
             )}
