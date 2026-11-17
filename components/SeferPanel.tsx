@@ -761,6 +761,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       { label: '✦ Ask about the whole page', run: () => window.dispatchEvent(new Event('chavrusa-ask-page')) },
       { label: '✓ Review this passage', run: () => window.dispatchEvent(new Event('sand-review')) },
       ...(settings.listenDaf !== false ? [{ label: '🎧 Listen to this page', run: () => { setListenOpen(true); toAmud(); } }] : []),
+      ...(settings.sourceSheet !== false ? [{ label: '📄 Source sheet', run: () => setSheetFor(src) }] : []),
     ] : []),
     ...(at != null && aiX ? lineButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { showLine(at); setBOpen(`${at}|${b.id}`); } })) : []),
     ...amudButtons.map((b) => ({ label: `✦ ${b.name}`, run: () => { setTopOpen(b.id); toAmud(); } })),
