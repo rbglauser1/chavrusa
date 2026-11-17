@@ -292,3 +292,6 @@
 /* Nov 16: Home has just the Continue card (Recents is a tab now). */
 [data-look='clay'] .split-panels.one { grid-template-rows:auto; grid-template-columns:1fr; flex:0 1 auto; align-content:center; }
 @media (min-width: 700px), (orientation: landscape) and (min-width: 520px) { [data-look='clay'] .split-panels.one { grid-template:auto / minmax(0, 560px); justify-content:center; } }
+/* Nov 16: with one card, the title, card and links sit together in the middle, not pushed to the bottom. */
+[data-look='clay'] .split-home:has(.split-panels.one) { justify-content:center; gap:clamp(22px, 5dvh, 48px); padding-bottom:calc(var(--dock-h, 78px) + 16px); }
+[data-look='clay'] .split-home:has(.split-panels.one) .split-intro { flex:0 0 auto; }
