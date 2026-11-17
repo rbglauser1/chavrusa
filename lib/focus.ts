@@ -25,12 +25,13 @@ export function streak(): number {
 }
 
 // ——— Just 5 minutes ———
-const FIVE = 'chavrusa-five';
+const FIVE = 'chavrusa-five', FIVE_LEN = 'chavrusa-five-len';
 export function startFive(minutes = 5) {
-  try { localStorage.setItem(FIVE, String(Date.now() + minutes * 60_000)); } catch { /* optional */ }
+  try { localStorage.setItem(FIVE, String(Date.now() + minutes * 60_000)); localStorage.setItem(FIVE_LEN, String(minutes)); } catch { /* optional */ }
   window.dispatchEvent(new Event('chavrusa-five'));
 }
 export function fiveEnd(): number | null { try { const v = Number(localStorage.getItem(FIVE)); return v > 0 ? v : null; } catch { return null; } }
+export function fiveLen(): number { try { return Number(localStorage.getItem(FIVE_LEN)) || 5; } catch { return 5; } }
 export function stopFive() { try { localStorage.removeItem(FIVE); } catch { /* optional */ } window.dispatchEvent(new Event('chavrusa-five')); }
 
 // ——— Sit with me (a quiet voice call) ———

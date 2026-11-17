@@ -3087,6 +3087,6 @@ html[data-fh-quiet] .fh-nav { bottom: calc(env(safe-area-inset-bottom) + 22px); 
   html[data-st-full] .fh-recap { bottom: calc(var(--full-mid, 32px) + 36px) !important; width: auto; margin-left: 12px; margin-right: 12px; }
   html[data-st-full] .fh-toast { bottom: calc(100dvh - 90px) !important; }
   html[data-st-full] .fh-goal { bottom: calc(100dvh - 60px) !important; margin-left: 14px; margin-bottom: -32px; }
-  html[data-st-full] .five-pill { bottom: calc(100dvh - 60px) !important; margin-right: 14px; margin-bottom: -32px; }
+  html[data-st-full] .five-pill { bottom: calc(100dvh - 40px) !important; margin-right: 10px; margin-bottom: -34px; display: block; }
   html[data-st-full] .fh-bar { bottom: calc(100dvh - 3px) !important; width: auto; margin: 0 0 -3px; }
 }

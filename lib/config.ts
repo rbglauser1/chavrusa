@@ -509,6 +509,7 @@ export interface Settings {
   wins?: boolean;       // Nov 16, Focus help: small wins (a quiet ✓ after each Step…) and the days in a row (on unless off)
   whereWasI?: boolean;  // Nov 16, Focus help: "Where was I?" in the ✦, and offered after 3 minutes away (on unless off)
   fiveMin?: boolean;    // Nov 16, Focus help: "Just 5 minutes" on Home (on unless off)
+  fiveLen?: number;     // Nov 17: how many minutes that button gives (2, 5, 10, 15, 20, 30; default 5)
   sitWithMe?: boolean;  // Nov 16, Focus help: "Sit with me" in the ✦, a quiet voice call while he reads (on unless off)
   sitCheck?: number;    // minutes of quiet before the chavrusa checks in during "Sit with me" (default 5)
   amudBar?: boolean;    // Nov 16, Focus help: a thin line at the top showing how far through the amud you are
@@ -641,7 +642,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode'] as const;
+export const OPTIONAL_SETTING_KEYS = ['windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode', 'fiveLen'] as const;
 
 export const OWNER_ID = 'owner';
 

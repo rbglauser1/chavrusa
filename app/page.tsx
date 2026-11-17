@@ -963,6 +963,7 @@ export default function Home() {
             talkSupported={voice.supported}
             talkOn={talking}
             five={settings.fiveMin !== false}
+            fiveLen={settings.fiveLen ?? 5}
             extras={<HomeExtras settings={settings} onSettings={updateSettings} onOpen={(ref) => { goLearn(); void openExact(ref); }} />}
           />
         )}

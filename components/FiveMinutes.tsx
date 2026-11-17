@@ -4,7 +4,7 @@
 // small promise is easier to keep.
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { fiveEnd, markLearned, startFive, stopFive, streak } from '@/lib/focus';
+import { fiveEnd, fiveLen, markLearned, startFive, stopFive, streak } from '@/lib/focus';
 
 export default function FiveMinutes({ onDone }: { onDone: () => void }) {
   const [end, setEnd] = useState<number | null>(null);
@@ -32,14 +32,15 @@ export default function FiveMinutes({ onDone }: { onDone: () => void }) {
   }
   markLearned();
   const days = streak();
+  const mins = fiveLen();
   return createPortal(
-    <div className="five-done" role="dialog" aria-label="Five minutes done">
+    <div className="five-done" role="dialog" aria-label={`${mins} minutes done`}>
       <div className="five-card">
         <div className="five-check">✓</div>
-        <h2>5 minutes of learning</h2>
+        <h2>{mins} minute{mins === 1 ? '' : 's'} of learning</h2>
         <p>Nice start.{days >= 2 ? ` 🔥 ${days} days in a row.` : ''} Want to keep going?</p>
         <button className="five-main" onClick={stopFive}>Keep going</button>
-        <button className="five-more" onClick={() => startFive(5)}>5 more minutes</button>
+        <button className="five-more" onClick={() => startFive(mins)}>{mins} more minutes</button>
         <button className="five-stop" onClick={() => { stopFive(); onDone(); }}>Done for now</button>
       </div>
     </div>,

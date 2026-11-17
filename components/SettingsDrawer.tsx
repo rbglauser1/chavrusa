@@ -326,9 +326,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           <Group id="focus" title="Focus help" hint={[s.focusMode === 'window' && 'window', s.oneLine && 'one line', s.glowLine && 'glow', s.wins !== false && 'wins', s.fiveMin !== false && '5 minutes', s.sitWithMe !== false && 'sit with me'].filter(Boolean).join(' · ') || 'all off'}>
             <div className="muted" style={{ fontSize: 12.5, margin: '0 0 10px' }}>For getting into the learning and staying with it: helpful for ADHD, and for anyone on a distracted day.</div>
             <div className="field">
-              <label>“Just 5 minutes” on Home</label>
+              <label>“Just {s.fiveLen ?? 5} minutes” on Home</label>
               <Seg value={s.fiveMin !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ fiveMin: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A button under Continue: it opens your place with a gentle 5-minute timer at the top. When it’s up: keep going, 5 more minutes, or done for now. Starting small makes starting easier.</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A button under Continue: it opens your place with a gentle timer at the top. When it’s up: keep going, more minutes, or done for now. Starting small makes starting easier.</div>
+              {s.fiveMin !== false && <>
+                <label style={{ marginTop: 10 }}>How long</label>
+                <Seg value={String(s.fiveLen ?? 5)} options={[['2', '2 min'], ['5', '5'], ['10', '10'], ['15', '15'], ['20', '20'], ['30', '30']]} onPick={(v) => onChange({ fiveLen: Number(v) })} />
+              </>}
             </div>
             <div className="field">
               <label>Reading window</label>
