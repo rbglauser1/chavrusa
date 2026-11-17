@@ -266,7 +266,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const FIRST = ['Rashi', 'Tosafot', 'Bartenura', 'Onkelos', 'Ramban', 'Mishnah Berurah', 'Magen Avraham', 'Turei Zahav', 'Siftei Kohen', 'Tosafot Yom Tov', 'Rashbam', 'Ibn Ezra', 'Sforno', 'Biur Halacha', 'Sha\'ar HaTziyun', 'Ba\'er Hetev', 'Be\'er Hetev'];
   const rank = (t: string) => { const k = FIRST.indexOf(t); return k < 0 ? 99 : k; };
   function lineComms(i: number) {
-    const list = [...(conns?.[partNum(i)] ?? [])];
+    // Nov 16: on the Gemara, Steinsaltz only when turned on (Settings → Look → Commentaries on the page).
+    const list = [...(conns?.[partNum(i)] ?? [])].filter((x) => !(kind === 'gemara' && settings.showSteinsaltz !== true && /^Steinsaltz/.test(x.title)));
     // Nov 16: the usual first ones (Rashi, Tosafos…), then Rishonim before Acharonim, each by date.
     const top = (t: string) => (rank(t) <= 2 ? rank(t) : 99);
     return list.sort((x, y) => top(x.title) - top(y.title) || (x.era ?? 3) - (y.era ?? 3) || (x.year ?? 9999) - (y.year ?? 9999) || rank(x.title) - rank(y.title) || x.title.localeCompare(y.title));
