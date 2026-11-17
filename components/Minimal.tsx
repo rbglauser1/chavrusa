@@ -219,47 +219,6 @@ export default function Minimal(p: Props) {
     document.documentElement.toggleAttribute('data-st-full', stFull);
     return () => document.documentElement.removeAttribute('data-st-full');
   }, [stFull]);
-  // Nov 16, temporary: on a phone, measure the screen and where the bottom row really is (normal and full screen),
-  // and save it with the settings so the display bug can be found. Twice: soon after the change, and a few seconds on.
-  useEffect(() => {
-    if (typeof navigator === 'undefined' || !(navigator.maxTouchPoints > 0) || tab !== 'text' || !p.sefer) return;
-    const measure = (when: string) => {
-      try {
-        const vv = window.visualViewport, de = document.documentElement;
-        const probe = document.createElement('div');
-        probe.style.cssText = 'position:absolute;left:-99px;top:0;width:1px;visibility:hidden;pointer-events:none';
-        document.body.appendChild(probe);
-        const unit = (v: string) => { probe.style.height = v; return Math.round(probe.getBoundingClientRect().height); };
-        const units = { dvh: unit('100dvh'), svh: unit('100svh'), lvh: unit('100lvh'), vh: unit('100vh'), sat: unit('env(safe-area-inset-top)'), sab: unit('env(safe-area-inset-bottom)') };
-        probe.remove();
-        const el = (sel: string) => {
-          const e = document.querySelector<HTMLElement>(sel);
-          if (!e) return null;
-          const r = e.getBoundingClientRect(), c = getComputedStyle(e);
-          const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-          return { t: Math.round(r.top), l: Math.round(r.left), w: Math.round(r.width), h: Math.round(r.height), pos: c.position, top: c.top, bottom: c.bottom, disp: c.display, op: c.opacity, vis: c.visibility, z: c.zIndex, hit: hit ? `${hit.tagName}.${String((hit as HTMLElement).className).slice(0, 40)}` : null, par: e.parentElement ? `${e.parentElement.tagName}.${String(e.parentElement.className).slice(0, 30)}` : null };
-        };
-        const box = (sel: string) => { const e = document.querySelector<HTMLElement>(sel); if (!e) return null; const r = e.getBoundingClientRect(), c = getComputedStyle(e); return { t: Math.round(r.top), h: Math.round(r.height), w: Math.round(r.width), pos: c.position, ov: c.overflow, disp: c.display, tf: c.transform, hgt: c.height }; };
-        const d = {
-          at: new Date().toISOString(), when, full: stFull, theme: p.settings.theme, outline: !!p.settings.outline, margin: p.settings.sideMargin, paper: p.settings.paper,
-          ua: navigator.userAgent.slice(0, 160), standalone: window.matchMedia('(display-mode: standalone)').matches,
-          inner: [window.innerWidth, window.innerHeight], client: [de.clientWidth, de.clientHeight], screen: [window.screen.width, window.screen.height], dpr: window.devicePixelRatio,
-          vv: vv ? { w: Math.round(vv.width), h: Math.round(vv.height), ot: Math.round(vv.offsetTop), ol: Math.round(vv.offsetLeft), pt: Math.round(vv.pageTop), sc: vv.scale } : null,
-          units, scrollY: Math.round(window.scrollY), docH: de.scrollHeight, docW: de.scrollWidth, attrs: Array.from(de.attributes).map((a) => `${a.name}=${a.value}`).join(' ').slice(0, 300),
-          html: box('html'), body: box('body'), app: box('.app'), main: box('.main'), study: box('.st-study'), source: box('.st-source'), sbody: box('.st-source .sefer-body'),
-          ctl: el('.st-full-ctl'), hub: el('.ai-hub-btn'), dock: el('.daf-dock'), bar: el('.daf-dock .daf-bar'), mic: el('.st-study-footer .st-mic'), asc: el('.st-study-footer .ascroll'), foot: el('.st-study-footer'), tabs: el('.launch-dock'),
-          bodyKids: Array.from(document.body.children).map((k) => `${k.tagName}.${String((k as HTMLElement).className).slice(0, 24)}`).filter((x) => !x.startsWith('SCRIPT')).join(' | ').slice(0, 400),
-        };
-        let list: unknown[] = [];
-        try { list = JSON.parse(localStorage.getItem('chavrusa-diag') ?? '[]'); } catch { /* fresh */ }
-        list = [...list, d].slice(-6);
-        try { localStorage.setItem('chavrusa-diag', JSON.stringify(list)); } catch { /* optional */ }
-        void fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ diag: JSON.stringify(list) }) }).catch(() => {});
-      } catch { /* never in the way */ }
-    };
-    const t1 = window.setTimeout(() => measure('soon'), 1500), t2 = window.setTimeout(() => measure('later'), 7000);
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
-  }, [stFull, tab, !!p.sefer]); // eslint-disable-line react-hooks/exhaustive-deps
   // Guided Learning uses the same Sefer double-tap gesture as the other reading experiences.
   const [glFullOn, setGlFull] = useState(false);
   const glFull = p.settings.theme === 'guided-learning' && glFullOn && tab === 'text' && !!p.sefer;
