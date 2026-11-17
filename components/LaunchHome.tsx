@@ -49,7 +49,7 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
         </section>
       </div>
       <footer className="split-footer">
-        {p.talkSupported && <button onClick={p.onTalk}>{p.talkOn ? 'Return to call' : 'Learn aloud'}</button>}
+        {p.talkSupported && <button onClick={p.onTalk}>{p.talkOn ? 'Return to call' : 'Voice call'}</button>}
         <button onClick={() => setOverview(true)}>Your learning</button>
         <button onClick={p.onGuide}>Learning guide</button>
       </footer>
