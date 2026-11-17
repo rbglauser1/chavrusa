@@ -2992,3 +2992,6 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .lwm-strip.lwm-max { max-height: 86dvh; }
 .lwm-strip.lwm-min { max-height: none; }
 .lwm-strip.lwm-min :is(.lwm-strip-body, .lwm-strip-nav) { display: none; }
+/* Nov 16: "This page and more" and the tip under it a little larger. */
+.ai-hub-more { font-size: 17px; padding: 4px 0; }
+.ai-hub-tip { font-size: 15px; }
