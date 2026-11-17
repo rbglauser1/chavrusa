@@ -3154,3 +3154,5 @@ html[data-fh-quiet] .fh-nav { bottom: calc(env(safe-area-inset-bottom) + 22px); 
 .mgp .mg-foot { font: 11px var(--f-ui); color: var(--soft); text-align: center; }
 :is([data-look='clay'],[data-look='chatgpt']) .mgp-comm { border-color: rgba(168, 82, 53, .3); }
 [data-c-he]:not([data-c-he='ink']) .mgp-he { color: color-mix(in srgb, var(--he-hue) 94%, var(--ink)); }
+/* While Mikraos Gedolos is open, the reading screen's Focus help cards (teasers, recap, goal, toasts) stay hidden. */
+html:has(.daf-page.mg) :is(.fh-bar, .fh-nav, .fh-offer, .fh-recap, .fh-toast, .fh-goal) { display: none !important; }
