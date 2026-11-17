@@ -4,7 +4,7 @@
 // - The main page lists only the top groups, each a row with a line of what it's set to and a ›.
 // - Tapping one opens it as its own page: a "‹ back" to where you came from and its name at the top. Its own
 //   settings are on that page, and the groups inside it are rows with a › again, one more page down.
-// - Only one level is ever shown. The phone's back gesture and the app's ‹ step back one page.
+// - Only one level is ever shown. The phone's back gesture and the big ‹ at the top step back one page.
 // The groups are written as before (<Group> inside <Group>); this file decides what shows.
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useBackLayer } from '@/lib/back';
@@ -27,15 +27,10 @@ export function GroupList({ id, children }: { id: string; children?: ReactNode }
     requestAnimationFrame(() => el.scrollIntoView({ block: 'start' }));
   }, [path.length]);
   const here = path[path.length - 1];
-  const back = path.length > 1 ? titles[path[path.length - 2]] : 'Settings';
   return (
     <NavCtx.Provider value={{ path, go, titles, chain: [] }}>
       <div ref={top} className="sg-top" data-settings-list={id} />
       {path.length > 0 && <div className="sg-crumb">
-        <button type="button" className="sg-backbtn" onClick={() => setPath(path.slice(0, -1))}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
-          {back}
-        </button>
         <h2 className="sg-pagetitle">{titles[here] ?? ''}</h2>
       </div>}
       <div className={path.length ? 'sg-pass' : 'sg-root'}>{children}</div>

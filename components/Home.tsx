@@ -7,7 +7,7 @@ import { useMineTitles } from './useMineTitles';
 // The new main screen (Settings → Main screen → New): one home that always opens first.
 // A card to pick up where you left off, four circles (Library, Recent, Themes, Settings), and a Talk button
 // that starts a fresh call and waits for the learner to say what he wants to learn.
-import { useBackLayer } from '@/lib/back';
+import { useBackLayer, closeTop } from '@/lib/back';
 import { useEffect, useState, type ReactNode } from 'react';
 import { HowTo, unlockNarration } from '@/components/HowTo';
 import Guide, { guideSeen } from '@/components/Guide';
@@ -153,7 +153,7 @@ export function HomePage({ title, onBack, children }: { title: string; onBack: (
   return (
     <div className="hpage">
       <header className="hpage-head">
-        <button className="hpage-back" onClick={onBack} aria-label="Back to the main screen"><Icon d={ICONS.back} /></button>
+        <button className="hpage-back" onClick={() => { if (!closeTop()) onBack(); }} aria-label="Back"><Icon d={ICONS.back} /></button>
         <h1>{title}</h1>
         <span className="hpage-spacer" />
       </header>
