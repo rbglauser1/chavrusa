@@ -319,6 +319,7 @@ export default function Home() {
   useBackLayer(notebook, () => setNotebook(false));
   const [sandReview, setSandReview] = useState(false);
   useBackLayer(sandReview, () => setSandReview(false));
+  useEffect(() => { const go = () => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); refreshSessions(); setView('recent'); }; window.addEventListener('chavrusa-recent', go); return () => window.removeEventListener('chavrusa-recent', go); }); // Nov 16: ⋯ → Recent sessions
   useEffect(() => { const open=()=>setSandReview(true); window.addEventListener('sand-review',open); return()=>window.removeEventListener('sand-review',open); }, []);
   // "How to use the app" from Settings: back to Home, where the guide opens.
   useEffect(() => {
