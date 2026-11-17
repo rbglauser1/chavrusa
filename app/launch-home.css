@@ -281,3 +281,9 @@
 :is([data-look='clay'],[data-look='chatgpt']) .seg { background:transparent !important; padding:2px 0 !important; gap:10px !important; border:0 !important; }
 :is([data-look='clay'],[data-look='chatgpt']) .seg button { border:1px solid var(--rule) !important; background:var(--surface) !important; color:var(--soft) !important; box-shadow:0 2px 10px rgba(0,0,0,.10) !important; border-radius:999px !important; min-height:42px; font-weight:400 !important; }
 :is([data-look='clay'],[data-look='chatgpt']) .seg button.on { background:var(--ink) !important; color:var(--bg) !important; border-color:var(--ink) !important; font-weight:600 !important; }
+
+/* Nov 16: every Settings row the same height (with or without the grey line under its name), the name centered in it,
+   so the rows are evenly spaced. */
+:is([data-look='clay'],[data-look='chatgpt']) .sg-2 > .sg-head, :is([data-look='clay'],[data-look='chatgpt']) .sg-3 > .sg-head { min-height:76px; padding-top:10px; padding-bottom:10px; box-sizing:border-box; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-1:not(.open) > .sg-head { min-height:80px; box-sizing:border-box; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-head .sg-text { display:flex; flex-direction:column; justify-content:center; min-width:0; }
