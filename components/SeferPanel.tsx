@@ -725,8 +725,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const c = at != null ? whereCounts(at) : null;
     const askOn = at != null && aiX && (settings.explainLine !== false || settings.lineChat !== false);
     return [
-      ...(wholeSec ? [{ label: '✦ Learn with me', run: () => setLwmAt(at != null ? at + 1 : 1) }] : []),
-      ...(askOn ? [{ label: '✦ Ask about this line', run: () => { if (settings.explainLine !== false) addIn(setXOpen, at!); if (settings.lineChat !== false) addIn(setCOpen, at!); } }] : []),
+      ...(wholeSec ? [{ label: '✦ Learn with me (I’ll lead)', run: () => setLwmAt(at != null ? at + 1 : 1) }] : []),
+      ...(askOn ? [{ label: '✦ Ask about this line (you lead)', run: () => { if (settings.explainLine !== false) addIn(setXOpen, at!); if (settings.lineChat !== false) addIn(setCOpen, at!); } }] : []),
       ...(at != null && c && (c.sources || c.elsewhere || c.halacha || mapOn) ? [{ label: '⇄ Where it goes', run: () => openWhere(at) }] : []),
       ...(at != null && lineX && settings.byHeart !== false && (kind === 'mishnah' || /^Pirkei Avot/.test(src.ref) || (kind === 'tanakh' && settings.byHeart === true)) ? [{ label: '🧠 By heart', run: () => addIn(setHeartOpen, at) }] : []),
       ...(at == null && mapOn ? [{ label: '🗺 Map', run: () => { setMapOpen(true); toAmud(); } }] : []),
