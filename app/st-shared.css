@@ -297,7 +297,7 @@
 [data-look='clay'] .split-home:has(.split-panels.one) .split-intro { flex:0 0 auto; }
 /* Nov 16: the Continue card a bit lower. */
 [data-look='clay'] .split-home .split-panels.one { margin-top:clamp(24px, 7dvh, 72px); }
-/* Nov 16: full screen's bottom buttons placed from the top (see --vv-h in components/Minimal.tsx), so the iPhone
-   can't push them below the screen while the page scrolls. */
-:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-full-ctl,
-:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { top:calc(var(--vv-h, 100dvh) - var(--full-mid, 32px) - 24px) !important; bottom:auto !important; }
+/* Nov 16: in full screen the bottom buttons are part of the page (not pinned), and moved to the bottom of the screen
+   after each scroll (components/Minimal.tsx, data-st-abs): pinned, they vanished on the iPhone. */
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full][data-st-abs] .st-full-ctl,
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full][data-st-abs] body .ai-hub-btn { position:absolute !important; bottom:auto !important; transition:top .12s ease-out; }

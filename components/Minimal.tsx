@@ -219,34 +219,32 @@ export default function Minimal(p: Props) {
     document.documentElement.toggleAttribute('data-st-full', stFull);
     return () => document.documentElement.removeAttribute('data-st-full');
   }, [stFull]);
-  // Nov 16: in full screen the whole page scrolls, and on the iPhone the bottom buttons (scroll, mic, ✦) can then
-  // scroll away with the page instead of staying put. After every scroll the app measures where each one really is
-  // and nudges it back to where it should be (the bottom of what is on screen). Where they stay put by themselves,
-  // the nudge is zero.
+  // Nov 16: in full screen the whole page scrolls (so the words slide up under the clock), and on the iPhone the
+  // bottom buttons (scroll, mic, ✦) then vanish when they are pinned to the screen. So in full screen they are part of
+  // the page instead, and after every scroll they are moved to the bottom of what is on screen.
   useEffect(() => {
     if (!stFull) return;
     const root = document.documentElement, vv = window.visualViewport;
+    root.setAttribute('data-st-abs', '');
     let raf = 0;
-    const fix = () => {
+    const place = () => {
       raf = 0;
-      root.style.setProperty('--vv-h', `${Math.round(vv ? vv.height : window.innerHeight)}px`);
+      const h = vv ? vv.height : window.innerHeight;
+      const mid = parseFloat(getComputedStyle(root).getPropertyValue('--full-mid')) || 32;
       document.querySelectorAll<HTMLElement>('.st-full-ctl, .ai-hub-btn').forEach((el) => {
-        const shift = parseFloat(el.dataset.shift ?? '0') || 0;
-        const want = parseFloat(getComputedStyle(el).top);
-        if (!Number.isFinite(want)) return;
-        const at = el.getBoundingClientRect().top - shift;
-        const next = Math.abs(want - at) < 2 ? 0 : Math.round(want - at);
-        if (next !== shift) { el.dataset.shift = String(next); el.style.translate = next ? `0 ${next}px` : ''; }
+        const cb = el.offsetParent as HTMLElement | null;
+        const cbTop = cb && cb !== document.body ? cb.getBoundingClientRect().top + window.scrollY : 0;
+        el.style.top = `${Math.round(window.scrollY + (vv ? vv.offsetTop : 0) + h - mid - 24 - cbTop)}px`;
       });
     };
-    const soon = () => { if (!raf) raf = requestAnimationFrame(fix); };
-    fix(); const t1 = window.setTimeout(fix, 300), t2 = window.setTimeout(fix, 1000);
-    vv?.addEventListener('resize', soon); vv?.addEventListener('scroll', soon); window.addEventListener('scroll', soon, { passive: true }); window.addEventListener('touchend', soon, { passive: true });
+    const soon = () => { if (!raf) raf = requestAnimationFrame(place); };
+    place(); const t1 = window.setTimeout(place, 300), t2 = window.setTimeout(place, 1200);
+    vv?.addEventListener('resize', soon); vv?.addEventListener('scroll', soon); window.addEventListener('scroll', soon, { passive: true }); window.addEventListener('resize', soon);
     return () => {
       window.clearTimeout(t1); window.clearTimeout(t2); if (raf) cancelAnimationFrame(raf);
-      vv?.removeEventListener('resize', soon); vv?.removeEventListener('scroll', soon); window.removeEventListener('scroll', soon); window.removeEventListener('touchend', soon);
-      root.style.removeProperty('--vv-h');
-      document.querySelectorAll<HTMLElement>('.st-full-ctl, .ai-hub-btn').forEach((el) => { delete el.dataset.shift; el.style.translate = ''; });
+      vv?.removeEventListener('resize', soon); vv?.removeEventListener('scroll', soon); window.removeEventListener('scroll', soon); window.removeEventListener('resize', soon);
+      root.removeAttribute('data-st-abs');
+      document.querySelectorAll<HTMLElement>('.st-full-ctl, .ai-hub-btn').forEach((el) => { el.style.top = ''; });
     };
   }, [stFull]);
   // Guided Learning uses the same Sefer double-tap gesture as the other reading experiences.
