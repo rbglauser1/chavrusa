@@ -323,4 +323,4 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-tex='light'] .sefer-flow::before { background-image: var(--pt-fib), var(--pt-grain); background-size: 300px 300px, 240px 240px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] .sefer-flow::before { background-image: var(--pt-sgrain), var(--pt-veins), var(--pt-cloud); background-size: 240px 240px, 900px 900px, 800px 800px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='light'],[data-tex='stone']) .sefer-flow::before { background-image: var(--pt-fib-n); background-size: 300px 300px; }
-:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .st-source .sefer-body { overflow-x:hidden; }
+:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .st-source .sefer-body { overflow-x:clip; }
