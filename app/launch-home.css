@@ -306,13 +306,13 @@
 }
 /* Nov 17: the texture is on the paper itself, so it moves with the words as you scroll (the learner preferred that to
    a still texture with the words sliding over it): on the page, and on each screen's own scrolling area. */
-:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) :is(body, .sefer-flow, .hpage-body, .nb, .lib) {
+:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) :is(.sefer-flow, .hpage-body, .nb, .lib) {
   background-image: var(--pt-fib), var(--pt-grain); background-size: 300px 300px, 240px 240px; background-attachment: local, local;
 }
-:is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] :is(body, .sefer-flow, .hpage-body, .nb, .lib) {
+:is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] :is(.sefer-flow, .hpage-body, .nb, .lib) {
   background-image: var(--pt-sgrain), var(--pt-veins), var(--pt-cloud); background-size: 240px 240px, 900px 900px, 800px 800px; background-attachment: local, local, local;
 }
-:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='light'],[data-tex='stone']) :is(body, .sefer-flow, .hpage-body, .nb, .lib) { background-image: var(--pt-fib-n); background-size: 300px 300px; background-attachment: local; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='light'],[data-tex='stone']) :is(.sefer-flow, .hpage-body, .nb, .lib) { background-image: var(--pt-fib-n); background-size: 300px 300px; background-attachment: local; }
 /* Nov 17: with a paper texture, the top bar on Home is see-through, so the texture runs under it with no seam. */
 :is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .launch-header { background:transparent !important; }
 
