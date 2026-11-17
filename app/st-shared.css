@@ -328,3 +328,7 @@ body:has(.launch-home) .five-pill { display:none; }
 [data-look='clay'] .split-panel:has(.launch-invite) .launch-primary { padding-top:13px; padding-bottom:13px; }
 [data-look='clay'] .split-panel .launch-small .launch-five { padding:9px 8px; }
 [data-look='clay'] .split-panel .launch-streak { margin-top:8px; }
+/* Nov 17: the card box never shrinks below the card (it was spilling over the title); if Home is taller than the
+   screen, it scrolls. */
+[data-look='clay'] .split-home .split-panels.one, [data-look='clay'] .split-home .split-panels.one > .split-panel { flex-shrink:0; height:auto; min-height:0; }
+[data-look='clay'] .split-home:has(.split-panels.one) { overflow-y:auto; }
