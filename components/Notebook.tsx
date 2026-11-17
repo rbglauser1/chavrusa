@@ -7,6 +7,8 @@ import { VoiceRecord, VoicePlay } from './VoiceNote';
 // A search covers them all. Tap "Open" to go to the note's line. Share or print what is shown (one amud, one topic…).
 import Clamp from './Clamp';
 import { useEffect, useMemo, useState } from 'react';
+import { SandIcon } from './SandTeal';
+import { printHtml } from '@/lib/printHtml';
 
 type Note = { id: string; ref: string; n: number; text: string; created: string; updated?: string; on?: string; quote?: string; audio?: string };
 type View = 'sefer' | 'topics' | 'newest';
@@ -91,12 +93,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
     const body = [...groups].map(([b, xs]) => `<h2>${esc(b)}</h2>${xs.map((x) => `<p class="w">${esc(where(x))} · ${new Date(x.updated ?? x.created).toLocaleDateString()}</p>${aiNote(x) ? '<p class="w">Written by AI · AI makes mistakes</p>' : ''}${x.quote ? `<p class="q" dir="auto">“${esc(x.quote)}”</p>` : ''}<p class="n" dir="auto">${esc(x.text).replace(/\n/g, '<br>')}</p>`).join('')}`).join('');
     return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font:12pt/1.5 Georgia,serif;max-width:680px;margin:32px auto;padding:0 16px}h1{font-weight:400}h2{font:600 14pt Georgia,serif;margin:24px 0 8px;border-bottom:1px solid #ccc}.w{color:#777;font:10pt Arial,sans-serif;margin:14px 0 2px}.q{font-style:italic;color:#555;margin:0 0 2px}.n{margin:0 0 12px}</style></head><body><h1>${esc(title)}</h1><p class="w">${list.length} notes · ${new Date().toLocaleDateString()}</p>${body}</body></html>`;
   };
-  const print = () => {
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(pageOf(titleOfShown, shown));
-    w.document.close(); w.focus(); w.print();
-  };
+  const print = () => printHtml(pageOf(titleOfShown, shown));
   const download = (all: boolean) => {
     const list = all ? (notes ?? []) : shown, title = all ? 'My Notebook' : titleOfShown;
     const blob = new Blob(['\ufeff', pageOf(title, list)], { type: 'application/msword' });
@@ -129,19 +126,18 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
 
   return (
     <div className="nb" role="dialog" aria-modal="true" aria-label="Notebook">
-      <div className="nb-head">
-        <button className="linklike" onClick={onClose}>‹ Back</button>
-        <h1>Notebook</h1>
-        <span className="muted">{notes ? `${notes.length} notes` : ''}</span>
+      <div className="nb-head nb-head2">
+        <button className="nb-back" onClick={onClose} aria-label="Back"><SandIcon name="back" /></button>
+        <div className="nb-title"><h1>Notebook</h1><span>{notes ? `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}` : ''}</span></div>
+        <span className="nb-spacer" />
       </div>
       <div className="nb-tabs">
         {([['sefer', 'By sefer'], ['topics', 'Topics'], ['newest', 'Newest']] as [View, string][]).map(([v, l]) => <button key={v} className={view === v ? 'on' : ''} onClick={() => { setView(v); if (v !== 'topics') setTag(null); }}>{l}</button>)}
       </div>
       <input className="notes-search" placeholder="Search all your notes" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="nb-bar">
-        {newPage === null ? <button className="btn ghost" onClick={() => setNewPage('')}>+ New page</button> : null}
-        {shown.length > 0 && <><button className="linklike" onClick={() => void share()}>Share</button><button className="linklike" onClick={print}>Print</button><button className="linklike" onClick={() => download(false)}>{notes && shown.length < notes.length ? 'Download these' : 'Download'}</button></>}
-        {notes && notes.length > 0 && shown.length < notes.length && <button className="linklike" onClick={() => download(true)}>Download all</button>}
+        {newPage === null ? <button className="nb-new" onClick={() => setNewPage('')}>+ New page</button> : null}
+        {shown.length > 0 && <span className="nb-acts"><button onClick={() => void share()}>Share</button><button onClick={print}>Print</button><button onClick={() => download(false)}>{notes && shown.length < notes.length ? 'Download these' : 'Download'}</button>{notes && notes.length > 0 && shown.length < notes.length && <button onClick={() => download(true)}>Download all</button>}</span>}
       </div>
       {newPage !== null && (
         <div className="ln-edit">
@@ -155,7 +151,7 @@ export default function Notebook({ onClose, onOpen }: { onClose: () => void; onO
           : view === 'sefer' ? books.map(([b, secs]) => (
             <div key={b} className="nb-book">
               <button className="nb-book-head" onClick={() => setOpenBook(openBook === b ? null : b)}>
-                <b>{b}</b><span className="muted">{[...secs.values()].reduce((k, l) => k + l.length, 0)} {openBook === b ? '▴' : '▾'}</span>
+                <b>{b.replace('Berakhot', 'Berachos')}</b><span className="nb-count">{[...secs.values()].reduce((k, l) => k + l.length, 0)}<span className={`nb-chev ${openBook === b ? 'on' : ''}`} aria-hidden="true">›</span></span>
               </button>
               {(openBook === b || q.trim() || books.length === 1) && [...secs.entries()].map(([sec, list]) => (
                 <div key={sec} className="nb-sec">

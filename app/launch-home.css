@@ -248,3 +248,30 @@
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#131313; }
 /* Nov 16: the Home card's title (e.g. Yoma 3a) was clipped top and bottom: a little more line height and room. */
 [data-look='clay'] .split-panel h2 { line-height:1.25; padding-block:2px; flex-shrink:0; }
+
+/* Nov 16: the Notebook matches the app: a round back arrow at the top left (as in Settings), the title in the middle,
+   "+ New page" in terracotta, Share / Print / Download as small pills, and each sefer as a soft card. */
+:is([data-look='clay'],[data-look='chatgpt']) .nb { padding:calc(env(safe-area-inset-top) + 14px) 18px calc(40px + env(safe-area-inset-bottom)); }
+@media (display-mode: standalone) { :is([data-look='clay'],[data-look='chatgpt']) .nb { padding-top:calc(env(safe-area-inset-top) + 30px); } }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-head2 { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; margin:0 auto 20px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-back { width:44px; height:44px; border-radius:50%; border:1px solid var(--rule); background:var(--surface); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; padding:0; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-title { text-align:center; line-height:1.1; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-head2 .nb-title h1 { font:500 28px var(--f-brand, var(--f-body)); letter-spacing:-.02em; margin:0; color:var(--ink); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-title span { display:block; margin-top:4px; font:12px var(--f-ui); color:var(--soft); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-tabs button { font:14px var(--f-ui); padding:9px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-tabs button.on { color:var(--ink); font-weight:600; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-bar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px auto 18px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-bar .nb-new { border:0; border-radius:999px; background:#CC7C5E; color:#fff; font:600 14px var(--f-ui); padding:10px 16px; cursor:pointer; white-space:nowrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-acts { display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-acts button { border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink); font:13px var(--f-ui); padding:8px 12px; cursor:pointer; white-space:nowrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-book { border:1px solid var(--rule); border-radius:16px; background:var(--surface); margin:0 auto 10px; padding:0 16px; box-shadow:0 3px 12px rgba(0,0,0,.03); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-book-head { padding:16px 0; align-items:center; font:500 18px var(--f-body); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-book-head b { font-weight:500; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-count { display:inline-flex; align-items:center; gap:10px; font:13px var(--f-ui); color:var(--soft); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-chev { display:inline-block; font-size:20px; line-height:1; transition:transform .15s; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-chev.on { transform:rotate(90deg); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-book .nb-sec { padding-bottom:8px; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-book .nb-note { box-shadow:none; padding:14px 16px; border-radius:12px; background:var(--bg); }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-sec-head { color:#CC7C5E; font-weight:600; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-actions button, :is([data-look='clay'],[data-look='chatgpt']) .nb-actions .linklike { text-decoration:none; color:var(--accent); }
+@media (min-width: 900px) { :is([data-look='clay'],[data-look='chatgpt']) .nb-body { display:block; } }
