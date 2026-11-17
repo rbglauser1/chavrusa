@@ -28,6 +28,8 @@ import { splitSentences, useVoice } from '@/components/useVoice';
 import { useLive } from '@/components/useLive';
 import { useGeminiLive } from '@/components/useGeminiLive';
 import Notebook from '@/components/Notebook';
+import FiveMinutes from '@/components/FiveMinutes';
+import { isSitting, setSitting } from '@/lib/focus';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -176,7 +178,7 @@ export default function Home() {
         .then((r) => r.json()).then((d) => { if (d?.session?.id) { sessionIdRef.current = d.session.id; setSessionId(d.session.id); } }).catch(() => {});
     },
     // Saver pauses sooner: never later than 15 quiet seconds.
-    idleSeconds: () => { const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
+    idleSeconds: () => { if (isSitting()) return 0; /* Sit with me: never paused for quiet (Nov 16) */ const t = settingsRef.current.liveIdleSec ?? 60; return settingsRef.current.saver !== false && t > 0 ? Math.min(t, SAVER_IDLE_SEC) : t; },
     wakeOnSpeech: () => settingsRef.current.liveWake ?? true,
     // Coach notes (Steady off): after each turn, a quick brain check of the voice against the style and the learner's
     // instructions; if it drifted, a short private note goes to the voice for its next reply. Never waited for.
@@ -208,6 +210,19 @@ export default function Home() {
   const liveGpt = useLive(liveOpts);
   const liveGem = useGeminiLive(liveOpts);
   const live = liveGem.active ? liveGem : liveGpt.active ? liveGpt : settings.liveEngine === 'gemini' ? liveGem : liveGpt;
+  // Sit with me (Nov 16, Focus help): when the call has been quiet for a few minutes, the chavrusa checks in with one
+  // short sentence. The call ends: Sit with me ends.
+  const sitAct = useRef(Date.now());
+  useEffect(() => { sitAct.current = Date.now(); }, [live.heard, live.state]);
+  useEffect(() => {
+    if (!live.active) { setSitting(false); return; }
+    const id = window.setInterval(() => {
+      if (!isSitting() || live.state === 'paused') return;
+      const mins = settingsRef.current.sitCheck ?? 5;
+      if (Date.now() - sitAct.current > mins * 60_000) { sitAct.current = Date.now(); live.nudge(); }
+    }, 15_000);
+    return () => window.clearInterval(id);
+  }, [live.active, live.state, live]);
   liveRef.current = live;
   // A call starting: the next piece gets ready right away (the opening's "go on" uses it).
   useEffect(() => { if (live.active) prefetchNext(); else { nextReady.current = null; nextTry.current++; } }, [live.active]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -947,6 +962,7 @@ export default function Home() {
             onTalk={homeTalk}
             talkSupported={voice.supported}
             talkOn={talking}
+            five={settings.fiveMin !== false}
             extras={<HomeExtras settings={settings} onSettings={updateSettings} onOpen={(ref) => { goLearn(); void openExact(ref); }} />}
           />
         )}
@@ -972,6 +988,7 @@ export default function Home() {
         )}
         {help && <Help onClose={() => setHelp(false)} />}
         {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
+        <FiveMinutes onDone={() => setView('home')} />
       {loaded && !settings.disclaimer2 && !seenDisclaimer && (
           <Disclaimer
             look={settings.theme}
@@ -1344,6 +1361,7 @@ export default function Home() {
       {drawer === 'settings' && <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setDrawer(null)} onHelp={() => setHelp(true)} liveActive={live.active} />}
       {help && <Help onClose={() => setHelp(false)} />}
       {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
+        <FiveMinutes onDone={() => setView('home')} />
       {loaded && !settings.disclaimer2 && !seenDisclaimer && (
         <Disclaimer
           look={settings.theme}

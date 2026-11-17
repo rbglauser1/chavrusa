@@ -33,6 +33,8 @@ import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, useTargum } from './useOutline';
+import FocusHelp from './FocusHelp';
+import { setVoiceGuide } from '@/lib/voiceGuide';
 
 interface Props {
   sources: SourceData[];
@@ -746,6 +748,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       ...(askOn ? [{ label: '✦ Ask about this line (you lead)', run: () => { if (settings.explainLine !== false) addIn(setXOpen, at!); if (settings.lineChat !== false) addIn(setCOpen, at!); } }] : []),
       ...(at != null && c && (c.sources || c.elsewhere || c.halacha || mapOn) ? [{ label: '⇄ Where it goes', run: () => openWhere(at) }] : []),
       ...(at != null && lineX && settings.byHeart !== false && (kind === 'mishnah' || /^Pirkei Avot/.test(src.ref) || (kind === 'tanakh' && settings.byHeart === true)) ? [{ label: '🧠 By heart', run: () => addIn(setHeartOpen, at) }] : []),
+      // Nov 16, Focus help: where you are, in a sentence; and a quiet call that keeps you company while you read.
+      ...(wholeSec && settings.whereWasI !== false ? [{ label: '↩ Where was I?', run: () => window.dispatchEvent(new CustomEvent('chavrusa-where', { detail: at != null ? at + 1 : undefined })) }] : []),
+      ...(wholeSec && voiceLead && settings.sitWithMe !== false ? [{ label: '🎙 Sit with me while I learn', run: () => { setVoiceGuide({ mode: 'sit', at: `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${at != null ? at + 1 : 1}` }); voiceLead(); } }] : []),
     ];
   };
   const hubAmud: HubAction[] = !src || /:\d+(-\d+)?$/.test(src.ref) || /^Mine /.test(src.ref) ? [] : [
@@ -782,6 +787,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     ? <>
         <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
+        {embedded && src && !isComm && !showLib && wholeSec && <FocusHelp settings={settings} refText={src.ref} total={src.he.length} focus={src.focus} picked={picked} />}
         {lwmAt != null && <LearnWithMe refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onVoiceTalk={talk && onPoint ? (n) => { onPoint(src, n); if (!talk.on) talk.toggle(); } : undefined} onClose={() => setLwmAt(null)} />}
       </>
     : null;

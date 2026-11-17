@@ -628,5 +628,10 @@ export function useGeminiLive(opts: Opts) {
     send({ clientContent: { turns: [{ role: 'user', parts: [{ text: `[APP] COACH NOTE (private: never mention it or answer it; just apply it from your next reply on): ${g(text)}` }] }], turnComplete: false } });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { freshStart: () => {}, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText: (label: string, he: string, en: string) => pointTo(label, 1, he, en), pauseIn, keepAwake: bump, active: state !== 'off' };
+  // Sit with me (Nov 16): after a long quiet, a short check-in.
+  const nudge = () => {
+    if (stateRef.current === 'speaking') return;
+    send({ clientContent: { turns: [{ role: 'user', parts: [{ text: '[APP] CHECK-IN: he has been quiet for a while. Say ONE short, warm sentence now to check in with him (different from before), then be quiet again.' }] }], turnComplete: true } });
+  };
+  return { nudge, freshStart: () => {}, remind, note, state, heard, supported, start, stop, answer, answerWhole, answerPart, answerExact, answerExactPart, read, stopReading, pointTo, pointText: (label: string, he: string, en: string) => pointTo(label, 1, he, en), pauseIn, keepAwake: bump, active: state !== 'off' };
 }

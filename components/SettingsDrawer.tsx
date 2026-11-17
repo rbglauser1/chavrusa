@@ -252,19 +252,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Justified: the Hebrew and the English fill the whole width of each line, with even edges on both sides, like a printed sefer. The last line of each stays as usual.</div>
             </div>
             <div className="field">
-              <label>Reading window</label>
-              <Seg value={s.focusMode === 'window' ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ focusMode: v === 'on' ? 'window' : 'off', spotlight: false })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A clear oval across the middle of the screen; above and below it is shaded. Scroll the words you're on into it.</div>
-              {s.focusMode === 'window' && (
-                <>
-                  <label style={{ marginTop: 10 }}>Window size</label>
-                  <div className="range"><input type="range" min={1} max={9} value={s.windowSize ?? 5} onChange={(e) => onChange({ windowSize: Number(e.target.value) })} /><span>{s.windowSize ?? 5}</span></div>
-                  <label style={{ marginTop: 6 }}>Shade</label>
-                  <div className="range"><input type="range" min={1} max={9} value={s.windowDark ?? 5} onChange={(e) => onChange({ windowDark: Number(e.target.value) })} /><span>{s.windowDark ?? 5}</span></div>
-                </>
-              )}
-            </div>
-            <div className="field">
               <label>Space between parts</label>
               <Seg value={s.partGap ?? 'normal'} options={[['normal', 'Normal'], ['more', 'More'], ['most', 'Most']]} onPick={(v) => onChange({ partGap: v as 'normal' | 'more' | 'most' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>More room after the English before the next Hebrew, so each part stands on its own.</div>
@@ -336,6 +323,56 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
           {rest && (
           <>
+          <Group id="focus" title="Focus help" hint={[s.focusMode === 'window' && 'window', s.oneLine && 'one line', s.glowLine && 'glow', s.wins !== false && 'wins', s.fiveMin !== false && '5 minutes', s.sitWithMe !== false && 'sit with me'].filter(Boolean).join(' · ') || 'all off'}>
+            <div className="muted" style={{ fontSize: 12.5, margin: '0 0 10px' }}>For getting into the learning and staying with it: helpful for ADHD, and for anyone on a distracted day.</div>
+            <div className="field">
+              <label>“Just 5 minutes” on Home</label>
+              <Seg value={s.fiveMin !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ fiveMin: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A button under Continue: it opens your place with a gentle 5-minute timer at the top. When it’s up: keep going, 5 more minutes, or done for now. Starting small makes starting easier.</div>
+            </div>
+            <div className="field">
+              <label>Reading window</label>
+              <Seg value={s.focusMode === 'window' ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ focusMode: v === 'on' ? 'window' : 'off', spotlight: false })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A clear oval across the middle of the screen; above and below it is shaded. Scroll the words you're on into it.</div>
+              {s.focusMode === 'window' && (
+                <>
+                  <label style={{ marginTop: 10 }}>Window size</label>
+                  <div className="range"><input type="range" min={1} max={9} value={s.windowSize ?? 5} onChange={(e) => onChange({ windowSize: Number(e.target.value) })} /><span>{s.windowSize ?? 5}</span></div>
+                  <label style={{ marginTop: 6 }}>Shade</label>
+                  <div className="range"><input type="range" min={1} max={9} value={s.windowDark ?? 5} onChange={(e) => onChange({ windowDark: Number(e.target.value) })} /><span>{s.windowDark ?? 5}</span></div>
+                </>
+              )}
+            </div>
+            <div className="field">
+              <label>One line at a time</label>
+              <Seg value={s.oneLine ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ oneLine: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Only the line you’re on is clear; the rest are faint. Next and Back at the bottom, or swipe sideways. Tap a faint line to go to it.</div>
+            </div>
+            <div className="field">
+              <label>Soft glow on the line you’re on</label>
+              <Seg value={s.glowLine ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ glowLine: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A gentle, slow glow on the line you tapped, the line the voice is on, or the line near the top as you scroll. It never blinks.</div>
+            </div>
+            <div className="field">
+              <label>Small wins</label>
+              <Seg value={s.wins !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ wins: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A quiet ✓ after each Step, every 5 lines and at the end of the amud, with how many days in a row you’ve learned (also on Home).</div>
+            </div>
+            <div className="field">
+              <label>Where was I?</label>
+              <Seg value={s.whereWasI !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ whereWasI: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the ✦: a sentence or two on where you are in the sugya, to step back in without rereading. Offered by itself when you come back after 3 minutes away. Made once per line and kept (a fraction of a cent the first time).</div>
+            </div>
+            <div className="field">
+              <label>Sit with me (voice)</label>
+              <Seg value={s.sitWithMe !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ sitWithMe: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the ✦: a quiet voice call. Your chavrusa keeps you company while you read on your own, answers if you ask, and checks in gently after a long quiet. The call isn’t paused for quiet, so it costs the voice’s usual rate the whole time (about 5¢ a minute with GPT-Live, 1–2¢ with Gemini Live).</div>
+            </div>
+            {s.sitWithMe !== false && <div className="field">
+              <label>Sit with me: check in after</label>
+              <Seg value={String(s.sitCheck ?? 5)} options={[['3', '3 min'], ['5', '5 min'], ['10', '10 min']]} onPick={(v) => onChange({ sitCheck: Number(v) })} />
+            </div>}
+          </Group>
           {/* Nov 16: everything the AI does, in one place. */}
           <Group id="ai" title="The AI" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''} · ${s.aiHub === false ? 'tools under each line' : 'tools in the ✦'}`}>
             <Group id="ai-tools" level={2} title="The ✦ and its tools" hint="Learn with me, Ask about this line, Where it goes, maps, review…">
