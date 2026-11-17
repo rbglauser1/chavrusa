@@ -324,3 +324,17 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] .sefer-flow::before { background-image: var(--pt-sgrain), var(--pt-veins), var(--pt-cloud); background-size: 240px 240px, 900px 900px, 800px 800px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='light'],[data-tex='stone']) .sefer-flow::before { background-image: var(--pt-fib-n); background-size: 300px 300px; }
 :is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .st-source .sefer-body { overflow-x:clip; }
+
+/* Nov 17: the terracotta buttons softer: a light clay fill with deep clay letters, in place of the solid dark
+   terracotta with white letters (still easy to read). On Night, a deep clay fill with light clay letters. */
+:is([data-look='clay'],[data-look='chatgpt']) {
+  --clay-soft-bg: #F2DED5; --clay-soft-bg-strong: #EDD2C6; --clay-soft-ink: #8C3F25; --clay-soft-rule: #E4C1B2;
+}
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] {
+  --clay-soft-bg: #4A2F25; --clay-soft-bg-strong: #57362A; --clay-soft-ink: #F3BCA4; --clay-soft-rule: #6B4334;
+}
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper] .split-panel .launch-primary,
+:is([data-look='clay'],[data-look='chatgpt']) .launch-primary { background: var(--clay-soft-bg-strong) !important; color: var(--clay-soft-ink) !important; border: 1px solid var(--clay-soft-rule) !important; box-shadow: none !important; }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.five-main, .nb-bar .nb-new, .fh-nav button:not(.fh-nav-x), .btn.primary, .send) { background: var(--clay-soft-bg) !important; color: var(--clay-soft-ink) !important; border: 1px solid var(--clay-soft-rule) !important; box-shadow: none !important; }
+:is([data-look='clay'],[data-look='chatgpt']) .seg button.on { background: var(--clay-soft-bg) !important; color: var(--clay-soft-ink) !important; border-color: var(--clay-soft-rule) !important; }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-five { border-color: var(--clay-soft-rule) !important; color: var(--clay-soft-ink) !important; }
