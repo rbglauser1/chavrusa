@@ -229,6 +229,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>On the Gemara, Tosafos opens by itself under each line that has a Tosafos (after Rashi, if Rashi is on too). Also in the ⋯ menu.</div>
             </div>
             <div className="field">
+              <label>My seforim in the Library</label>
+              <Seg value={s.mySeforim ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ mySeforim: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Shows a "My seforim" card at the top of the Library, where you can add and open your own texts.</div>
+            </div>
+            <div className="field">
               <label>Steinsaltz among the commentaries (Gemara)</label>
               <Seg value={s.showSteinsaltz ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ showSteinsaltz: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The English under each line of the Gemara is already the Steinsaltz; turn this on to also list it with the commentaries.</div>

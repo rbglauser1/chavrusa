@@ -18,7 +18,7 @@ export function LaunchNav(p: { dockOnly?: boolean; view: View; onHome: () => voi
     return () => { window.removeEventListener('keydown', close); window.removeEventListener('pointerdown', outside); };
   }, [more]);
   const go = (fn: () => void) => { setMore(false); fn(); };
-  return <>{!p.dockOnly && <header className="launch-header"><button className="launch-brand" onClick={() => go(p.onHome)}>Chavrusa</button><button className="launch-icon" aria-label="Settings" onClick={() => go(p.onSettings)}><SandIcon name="settings" size={25}/></button></header>}<nav className="launch-dock" aria-label="Main navigation"><button aria-current={p.view === 'home' ? 'page' : undefined} onClick={() => go(p.onHome)}><SandIcon name="home"/><span>Home</span></button><button onClick={() => go(p.onLibrary)}><SandIcon name="book"/><span>Library</span></button><button onClick={() => go(p.onNotebook)}><SandIcon name="notes"/><span>Notebook</span></button></nav></>; // Nov 16: no More tab; its items live in the ⋯ menu, on Home and in Settings
+  return <>{!p.dockOnly && <header className="launch-header"><button className="launch-brand" onClick={() => go(p.onHome)}>Chavrusa</button><button className="launch-icon" aria-label="Settings" onClick={() => go(p.onSettings)}><SandIcon name="settings" size={25}/></button></header>}<nav className="launch-dock" aria-label="Main navigation"><button aria-current={p.view === 'home' ? 'page' : undefined} onClick={() => go(p.onHome)}><SandIcon name="home"/><span>Home</span></button><button onClick={() => go(p.onLibrary)}><SandIcon name="book"/><span>Library</span></button><button aria-current={p.view === 'recent' ? 'page' : undefined} onClick={() => go(p.onRecent)}><SandIcon name="review"/><span>Recents</span></button><button onClick={() => go(p.onNotebook)}><SandIcon name="notes"/><span>Notebook</span></button></nav></>; // Nov 16: Home, Library, Recents, Notebook
 }
 export type LaunchHomeProps = { busy?: boolean; cont: ContinueInfo | null; onContinue: () => void; onLibrary: () => void; onRecent: () => void; onThemes: () => void; onTalk: () => void; talkSupported: boolean; talkOn: boolean; extras?: ReactNode; onGuide: () => void; onReview?: () => void; onAsk?: (text: string) => void | Promise<void> };
 function Overview({ children, onClose }: { children: ReactNode; onClose: () => void }) {
@@ -28,7 +28,8 @@ function Overview({ children, onClose }: { children: ReactNode; onClose: () => v
   useEffect(() => { const previous = document.activeElement as HTMLElement | null; close.current?.focus(); return () => previous?.focus(); }, []);
   return <div className="launch-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}><section ref={panel} className="launch-overview" role="dialog" aria-modal="true" aria-label="Your learning" onKeyDown={e => { if (e.key === 'Escape') onClose(); if (e.key === 'Tab') { const items = Array.from(panel.current?.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea') ?? []).filter(x => !x.hasAttribute('disabled')); if (e.shiftKey && document.activeElement === items[0]) { e.preventDefault(); items.at(-1)?.focus(); } else if (!e.shiftKey && document.activeElement === items.at(-1)) { e.preventDefault(); items[0]?.focus(); } } }}><header><h2>Your learning</h2><button ref={close} className="launch-icon" aria-label="Close learning overview" onClick={onClose}><SandIcon name="close"/></button></header>{children}</section></div>;
 }
-const titleOf = (c: ContinueInfo | null) => (c?.ref || c?.title || c?.heRef || 'Choose a sefer').replace('Berakhot', 'Berachos');
+// Nov 16: the place (Yoma 4a), never the chavrusa's first words; a talk with no text open is "Your last conversation".
+const titleOf = (c: ContinueInfo | null) => (c ? (c.ref || c.heRef || 'Your last conversation') : 'Choose a sefer').replace('Berakhot', 'Berachos');
 export function SplitCanvasHome(p: LaunchHomeProps) {
   const [overview, setOverview] = useState(false);
 
@@ -37,7 +38,7 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
       <header className="split-intro">
         <h1>Make time{' '}<br />to learn.</h1>
       </header>
-      <div className="split-panels">
+      <div className="split-panels one">
         <section className="split-panel">
           <span className="launch-eyebrow">{p.cont ? 'Return to your learning' : 'Begin your learning'}</span>
           <h2 dir="auto">{titleOf(p.cont)}</h2>
@@ -45,11 +46,6 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
           <button className="launch-primary" onClick={p.cont ? p.onContinue : p.onLibrary}>
             {p.cont ? 'Continue' : 'Open the Library'} <SandIcon name="arrow" size={18} />
           </button>
-        </section>
-        <section className="split-panel split-new">
-          <h2>Begin something new</h2>
-          <button onClick={p.onLibrary}><SandIcon name="book" size={20} />Choose a sefer</button>
-          <button onClick={p.onRecent}><SandIcon name="review" size={20} />Recents</button>
         </section>
       </div>
       <footer className="split-footer">

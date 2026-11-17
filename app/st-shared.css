@@ -286,5 +286,9 @@
 :is([data-look='clay'],[data-look='chatgpt']) .st-new-chat { margin-left:auto; border:1px solid var(--rule); background:var(--surface); color:var(--ink); border-radius:999px; padding:6px 12px; font:13px var(--f-ui); }
 
 /* Nov 16: no More tab (three tabs); the ⋯ menu's links look like its buttons. */
-:is([data-look='clay'],[data-look='chatgpt']) .launch-dock { grid-template-columns:repeat(3,1fr); }
+:is([data-look='clay'],[data-look='chatgpt']) .launch-dock { grid-template-columns:repeat(4,1fr); }
 :is([data-look='clay'],[data-look='chatgpt']) .st-tools-menu a { display:block; padding:13px; border-radius:9px; font:13px var(--f-ui); color:var(--ink); text-decoration:none; }
+
+/* Nov 16: Home has just the Continue card (Recents is a tab now). */
+[data-look='clay'] .split-panels.one { grid-template-rows:auto; grid-template-columns:1fr; flex:0 1 auto; align-content:center; }
+@media (min-width: 700px), (orientation: landscape) and (min-width: 520px) { [data-look='clay'] .split-panels.one { grid-template:auto / minmax(0, 560px); justify-content:center; } }

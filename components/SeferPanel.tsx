@@ -823,7 +823,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {/* (The "Go to" box was removed: open places from the Library, or just tell the chavrusa.) */}
 
       {/* The library stays where you left it (hidden, not closed), so you can go back up a level later. */}
-      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library shown={showLib} onOpen={onOpenExact ?? onOpenRef} onClose={closeLib} /></div>}
+      {libUsed && <div style={showLib ? { display: 'contents' } : { display: 'none' }}><Library shown={showLib} mine={!!settings.mySeforim} onOpen={onOpenExact ?? onOpenRef} onClose={closeLib} /></div>}
 
       {!showLib && sources.length > 0 && (
         <div className="sefer-tabs">

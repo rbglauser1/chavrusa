@@ -85,7 +85,7 @@ function OfflineShelf({ onPick }: { onPick: (title: string) => void }) {
   );
 }
 
-export default function Library({ onOpen, onClose, shown = true }: { onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: (opened?: boolean) => void; shown?: boolean }) {
+export default function Library({ onOpen, onClose, shown = true, mine = false }: { mine?: boolean; onOpen: (ref: string, focus?: number) => Promise<string | { message: string; approvable?: string } | null>; onClose: (opened?: boolean) => void; shown?: boolean }) {
   const [openParsha, setOpenParsha] = useState<number | null>(null);
   const [path, setPathState] = useState<string[]>(memory.path);
   const setPath = (p: string[]) => { memory.path = p; setPathState(p); };
@@ -174,7 +174,7 @@ export default function Library({ onOpen, onClose, shown = true }: { onOpen: (re
       {approvable && <button className="btn" disabled={busy} onClick={approveAndOpen}>Approve this sefer and open it</button>}
 
       {!book && !path.length && offlineOn() && <OfflineShelf onPick={(t) => setBook({ title: t })} />}
-      {!book && !path.length && !showRecent && (
+      {mine && !book && !path.length && !showRecent && (
         <div className="lib-recent">
           {!showMine ? (
             <button className="lib-item category" onClick={() => setShowMine(true)}>
