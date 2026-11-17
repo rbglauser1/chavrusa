@@ -1212,9 +1212,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             {src.he.length === 0 && src.en.map((l, i) => <div key={i} className="line"><div>{l}</div></div>)}
           </>
         )}
-        {src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) && (() => {
-          // Always in view while scrolling: which amud you're looking at, with the page turns.
-          const v = inView === 'prev' && prevSrc ? prevSrc : inView === 'next' && nextSrc ? nextSrc : src;
+        {src && !isComm && (!/:\d+(-\d+)?$/.test(src.ref) || /^[^:]+ \d+[ab]:\d+(-\d+)?$/.test(src.ref)) && (() => {
+          // Always in view while scrolling: which amud you're looking at, with the page turns. (Nov 16: also when
+          // what is open is some lines of an amud, e.g. from a note: the counter shows the amud.)
+          const v0 = inView === 'prev' && prevSrc ? prevSrc : inView === 'next' && nextSrc ? nextSrc : src;
+          const v = { ...v0, ref: v0.ref.replace(/:\d+(-\d+)?$/, ''), heRef: (v0.heRef ?? '').replace(/:[^:]*$/, '') };
           const pv = prevSection(v.ref), nx = nextSection(v.ref);
           const word = sectionWord(v.ref);
           const bar = (

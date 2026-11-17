@@ -300,4 +300,6 @@
 /* Nov 16: in full screen the bottom buttons are part of the page (not pinned), and moved to the bottom of the screen
    after each scroll (components/Minimal.tsx, data-st-abs): pinned, they vanished on the iPhone. */
 :is([data-look='clay'],[data-look='chatgpt'])[data-st-full][data-st-abs] .st-full-ctl,
-:is([data-look='clay'],[data-look='chatgpt'])[data-st-full][data-st-abs] body .ai-hub-btn { position:absolute !important; bottom:auto !important; transition:top .12s ease-out; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full][data-st-abs] body .ai-hub-btn,
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full][data-st-abs] .daf-dock .daf-bar { position:absolute !important; bottom:auto !important; transition:opacity .15s ease; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full][data-st-moving] :is(.st-full-ctl, .ai-hub-btn, .daf-dock .daf-bar) { opacity:0; pointer-events:none; }
