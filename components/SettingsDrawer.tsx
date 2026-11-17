@@ -239,7 +239,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <Group id="look-sizes" level={2} title="Text sizes" hint={`Hebrew ${s.heSize}${(s.heSpacing ?? 'normal') !== 'normal' ? ` (${s.heSpacing})` : ''} · Rashi ${s.commSize ?? 20} · English ${s.enSize}`}>
             <div className="field">
               <label>Hebrew text size</label>
-              <div className="range"><input type="range" min={16} max={36} value={s.heSize} onChange={(e) => onChange({ heSize: Number(e.target.value) })} /><span className="he" style={{ fontSize: s.heSize }}>אבג</span></div>
+              <div className="range"><input type="range" min={16} max={52} value={s.heSize} onChange={(e) => onChange({ heSize: Number(e.target.value) })} /><span className="he" style={{ fontSize: s.heSize }}>אבג</span></div>
             </div>
             <div className="field">
               <label>Hebrew spacing</label>
