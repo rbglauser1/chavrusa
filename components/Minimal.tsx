@@ -219,6 +219,16 @@ export default function Minimal(p: Props) {
     document.documentElement.toggleAttribute('data-st-full', stFull);
     return () => document.documentElement.removeAttribute('data-st-full');
   }, [stFull]);
+  // Nov 16: in full screen the whole page scrolls, and the iPhone can then put bottom-pinned buttons below the screen.
+  // The buttons are placed from the top instead, by the height of what is actually on screen (--vv-h).
+  useEffect(() => {
+    if (!stFull) return;
+    const root = document.documentElement, vv = window.visualViewport;
+    const set = () => root.style.setProperty('--vv-h', `${Math.round(vv ? vv.height + vv.offsetTop : window.innerHeight)}px`);
+    set();
+    vv?.addEventListener('resize', set); vv?.addEventListener('scroll', set); window.addEventListener('scroll', set, { passive: true });
+    return () => { vv?.removeEventListener('resize', set); vv?.removeEventListener('scroll', set); window.removeEventListener('scroll', set); root.style.removeProperty('--vv-h'); };
+  }, [stFull]);
   // Guided Learning uses the same Sefer double-tap gesture as the other reading experiences.
   const [glFullOn, setGlFull] = useState(false);
   const glFull = p.settings.theme === 'guided-learning' && glFullOn && tab === 'text' && !!p.sefer;
