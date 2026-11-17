@@ -287,3 +287,6 @@
 :is([data-look='clay'],[data-look='chatgpt']) .sg-2 > .sg-head, :is([data-look='clay'],[data-look='chatgpt']) .sg-3 > .sg-head { min-height:76px; padding-top:10px; padding-bottom:10px; box-sizing:border-box; }
 :is([data-look='clay'],[data-look='chatgpt']) .sg-1:not(.open) > .sg-head { min-height:80px; box-sizing:border-box; }
 :is([data-look='clay'],[data-look='chatgpt']) .sg-head .sg-text { display:flex; flex-direction:column; justify-content:center; min-width:0; }
+/* Nov 16: the chosen Settings choice in dark terracotta (lighter on the eye than black, matches the ✦ and Continue). */
+:is([data-look='clay'],[data-look='chatgpt']) .seg button.on { background:#a85235 !important; border-color:#a85235 !important; color:#fff !important; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] .seg button.on { background:#c4734f !important; border-color:#c4734f !important; }
