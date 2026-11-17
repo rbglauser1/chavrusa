@@ -62,6 +62,8 @@ export function Home(p: {
   extras?: ReactNode; // the optional cards (Settings → Extras): chazara, progress
   five?: boolean; // Nov 16: "Just 5 minutes" on Home
   fiveLen?: number;
+  leftQ?: { ref: string; line: number; text: string; at: string } | null;
+  teasersOn?: boolean;
 }) {
   const c = p.cont;
   // The guide (components/Guide.tsx): one tap away, and it opens by itself the first time, once the disclaimer has

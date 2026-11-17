@@ -3099,3 +3099,15 @@ html[data-fh-quiet] .fh-nav { bottom: calc(env(safe-area-inset-bottom) + 22px); 
 .launch-small { display: flex; gap: 8px; margin-top: 10px; }
 .launch-small .launch-five { margin-top: 0; flex: 1; padding: 11px 8px; font-size: 14px; }
 .launch-line { font-size: .55em; color: var(--soft); letter-spacing: 0; white-space: nowrap; }
+/* Nov 17: teasers, the question from last time, "a question for next time", and the Home invitation. */
+.fh-tz-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.fh-lq-text { font-family: var(--f-body); font-size: 17px; font-style: italic; }
+.lq-card { text-align: left; }
+.lq-card h2, .lq-card p { text-align: center; }
+.lq-label { display: block; font: 600 12px var(--f-ui); color: var(--soft); margin: 0 0 6px; }
+.lq-text { width: 100%; box-sizing: border-box; border: 1px solid var(--rule); border-radius: 14px; background: var(--bg); color: var(--ink); padding: 12px 14px; font: 16px/1.45 var(--f-ui); resize: none; margin-bottom: 4px; }
+.lq-card .five-main:disabled { opacity: .45; }
+.launch-invite { margin: 2px 0 14px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, #CC7C5E 8%, transparent); font-family: var(--f-ui); }
+.launch-invite span { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; color: #a85235; margin-bottom: 3px; }
+.launch-invite q { font: 15.5px/1.45 var(--f-body); color: var(--ink); }
+.launch-invite.own q { font-style: italic; }

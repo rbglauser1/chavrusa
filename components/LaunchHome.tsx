@@ -21,7 +21,7 @@ export function LaunchNav(p: { dockOnly?: boolean; view: View; onHome: () => voi
   const go = (fn: () => void) => { setMore(false); fn(); };
   return <>{!p.dockOnly && <header className="launch-header"><button className="launch-brand" onClick={() => go(p.onHome)}>Chavrusa</button><button className="launch-icon" aria-label="Settings" onClick={() => go(p.onSettings)}><SandIcon name="settings" size={25}/></button></header>}<nav className="launch-dock" aria-label="Main navigation"><button aria-current={p.view === 'home' ? 'page' : undefined} onClick={() => go(p.onHome)}><SandIcon name="home"/><span>Home</span></button><button onClick={() => go(p.onLibrary)}><SandIcon name="book"/><span>Library</span></button><button aria-current={p.view === 'recent' ? 'page' : undefined} onClick={() => go(p.onRecent)}><SandIcon name="review"/><span>Recents</span></button><button onClick={() => go(p.onNotebook)}><SandIcon name="notes"/><span>Notebook</span></button></nav></>; // Nov 16: Home, Library, Recents, Notebook
 }
-export type LaunchHomeProps = { five?: boolean; fiveLen?: number; busy?: boolean; cont: ContinueInfo | null; onContinue: () => void; onLibrary: () => void; onRecent: () => void; onThemes: () => void; onTalk: () => void; talkSupported: boolean; talkOn: boolean; extras?: ReactNode; onGuide: () => void; onReview?: () => void; onAsk?: (text: string) => void | Promise<void> };
+export type LaunchHomeProps = { five?: boolean; fiveLen?: number; leftQ?: { ref: string; line: number; text: string; at: string } | null; teasersOn?: boolean; busy?: boolean; cont: ContinueInfo | null; onContinue: () => void; onLibrary: () => void; onRecent: () => void; onThemes: () => void; onTalk: () => void; talkSupported: boolean; talkOn: boolean; extras?: ReactNode; onGuide: () => void; onReview?: () => void; onAsk?: (text: string) => void | Promise<void> };
 function Overview({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
@@ -35,6 +35,31 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
   const [overview, setOverview] = useState(false);
   const [days, setDays] = useState(0);
   useEffect(() => { setDays(streak()); }, []);
+  // Back into the sugya (Nov 17): one invitation inside the Continue card, the best one there is: the question he left
+  // himself, then a note of his own on that page, then a teaser for where he stopped (written by AI, and labeled so).
+  const [invite, setInvite] = useState<{ label: string; text: string; own: boolean } | null>(null);
+  const contRef = p.cont?.ref ?? '', contLine = p.cont?.line ?? 0;
+  useEffect(() => {
+    setInvite(null);
+    if (p.leftQ?.text) { setInvite({ label: `You asked yourself · ${p.leftQ.ref.replace('Berakhot', 'Berachos')}, line ${p.leftQ.line}`, text: p.leftQ.text, own: true }); return; }
+    if (!contRef) return;
+    let off = false;
+    const base = contRef.replace(/:\d+(-\d+)?$/, '');
+    (async () => {
+      try {
+        const n = await fetch(`/api/notes?ref=${encodeURIComponent(base)}`).then((r) => r.json());
+        const mine = (n.notes ?? []).find((x: { text?: string }) => (x.text ?? '').trim().length > 3);
+        if (mine && !off) { setInvite({ label: `Your note on line ${mine.n}`, text: String(mine.text).slice(0, 160), own: true }); return; }
+        if (!p.teasersOn) return;
+        const t = await fetch(`/api/teasers?ref=${encodeURIComponent(base)}`).then((r) => r.json());
+        const items: { line: number; kind: string; text: string }[] = t.items ?? [];
+        const next = items.find((x) => x.kind === 'guess' && x.line >= contLine) ?? items.find((x) => x.line >= contLine);
+        const text = next?.text || t.hook;
+        if (text && !off) setInvite({ label: next?.kind === 'guess' ? 'What would you say?' : 'Something to think about', text, own: false });
+      } catch { /* no invitation */ }
+    })();
+    return () => { off = true; };
+  }, [p.leftQ?.text, p.leftQ?.ref, p.leftQ?.line, contRef, contLine, p.teasersOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <main className="launch-home split-home no-pull" aria-label="Claude split canvas Home">
@@ -46,6 +71,10 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
           <span className="launch-eyebrow">{p.cont ? 'Return to your learning' : 'Begin your learning'}</span>
           <h2 dir="auto">{titleOf(p.cont)}{p.cont?.ref && p.cont.line ? <span className="launch-line"> · line {p.cont.line}</span> : null}</h2>
           {p.cont && <p>Your place, ready when you are.</p>}
+          {invite && <div className={`launch-invite ${invite.own ? 'own' : ''}`}>
+            <span>{invite.label}{invite.own ? '' : ' · AI'}</span>
+            <q>{invite.text}</q>
+          </div>}
           <button className="launch-primary" onClick={p.cont ? p.onContinue : p.onLibrary}>
             {p.cont ? 'Continue' : 'Open the Library'} <SandIcon name="arrow" size={18} />
           </button>

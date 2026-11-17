@@ -41,6 +41,7 @@ export default function FiveMinutes({ onDone }: { onDone: () => void }) {
         <p>Nice start.{days >= 2 ? ` 🔥 ${days} days in a row.` : ''} Want to keep going?</p>
         <button className="five-main" onClick={stopFive}>Keep going</button>
         <button className="five-more" onClick={() => startFive(mins)}>{mins} more minutes</button>
+        <button className="five-more" onClick={() => { stopFive(); window.dispatchEvent(new Event('chavrusa-leave-q')); }}>Leave myself a question</button>
         <button className="five-stop" onClick={() => { stopFive(); onDone(); }}>Done for now</button>
       </div>
     </div>,

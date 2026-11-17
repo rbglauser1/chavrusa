@@ -29,6 +29,7 @@ import { useLive } from '@/components/useLive';
 import { useGeminiLive } from '@/components/useGeminiLive';
 import Notebook from '@/components/Notebook';
 import FiveMinutes from '@/components/FiveMinutes';
+import LeaveQuestion from '@/components/LeaveQuestion';
 import { isSitting, setSitting } from '@/lib/focus';
 
 type Item =
@@ -336,6 +337,8 @@ export default function Home() {
   useBackLayer(sandReview, () => setSandReview(false));
   useEffect(() => { const go = () => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); refreshSessions(); setView('recent'); }; window.addEventListener('chavrusa-recent', go); return () => window.removeEventListener('chavrusa-recent', go); }); // Nov 16: ⋯ → Recent sessions
   useEffect(() => { const open=()=>setSandReview(true); window.addEventListener('sand-review',open); return()=>window.removeEventListener('sand-review',open); }, []);
+  // Focus help changes a setting from the reading screen (Nov 17: clearing "a question for next time").
+  useEffect(() => { const on = (e: Event) => updateSettings((e as CustomEvent<Partial<Settings>>).detail ?? {}); window.addEventListener('chavrusa-settings', on); return () => window.removeEventListener('chavrusa-settings', on); }, [updateSettings]);
   // Focus help's "Stop here" (Nov 17): back to Home; the place is kept.
   useEffect(() => { const go = () => setView('home'); window.addEventListener('chavrusa-home', go); return () => window.removeEventListener('chavrusa-home', go); }, []);
   // "How to use the app" from Settings: back to Home, where the guide opens.
@@ -968,6 +971,8 @@ export default function Home() {
             talkOn={talking}
             five={settings.fiveMin !== false}
             fiveLen={settings.fiveLen ?? 5}
+            leftQ={settings.leftQ ?? null}
+            teasersOn={settings.teasers !== false}
             extras={<HomeExtras settings={settings} onSettings={updateSettings} onOpen={(ref) => { goLearn(); void openExact(ref); }} />}
           />
         )}
@@ -994,6 +999,7 @@ export default function Home() {
         {help && <Help onClose={() => setHelp(false)} />}
         {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
         <FiveMinutes onDone={() => setView('home')} />
+        <LeaveQuestion onSave={(q) => updateSettings({ leftQ: q })} />
       {loaded && !settings.disclaimer2 && !seenDisclaimer && (
           <Disclaimer
             look={settings.theme}
@@ -1367,6 +1373,7 @@ export default function Home() {
       {help && <Help onClose={() => setHelp(false)} />}
       {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
         <FiveMinutes onDone={() => setView('home')} />
+        <LeaveQuestion onSave={(q) => updateSettings({ leftQ: q })} />
       {loaded && !settings.disclaimer2 && !seenDisclaimer && (
         <Disclaimer
           look={settings.theme}

@@ -40,6 +40,12 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
 
   // A minute of learning counts as a day learned (the days-in-a-row count).
   useEffect(() => { const t = window.setTimeout(() => markLearned(), 60_000); return () => window.clearTimeout(t); }, []);
+  // Where you are, for "a question for next time" (components/LeaveQuestion.tsx).
+  useEffect(() => {
+    const line = cur ?? numbered().find((e) => e.getBoundingClientRect().bottom > 140)?.dataset.line;
+    (window as unknown as { __chavrusaPlace?: { ref: string; line: number } }).__chavrusaPlace = { ref: base, line: Number(line) || 1 };
+  }, [cur, base]);
+  useEffect(() => () => { (window as unknown as { __chavrusaPlace?: unknown }).__chavrusaPlace = undefined; }, []);
   // A new amud: start over.
   useEffect(() => { best.current = 0; sinceWin.current = 0; setCur(null); setRecap(null); }, [base]);
   // The line you're on: the voice's place, or the line you tapped.
@@ -170,6 +176,57 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
     return () => { document.removeEventListener('touchstart', start); document.removeEventListener('touchend', end); };
   }, [one, quiet, total]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Teasers (Nov 17): pop-ups that draw you into the exact text, one at a time at natural moments. All of a page's
+  // teasers come from one call, kept (app/api/teasers). Seen ones aren't shown again that day.
+  type Tz = { line: number; kind: string; text: string; answer?: string; answerLine?: number; words?: string };
+  const tzOn = settings.teasers !== false;
+  const [tz, setTz] = useState<{ base: string; hook: string; items: Tz[] } | null>(null);
+  const [tzShow, setTzShow] = useState<{ kind: string; line?: number; text: string; answer?: string; answerLine?: number; open?: boolean } | null>(null);
+  const lastTz = useRef(0);
+  const seenKey = (k: string) => `chavrusa-tz|${new Date().toLocaleDateString('en-CA')}|${base}|${k}`;
+  const seen = (k: string) => { try { return localStorage.getItem(seenKey(k)) === '1'; } catch { return false; } };
+  const markSeen = (k: string) => { try { localStorage.setItem(seenKey(k), '1'); } catch { /* optional */ } };
+  useEffect(() => {
+    setTz(null); setTzShow(null);
+    if (!tzOn || !base) return;
+    let off = false;
+    fetch(`/api/teasers?ref=${encodeURIComponent(base)}`).then((r) => r.json()).then((d) => { if (!off) setTz({ base, hook: d.hook ?? '', items: Array.isArray(d.items) ? d.items : [] }); }).catch(() => {});
+    return () => { off = true; };
+  }, [base, tzOn]);
+  // Before you start: the page's hook, once, soon after it opens (not over another card).
+  useEffect(() => {
+    if (!tz || tz.base !== base || !tz.hook || seen('hook')) return;
+    const t = window.setTimeout(() => {
+      if (document.querySelector('.five-done, .fh-recap')) return;
+      markSeen('hook'); lastTz.current = Date.now();
+      setTzShow({ kind: 'hook', text: tz.hook });
+    }, 1800);
+    return () => window.clearTimeout(t);
+  }, [tz, base]); // eslint-disable-line react-hooks/exhaustive-deps
+  // On reaching a line with a teaser (going forward), at most one every 2½ minutes.
+  useEffect(() => {
+    if (!tz || tz.base !== base || cur == null || tzShow || recap) return;
+    if (Date.now() - lastTz.current < 150_000) return;
+    const it = tz.items.find((x) => x.line === cur && !seen(`${x.line}-${x.kind}`));
+    if (!it) return;
+    markSeen(`${it.line}-${it.kind}`); lastTz.current = Date.now();
+    setTzShow({ kind: it.kind, line: it.line, text: it.text, answer: it.answer, answerLine: it.answerLine });
+    if (it.words) setLit([{ line: it.line, phrase: it.words }]);
+  }, [cur, tz, base]); // eslint-disable-line react-hooks/exhaustive-deps
+  const TZ_LABEL: Record<string, string> = { hook: 'Before you start', guess: 'What would you say?', notice: 'Did you notice?', rishon: 'A Rishon asks', practice: 'In practice today', change: 'What changed in the case?', rashi: 'What caught Rashi’s eye?' };
+
+  // A question for next time, left last visit: shown beside its line when you come back.
+  const lq = settings.leftQ && settings.leftQ.ref === base ? settings.leftQ : null;
+  const [lqShown, setLqShown] = useState(false);
+  useEffect(() => { setLqShown(false); }, [base]);
+  useEffect(() => {
+    if (!lq || lqShown) return;
+    const t = window.setTimeout(() => { setLqShown(true); lineEl(lq.line)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); setCur(lq.line); }, 900);
+    return () => window.clearTimeout(t);
+  }, [lq, lqShown]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [lqClosed, setLqClosed] = useState(false);
+  useEffect(() => { setLqClosed(false); }, [base]);
+
   // Where was I? lights up the words it's talking about, in the text itself (the browser's highlight, no change to the page).
   useEffect(() => {
     const H = (globalThis as unknown as { CSS?: { highlights?: Map<string, unknown> } }).CSS?.highlights;
@@ -254,12 +311,33 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
         {oneOnce && !settings.oneLine && <button className="fh-nav-x" onClick={leaveOnce} aria-label="Back to the whole page">✕</button>}
       </div>}
       {toast && <div className="fh-toast" role="status">{toast}</div>}
+      {lq && lqShown && !lqClosed && <div className="fh-recap fh-lq" role="dialog" aria-label="Your question from last time">
+        <div className="fh-recap-top"><b>Your question from last time · line {lq.line}</b><button onClick={() => setLqClosed(true)} aria-label="Close">✕</button></div>
+        <p className="fh-lq-text">“{lq.text}”</p>
+        <div className="fh-tz-btns">
+          <button className="fh-recap-go" onClick={() => setLqClosed(true)}>Let’s pick it up</button>
+          <button className="fh-recap-go" onClick={() => { setLqClosed(true); window.dispatchEvent(new CustomEvent('chavrusa-settings', { detail: { leftQ: null } })); }}>Answered: clear it</button>
+        </div>
+      </div>}
+      {tzShow && !(lq && lqShown && !lqClosed) && <div className="fh-recap fh-tz" role="dialog" aria-label={TZ_LABEL[tzShow.kind] ?? 'Something to think about'}>
+        <div className="fh-recap-top"><b>✦ {TZ_LABEL[tzShow.kind] ?? 'Something to think about'}{tzShow.line ? ` · line ${tzShow.line}` : ''}</b><button onClick={() => { setTzShow(null); setLit(null); }} aria-label="Close">✕</button></div>
+        <p>{tzShow.text}</p>
+        {tzShow.kind === 'guess' && tzShow.open && tzShow.answer && <p className="fh-recap-ask"><b>The answer:</b> {tzShow.answer}</p>}
+        <div className="fh-tz-btns">
+          {tzShow.kind === 'guess' && !tzShow.open && <button className="fh-recap-go" onClick={() => setTzShow(null)}>Let me think</button>}
+          {tzShow.kind === 'guess' && !tzShow.open && tzShow.answer && <button className="fh-recap-go" onClick={() => setTzShow((x) => (x ? { ...x, open: true } : x))}>Show the answer</button>}
+          {tzShow.kind === 'guess' && tzShow.open && tzShow.answerLine && <button className="fh-recap-go" onClick={() => { const n = tzShow.answerLine!; setTzShow(null); setCur(n); lineEl(n)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}>Go to it in the text</button>}
+          {tzShow.kind !== 'guess' && <button className="fh-recap-go" onClick={() => setTzShow(null)}>{tzShow.kind === 'hook' ? 'Let’s see' : 'Got it'}</button>}
+        </div>
+        <div className="ai-note left">Written by AI · AI makes mistakes</div>
+      </div>}
       {goalCard && <div className="five-done" role="dialog" aria-label="Goal reached">
         <div className="five-card">
           <div className="five-check">🎯</div>
           <h2>{goal === 'step' ? 'You finished this Step' : 'Today’s goal reached'}</h2>
           <p>{cheer()}. This is a good place to stop, and your place is kept.</p>
           <button className="five-main" onClick={() => setGoalCard(false)}>Keep learning</button>
+          <button className="five-more" onClick={() => { setGoalCard(false); window.dispatchEvent(new Event('chavrusa-leave-q')); }}>Leave myself a question</button>
           <button className="five-stop" onClick={() => { setGoalCard(false); window.dispatchEvent(new Event('chavrusa-home')); }}>Stop here</button>
         </div>
       </div>}
