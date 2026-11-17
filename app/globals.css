@@ -3013,3 +3013,11 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
   padding: 10px 14px 12px; margin: 4px 0 18px;
 }
 .amud-intro span { color: #CC7C5E; font-weight: 700; letter-spacing: .1em; }
+/* Nov 16: printing the source sheet from the page itself (components/SheetView.tsx). */
+#sheet-print { display: none; }
+.sheetv-acts { display: flex; gap: 8px; align-items: center; }
+@media print {
+  html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #fff !important; position: static !important; }
+  body > *:not(#sheet-print) { display: none !important; }
+  #sheet-print { display: block !important; }
+}
