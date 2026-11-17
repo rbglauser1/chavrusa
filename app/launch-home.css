@@ -290,3 +290,24 @@
 /* Nov 16: the chosen Settings choice in dark terracotta (lighter on the eye than black, matches the ✦ and Continue). */
 :is([data-look='clay'],[data-look='chatgpt']) .seg button.on { background:#a85235 !important; border-color:#a85235 !important; color:#fff !important; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] .seg button.on { background:#c4734f !important; border-color:#c4734f !important; }
+
+/* Nov 17: paper texture (Settings → The page → Background → Paper texture), on top of whichever background color
+   is chosen: neutral fibers and patina that darken the color a touch (lighten it on Night), so they take on its tone.
+   A layer over the page that taps go straight through; the floating buttons sit above it and stay clean. */
+:root {
+  --pt-fib: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6 .04' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23f%29'/%3E%3C/svg%3E");
+  --pt-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3C/svg%3E");
+  --pt-mot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.01' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .30 -.11'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23m%29'/%3E%3C/svg%3E");
+  --pt-fib-n: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6 .04' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23f%29'/%3E%3C/svg%3E");
+  --pt-mot-n: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.01' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .22 -.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23m%29'/%3E%3C/svg%3E");
+}
+:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='parchment']) body::after {
+  content: ''; position: fixed; inset: 0; z-index: 2; pointer-events: none; mix-blend-mode: multiply;
+  background-image: var(--pt-fib), var(--pt-grain); background-size: 300px 300px, 240px 240px;
+}
+:is([data-look='clay'],[data-look='chatgpt'])[data-tex='parchment'] body::after {
+  background-image: var(--pt-fib), var(--pt-grain), var(--pt-mot), radial-gradient(ellipse 120% 95% at 50% 45%, transparent 58%, rgba(60, 40, 20, .07) 100%);
+  background-size: 300px 300px, 240px 240px, 700px 700px, 100% 100%;
+}
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='light'],[data-tex='parchment']) body::after { mix-blend-mode: screen; background-image: var(--pt-fib-n); background-size: 300px 300px; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'][data-tex='parchment'] body::after { background-image: var(--pt-fib-n), var(--pt-mot-n); background-size: 300px 300px, 700px 700px; }

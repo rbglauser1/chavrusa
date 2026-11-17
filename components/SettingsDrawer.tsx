@@ -158,6 +158,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                     </button>
                   ))}
                 </div>
+                <label style={{ marginTop: 14 }}>Paper texture</label>
+                <Seg value={s.paperTex ?? 'off'} options={[['off', 'Smooth'], ['light', 'Light paper'], ['parchment', 'Parchment']]} onPick={(v) => onChange({ paperTex: v as 'off' | 'light' | 'parchment' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The feel of paper on top of the color you chose: Light paper is fine fibers, seen up close; Parchment adds a soft, uneven patina like an old sefer. It takes on the background's own color.</div>
               </div>
             )}
             </Group>

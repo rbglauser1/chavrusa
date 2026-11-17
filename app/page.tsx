@@ -429,6 +429,8 @@ export default function Home() {
     if (isExperience(settings.theme)) root.dataset.experience = settings.theme; else delete root.dataset.experience;
     try { if (!designPreviewOnly.current) document.cookie = `ui=${settings.theme}|${Math.round(settings.heSize)}|${Math.round(settings.enSize)}|${settings.rashiScript ? 'on' : 'off'}|${Math.round(settings.commSize ?? 20)}|${settings.fonts?.[settings.theme]?.en ?? ''}|${settings.fonts?.[settings.theme]?.he ?? ''}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => colorOf(settings, p)).join('.')}|${(['he', 'en', 'comm', 'intro'] as const).map((p) => (settings.bold?.[p] ? 'b' : '-')).join('')}|${settings.fonts?.[settings.theme]?.comm ?? ''}|${guidedPalette(settings.guidedPalette)}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.paper = settings.paper ?? 'look';
+    root.dataset.tex = settings.paperTex ?? 'off'; // Nov 17: paper texture
+    try { document.cookie = `tex=${settings.paperTex ?? 'off'}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     requestAnimationFrame(() => baseStatus()); // the clock strip takes the page's color (Nov 16)
     try { document.cookie = `paper=${settings.paper ?? 'look'}; path=/; max-age=31536000; samesite=lax`; } catch { /* optional */ }
     root.dataset.rashi = settings.rashiScript ? 'on' : 'off';
@@ -457,7 +459,7 @@ export default function Home() {
     root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
     const cs = fontStack(FONTS_COMM, cf);
     if (cf !== 'rashi' && cf !== 'same' && cs) root.style.setProperty('--f-comm', cs); else root.style.removeProperty('--f-comm');
-  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin, settings.paper]);
+  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin, settings.paper, settings.paperTex]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 

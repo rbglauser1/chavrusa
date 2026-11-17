@@ -40,6 +40,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const [look, he, en, rashi, comm, fEn, fHe, cols, bolds, fComm, palette] = (jar.get('ui')?.value ?? '').split('|');
   const paperC = jar.get('paper')?.value ?? '';
   const paper = ['white', 'cream', 'blue', 'green', 'night'].includes(paperC) ? paperC : 'look'; // the background color, Nov 16
+  const texC = jar.get('tex')?.value ?? '';
+  const tex = ['light', 'parchment'].includes(texC) ? texC : 'off'; // the paper texture, Nov 17
   // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).
   const [cHe, cEn, cComm, cIntro] = (cols ?? '').split('.').map((c) => (/^[a-z]{2,8}$/.test(c) ? c : ''));
   const enFont = fontStack(FONTS_EN, fEn), heFont = fontStack(FONTS_HE, fHe);
@@ -48,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const num = (v: string | undefined) => (v && /^\d{1,2}$/.test(v) ? `${v}px` : undefined);
   const style = { ...(num(he) ? { '--he-size': num(he) } : {}), ...(num(en) ? { '--en-size': num(en) } : {}), ...(num(comm) ? { '--comm-size': num(comm) } : {}), ...(enFont ? { '--f-body': enFont, '--f-ui': enFont } : {}), ...(heFont ? { '--f-he': heFont } : {}), ...(commFont !== 'rashi' && commFont !== 'same' && commStack ? { '--f-comm': commStack } : {}) } as React.CSSProperties;
   return (
-    <html lang="en" data-guided-palette={look === 'guided-learning' ? guidedPalette(palette) : undefined} data-experience={isExperience(look) ? look : undefined} data-look={LOOKS.includes(look) ? look : 'daf'} data-paper={paper} data-rashi={rashi === 'off' ? 'off' : 'on'} data-enfont={enFont ? 'chosen' : 'look'} data-commfont={commFont === 'rashi' ? 'rashi' : commFont === 'same' ? 'same' : 'chosen'} data-hefont={heFont ? 'chosen' : 'look'} data-c-he={cHe || 'ink'} data-c-en={cEn || 'ink'} data-c-comm={cComm || 'sepia'} data-c-intro={cIntro || 'slate'} data-b-he={bolds?.[0] === 'b' ? 'on' : 'off'} data-b-en={bolds?.[1] === 'b' ? 'on' : 'off'} data-b-comm={bolds?.[2] === 'b' ? 'on' : 'off'} data-b-intro={bolds?.[3] === 'b' ? 'on' : 'off'} style={style} suppressHydrationWarning>
+    <html lang="en" data-guided-palette={look === 'guided-learning' ? guidedPalette(palette) : undefined} data-experience={isExperience(look) ? look : undefined} data-look={LOOKS.includes(look) ? look : 'daf'} data-paper={paper} data-tex={tex} data-rashi={rashi === 'off' ? 'off' : 'on'} data-enfont={enFont ? 'chosen' : 'look'} data-commfont={commFont === 'rashi' ? 'rashi' : commFont === 'same' ? 'same' : 'chosen'} data-hefont={heFont ? 'chosen' : 'look'} data-c-he={cHe || 'ink'} data-c-en={cEn || 'ink'} data-c-comm={cComm || 'sepia'} data-c-intro={cIntro || 'slate'} data-b-he={bolds?.[0] === 'b' ? 'on' : 'off'} data-b-en={bolds?.[1] === 'b' ? 'on' : 'off'} data-b-comm={bolds?.[2] === 'b' ? 'on' : 'off'} data-b-intro={bolds?.[3] === 'b' ? 'on' : 'off'} style={style} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
