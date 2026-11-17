@@ -2996,3 +2996,20 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 .ai-hub-more { font-size: 17px; padding: 4px 0; }
 .ai-hub-tip { font-size: 15px; }
 .ai-hub-more { color: #CC7C5E; } /* Nov 16: "This page and more" in terracotta, like the rest of the ✦ */
+
+/* Nov 16: what the AI adds to the page looks like the AI (terracotta), not like the sefer: the Steps above each move
+   and the amud intro sit in a soft terracotta note with a small "✦ STEP" / "✦ INTRO" label, in the app's font. */
+.sefer .move, .min .move {
+  font-family: var(--f-ui); font-size: max(15px, calc(var(--en-size, 16px) - 2px)); font-weight: 400; line-height: 1.45;
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+  background: color-mix(in srgb, #CC7C5E 8%, transparent); border-left: 3px solid #CC7C5E; border-radius: 4px 12px 12px 4px;
+  padding: 8px 12px 9px; margin: 16px 0 10px;
+}
+.sefer .move::before, .min .move::before { content: '✦ STEP'; display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; color: #CC7C5E; margin-bottom: 3px; }
+.amud-intro {
+  font-family: var(--f-ui); font-size: max(15px, calc(var(--en-size, 16px) - 2px)); line-height: 1.55;
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+  background: color-mix(in srgb, #CC7C5E 8%, transparent); border-left: 3px solid #CC7C5E; border-bottom: 0; border-radius: 4px 12px 12px 4px;
+  padding: 10px 14px 12px; margin: 4px 0 18px;
+}
+.amud-intro span { color: #CC7C5E; font-weight: 700; letter-spacing: .1em; }

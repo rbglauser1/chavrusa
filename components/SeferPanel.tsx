@@ -644,7 +644,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {canTranslate && showAll && t.en[i] && <div className="tg-en">{yeshivishEnglish(t.en[i])}</div>}
     </div>
   ) : null);
-  const introBox = (t: string) => (t ? <div className="amud-intro"><span>On this {sectionWord(src?.ref ?? '')}</span><div className="ai-note left">Written by AI · AI makes mistakes</div>{t}</div> : null);
+  const introBox = (t: string) => (t ? <div className="amud-intro"><span>✦ Intro · this {sectionWord(src?.ref ?? '')}</span><div className="ai-note left">Written by AI · AI makes mistakes</div>{t}</div> : null);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
