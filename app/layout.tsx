@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const paperC = jar.get('paper')?.value ?? '';
   const paper = ['white', 'cream', 'blue', 'green', 'night'].includes(paperC) ? paperC : 'look'; // the background color, Nov 16
   const texC = jar.get('tex')?.value ?? '';
-  const tex = ['light', 'parchment'].includes(texC) ? texC : 'off'; // the paper texture, Nov 17
+  const tex = ['light', 'stone'].includes(texC) ? texC : 'off'; // the paper texture, Nov 17
   // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).
   const [cHe, cEn, cComm, cIntro] = (cols ?? '').split('.').map((c) => (/^[a-z]{2,8}$/.test(c) ? c : ''));
   const enFont = fontStack(FONTS_EN, fEn), heFont = fontStack(FONTS_HE, fHe);

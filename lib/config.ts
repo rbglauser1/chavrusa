@@ -516,7 +516,7 @@ export interface Settings {
   goal?: 'off' | '3' | '5' | '10' | 'step'; // Nov 16, Focus help: today's small goal (lines, or one Step)
   readAlong?: boolean;  // Nov 16, Focus help: in a call, the line the voice is on is lit and kept in view
   quietMode?: boolean;  // Nov 16, Focus help: only the text and Next / Back (no bottom buttons, tabs, or line buttons)
-  paperTex?: 'off' | 'light' | 'parchment'; // Nov 17: a paper texture over the background color (Claude / ChatGPT looks)
+  paperTex?: 'off' | 'light' | 'stone'; // Nov 17: a paper texture over the background color (Claude / ChatGPT looks)
   mySeforim?: boolean; // Nov 16: the "My seforim" card in the Library (your own texts); off unless turned on
   showSteinsaltz?: boolean; // Nov 16: Steinsaltz among the commentaries on a Gemara line (off: the English already is his)
   mussarAngle?: boolean;   // Nov 16: add a mussar / Chassidus angle to any style (was the Mussar and Chassidic styles)
