@@ -748,6 +748,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const on = (e: Event) => {
       const what = (e as CustomEvent<string>).detail;
       const act = hubAmud.find((x) => (what === 'sheet' && /Source sheet/.test(x.label)) || (what === 'listen' && /Listen/.test(x.label)) || (what === 'review' && /Review questions/.test(x.label)));
+      if (what === 'map') { setMapOpen(true); toAmud(); return; }
       act?.run();
     };
     window.addEventListener('chavrusa-page-tool', on);
