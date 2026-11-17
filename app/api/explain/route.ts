@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
-import { getText } from '@/lib/sefaria';
+import { getText, endOfPrevious } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
@@ -59,7 +59,7 @@ async function makeExplain(base: string, n: number, short = false): Promise<{ te
   } catch { /* optional */ }
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const r = await runAnthropic({
-    lang: true, model: model.id, system: short ? PROMPT + SHORT : PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n} (the line's own reference: ${s.ref}:${n})\n\n${lines.slice(0, 26000)}${comm}` }],
+    lang: true, model: model.id, system: short ? PROMPT + SHORT : PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n} (the line's own reference: ${s.ref}:${n})${await endOfPrevious(base, n, approved)}\n\n${lines.slice(0, 26000)}${comm}` }],
     tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: short ? 3 : 6,
   });
   await logCost({ sessionId: null, kind: 'explain', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
@@ -80,6 +80,6 @@ export async function GET(req: NextRequest) {
   const m = ref.match(/^(.*?):(\d+)$/);
   if (!m || /^Mine /.test(ref)) return NextResponse.json({ text: '' });
   const short = req.nextUrl.searchParams.get('short') === '1';
-  try { return NextResponse.json(await keep(short ? 'explain-short-v1' : 'explain-v2', ref, () => makeExplain(m[1], Number(m[2]), short), (x) => !x.text)); }
+  try { return NextResponse.json(await keep(`${short ? 'explain-short-v1' : 'explain-v2'}${Number(m[2]) <= 3 ? '-prev' : ''}`, ref, () => makeExplain(m[1], Number(m[2]), short), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ text: '', error: (e as Error).message }); }
 }

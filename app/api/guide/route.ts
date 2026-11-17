@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MODELS, costUsd, styleForChat } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
-import { getText } from '@/lib/sefaria';
+import { getText, endOfPrevious } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
@@ -48,7 +48,7 @@ async function makeGuide(base: string, n: number): Promise<Guide> {
   if (!s.verdict.allowed || !s.he.length || n > s.he.length) return { question: '', hint: '', kashya: null };
   const model = await keptModel();
   const r = await runAnthropic({
-    lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lineText(s.he, s.en, n)}` }],
+    lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n}${await endOfPrevious(base, n, approved)}\n\n${lineText(s.he, s.en, n)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 700,
   });
   await logCost({ sessionId: null, kind: 'guide', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
     const r = await run({
       lang: true, model: model.id, system: `${REPLY}\n\n${styleForChat(settings)}\n\n${SCOPE}`,
-      history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lineText(s.he, s.en, n)}\n\n---\nYou asked: ${String(b.question ?? '').slice(0, 500)}\nHe answered: ${answer}` }],
+      history: [{ role: 'user', content: `${s.ref}, line ${n}${await endOfPrevious(m[1], n, approved)}\n\n${lineText(s.he, s.en, n)}\n\n---\nYou asked: ${String(b.question ?? '').slice(0, 500)}\nHe answered: ${answer}` }],
       tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 500,
     });
     await logCost({ sessionId: null, kind: 'guide-reply', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});

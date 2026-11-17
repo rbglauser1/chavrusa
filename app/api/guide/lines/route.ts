@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
-import { getText } from '@/lib/sefaria';
+import { getText, endOfPrevious } from '@/lib/sefaria';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { parseAiJson } from '@/lib/aiLang';
 import { keep } from '@/lib/keep';
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       if (!s.verdict.allowed || !s.he.length) return { lines: [] as Row[] };
       const model = await keptModel();
       const r = await runAnthropic({
-        lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref} (${s.he.length} lines)\n\n${sectionText(s.he, s.en, 30000)}` }],
+        lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref} (${s.he.length} lines)${await endOfPrevious(ref, 1, await approvedList())}\n\n${sectionText(s.he, s.en, 30000)}` }],
         tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: Math.min(6000, 300 + s.he.length * 110),
       });
       await logCost({ sessionId: null, kind: 'guide-lines', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});

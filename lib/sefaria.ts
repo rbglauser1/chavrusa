@@ -330,3 +330,27 @@ export async function getPerPasuk(ref: string, list: ApprovedEntry[], withEn = f
     return he.map((h, k) => ({ he: stripKeepBold(h), en: en[k] ? yeshivishEnglish(stripHtml(en[k])) : '' })).filter((x) => x.he.trim());
   });
 }
+
+// Nov 16: the section before this one ("Yoma 4a" → "Yoma 3b", "Genesis 2" → "Genesis 1"), so a line near the start of
+// an amud or perek can be read with the end of what came before it (a sentence often runs over). Null at the first.
+export function prevSection(base: string): string | null {
+  const a = base.match(/^(.*\D)(\d+)([ab])$/);
+  if (a) { const d = Number(a[2]); return a[3] === 'b' ? `${a[1]}${d}a` : d > 2 ? `${a[1]}${d - 1}b` : null; }
+  const c = base.match(/^(.*\D)(\d+)$/);
+  if (c && Number(c[2]) > 1) return `${c[1]}${Number(c[2]) - 1}`;
+  return null;
+}
+
+/** The last few lines of the section before, as context for a line near the start of this one (or ''). */
+export async function endOfPrevious(base: string, n: number, list: ApprovedEntry[], lines = 4): Promise<string> {
+  if (n > 3) return '';
+  const p = prevSection(base);
+  if (!p) return '';
+  try {
+    const t = await getText(p, list);
+    if (!t.verdict.allowed || !t.he.length) return '';
+    const from = Math.max(0, t.he.length - lines);
+    const body = t.he.slice(from).map((h, i) => `[${t.ref}:${from + i + 1}] ${h.replace(/[֑-ׇ]/g, '')}${t.en[from + i] ? `\n    ${t.en[from + i].slice(0, 600)}` : ''}`).join('\n');
+    return `\n\nThe end of the section before (${t.ref}). This line may finish a sentence or a step that begins here:\n${body}`;
+  } catch { return ''; }
+}

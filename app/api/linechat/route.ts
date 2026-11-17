@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MODELS, costUsd, styleForChat } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
-import { getText } from '@/lib/sefaria';
+import { getText, endOfPrevious } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
@@ -76,7 +76,8 @@ export async function POST(req: NextRequest) {
     const settings = await getSettings();
     const model = MODELS[settings.provider][settings.tier];
     const about = typeof b.about === 'string' && b.about.trim() ? `\n\nThe explanation of this line he was given (his questions follow up on it):\n${b.about.replace(/⟦([^⟧]+)⟧/g, '$1').slice(0, 4000)}` : '';
-    const first: Msg = { role: 'user', content: `We are learning ${s.ref}, line ${n} (its reference: ${s.ref}:${n}).\n\n${lines.slice(0, 26000)}${comm}${about}\n\n---\n${msgs[0].content}` };
+    const before = await endOfPrevious(base, n, approved);
+    const first: Msg = { role: 'user', content: `We are learning ${s.ref}, line ${n} (its reference: ${s.ref}:${n}).${before}\n\n${lines.slice(0, 26000)}${comm}${about}\n\n---\n${msgs[0].content}` };
     const history = [first, ...msgs.slice(1)];
     const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
     const r = await run({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(settings)}\n\n${SCOPE}`, history, tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: 5 });
