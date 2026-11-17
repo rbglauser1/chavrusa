@@ -664,6 +664,22 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     r.t = now; r.timer = window.setTimeout(() => { r.timer = null; run(); }, 300);
   }
   const dbl = embedded && !!onDoubleTap;
+  // Nov 16: a double tap inside the boxes under a line (Full depth explanation, Back and forth, Where it goes, a
+  // commentary) also goes in and out of full screen; those boxes keep single taps to themselves.
+  const boxTap = useRef(0);
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!dbl || !el) return;
+    const on = (e: MouseEvent) => {
+      const t = e.target as Element;
+      if (!t.closest('.line-x, .lchat, .wig, .comm-line, .comm-outline, .review, .lx-box')) return;
+      if (t.closest('button, a, input, textarea, select, [contenteditable]')) return;
+      const now = Date.now();
+      if (now - boxTap.current < 320) { boxTap.current = 0; onDoubleTap?.(); } else boxTap.current = now;
+    };
+    el.addEventListener('click', on, true);
+    return () => el.removeEventListener('click', on, true);
+  });
   function toggleLine(i: number) {
     if (embedded) { setPicked((p) => (p === i ? null : i)); if (listOpen === i) setListOpen(null); }
     if (src) tappedLine.current = { ref: src.ref, n: i + 1, at: Date.now() };
