@@ -262,8 +262,8 @@
 :is([data-look='clay'],[data-look='chatgpt']) .nb-tabs button.on { color:var(--ink); font-weight:600; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-bar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px auto 18px; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-bar .nb-new { border:0; border-radius:999px; background:#CC7C5E; color:#fff; font:600 14px var(--f-ui); padding:10px 16px; cursor:pointer; white-space:nowrap; }
-:is([data-look='clay'],[data-look='chatgpt']) .nb-acts { display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
-:is([data-look='clay'],[data-look='chatgpt']) .nb-acts button { border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink); font:13px var(--f-ui); padding:8px 12px; cursor:pointer; white-space:nowrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-acts { display:flex; gap:6px; flex-wrap:wrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-acts button { border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink); font:13px var(--f-ui); padding:7px 10px; cursor:pointer; white-space:nowrap; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-book { border:1px solid var(--rule); border-radius:16px; background:var(--surface); margin:0 auto 10px; padding:0 16px; box-shadow:0 3px 12px rgba(0,0,0,.03); }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-book-head { padding:16px 0; align-items:center; font:500 18px var(--f-body); }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-book-head b { font-weight:500; }
