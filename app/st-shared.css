@@ -313,3 +313,5 @@
 [data-look='clay'] .split-home .split-panels.one { margin-top:clamp(12px, 3.8dvh, 38px); }
 /* The learning timer isn't shown over Home (it keeps running). */
 body:has(.launch-home) .five-pill { display:none; }
+/* Nov 17: the phrase and the card a little lower on the screen (together). */
+[data-look='clay'] .split-home:has(.split-panels.one) { padding-top:clamp(30px, 8dvh, 70px); }
