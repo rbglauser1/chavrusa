@@ -14,6 +14,8 @@ import { cheer, markLearned, streak } from '@/lib/focus';
 
 type Props = { settings: Settings; refText: string; total: number; focus?: number; picked: number | null; talkOn?: boolean };
 
+// Text that is mostly Hebrew letters is set right to left, in the Hebrew font, a little larger.
+const heCls = (t?: string | null) => (t && (t.match(/[\u0590-\u05FF]/g)?.length ?? 0) > (t.match(/[A-Za-z]/g)?.length ?? 0) ? 'fh-he' : undefined);
 const lineEl = (n: number) => document.querySelector<HTMLElement>(`.sefer-flow [data-line="${n}"]`);
 const numbered = () => Array.from(document.querySelectorAll<HTMLElement>('.sefer-flow [data-line]')).filter((e) => /^\d+$/.test(e.dataset.line ?? ''));
 
@@ -318,7 +320,7 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
       {toast && <div className="fh-toast" role="status">{toast}</div>}
       {lq && lqShown && !lqClosed && <div className="fh-recap fh-lq" role="dialog" aria-label="Your question from last time">
         <div className="fh-recap-top"><b>Your question from last time · line {lq.line}</b><button onClick={() => setLqClosed(true)} aria-label="Close">✕</button></div>
-        <p className="fh-lq-text">“{lq.text}”</p>
+        <p dir="auto" className="fh-lq-text">“{lq.text}”</p>
         <div className="fh-tz-btns">
           <button className="fh-recap-go" onClick={() => setLqClosed(true)}>Let’s pick it up</button>
           <button className="fh-recap-go" onClick={() => { setLqClosed(true); window.dispatchEvent(new CustomEvent('chavrusa-settings', { detail: { leftQ: null } })); }}>Answered: clear it</button>
@@ -326,8 +328,8 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
       </div>}
       {tzShow && !(lq && lqShown && !lqClosed) && <div className="fh-recap fh-tz" role="dialog" aria-label={TZ_LABEL[tzShow.kind] ?? 'Something to think about'}>
         <div className="fh-recap-top"><b>✦ {TZ_LABEL[tzShow.kind] ?? 'Something to think about'}{tzShow.line ? ` · line ${tzShow.line}` : ''}</b><button onClick={() => { setTzShow(null); setLit(null); }} aria-label="Close">✕</button></div>
-        <p>{tzShow.text}</p>
-        {tzShow.kind === 'guess' && tzShow.open && tzShow.answer && <p className="fh-recap-ask"><b>The answer:</b> {tzShow.answer}</p>}
+        <p dir="auto" className={heCls(tzShow.text)}>{tzShow.text}</p>
+        {tzShow.kind === 'guess' && tzShow.open && tzShow.answer && <p dir="auto" className={`fh-recap-ask ${heCls(tzShow.answer) ?? ''}`}><b>The answer:</b> {tzShow.answer}</p>}
         <div className="fh-tz-btns">
           {tzShow.kind === 'guess' && !tzShow.open && <button className="fh-recap-go" onClick={() => setTzShow(null)}>Let me think</button>}
           {tzShow.kind === 'guess' && !tzShow.open && tzShow.answer && <button className="fh-recap-go" onClick={() => setTzShow((x) => (x ? { ...x, open: true } : x))}>Show the answer</button>}
@@ -349,9 +351,9 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
       {offer && !recap && <button className="fh-offer" onClick={() => ask()}>↩ Where was I?</button>}
       {recap && <div className="fh-recap" role="dialog" aria-label="Where was I?">
         <div className="fh-recap-top"><b>↩ Where was I? · line {recap.n}</b><button onClick={() => setRecap(null)} aria-label="Close">✕</button></div>
-        <p>{recap.text ?? (recap.err ? 'Couldn’t get it right now. Try again in a moment.' : 'Thinking…')}</p>
+        <p dir="auto" className={heCls(recap.text)}>{recap.text ?? (recap.err ? 'Couldn’t get it right now. Try again in a moment.' : 'Thinking…')}</p>
         {recap.text && recap.words?.length ? <p className="fh-recap-hint">The words it’s about are lit up in the text.</p> : null}
-        {recap.ask && <p className="fh-recap-ask"><b>Think about it:</b> {recap.ask}</p>}
+        {recap.ask && <p dir="auto" className={`fh-recap-ask ${heCls(recap.ask) ?? ''}`}><b>Think about it:</b> {recap.ask}</p>}
         {recap.text && <button className="fh-recap-go" onClick={() => { const n = recap.n; setRecap(null); setCur(n); lineEl(n)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}>Take me to the line</button>}
         <div className="ai-note left">Written by AI · AI makes mistakes</div>
       </div>}

@@ -73,7 +73,7 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
           {p.cont && <p>Your place, ready when you are.</p>}
           {invite && <div className={`launch-invite ${invite.own ? 'own' : ''}`}>
             <span>{invite.label}{invite.own ? '' : ' · AI'}</span>
-            <q>{invite.text}</q>
+            <q dir="auto" className={/[\u0590-\u05FF]/.test(invite.text) && !/[A-Za-z]{4}/.test(invite.text) ? 'he' : undefined}>{invite.text}</q>
           </div>}
           <button className="launch-primary" onClick={p.cont ? p.onContinue : p.onLibrary}>
             {p.cont ? 'Continue' : 'Open the Library'} <SandIcon name="arrow" size={18} />

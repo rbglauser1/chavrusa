@@ -3116,3 +3116,9 @@ html[data-fh-quiet] .fh-nav { bottom: calc(env(safe-area-inset-bottom) + 22px); 
 .fh-nav { width: max-content; max-width: calc(100vw - 24px); box-sizing: border-box; flex-wrap: nowrap; }
 .fh-nav button, .fh-nav span { white-space: nowrap; flex: 0 0 auto; }
 .fh-nav button:not(.fh-nav-x) { padding: 10px 18px; font-size: 15px; line-height: 1.2; }
+/* Nov 17: the pop-up cards' writing larger, and Hebrew in the Hebrew font, right to left. */
+.fh-recap p { font-size: 17.5px; line-height: 1.5; }
+.fh-recap .fh-recap-ask { font-size: 16px; }
+.fh-recap .fh-he { font-family: var(--f-he, 'Frank Ruhl Libre', serif); font-size: 21px; line-height: 1.55; text-align: right; }
+.fh-recap .fh-recap-ask.fh-he { font-size: 19px; }
+.launch-invite q.he { font-family: var(--f-he, 'Frank Ruhl Libre', serif); font-size: 18px; display: block; text-align: right; }
