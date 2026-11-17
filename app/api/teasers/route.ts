@@ -26,7 +26,7 @@ Answer in JSON only, exactly this shape:
   - "change": only in a Mishnah with two similar cases: which detail changed between them? (at most 22 words).
   - "rashi": only in Chumash, on a pasuk that Rashi comments on: what in the wording caught Rashi's attention? (at most 22 words).
 - "words": 2 to 5 words copied EXACTLY, letter for letter, from that line's Hebrew/Aramaic, without vowels: the words the teaser is about.
-Plain English; learning terms may stay in Hebrew letters. Never invent sources or quotes.`;
+Write every "hook", "text" and "answer" in plain ENGLISH (unless the instructions at the end ask for another language), even though the text is Hebrew and Aramaic; only the quoted words and well-known learning terms stay in Hebrew letters. Never invent sources or quotes.`;
 
 type Item = { line: number; kind: string; text: string; answer?: string; answerLine?: number; words?: string };
 type Teasers = { hook: string; items: Item[] };
@@ -62,6 +62,6 @@ async function make(ref: string): Promise<Teasers> {
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '').replace(/:\d+(-\d+)?$/, '').trim();
   if (!ref || /^Mine /.test(ref)) return NextResponse.json({ hook: '', items: [] });
-  try { return NextResponse.json(await keep('teasers-v2', ref, () => make(ref), (x) => !x.hook && !x.items.length)); }
+  try { return NextResponse.json(await keep('teasers-v3', ref, () => make(ref), (x) => !x.hook && !x.items.length)); }
   catch (e) { return NextResponse.json({ hook: '', items: [], error: (e as Error).message }); }
 }

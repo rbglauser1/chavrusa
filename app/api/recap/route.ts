@@ -19,6 +19,7 @@ Answer in JSON only, exactly this shape:
 {"where": "...", "words": [{"line": 7, "phrase": "..."}], "ask": "..."}
 - "where": 2 or 3 short, plain sentences (at most 60 words), as a friend would say it: what question is on the table here, whose position or step the marked line gives (the Gemara asks, Rav Chisda answers, a braisa is brought as a proof…), and how it fits. Don't give away what comes after this line. Learning terms he knows may stay in Hebrew letters.
 - "words": 1 to 3 short phrases (2 to 6 words each) copied EXACTLY, letter for letter, from the Hebrew/Aramaic of the marked line or the line or two before it, without vowels: the words your "where" is about (the question, the name of who says it). "line" is that line's number.
+Write "where" and "ask" in plain ENGLISH (unless the instructions at the end ask for another language).
 - "ask": ONE short question (at most 15 words) that gets him thinking about the marked line again, without the answer.`;
 
 type Recap = { text: string; words?: { line: number; phrase: string }[]; ask?: string };
