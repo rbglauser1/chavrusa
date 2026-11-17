@@ -33,6 +33,18 @@ function Seg<T extends string>({ value, options, onPick }: { value: T; options: 
 export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp, liveActive, part = 'all', asPage = false }: Props) {
   const themes = part !== 'settings', rest = part !== 'themes';
   const [editing, setEditing] = useState<CustomStyle | null>(null);
+  // Nov 16: one renderer for the on/off rows (the AI tools, your learning, calls). Same defaults as before.
+  const DEFAULT_ON = ['cacheTexts', 'mapComms', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'explainLine', 'listenDaf', 'halachaTrail', 'tosSteps', 'wordTap', 'lineChat', 'lineSources'];
+  const renderToggles = (rows: [keyof Settings, string, string][]) => rows.map(([k, label, about]) => {
+    const on = DEFAULT_ON.includes(k as string) ? s[k] !== false : !!s[k];
+    return (
+      <div key={k} style={{ marginBottom: 12 }}>
+        <label>{label}</label>
+        <Seg value={on ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ [k]: v === 'on' } as Partial<Settings>)} />
+        <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{about}</div>
+      </div>
+    );
+  });
   const lab = useLab(); // the testing options are in the Lab only (Nov 15)
   const [voiceMore, setVoiceMore] = useState(false); // voice tests and fine-tuning: hidden until asked for (Nov 13)
   const [memories, setMemories] = useState<Memory[] | null>(null);
@@ -123,65 +135,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
           </Group>
 
-          <Group id="ai" title="Depth, AI and cost" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''}`}>
-            <div className="field">
-              <label>The AI writes in</label>
-              <Seg value={s.aiLang ?? 'en'} options={[['en', 'English'], ['he', 'Hebrew'], ['both', 'Both']]} onPick={(v) => onChange({ aiLang: v as 'en' | 'he' | 'both' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Everything the AI writes on the screen: the chat, ✦ Chat, Explain, Ideas, the sugya map, outlines, steps, review questions, Chazara and notes. Both: the English, then the same in Hebrew. Quotes stay as written. The voice in a call stays in English. Things already made are made again in the new language the first time you open them (a few cents each), then kept.</div>
-            </div>
-            <div className="field">
-              <label>Company</label>
-              <Seg<Provider> value={s.provider} options={[['anthropic', 'Claude'], ['openai', 'OpenAI']]} onPick={(v) => onChange({ provider: v })} />
-            </div>
-            <div className="field">
-              <label>Depth</label>
-              <Seg<Tier> value={s.tier} options={(['basic', 'middle', 'top'] as Tier[]).map((t) => [t, TIER_LABELS[t]])} onPick={(v) => onChange({ tier: v })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                Using {MODELS[s.provider][s.tier].label} · about ${MODELS[s.provider][s.tier].inputPerM}/${MODELS[s.provider][s.tier].outputPerM} per million tokens in/out
-              </div>
-            </div>
-            <div className="field">
-              <label>Made once and kept</label>
-              <Seg value={s.keptModel === 'sonnet' ? 'sonnet' : 'opus'} options={[['opus', 'Claude Opus'], ['sonnet', 'Claude Sonnet']]} onPick={(v) => onChange({ keptModel: v as 'opus' | 'sonnet' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                Sugya maps, explanations, ideas, review questions, summaries, intros, chazara and your own buttons. Each is made once, the first time it’s opened, then kept and free. {s.keptModel === 'sonnet' ? 'Sonnet costs about half as much; Opus goes deeper.' : 'Opus goes deeper; Sonnet costs about half as much.'} What each one made is kept apart, so switching never mixes them.
-              </div>
-            </div>
-            <div className="field">
-              <label>Saver (typing and talking)</label>
-              <Seg value={s.saver !== false ? 'saver' : 'full'} options={[['saver', 'Saver'], ['full', 'Full depth every turn']]} onPick={(v) => onChange({ saver: v === 'saver' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                {s.saver !== false
-                  ? `Saver: everyday turns, typed or spoken, use ${MODELS[s.provider][s.tier === 'basic' ? 'basic' : 'middle'].label}. Say or type “go deeper” or “explain it fully” and ${MODELS[s.provider][s.tier].label} takes over for the next few turns. Calls pause after 15 quiet seconds.`
-
-                  : `Every turn uses ${MODELS[s.provider][s.tier].label}.`}
-              </div>
-            </div>
-            <div className="field">
-              <label>Quick replies (“OK,” “got it,” “thanks”)</label>
-              <Seg value={s.quickReplies ? 'cheap' : 'full'} options={[['cheap', 'Use the cheaper model'], ['full', 'Always use my chosen depth']]} onPick={(v) => onChange({ quickReplies: v === 'cheap' })} />
-            </div>
-            <div className="field">
-              <label>Warn me when a session costs more than (USD, blank for never)</label>
-              <input type="number" min={0} step={0.1} value={s.costWarnUsd ?? ''} onChange={(e) => onChange({ costWarnUsd: e.target.value === '' ? null : Number(e.target.value) })} />
-            </div>
-            <Group id="ai-cost" level={2} title="Cost, last 30 days" hint={costs ? `$${costs.totalUsd.toFixed(2)}` : undefined}>
-            {!costs && <div className="muted">Loading…</div>}
-            {costs && (
-              <table className="costs">
-                <thead><tr><th>Model</th><th className="n">Exchanges</th><th className="n">USD</th></tr></thead>
-                <tbody>
-                  {Object.entries(costs.byModel).map(([k, v]) => <tr key={k}><td>{k}</td><td className="n">{v.exchanges}</td><td className="n">${v.usd.toFixed(3)}</td></tr>)}
-                  <tr><td><b>Total</b></td><td /><td className="n"><b>${costs.totalUsd.toFixed(2)}</b></td></tr>
-                </tbody>
-              </table>
-            )}
-          </Group>
-          </Group>
 
           </>}
           {themes && (
-          <Group id="look" title={asPage ? 'Look' : 'Look and text'} hint="Background, fonts, text colors, sizes, page layout" flat={part === 'themes'}>
+          <Group id="look" title={asPage ? 'The page' : 'The page and text'} hint="Background, fonts, colors, sizes, layout, the text, commentaries" flat={part === 'themes'}>
             {/* Nov 16, rethought: Background first, then Fonts, Text colors, Sizes, Commentaries, Page layout. The look
                 itself (Claude) is fixed; choosing another look is in the Lab. */}
             <Group id="look-look" level={2} title="Background" hint={(s.theme === 'clay' || s.theme === 'chatgpt') ? ({ look: 'Off-white', white: 'White', cream: 'Cream', blue: 'Light blue', green: 'Light green', night: 'Night' } as Record<string, string>)[s.paper ?? 'look'] : undefined}>
@@ -249,14 +206,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Commentary text size (Rashi, Tosafos…)</label>
               <div className="range"><input type="range" min={14} max={36} value={s.commSize ?? 20} onChange={(e) => onChange({ commSize: Number(e.target.value) })} /><span className="he rashi" style={{ fontSize: s.commSize ?? 20 }}>אבג</span></div>
-            </div>
-            <div className="field">
-              <label>AI writing size (Explain, Chat, Ideas, outlines)</label>
-              <div className="range"><input type="range" min={14} max={32} value={s.aiSize ?? Math.max(17, s.enSize)} onChange={(e) => onChange({ aiSize: Number(e.target.value) })} /><span style={{ fontSize: s.aiSize ?? Math.max(17, s.enSize) }}>Abc אבג</span></div>
-            </div>
-            <div className="field">
-              <label>The AI's Hebrew in</label>
-              <Seg value={s.aiHeFont ?? 'text'} options={[['text', 'The text’s Hebrew font'], ['times', 'Times New Roman']]} onPick={(v) => onChange({ aiHeFont: v as 'text' | 'times' })} />
             </div>
             <div className="field">
               <label>English text size</label>
@@ -344,10 +293,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Sefaria&apos;s English mixes the word-for-word translation with words it adds to explain. Plain: all alike. Softer: the explanation in light grey. Lighter: just a shade lighter. Italics: the explanation in italics. Only translation: just Sefaria&apos;s word-for-word translation, with the explanation left out (a line with nothing marked shows all of it).</div>
             </div>
             </Group>
-          </Group>
-          )}
-          {rest && (
-          <Group id="shown" title="What's shown" hint="The text, translation, AI extras, seforim">
             <Group id="shown-text" level={2} title="The text and its translation" hint={`${s.display === 'original' ? 'original only' : s.display === 'off' ? 'off (verbal)' : 'with translation'}${s.nikud ? ' · nikud' : ''}${s.onkelos ? ' · Onkelos' : ''}`}>
             <div className="field">
               <label>Source text</label>
@@ -369,7 +314,53 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Onkelos under each pasuk, with its English when Sefaria has one. Straight from Sefaria, no AI, free. Also in Quiet chat&apos;s ⋯ menu.</div>
             </div>
             </Group>
-            <Group id="shown-ai" level={2} title="Extras written by the AI" hint="Amud intro, steps, commentary summaries">
+            <Group id="shown-sef" level={2} title="Seforim from Sefaria" hint={s.approveAll ? 'all allowed' : 'classic and approved only'}>
+            <div className="field">
+              <label>Seforim from Sefaria</label>
+              <Seg value={s.approveAll ? 'all' : 'approved'} options={[['all', 'Allow all'], ['approved', 'Classic and approved only']]} onPick={(v) => onChange({ approveAll: v === 'all' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>“Classic and approved only” allows works before 1900 and ones you approved. Either way, the Chavrusa speaks only from an Orthodox perspective.</div>
+            </div>
+            <div className="field">
+              <label>Nikud</label>
+              <Seg value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ nikud: v === 'on' })} />
+            </div>
+            </Group>
+          </Group>
+          )}
+
+          {rest && (
+          <>
+          {/* Nov 16: everything the AI does, in one place. */}
+          <Group id="ai" title="The AI" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''} · ${s.aiHub === false ? 'tools under each line' : 'tools in the ✦'}`}>
+            <Group id="ai-tools" level={2} title="The ✦ and its tools" hint="Learn with me, Ask about this line, Where it goes, maps, review…">
+            <div className="field">
+              <label>Where the AI tools are</label>
+              <Seg value={s.aiHub === false ? 'lines' : 'hub'} options={[['hub', 'In one ✦ button'], ['lines', 'Under each line']]} onPick={(v) => onChange({ aiHub: v === 'hub' })} />
+              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>In one ✦ (recommended): the floating button at the bottom right holds Learn with me, Ask about this line, Where it goes, and the page’s map, review, Listen and source sheet. Under each line: the old way, a row of buttons under every line you tap.</div>
+            </div>
+            <div className="field">
+              <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
+              {renderToggles([
+                ['explainLine', 'Full depth explanation', 'In ✦ → Ask about this line, and ✦ Full depth in Learn with me: what the line says and where it stands in the sugya, with the meforshim, each source tappable. Made once per line and kept.'],
+                ['lineChat', 'Back and forth', 'Under the explanation in Ask about this line (and in Learn with me): ask about the line in your own words or tap a ready question (a kashya, a chakira…). Short answers, in your learning style.'],
+                ['lineSources', 'Sources (in Where it goes)', 'In ✦ → Where it goes: what Sefaria links to the line (pesukim, Midrash, other seforim), with ✦ Summarize to pull them together.'],
+                ['elsewhere', 'Elsewhere in Shas (in Where it goes)', 'In ✦ → Where it goes, on Gemara and Mishnah: the same sugya or statement in other places. From Sefaria’s links, no AI.'],
+                ['halachaTrail', 'Halacha (in Where it goes)', 'In ✦ → Where it goes, on Gemara and Mishnah: the road from the line to the Rambam, the Tur, the Shulchan Aruch and the Mishnah Berurah.'],
+                ['sugyaMap', 'Sugya map', 'In ✦ → This page and more, and in Where it goes: the big picture of the amud or perek, its topics and their steps, in English. Made once and kept.'],
+                ['mapComms', 'Meforshim in the sugya map', 'Under each step of the map, the meforshim on it; tap one and it opens right there.'],
+                ['review', 'Review this passage', 'In ✦ → This page and more: questions on the amud or perek to test yourself, each answer hidden until you tap. Made once and kept.'],
+                ['listenDaf', 'Listen to this page', 'In ✦ → This page and more: a spoken overview of the amud or perek, eight to ten minutes, for the car. Written and recorded once, then free.'],
+                ['sourceSheet', 'Source sheet', 'In ✦ → This page and more: one printable page of the amud or perek (the big picture, who holds what, the text with its English, the halacha, your notes).'],
+                ['tosSteps', 'Outline and Steps on the commentaries', 'On Rashi, Tosafos and every meforesh: Outline gives the piece in a few points; Steps cuts the same words into its steps. Made once and kept.'],
+                ['chazara', 'Chazara on Home', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya.'],
+                ['daySummary', 'What we learned (after a call)', 'After a call of three minutes or more, a short summary of it is saved to your Notebook. About a cent a call.'],
+              ])}
+            </div>
+            <MyQuestions list={s.myQuestions ?? []} onChange={(l) => onChange({ myQuestions: l })} />
+            <HideQuestions hidden={s.hideQuestions ?? []} onChange={(l) => onChange({ hideQuestions: l })} />
+            <MyButtons list={s.myButtons ?? []} onChange={(l) => onChange({ myButtons: l })} />
+            </Group>
+            <Group id="ai-page" level={2} title="What it adds to the page" hint="Amud intro, steps, commentary summaries">
             <div className="field">
               <label>Amud intro (a paragraph on what&apos;s coming, at the top of each amud)</label>
               <Seg value={s.amudIntro !== false ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ amudIntro: v === 'on' })} />
@@ -388,25 +379,73 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>When you open a commentary, a sentence or two under each comment saying what it explains or asks (not a literal translation). Made once per commentator per amud (about 1–2 cents), then kept, free. Only for commentaries you open.</div>
             </div>
             </Group>
-            <Group id="shown-sef" level={2} title="Seforim from Sefaria" hint={s.approveAll ? 'all allowed' : 'classic and approved only'}>
+            <Group id="ai-write" level={2} title="How it writes" hint={`${(s.aiLang ?? 'en') === 'en' ? 'English' : s.aiLang === 'he' ? 'Hebrew' : 'English and Hebrew'} · size ${s.aiSize ?? Math.max(17, s.enSize)}`}>
             <div className="field">
-              <label>Seforim from Sefaria</label>
-              <Seg value={s.approveAll ? 'all' : 'approved'} options={[['all', 'Allow all'], ['approved', 'Classic and approved only']]} onPick={(v) => onChange({ approveAll: v === 'all' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>“Classic and approved only” allows works before 1900 and ones you approved. Either way, the Chavrusa speaks only from an Orthodox perspective.</div>
+              <label>The AI writes in</label>
+              <Seg value={s.aiLang ?? 'en'} options={[['en', 'English'], ['he', 'Hebrew'], ['both', 'Both']]} onPick={(v) => onChange({ aiLang: v as 'en' | 'he' | 'both' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Everything the AI writes on the screen: the chat, ✦ Chat, Explain, Ideas, the sugya map, outlines, steps, review questions, Chazara and notes. Both: the English, then the same in Hebrew. Quotes stay as written. The voice in a call stays in English. Things already made are made again in the new language the first time you open them (a few cents each), then kept.</div>
             </div>
             <div className="field">
-              <label>Nikud</label>
-              <Seg value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ nikud: v === 'on' })} />
+              <label>AI writing size (Explain, Chat, Ideas, outlines)</label>
+              <div className="range"><input type="range" min={14} max={32} value={s.aiSize ?? Math.max(17, s.enSize)} onChange={(e) => onChange({ aiSize: Number(e.target.value) })} /><span style={{ fontSize: s.aiSize ?? Math.max(17, s.enSize) }}>Abc אבג</span></div>
+            </div>
+            <div className="field">
+              <label>The AI's Hebrew in</label>
+              <Seg value={s.aiHeFont ?? 'text'} options={[['text', 'The text’s Hebrew font'], ['times', 'Times New Roman']]} onPick={(v) => onChange({ aiHeFont: v as 'text' | 'times' })} />
             </div>
             </Group>
-            <Group id="shown-call" level={2} title="The screen during calls" hint={s.blankCall ? 'blank' : 'shows the conversation'}>
+            <Group id="ai-model" level={2} title="Depth and cost" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''}`}>
             <div className="field">
-              <label>Screen during voice conversations</label>
-              <Seg value={s.blankCall ? 'blank' : 'show'} options={[['show', 'Show the conversation'], ['blank', 'Blank (voice only)']]} onPick={(v) => onChange({ blankCall: v === 'blank' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Blank keeps the screen empty while you talk, for focus. It doesn't change the cost. Everything is still saved, so you can read it after the call.</div>
+              <label>Company</label>
+              <Seg<Provider> value={s.provider} options={[['anthropic', 'Claude'], ['openai', 'OpenAI']]} onPick={(v) => onChange({ provider: v })} />
             </div>
+            <div className="field">
+              <label>Depth</label>
+              <Seg<Tier> value={s.tier} options={(['basic', 'middle', 'top'] as Tier[]).map((t) => [t, TIER_LABELS[t]])} onPick={(v) => onChange({ tier: v })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                Using {MODELS[s.provider][s.tier].label} · about ${MODELS[s.provider][s.tier].inputPerM}/${MODELS[s.provider][s.tier].outputPerM} per million tokens in/out
+              </div>
+            </div>
+            <div className="field">
+              <label>Made once and kept</label>
+              <Seg value={s.keptModel === 'sonnet' ? 'sonnet' : 'opus'} options={[['opus', 'Claude Opus'], ['sonnet', 'Claude Sonnet']]} onPick={(v) => onChange({ keptModel: v as 'opus' | 'sonnet' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                Sugya maps, explanations, ideas, review questions, summaries, intros, chazara and your own buttons. Each is made once, the first time it’s opened, then kept and free. {s.keptModel === 'sonnet' ? 'Sonnet costs about half as much; Opus goes deeper.' : 'Opus goes deeper; Sonnet costs about half as much.'} What each one made is kept apart, so switching never mixes them.
+              </div>
+            </div>
+            <div className="field">
+              <label>Saver (typing and talking)</label>
+              <Seg value={s.saver !== false ? 'saver' : 'full'} options={[['saver', 'Saver'], ['full', 'Full depth every turn']]} onPick={(v) => onChange({ saver: v === 'saver' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                {s.saver !== false
+                  ? `Saver: everyday turns, typed or spoken, use ${MODELS[s.provider][s.tier === 'basic' ? 'basic' : 'middle'].label}. Say or type “go deeper” or “explain it fully” and ${MODELS[s.provider][s.tier].label} takes over for the next few turns. Calls pause after 15 quiet seconds.`
+
+                  : `Every turn uses ${MODELS[s.provider][s.tier].label}.`}
+              </div>
+            </div>
+            <div className="field">
+              <label>Quick replies (“OK,” “got it,” “thanks”)</label>
+              <Seg value={s.quickReplies ? 'cheap' : 'full'} options={[['cheap', 'Use the cheaper model'], ['full', 'Always use my chosen depth']]} onPick={(v) => onChange({ quickReplies: v === 'cheap' })} />
+            </div>
+            <div className="field">
+              <label>Warn me when a session costs more than (USD, blank for never)</label>
+              <input type="number" min={0} step={0.1} value={s.costWarnUsd ?? ''} onChange={(e) => onChange({ costWarnUsd: e.target.value === '' ? null : Number(e.target.value) })} />
+            </div>
+            <Group id="ai-cost" level={2} title="Cost, last 30 days" hint={costs ? `$${costs.totalUsd.toFixed(2)}` : undefined}>
+            {!costs && <div className="muted">Loading…</div>}
+            {costs && (
+              <table className="costs">
+                <thead><tr><th>Model</th><th className="n">Exchanges</th><th className="n">USD</th></tr></thead>
+                <tbody>
+                  {Object.entries(costs.byModel).map(([k, v]) => <tr key={k}><td>{k}</td><td className="n">{v.exchanges}</td><td className="n">${v.usd.toFixed(3)}</td></tr>)}
+                  <tr><td><b>Total</b></td><td /><td className="n"><b>${costs.totalUsd.toFixed(2)}</b></td></tr>
+                </tbody>
+              </table>
+            )}
+          </Group>
             </Group>
           </Group>
+          </>
           )}
 
           {rest && <>
@@ -571,55 +610,17 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <GeminiSample value={s.geminiVoice} onPick={(v) => onChange({ geminiVoice: v })} />
               <GeminiPronunciation s={s} onChange={onChange} />
             </Group>
-              </>
-            )}
-            <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
-          </Group>
-
-          <Group id="extras" title="Extras" hint={[s.cacheTexts !== false && 'saved texts', s.notes && 'notes', s.sugyaMap && 'sugya map', s.review && 'review', s.chazara && 'chazara', s.progress && 'progress', s.driveMode && 'driving', s.offline && 'offline'].filter(Boolean).join(' · ') || 'all off'}>
+            <Group id="voice-call" level={2} title="During a call" hint={s.blankCall ? 'blank screen' : 'shows the conversation'}>
             <div className="field">
-              <label>AI tools</label>
-              <Seg value={s.aiHub === false ? 'lines' : 'hub'} options={[['hub', 'In one ✦ button'], ['lines', 'Under each line']]} onPick={(v) => onChange({ aiHub: v === 'hub' })} />
-              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>One ✦: a floating button at the bottom right with Explain, Chat and Ideas for the line, and the Sugya map, Review questions, Source sheet and Listen for the amud. Under each line: the ✦ buttons under every line and a row at the top of the amud, as before. Outline and Steps stay in the Tosafos either way.</div>
-              <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
-              {([
-                ['chazara', 'Chazara (review)', 'On Home: a short recap of what you learned last time, and a few questions on an older sugya. One small AI call per recap, kept so it is made once.'],
-                ['sugyaMap', 'Sugya map', 'A map button at the top of the Sefer, all in English: the big picture of the amud or perek, then each topic with an intro, what you need to know for it, its steps (question, answer, proof…; for Mishnah its rulings and disputes; for Chumash and Nach its story, speeches, mitzvos and prophecies), and where it ends up. From Sefaria (free): the meforshim on each step, where the halacha is ruled, and the verses quoted. Tap a step to go there. The outline is made by the AI once per amud or perek and kept. In the map, “⚖ Who holds what” lays out each machlokes of the amud as a table: each opinion, its reason and its source (made once by the AI when you first tap it, about 2–4 cents, then kept).'],
-                ['elsewhere', 'Where else in Shas', 'A “⇄ Elsewhere” button on a line of Gemara or Mishnah that comes up in other places: the same sugya or statement in other masechtos and elsewhere in this one, each opening right there. From Sefaria’s links (free, no AI).'],
-                ['byHeart', 'Learn by heart', 'A “🧠 By heart” button on each Mishnah and in Pirkei Avos: the words hide a little more each round until you say it all from memory. “Check me” listens (the phone’s own speech recognition, free) and marks the words you missed.'],
-                ['marks', 'Color marks', 'Press and drag over words in a line, and pick Question (blue), Answer (green) or Key (yellow), like a pencil in a Gemara. The marks stay on the page and show in your Notebook. “Unmark” takes one off.'],
-                ['sourceSheet', 'Source sheet', 'A “📄 Source sheet” button at the top of the Sefer: one printable page of the amud for a shiur, a chabura or Shabbos: the big picture and steps, who holds what, the text with its English, the halacha of each line, and your notes and marks. Print it or save it as a PDF.'],
-                ['daySummary', 'What we learned', 'After a call of three minutes or more, a short summary of it (the main points and your questions) is saved to your Notebook on the place you ended. About a cent a call.'],
-                ['listenDaf', 'Listen to the daf', 'A “🎧 Listen” button at the top of the Sefer: a spoken overview of the amud or perek, eight to ten minutes, with nothing to look at: for the car. The first time it is written and recorded (about a minute, about 20¢ for an amud); after that it is kept and plays at once, free. In your voice for Basic talk and your nusach.'],
-                ['halachaTrail', 'From the sugya to the halacha', 'A “⚖ Halacha” button on a line of Gemara or Mishnah that the halacha is learned from: the road from that line to the Rambam, the Tur, the Shulchan Aruch, and the Mishnah Berurah and commentaries on that se’if, in order. From Sefaria’s links (free, no AI).'],
-                ['tosSteps', 'Outline and steps on the commentaries', 'An “Outline” and a “Steps” button on Rashi, Tosafos and every other meforesh (Gemara, Chumash, Mishnayos, Tanach): Outline gives the piece in a few points; Steps shows the same words cut into its steps, with punctuation and one line of English on each. Made once by the AI and kept'],
-                ['wordTap', 'Word meanings', 'In a line that is open, or in a meforesh open under it, tap any Hebrew or Aramaic word to see what it means, from Jastrow’s dictionary. Tap an abbreviation (כה"ג, וי"ל, א"נ) and it is opened into its words. Free (no AI).'],
-                ['lineChat', 'Back and forth on each line', 'Next to Explain on every line of any sefer: “✦ Back and forth” opens a written chat with the AI about that line, right under it. Ask anything; save any answer, or the whole chat, to your Notebook. Uses your Depth (above).'],
-                ['explainLine', 'Explain button on each line', 'Next to Rashi and Tosafos on every line of Gemara, Mishnah, Chumash and Nach: “✦ Explain” opens, right under the line, what it says and where it stands in the sugya. Made by the AI (Claude Opus) once per line and kept for good.'],
-                ['lineSources', 'Sources button on each line', 'Next to Rashi and Tosafos: “Sources” opens what Sefaria links to that line: where the halacha is, the same in Shas, Midrash, verses, and machshava, mussar and chassidus. Each opens right there in Hebrew and English. Free, no AI. Beside it, “✦ Ideas”: 2–4 points the AI (Opus) draws only from those seforim, each naming its source; made once per line and kept.'],
-                ['mapComms', 'Meforshim in the sugya map', 'Under each step of the map, the meforshim on it (Rashi, Tosafos, Ritva…). Tap one and it opens right there in the map, Hebrew with English (translated by the AI where Sefaria has none, once, and kept).'],
-                ['review', 'Review questions', 'A “Review” button at the top of the Sefer: questions on the amud or perek to test yourself, each with its answer hidden until you tap. Made by the AI once per amud or perek and kept for good.'],
-                ['notes', 'Notes on the line', 'Add a note to any line (tap the line, then ✎), or say “make a note: …” in a call. Lines with notes show ✎; all your notes are in the Library under My Notes.'],
-                ['progress', 'Progress and plans', 'On Home: the amudim and perakim you have learned, your goals (“finish Yoma by …”), daf yomi, and a siyum when you finish.'],
+              <label>Screen during voice conversations</label>
+              <Seg value={s.blankCall ? 'blank' : 'show'} options={[['show', 'Show the conversation'], ['blank', 'Blank (voice only)']]} onPick={(v) => onChange({ blankCall: v === 'blank' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Blank keeps the screen empty while you talk, for focus. It doesn't change the cost. Everything is still saved, so you can read it after the call.</div>
+            </div>
+            <div className="field">
+              {renderToggles([
                 ['darkCall', 'Dark call screen', 'When a call starts, the screen goes dark and quiet: the words being read, large, with Again, Pause and Go on. Tap “Text” to go back to the page. Works with every look.'],
                 ['driveMode', 'Driving mode', 'A 🚗 button on the learning screen: big buttons, the screen kept on, and your headphone or car buttons work (play/pause, next = go on, back = say it again).'],
-                ['offline', 'Offline reading', 'A “Download” button on a masechta or sefer in the Library: read it with no internet (the chavrusa itself still needs internet).'],
-                ['cacheTexts', 'Saved texts', 'Keep a copy of each text you open, so it still opens when Sefaria is slow or down. Free storage; refreshed monthly.'],
-              ] as [keyof Settings, string, string][]).map(([k, label, about]) => {
-                const on = k === 'cacheTexts' || k === 'mapComms' || k === 'elsewhere' || k === 'byHeart' || k === 'marks' || k === 'sourceSheet' || k === 'daySummary' || k === 'explainLine' || k === 'listenDaf' || k === 'halachaTrail' || k === 'tosSteps' || k === 'wordTap' || k === 'lineChat' || k === 'lineSources' ? s[k] !== false : !!s[k];
-                return (
-                  <div key={k} style={{ marginBottom: 12 }}>
-                    <label>{label}</label>
-                    <Seg value={on ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onChange({ [k]: v === 'on' } as Partial<Settings>)} />
-                    <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{about}</div>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ margin: '4px 0 16px' }}>
-              <label>Learning time goal</label>
-              <Seg value={String(s.timeGoal ?? 0)} options={[['0', 'No goal'], ['20', '20 min'], ['30', '30 min'], ['60', '1 hour'], ['120', '2 hours']]} onPick={(v) => onChange({ timeGoal: Number(v) })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app counts the time you learn (a page open and in use, or a call), and shows today and this week on Home. A goal adds a line that fills up through the day.</div>
+              ])}
             </div>
             <div style={{ margin: '4px 0 16px' }}>
               <label>Start a call from Siri</label>
@@ -628,9 +629,29 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               </div>
               <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => { try { void navigator.clipboard.writeText(`${window.location.origin}/?talk=1`); } catch { /* optional */ } }}>Copy the address</button>
             </div>
-            <MyQuestions list={s.myQuestions ?? []} onChange={(l) => onChange({ myQuestions: l })} />
-            <HideQuestions hidden={s.hideQuestions ?? []} onChange={(l) => onChange({ hideQuestions: l })} />
-            <MyButtons list={s.myButtons ?? []} onChange={(l) => onChange({ myButtons: l })} />
+            </Group>
+              </>
+            )}
+            <p className="muted" style={{ fontSize: 13, margin: 0 }}>Tap <b>Talk</b> at the top for a hands-free conversation: speak, pause, and your chavrusa answers out loud.</p>
+          </Group>
+
+          <Group id="extras" title="Your learning" hint="Notes, marks, progress, by heart, word meanings, offline">
+            <div className="field">
+              {renderToggles([
+                ['byHeart', 'Learn by heart', 'A “🧠 By heart” button on each Mishnah and in Pirkei Avos: the words hide a little more each round until you say it all from memory. “Check me” listens (the phone’s own speech recognition, free) and marks the words you missed.'],
+                ['marks', 'Color marks', 'Press and drag over words in a line, and pick Question (blue), Answer (green) or Key (yellow), like a pencil in a Gemara. The marks stay on the page and show in your Notebook. “Unmark” takes one off.'],
+                ['wordTap', 'Word meanings', 'In a line that is open, or in a meforesh open under it, tap any Hebrew or Aramaic word to see what it means, from Jastrow’s dictionary. Tap an abbreviation (כה"ג, וי"ל, א"נ) and it is opened into its words. Free (no AI).'],
+                ['notes', 'Notes on the line', 'Add a note to any line (tap the line, then ✎), or say “make a note: …” in a call. Lines with notes show ✎; all your notes are in the Library under My Notes.'],
+                ['progress', 'Progress and plans', 'On Home: the amudim and perakim you have learned, your goals (“finish Yoma by …”), daf yomi, and a siyum when you finish.'],
+                ['offline', 'Offline reading', 'A “Download” button on a masechta or sefer in the Library: read it with no internet (the chavrusa itself still needs internet).'],
+                ['cacheTexts', 'Saved texts', 'Keep a copy of each text you open, so it still opens when Sefaria is slow or down. Free storage; refreshed monthly.'],
+              ])}
+            </div>
+            <div style={{ margin: '4px 0 16px' }}>
+              <label>Learning time goal</label>
+              <Seg value={String(s.timeGoal ?? 0)} options={[['0', 'No goal'], ['20', '20 min'], ['30', '30 min'], ['60', '1 hour'], ['120', '2 hours']]} onPick={(v) => onChange({ timeGoal: Number(v) })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app counts the time you learn (a page open and in use, or a call), and shows today and this week on Home. A goal adds a line that fills up through the day.</div>
+            </div>
           </Group>
 
           <Group id="inbox" title="Messages" hint="What people sent through Contact us">
