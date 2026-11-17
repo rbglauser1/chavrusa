@@ -18,7 +18,7 @@ const PROMPT = `You prepare a few short "teasers" for a learner about to learn t
 Answer in JSON only, exactly this shape:
 {"hook": "...", "items": [{"line": 3, "kind": "guess", "text": "...", "answer": "...", "answerLine": 4, "words": "..."}]}
 - "hook": ONE intriguing question or idea (at most 18 words) about what this page is about, to make him want to start. No answer.
-- "items": 3 to 6 teasers, each tied to ONE line, in line order, spread through the text. Kinds:
+- "items": MANY teasers: about one for every two or three lines (at least 8, up to 16 on a long page), each tied to ONE line, in line order, spread evenly through the whole text, with a good mix of kinds. Kinds:
   - "guess": the line ASKS a question that a later line answers. "text": invite him to answer it himself (at most 22 words). "answer": the answer in at most 30 words. "answerLine": the line with the answer.
   - "notice": a surprising word, a repetition, or a tension with an earlier line, as a question (at most 22 words).
   - "rishon": a well-known question of Rashi, Tosafos or another Rishon on this line, as a teaser question, without the answer (at most 22 words). Only one you are sure of.
@@ -40,14 +40,14 @@ async function make(ref: string): Promise<Teasers> {
   const clip = (t: string, m: number) => (t.length > m ? `${t.slice(0, m)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 600)}${s.en[i] ? `\n    ${clip(s.en[i], 600)}` : ''}`).join('\n');
   const model = await keptModel();
-  const r = await runAnthropic({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 40000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 1600 });
+  const r = await runAnthropic({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 40000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 4000 });
   await logCost({ sessionId: null, kind: 'teasers', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const raw = r.text.trim();
   const j = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
   const n = s.he.length;
   const items: Item[] = (Array.isArray(j.items) ? j.items : [])
     .filter((x: Item) => KINDS.has(String(x?.kind)) && Number(x?.line) >= 1 && Number(x?.line) <= n && typeof x?.text === 'string' && x.text.trim())
-    .slice(0, 6)
+    .slice(0, 18)
     .map((x: Item) => ({
       line: Number(x.line), kind: String(x.kind), text: String(x.text).trim().slice(0, 240),
       ...(x.kind === 'guess' && x.answer ? { answer: String(x.answer).trim().slice(0, 300), answerLine: Math.min(n, Math.max(Number(x.line), Number(x.answerLine) || Number(x.line) + 1)) } : {}),
@@ -62,6 +62,6 @@ async function make(ref: string): Promise<Teasers> {
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '').replace(/:\d+(-\d+)?$/, '').trim();
   if (!ref || /^Mine /.test(ref)) return NextResponse.json({ hook: '', items: [] });
-  try { return NextResponse.json(await keep('teasers-v1', ref, () => make(ref), (x) => !x.hook && !x.items.length)); }
+  try { return NextResponse.json(await keep('teasers-v2', ref, () => make(ref), (x) => !x.hook && !x.items.length)); }
   catch (e) { return NextResponse.json({ hook: '', items: [], error: (e as Error).message }); }
 }

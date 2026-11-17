@@ -378,7 +378,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Teasers while learning</label>
               <Seg value={s.teasers !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ teasers: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. At most one every few minutes, never twice the same day. Made once per page and kept (a cent or two the first time).</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. About one for every two or three lines, shown as you reach them (not more often than every 40 seconds), never twice the same day. Made once per page and kept (a few cents the first time).</div>
             </div>
             <div className="field">
               <label>Question on the Home card</label>

@@ -183,6 +183,7 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
   const [tz, setTz] = useState<{ base: string; hook: string; items: Tz[] } | null>(null);
   const [tzShow, setTzShow] = useState<{ kind: string; line?: number; text: string; answer?: string; answerLine?: number; open?: boolean } | null>(null);
   const lastTz = useRef(0);
+  const tzPrev = useRef<number | null>(null);
   const seenKey = (k: string) => `chavrusa-tz|${new Date().toLocaleDateString('en-CA')}|${base}|${k}`;
   const seen = (k: string) => { try { return localStorage.getItem(seenKey(k)) === '1'; } catch { return false; } };
   const markSeen = (k: string) => { try { localStorage.setItem(seenKey(k), '1'); } catch { /* optional */ } };
@@ -203,11 +204,15 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
     }, 1800);
     return () => window.clearTimeout(t);
   }, [tz, base]); // eslint-disable-line react-hooks/exhaustive-deps
-  // On reaching a line with a teaser (going forward), at most one every 2½ minutes.
+  // On reaching a line with a teaser (going forward), at most one every 40 seconds.
   useEffect(() => {
     if (!tz || tz.base !== base || cur == null || tzShow || recap) return;
-    if (Date.now() - lastTz.current < 150_000) return;
-    const it = tz.items.find((x) => x.line === cur && !seen(`${x.line}-${x.kind}`));
+    if (Date.now() - lastTz.current < 40_000) return;
+    // The teaser on this line, or else the nearest one on a line just passed over (scrolling skips lines).
+    const from = Math.max(1, (tzPrev.current ?? cur) - 0), back = cur - 3;
+    tzPrev.current = cur;
+    const fresh = (x: Tz) => !seen(`${x.line}-${x.kind}`);
+    const it = tz.items.find((x) => x.line === cur && fresh(x)) ?? [...tz.items].reverse().find((x) => x.line < cur && x.line >= Math.min(from, back) && fresh(x));
     if (!it) return;
     markSeen(`${it.line}-${it.kind}`); lastTz.current = Date.now();
     setTzShow({ kind: it.kind, line: it.line, text: it.text, answer: it.answer, answerLine: it.answerLine });
