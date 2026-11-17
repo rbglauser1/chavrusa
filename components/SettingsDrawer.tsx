@@ -25,7 +25,8 @@ interface Props {
 function Seg<T extends string>({ value, options, onPick }: { value: T; options: [T, string][]; onPick: (v: T) => void }) {
   return (
     <div className="seg">
-      {options.map(([v, label]) => <button key={v} className={v === value ? 'on' : ''} onClick={() => onPick(v)}>{label}</button>)}
+      {/* Nov 16: every Off/On pair the same way round: Off on the left, On on the right */}
+      {(options.length === 2 && options.some(([v]) => v === 'on') && options.some(([v]) => v === 'off') ? [options.find(([v]) => v === 'off')!, options.find(([v]) => v === 'on')!] : options).map(([v, label]) => <button key={v} className={v === value ? 'on' : ''} onClick={() => onPick(v)}>{label}</button>)}
     </div>
   );
 }
