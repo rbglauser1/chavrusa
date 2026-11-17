@@ -315,3 +315,16 @@
 body:has(.launch-home) .five-pill { display:none; }
 /* Nov 17: the phrase and the card a little lower on the screen (together). */
 [data-look='clay'] .split-home:has(.split-panels.one) { padding-top:clamp(30px, 8dvh, 70px); }
+/* Nov 17: the Continue card with an invitation stays compact, and Home never lets the card cover the title: when it
+   doesn't all fit, it starts at the top and scrolls instead of spreading both ways. */
+[data-look='clay'] .split-home:has(.split-panels.one) { justify-content:safe center; }
+[data-look='clay'] .split-home:has(.launch-invite) { padding-top:clamp(10px, 3dvh, 30px); gap:clamp(14px, 3dvh, 32px); }
+[data-look='clay'] .split-home:has(.launch-invite) .split-intro { margin-top:0; }
+[data-look='clay'] .split-home:has(.launch-invite) .split-panels.one { margin-top:0; }
+[data-look='clay'] .split-panel:has(.launch-invite) > p { display:none; }
+[data-look='clay'] .split-panel .launch-invite { margin:4px 0 14px; padding:9px 12px; }
+[data-look='clay'] .split-panel .launch-invite q { font-size:15px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+[data-look='clay'] .split-panel .launch-invite span { font-size:11px; }
+[data-look='clay'] .split-panel:has(.launch-invite) .launch-primary { padding-top:13px; padding-bottom:13px; }
+[data-look='clay'] .split-panel .launch-small .launch-five { padding:9px 8px; }
+[data-look='clay'] .split-panel .launch-streak { margin-top:8px; }
