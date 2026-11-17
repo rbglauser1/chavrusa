@@ -336,6 +336,8 @@ export default function Home() {
   useBackLayer(sandReview, () => setSandReview(false));
   useEffect(() => { const go = () => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); refreshSessions(); setView('recent'); }; window.addEventListener('chavrusa-recent', go); return () => window.removeEventListener('chavrusa-recent', go); }); // Nov 16: ⋯ → Recent sessions
   useEffect(() => { const open=()=>setSandReview(true); window.addEventListener('sand-review',open); return()=>window.removeEventListener('sand-review',open); }, []);
+  // Focus help's "Stop here" (Nov 17): back to Home; the place is kept.
+  useEffect(() => { const go = () => setView('home'); window.addEventListener('chavrusa-home', go); return () => window.removeEventListener('chavrusa-home', go); }, []);
   // "How to use the app" from Settings: back to Home, where the guide opens.
   useEffect(() => {
     const go = () => { setDrawer(null); setView('home'); window.setTimeout(() => window.dispatchEvent(new Event('chavrusa-guide')), 200); };

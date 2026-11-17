@@ -386,8 +386,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>Today’s goal</label>
-              <Seg value={s.goal ?? 'off'} options={[['off', 'Off'], ['3', '3 lines'], ['5', '5 lines'], ['10', '10 lines'], ['step', 'One Step']]} onPick={(v) => onChange({ goal: v as 'off' | '3' | '5' | '10' | 'step' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small, clear finish line for the day. A 🎯 at the top counts the new lines from where you start; when you get there it says so, and that’s enough for today (or keep going). One Step needs Steps on (The AI → What it adds to the page); without them, 5 lines count as a Step.</div>
+              <Seg value={s.goal ?? 'off'} options={[['off', 'Off'], ['3', '3 lines'], ['5', '5 lines'], ['10', '10 lines'], ['step', 'Finish this Step']]} onPick={(v) => onChange({ goal: v as 'off' | '3' | '5' | '10' | 'step' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small, clear finish line for the day. A 🎯 at the top counts the new lines from where you start; when you get there it offers Stop here (your place is kept) or Keep learning. Finish this Step needs Steps on (The AI → What it adds to the page); without them, 5 lines count as a Step.</div>
             </div>
             <div className="field">
               <label>Read along with the voice</label>

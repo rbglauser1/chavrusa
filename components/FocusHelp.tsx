@@ -23,13 +23,19 @@ const dayKey = () => new Date().toLocaleDateString('en-CA');
 export default function FocusHelp({ settings, refText, total, focus, picked, talkOn }: Props) {
   const quiet = !!settings.quietMode, bar = !!settings.amudBar, goal = settings.goal && settings.goal !== 'off' ? settings.goal : null;
   const along = !!settings.readAlong && !!talkOn; // in a call: the line the voice is on is lit and followed
-  const one = !!settings.oneLine, glow = !!settings.glowLine || along, wins = settings.wins !== false, where = settings.whereWasI !== false;
+  // "One line" from the Continue card (Nov 17): one line at a time for this visit only, with a ✕ to leave it.
+  const [oneOnce, setOneOnce] = useState(false);
+  useEffect(() => { try { setOneOnce(sessionStorage.getItem('chavrusa-oneline') === '1'); } catch { /* optional */ } }, []);
+  const leaveOnce = () => { try { sessionStorage.removeItem('chavrusa-oneline'); } catch { /* optional */ } setOneOnce(false); };
+  const one = !!settings.oneLine || oneOnce, glow = !!settings.glowLine || along, wins = settings.wins !== false, where = settings.whereWasI !== false;
   const base = refText.replace(/:\d+(-\d+)?$/, '');
   const [cur, setCur] = useState<number | null>(null);
   const curRef = useRef<number | null>(null); curRef.current = cur;
   const [toast, setToast] = useState<string | null>(null);
   const [offer, setOffer] = useState(false);
-  const [recap, setRecap] = useState<{ n: number; text: string | null; err?: boolean } | null>(null);
+  type Rc = { n: number; text: string | null; err?: boolean; words?: { line: number; phrase: string }[]; ask?: string };
+  const [recap, setRecap] = useState<Rc | null>(null);
+  const [lit, setLit] = useState<{ line: number; phrase: string }[] | null>(null);
   const best = useRef(0), sinceWin = useRef(0);
 
   // A minute of learning counts as a day learned (the days-in-a-row count).
@@ -84,6 +90,7 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
   }, [along, focus]);
   // Today's goal: so many new lines (or one Step) from where you started today. Kept for the day on this phone.
   const [goalDone, setGoalDone] = useState(false);
+  const [goalCard, setGoalCard] = useState(false);
   const [goalAt, setGoalAt] = useState(0);
   const goalStart = useRef<number | null>(null), stepsSeen = useRef(0);
   useEffect(() => { try { setGoalDone(localStorage.getItem(GOAL_KEY) === `${dayKey()}|${goal}`); } catch { /* optional */ } goalStart.current = null; stepsSeen.current = 0; setGoalAt(0); }, [goal, base]);
@@ -104,7 +111,7 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
       setGoalDone(true);
       try { localStorage.setItem(GOAL_KEY, `${dayKey()}|${goal}`); } catch { /* optional */ }
       markLearned();
-      say(`🎯 Today’s goal reached · ${cheer()}`);
+      setGoalCard(true);
     }
   }, [cur, goal, goalDone]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -163,6 +170,51 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
     return () => { document.removeEventListener('touchstart', start); document.removeEventListener('touchend', end); };
   }, [one, quiet, total]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Where was I? lights up the words it's talking about, in the text itself (the browser's highlight, no change to the page).
+  useEffect(() => {
+    const H = (globalThis as unknown as { CSS?: { highlights?: Map<string, unknown> } }).CSS?.highlights;
+    const HL = (globalThis as unknown as { Highlight?: new (...r: Range[]) => unknown }).Highlight;
+    if (!H || !HL) return;
+    if (!lit?.length) { H.delete('fh-words'); return; }
+    const ranges: Range[] = [];
+    const NIK = /[\u0591-\u05C7]/;
+    for (const w of lit) {
+      const el = lineEl(w.line); if (!el) continue;
+      const want = w.phrase.replace(/[\u0591-\u05C7]/g, '').replace(/[^\u05D0-\u05EA ]/g, '').replace(/\s+/g, ' ').trim();
+      if (want.length < 2) continue;
+      // The line's Hebrew letters, without vowels or punctuation, each remembered with where it sits.
+      const map: { node: Text; i: number }[] = []; let flat = '';
+      el.querySelectorAll('.he').forEach((he) => {
+        const walk = document.createTreeWalker(he, NodeFilter.SHOW_TEXT);
+        for (let t = walk.nextNode() as Text | null; t; t = walk.nextNode() as Text | null) {
+          const v = t.data;
+          for (let i = 0; i < v.length; i++) {
+            const c = v[i];
+            if (NIK.test(c)) continue;
+            if (/[\u05D0-\u05EA]/.test(c)) { flat += c; map.push({ node: t, i }); }
+            else if (/\s/.test(c) && !flat.endsWith(' ')) { flat += ' '; map.push({ node: t, i }); }
+          }
+        }
+        if (!flat.endsWith(' ')) { flat += ' '; map.push(map[map.length - 1]); }
+      });
+      const at = flat.indexOf(want);
+      if (at < 0) continue;
+      const a = map[at], b = map[at + want.length - 1];
+      if (!a || !b) continue;
+      const r = document.createRange(); r.setStart(a.node, a.i); r.setEnd(b.node, b.i + 1);
+      ranges.push(r);
+    }
+    if (ranges.length) H.set('fh-words', new HL(...ranges)); else H.delete('fh-words');
+    return () => { H.delete('fh-words'); };
+  }, [lit]);
+  // The lit words stay after the card closes, until the next tap on the text.
+  useEffect(() => { if (recap?.words?.length) setLit(recap.words); }, [recap]);
+  useEffect(() => {
+    if (!lit) return;
+    const off = (e: MouseEvent) => { if ((e.target as Element).closest?.('.sefer-flow')) setLit(null); };
+    const t = window.setTimeout(() => document.addEventListener('click', off, true), 600);
+    return () => { window.clearTimeout(t); document.removeEventListener('click', off, true); };
+  }, [lit]);
   // Where was I?
   const ask = (n?: number) => {
     const line = n ?? curRef.current ?? numbered().find((e) => e.getBoundingClientRect().bottom > 140)?.dataset.line;
@@ -170,7 +222,7 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
     setOffer(false);
     setRecap({ n: k, text: null });
     fetch(`/api/recap?ref=${encodeURIComponent(`${base}:${k}`)}`).then((r) => r.json())
-      .then((d) => setRecap((x) => (x && x.n === k ? { n: k, text: d.text || null, err: !d.text } : x)))
+      .then((d) => setRecap((x) => (x && x.n === k ? { n: k, text: d.text || null, err: !d.text, words: d.words, ask: d.ask } : x)))
       .catch(() => setRecap((x) => (x && x.n === k ? { n: k, text: null, err: true } : x)));
   };
   useEffect(() => {
@@ -199,12 +251,24 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
         <button onClick={() => go(-1)} disabled={(cur ?? 1) <= 1} aria-label="Previous line">‹ Back</button>
         <span>Line {cur ?? '–'} of {total}</span>
         <button onClick={() => go(1)} disabled={(cur ?? 1) >= total} aria-label="Next line">Next ›</button>
+        {oneOnce && !settings.oneLine && <button className="fh-nav-x" onClick={leaveOnce} aria-label="Back to the whole page">✕</button>}
       </div>}
       {toast && <div className="fh-toast" role="status">{toast}</div>}
+      {goalCard && <div className="five-done" role="dialog" aria-label="Goal reached">
+        <div className="five-card">
+          <div className="five-check">🎯</div>
+          <h2>{goal === 'step' ? 'You finished this Step' : 'Today’s goal reached'}</h2>
+          <p>{cheer()}. This is a good place to stop, and your place is kept.</p>
+          <button className="five-main" onClick={() => setGoalCard(false)}>Keep learning</button>
+          <button className="five-stop" onClick={() => { setGoalCard(false); window.dispatchEvent(new Event('chavrusa-home')); }}>Stop here</button>
+        </div>
+      </div>}
       {offer && !recap && <button className="fh-offer" onClick={() => ask()}>↩ Where was I?</button>}
       {recap && <div className="fh-recap" role="dialog" aria-label="Where was I?">
         <div className="fh-recap-top"><b>↩ Where was I? · line {recap.n}</b><button onClick={() => setRecap(null)} aria-label="Close">✕</button></div>
         <p>{recap.text ?? (recap.err ? 'Couldn’t get it right now. Try again in a moment.' : 'Thinking…')}</p>
+        {recap.text && recap.words?.length ? <p className="fh-recap-hint">The words it’s about are lit up in the text.</p> : null}
+        {recap.ask && <p className="fh-recap-ask"><b>Think about it:</b> {recap.ask}</p>}
         {recap.text && <button className="fh-recap-go" onClick={() => { const n = recap.n; setRecap(null); setCur(n); lineEl(n)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}>Take me to the line</button>}
         <div className="ai-note left">Written by AI · AI makes mistakes</div>
       </div>}

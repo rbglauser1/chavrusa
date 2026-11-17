@@ -44,13 +44,16 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
       <div className="split-panels one">
         <section className="split-panel">
           <span className="launch-eyebrow">{p.cont ? 'Return to your learning' : 'Begin your learning'}</span>
-          <h2 dir="auto">{titleOf(p.cont)}</h2>
+          <h2 dir="auto">{titleOf(p.cont)}{p.cont?.ref && p.cont.line ? <span className="launch-line"> · line {p.cont.line}</span> : null}</h2>
           {p.cont && <p>Your place, ready when you are.</p>}
           <button className="launch-primary" onClick={p.cont ? p.onContinue : p.onLibrary}>
             {p.cont ? 'Continue' : 'Open the Library'} <SandIcon name="arrow" size={18} />
           </button>
           {/* Nov 16, Focus help: a small promise is easier to start */}
-          {p.five && <button className="launch-five" onClick={() => { startFive(p.fiveLen ?? 5); (p.cont ? p.onContinue : p.onLibrary)(); }}>⏱ Just {p.fiveLen ?? 5} minutes</button>}
+          <div className="launch-small">
+            {p.five && <button className="launch-five" onClick={() => { startFive(p.fiveLen ?? 5); (p.cont ? p.onContinue : p.onLibrary)(); }}>⏱ Just {p.fiveLen ?? 5} min</button>}
+            {p.cont?.ref && <button className="launch-five" onClick={() => { try { sessionStorage.setItem('chavrusa-oneline', '1'); } catch { /* optional */ } p.onContinue(); }}>☝ One line</button>}
+          </div>
           {days >= 2 && <span className="launch-streak">🔥 {days} days in a row</span>}
         </section>
       </div>
