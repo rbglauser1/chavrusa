@@ -2995,3 +2995,4 @@ ul.pts[dir='rtl'] ul { padding-right: 18px; }
 /* Nov 16: "This page and more" and the tip under it a little larger. */
 .ai-hub-more { font-size: 17px; padding: 4px 0; }
 .ai-hub-tip { font-size: 15px; }
+.ai-hub-more { color: #CC7C5E; } /* Nov 16: "This page and more" in terracotta, like the rest of the ✦ */
