@@ -376,9 +376,14 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the ✦: a quiet voice call. Your chavrusa keeps you company while you read on your own, answers if you ask, and checks in gently after a long quiet. The call isn’t paused for quiet, so it costs the voice’s usual rate the whole time (about 5¢ a minute with GPT-Live, 1–2¢ with Gemini Live).</div>
             </div>
             <div className="field">
-              <label>Teasers (pop-ups that draw you in)</label>
+              <label>Teasers while learning</label>
               <Seg value={s.teasers !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ teasers: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. At most one every few minutes, never twice the same day. Also on Home, inside the Continue card, after your own question or note. Made once per page and kept (a cent or two the first time).</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. At most one every few minutes, never twice the same day. Made once per page and kept (a cent or two the first time).</div>
+            </div>
+            <div className="field">
+              <label>Question on the Home card</label>
+              <Seg value={s.homeTeaser !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeTeaser: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Inside the Continue card on Home, a short AI question about where you stopped, to draw you back in. It shows only when you haven’t left yourself a question or a note on that page (those always show).</div>
             </div>
             {s.sitWithMe !== false && <div className="field">
               <label>Sit with me: check in after</label>
