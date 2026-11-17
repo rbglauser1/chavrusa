@@ -337,8 +337,6 @@ export default function Home() {
   useBackLayer(sandReview, () => setSandReview(false));
   useEffect(() => { const go = () => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); refreshSessions(); setView('recent'); }; window.addEventListener('chavrusa-recent', go); return () => window.removeEventListener('chavrusa-recent', go); }); // Nov 16: ⋯ → Recent sessions
   useEffect(() => { const open=()=>setSandReview(true); window.addEventListener('sand-review',open); return()=>window.removeEventListener('sand-review',open); }, []);
-  // Focus help changes a setting from the reading screen (Nov 17: clearing "a question for next time").
-  useEffect(() => { const on = (e: Event) => updateSettings((e as CustomEvent<Partial<Settings>>).detail ?? {}); window.addEventListener('chavrusa-settings', on); return () => window.removeEventListener('chavrusa-settings', on); }, [updateSettings]);
   // Focus help's "Stop here" (Nov 17): back to Home; the place is kept.
   useEffect(() => { const go = () => setView('home'); window.addEventListener('chavrusa-home', go); return () => window.removeEventListener('chavrusa-home', go); }, []);
   // "How to use the app" from Settings: back to Home, where the guide opens.
@@ -506,6 +504,8 @@ export default function Home() {
     // second could write back the settings as they were before the first.
     saveChain.current = saveChain.current.then(() => fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }).then(() => undefined, () => undefined));
   }, []);
+  // Focus help changes a setting from the reading screen (Nov 17: clearing "a question for next time").
+  useEffect(() => { const on = (e: Event) => updateSettings((e as CustomEvent<Partial<Settings>>).detail ?? {}); window.addEventListener('chavrusa-settings', on); return () => window.removeEventListener('chavrusa-settings', on); }, [updateSettings]);
 
   // The place he last scrolled to in the Sefer, per session (on this phone). It wins over the session's own place when
   // it is newer than anything said or tapped since: Recent and "pick up where you left off" open there.
