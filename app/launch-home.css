@@ -319,8 +319,11 @@
 /* Nov 17: on the reading screen the texture goes edge to edge: it sits on a layer under the text that reaches past
    the margins to the sides of the page (and on below the last line), and still moves with the words. */
 :is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .sefer-flow { background-image:none !important; position:relative; isolation:isolate; }
-:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .sefer-flow::before { content:''; position:absolute; z-index:-1; pointer-events:none; top:-60px; bottom:-600px; left:-80px; right:-80px; }
+:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .sefer-flow::before { content:''; position:absolute; z-index:-1; pointer-events:none; top:0; bottom:0; left:-80px; right:-80px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-tex='light'] .sefer-flow::before { background-image: var(--pt-fib), var(--pt-grain); background-size: 300px 300px, 240px 240px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] .sefer-flow::before { background-image: var(--pt-sgrain), var(--pt-veins), var(--pt-cloud); background-size: 240px 240px, 900px 900px, 800px 800px; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='light'],[data-tex='stone']) .sefer-flow::before { background-image: var(--pt-fib-n); background-size: 300px 300px; }
 :is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .st-source .sefer-body { overflow-x:clip; }
+/* Nov 17: the texture layer must never make the page longer than the text (it had reached 600 px past the end, so the
+   page scrolled on past the amud: the next amud didn't load and the bottom buttons rode up). */
+:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone']) .sefer-flow { overflow-y: clip; overflow-x: visible; }
