@@ -342,9 +342,12 @@
 .sg-pagecard .sg-2 > .sg-head .sg-title { font-size: 16px; font-weight: 500; }
 .sg-root .sg-1 > .sg-head .sg-arrow, .sg-pagecard .sg-2 > .sg-head .sg-arrow { transform: none !important; }
 
-/* Nov 17: choices stay pills. Equal widths when they fit on one line; when there are too many (Today's goal), they
-   wrap onto a second line instead of squeezing into tall ovals. Each white choice has a thin terracotta line inside. */
-:is([data-look='clay'],[data-look='chatgpt']) .seg { flex-wrap: wrap; row-gap: 10px !important; }
-:is([data-look='clay'],[data-look='chatgpt']) .seg button { flex: 1 1 0; min-width: max-content; white-space: nowrap; padding: 8px 16px; min-height: 42px; }
-:is([data-look='clay'],[data-look='chatgpt']) .seg button:not(.on) { border: 1px solid rgba(168, 82, 53, .45) !important; }
-:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] .seg button:not(.on) { border-color: rgba(196, 115, 79, .5) !important; }
+/* Nov 17: choices stay one row of pills, never wrapping and never squeezed into tall ovals (the row isn't clipped,
+   so the end pills keep their round edges). */
+:is([data-look='clay'],[data-look='chatgpt']) .seg { overflow: visible !important; flex-wrap: nowrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .seg button { flex: 1 1 0; min-width: 0; white-space: nowrap; padding: 8px 4px; min-height: 42px; }
+:is([data-look='clay'],[data-look='chatgpt']) .seg:has(> button:nth-child(5)) { gap: 7px !important; }
+
+/* Nov 17: a thin terracotta line around each Settings box (the main list and the page you step into). */
+:is([data-look='clay'],[data-look='chatgpt']) :is(.sg-root .sg-1, .sg-pagecard) { border: 1px solid rgba(168, 82, 53, .45) !important; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.sg-root .sg-1, .sg-pagecard) { border-color: rgba(196, 115, 79, .5) !important; }

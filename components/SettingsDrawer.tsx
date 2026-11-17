@@ -333,8 +333,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.fiveMin !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ fiveMin: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A button under Continue: it opens your place with a gentle timer at the top. When it’s up: keep going, more minutes, or done for now. Starting small makes starting easier.</div>
               {s.fiveMin !== false && <>
-                <label style={{ marginTop: 10 }}>How long</label>
-                <Seg value={String(s.fiveLen ?? 5)} options={[['2', '2 min'], ['5', '5'], ['10', '10'], ['15', '15'], ['20', '20'], ['30', '30']]} onPick={(v) => onChange({ fiveLen: Number(v) })} />
+                <label style={{ marginTop: 10 }}>How long (minutes)</label>
+                <Seg value={String(s.fiveLen ?? 5)} options={[['2', '2'], ['5', '5'], ['10', '10'], ['15', '15'], ['20', '20'], ['30', '30']]} onPick={(v) => onChange({ fiveLen: Number(v) })} />
               </>}
             </div>
             <div className="field">
@@ -395,9 +395,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line across the top of the reading screen that fills as you go through the amud or perek, so the end always feels reachable.</div>
             </div>
             <div className="field">
-              <label>Today’s goal</label>
-              <Seg value={s.goal ?? 'off'} options={[['off', 'Off'], ['3', '3 lines'], ['5', '5 lines'], ['10', '10 lines'], ['step', 'Finish this Step']]} onPick={(v) => onChange({ goal: v as 'off' | '3' | '5' | '10' | 'step' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small, clear finish line for the day. A 🎯 at the top counts the new lines from where you start; when you get there it offers Stop here (your place is kept) or Keep learning. Finish this Step needs Steps on (The AI → What it adds to the page); without them, 5 lines count as a Step.</div>
+              <label>Today’s goal (lines)</label>
+              <Seg value={s.goal ?? 'off'} options={[['off', 'Off'], ['3', '3'], ['5', '5'], ['10', '10'], ['step', '1 Step']]} onPick={(v) => onChange({ goal: v as 'off' | '3' | '5' | '10' | 'step' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small, clear finish line for the day. A 🎯 at the top counts the new lines from where you start; when you get there it offers Stop here (your place is kept) or Keep learning. 1 Step means finish the Step you’re on; it needs Steps on (The AI → What it adds to the page); without them, 5 lines count as a Step.</div>
             </div>
             <div className="field">
               <label>Read along with the voice</label>
