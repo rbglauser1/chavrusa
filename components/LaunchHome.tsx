@@ -41,6 +41,7 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
   const contRef = p.cont?.ref ?? '', contLine = p.cont?.line ?? 0;
   useEffect(() => {
     setInvite(null);
+    if (!p.teasersOn) return; // the switch hides the whole box: your question, your note and the AI question
     if (p.leftQ?.text) { setInvite({ label: `You asked yourself · ${p.leftQ.ref.replace('Berakhot', 'Berachos')}, line ${p.leftQ.line}`, text: p.leftQ.text, own: true }); return; }
     if (!contRef) return;
     let off = false;
@@ -50,7 +51,6 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
         const n = await fetch(`/api/notes?ref=${encodeURIComponent(base)}`).then((r) => r.json());
         const mine = (n.notes ?? []).find((x: { text?: string }) => (x.text ?? '').trim().length > 3);
         if (mine && !off) { setInvite({ label: `Your note on line ${mine.n}`, text: String(mine.text).slice(0, 160), own: true }); return; }
-        if (!p.teasersOn) return;
         const t = await fetch(`/api/teasers?ref=${encodeURIComponent(base)}`).then((r) => r.json());
         const items: { line: number; kind: string; text: string }[] = t.items ?? [];
         const next = items.find((x) => x.kind === 'guess' && x.line >= contLine) ?? items.find((x) => x.line >= contLine);

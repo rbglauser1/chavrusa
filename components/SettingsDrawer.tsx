@@ -381,9 +381,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. About one for every two or three lines, shown as you reach them (not more often than every 40 seconds), never twice the same day. Made once per page and kept (a few cents the first time).</div>
             </div>
             <div className="field">
-              <label>Question on the Home card</label>
+              <label>Reminder box on the Home card</label>
               <Seg value={s.homeTeaser !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeTeaser: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Inside the Continue card on Home, a short AI question about where you stopped, to draw you back in. It shows only when you haven’t left yourself a question or a note on that page (those always show).</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small box inside the Continue card on Home, to draw you back in: the question you left yourself, else your note on that page, else a short AI question about where you stopped. Off hides the box completely.</div>
             </div>
             {s.sitWithMe !== false && <div className="field">
               <label>Sit with me: check in after</label>
