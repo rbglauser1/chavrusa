@@ -8,6 +8,7 @@ import type { Settings } from '@/lib/config';
 const isAlert = (t: string) => /^(Microphone|Could not|The voice|The live|Live voice|Gemini Live|Your OpenAI)/.test(t);
 import { MEFORSHIM, MG_DEFAULT } from '@/lib/mikraos';
 import { pairPhrases } from '@/lib/interlinear';
+import { heShower } from '@/lib/hebrew';
 
 type HeEn = { he: string; en: string };
 type Data = { ref: string; heRef: string; pesukim: string[]; pesukimEn: string[]; onkelos: HeEn[]; meforshim: { id: string; he: string; name: string; title?: string; perPasuk: HeEn[][]; missing?: boolean }[]; onRashi?: Record<string, { title: string; refs: string[] }[]> };
@@ -38,6 +39,10 @@ function Bolded({ t }: { t: string }) {
 
 export default function MikraosPage({ startRef, startPasuk, onClose, talk, status, settings, onChange, onLearn }: { startRef: string; startPasuk?: number; onClose: () => void; talk?: ReactNode; status?: string; settings: Settings; onChange: (p: Partial<Settings>) => void; onLearn?: (x: { label: string; he: string; en: string }) => void }) {
   const [sel, setSel] = useState<Sel | null>(null);
+  // Nov 17: on a phone the printed page was too small to read. There it is one pasuk at a time, in the app's own colors
+  // and sizes: the pasuk, Onkelos, then each chosen meforesh in turn, scrolling down; swipe or ‹ › for the next pasuk.
+  const [phone] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches);
+  const showHe = heShower(settings);
   // A meforesh on Rashi (Gur Aryeh, Mizrachi…), opened from its tag under a Rashi: shown in a panel over the page.
   const [sheet, setSheet] = useState<{ title: string; label: string; he: string; en: string; loading?: boolean } | null>(null);
   const pendingFocus = useRef<{ pasuk: number; who: string | null } | null>(null);
@@ -53,7 +58,7 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   // pesukim fit (with the chosen meforshim, Onkelos and English), and if even one pasuk's commentary is too long, sets the
   // type a little smaller, the way a printer would. Pages turn in order; the starts of the pages before are remembered.
   const [start, setStart] = useState(Math.max(0, (startPasuk ?? 1) - 1));
-  const [count, setCount] = useState(3);
+  const [count, setCount] = useState(phone ? 1 : 3);
   const [scale, setScale] = useState(1);
   const [phase, setPhase] = useState<'fit' | 'grow' | 'done'>('fit');
   const [history, setHistory] = useState<number[]>([]);
@@ -83,11 +88,11 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   const first = Math.min(start, Math.max(0, n - 1));
   const shown = Math.max(1, Math.min(count, n - first));
   const range = data ? Array.from({ length: shown }, (_, k) => first + k) : [];
-  const refit = (c = 3) => { shrunk.current = false; setCount(c); setScale(1); setPhase('fit'); };
+  const refit = (c = 3) => { shrunk.current = false; setCount(phone ? 1 : c); setScale(1); setPhase('fit'); };
   // New text, or new choices: fit again from here.
   useEffect(() => {
     if (!data) return;
-    if (fromEnd.current) { fromEnd.current = false; setStart(Math.max(0, data.pesukim.length - 3)); setHistory([]); }
+    if (fromEnd.current) { fromEnd.current = false; setStart(Math.max(0, data.pesukim.length - (phone ? 1 : 3))); setHistory([]); }
     refit();
   }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
   // Measure: does everything fit on the page? Start with a guess; if it overflows, one pasuk fewer (or, at one pasuk,
@@ -143,7 +148,7 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   }
   useEffect(() => {
     const el = box.current;
-    if (!el) return;
+    if (!el || phone) return;
     let startDist = 0, startZoom = 1, lastTap = 0, tapTimer: number | undefined, moved = false, tapX = 0, tapY = 0, midX = 0, midY = 0;
     const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
     const onStart = (e: TouchEvent) => {
@@ -244,6 +249,118 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
   }
   // After a new perek loads for a focus, apply it.
   useEffect(() => { if (data && pendingFocus.current) { const f = pendingFocus.current; pendingFocus.current = null; applyFocus(f.pasuk, f.who); } }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The phone: one pasuk at a time.
+  const goPasuk = (dir: 1 | -1) => {
+    if (!data) return;
+    setSel(null);
+    box.current?.scrollTo({ top: 0 });
+    const i = first + dir;
+    if (i >= 0 && i < n) { setStart(i); return; }
+    if (dir === 1 && perek < (BOOK_LEN[book] ?? 200)) { setStart(0); setRef(`${book} ${perek + 1}`); }
+    if (dir === -1 && perek > 1) { fromEnd.current = true; setRef(`${book} ${perek - 1}`); }
+  };
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  if (phone) {
+    const i = first;
+    const mine = data ? data.meforshim.filter((m) => (m.perPasuk[i] ?? []).length) : [];
+    return (
+      <div className={`daf-page mg mgp`} role="dialog" aria-label={`${ref}, Mikraos Gedolos`}>
+        <div className="daf-page-bar mgp-bar">
+          <button className="mgp-round" onClick={onClose} aria-label="Close"><span aria-hidden>✕</span></button>
+          <div className="mgp-title"><b>{book} {perek}{data ? `:${i + 1}` : ''}</b><small>{BOOK_HE[book] ?? ''} {heNum(perek)}{data ? ` · ${heNum(i + 1)}` : ''}</small></div>
+          <button className={`mgp-round ${panel ? 'on' : ''}`} onClick={() => setPanel((v) => !v)} aria-label="Choose meforshim and English">☰</button>
+        </div>
+        {panel && (
+          <div className="mg-panel">
+            <div className="mg-panel-row">
+              <label><input type="checkbox" checked={withEn} onChange={() => onChange({ mgEnglish: !withEn })} /> English</label>
+              <label><input type="checkbox" checked={withOnk} onChange={() => onChange({ mgOnkelos: !withOnk })} /> Onkelos</label>
+            </div>
+            <div className="mg-panel-title">Meforshim</div>
+            <div className="mg-panel-grid">
+              {MEFORSHIM.map((m) => {
+                const missing = data?.meforshim.find((x) => x.id === m.id)?.missing;
+                return <label key={m.id} className={missing ? 'missing' : ''}><input type="checkbox" checked={chosen.includes(m.id)} onChange={() => toggleMef(m.id)} /> {m.name} <span className="he">{m.he}</span>{missing ? <small> (not on this sefer)</small> : null}</label>;
+              })}
+            </div>
+            <button className="btn" onClick={() => setPanel(false)}>Done</button>
+          </div>
+        )}
+        <div className="daf-page-box mgp-box" ref={box}
+          onTouchStart={(e) => { const t = e.touches[0]; swipe.current = e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }}
+          onTouchEnd={(e) => { const s0 = swipe.current; swipe.current = null; const t = e.changedTouches[0]; if (!s0 || !t) return; const dx = t.clientX - s0.x, dy = t.clientY - s0.y; if (Math.abs(dx) > 70 && Math.abs(dy) < 45) goPasuk(dx < 0 ? 1 : -1); }}
+          onClick={(e) => {
+            const t = (e.target as HTMLElement).closest('[data-mg]') as HTMLElement | null;
+            if (!t || (e.target as HTMLElement).closest('button')) return;
+            const [kind, a, b, c] = (t.dataset.mg ?? '').split(':');
+            const next: Sel = kind === 'p' ? { kind: 'p', i: Number(a) } : { kind: 'c', m: a, i: Number(b), k: Number(c) };
+            setSel((cur) => (cur && JSON.stringify(cur) === JSON.stringify(next) ? null : next));
+          }}>
+          {!data && <div className="daf-page-msg">{err || 'Opening…'}</div>}
+          {data && (
+            <div className="mgp-flow">
+              <section data-mg={`p:${i}`} className={`mgp-pasuk ${isSel({ kind: 'p', i }) ? 'mg-sel' : ''}`}>
+                <div className="mgp-he" dir="rtl"><span className="mgp-num">{heNum(i + 1)}</span> {showHe(data.pesukim[i] ?? '')}</div>
+                {withEn && data.pesukimEn[i] && <div className="mgp-en">{data.pesukimEn[i]}</div>}
+              </section>
+              {withOnk && data.onkelos[i]?.he && (
+                <section className="mgp-comm mgp-onk">
+                  <h3><span>Onkelos</span><span className="he">אונקלוס</span></h3>
+                  <div className="mgp-ch" dir="rtl">{data.onkelos[i].he}</div>
+                  {withEn && data.onkelos[i].en && <div className="mgp-en">{data.onkelos[i].en}</div>}
+                </section>
+              )}
+              {mine.map((m) => (
+                <section key={m.id} className="mgp-comm">
+                  <h3><span>{m.name}</span><span className="he">{m.he}</span></h3>
+                  {(m.perPasuk[i] ?? []).map((c, k) => (
+                    <div key={k} data-mg={`c:${m.id}:${i}:${k}`} className={`mgp-item ${isSel({ kind: 'c', m: m.id, i, k }) ? 'mg-sel' : ''}`}>
+                      <div className="mgp-ch rashi" dir="rtl"><Bolded t={c.he} /></div>
+                      {tags(m.id, i, k)}
+                      {withEn && c.en && <div className="mgp-en">{c.en}</div>}
+                    </div>
+                  ))}
+                </section>
+              ))}
+              {!mine.length && <p className="mgp-none">None of your meforshim comment on this pasuk.</p>}
+              <div className="mgp-nav">
+                <button onClick={() => goPasuk(-1)} disabled={i === 0 && perek === 1}>‹ Pasuk {i > 0 ? i : 'before'}</button>
+                <button onClick={() => goPasuk(1)}>Pasuk {i + 2 <= n ? i + 2 : 'after'} ›</button>
+              </div>
+              <div className="mg-foot">Text from Sefaria · approved sources only{withEn ? ' · English: Sefaria\'s translations' : ''}</div>
+            </div>
+          )}
+        </div>
+        {sel && data && selItem() && (
+          <div className="mg-action">
+            <span className="mg-action-label">{selItem()!.label}</span>
+            <button className="btn primary" onClick={() => { const x = selItem()!; onLearn?.({ label: x.label, he: x.he, en: x.en }); }}>▶ Learn this</button>
+            <button className="btn" onClick={selNext}>Next ›</button>
+            <button className="mg-action-x" onClick={() => setSel(null)} aria-label="Clear">✕</button>
+          </div>
+        )}
+        {sheet && (
+          <div className="mg-sheet" role="dialog" aria-label={sheet.title}>
+            <div className="mg-sheet-head"><b>{sheet.title}</b><button className="mg-action-x" onClick={() => setSheet(null)} aria-label="Close">✕</button></div>
+            <div className="mg-sheet-body">
+              {sheet.loading ? <div className="muted">Opening…</div> : (<>
+                <div className="mg-sheet-he rashi" dir="rtl">{sheet.he || <span className="muted">Not found on Sefaria.</span>}</div>
+                {sheet.en && <div className="mg-sheet-en" dir="ltr">{sheet.en}</div>}
+              </>)}
+            </div>
+            {!sheet.loading && sheet.he && <div className="mg-sheet-foot"><button className="btn primary" onClick={() => onLearn?.({ label: sheet.label, he: sheet.he, en: sheet.en })}>▶ Learn this</button></div>}
+          </div>
+        )}
+        {talk && (
+          <div className="daf-page-talk">
+            {status && <span className={`daf-page-status ${isAlert(status) ? 'err' : ''}`}>{status}</span>}
+            {talk}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const title = `${BOOK_HE[book] ?? book} ${heNum(perek)}`;
   return (
