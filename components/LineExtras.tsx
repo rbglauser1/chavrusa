@@ -53,7 +53,7 @@ export function ExplainBox({ lineRef, onClose }: { lineRef: string; onClose: () 
   const text = data?.text;
   return (
     <div className="comm line-x" onClick={(e) => e.stopPropagation()}>
-      <div className="comm-title">✦ Explanation{text && <NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the explanation" quote={text.replace(/⟦[^⟧]+⟧/g, '').slice(0, 140)} label="✎" />}<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
+      <div className="comm-title">✦ Full depth explanation{text && <NoteAdd refText={split(lineRef)[0]} n={split(lineRef)[1]} on="the explanation" quote={text.replace(/⟦[^⟧]+⟧/g, '').slice(0, 140)} label="✎" />}<button className="comm-x" aria-label="Close the explanation" onClick={onClose}>✕</button></div>
       {text && <div className="ai-note left">Written by AI · AI makes mistakes{data.sources.length ? ' · tap a source to check it inside' : ''}</div>}
       {data ? <><WithSources text={data.text} sources={data.sources} /><LineChat lineRef={lineRef} onClose={() => {}} follow={{ about: data.text }} /></>
         : err ? <div className="muted">{err} <button className="linklike" onClick={() => setTick((n) => n + 1)}>Try again</button></div>

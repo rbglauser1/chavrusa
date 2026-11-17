@@ -240,7 +240,7 @@ export default function LearnWithMe({ refText, total, start, lineEl, onNext, onC
         ) : (
           <>
             <button className="btn lwm-back" disabled={n <= 1} onClick={() => setN(n - 1)} aria-label="Back a line">‹</button>
-            <button className="btn" onClick={() => { if (deep || xOpen) { setDeep(false); setXOpen(false); } else setDeep(true); }}>{deep || xOpen ? 'Hide' : '✦ Explain'}</button>
+            <button className="btn" onClick={() => { if (deep || xOpen) { setDeep(false); setXOpen(false); } else setDeep(true); }}>{deep || xOpen ? 'Hide' : '✦ Full depth'}</button>
             <button className="btn primary" onClick={() => setN(n + 1)}>{n === total ? 'Finish' : 'Next ›'}</button>
           </>
         )}

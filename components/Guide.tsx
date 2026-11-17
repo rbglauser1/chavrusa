@@ -283,7 +283,7 @@ const SCREENS: Record<string, () => ReactNode> = {
     <Panel top={49.5} h={30} title="Rashi · Learn it in the Sefer ↗"><div className="gd-he gd-comm" dir="rtl"><b>מאי טעמא</b> - דקא יליף פרישה מסיני ולא ממילואים, כדכתיב…</div></Panel>
   </Sefer>),
   explain: () => (<Sefer on="explain">
-    <Panel top={49.5} h={31} title="✦ Explanation">
+    <Panel top={49.5} h={31} title="✦ Full depth explanation">
       <div className="gd-tiny gd-soft">Written by AI · may contain mistakes</div>
       <p>The Gemara asks what Rabbi Yochanan’s source is for setting the Kohen Gadol apart for seven days.</p>
       <p>He learns it with a <span dir="rtl">גזירה שוה</span> from the word <span dir="rtl">״צוה״</span> said at the inauguration…</p>
