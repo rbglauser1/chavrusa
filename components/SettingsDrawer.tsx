@@ -379,6 +379,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The AI summarizes each step of an amud or perek once (about 1–2 cents the first time), then it's kept, free. With Steps on, every long meforesh opened under a line (Ramban, Rashba, Maharsha…) also gets a “Steps” button that cuts it into its steps, the way Tosafos has (Extras → Tosafos steps).</div>
             </div>
             <div className="field">
+              <label>Pshat (the AI says it over, after each move)</label>
+              <Seg value={s.pshat ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ pshat: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Like Steps, but after the words instead of before them: when a move of the Gemara ends, a short note says it over in plain words, the pshat, the way a chavrusa would. Made once per amud or perek (about 2–4 cents the first time), then kept, free.</div>
+            </div>
+            <div className="field">
               <label>Commentary summaries (Rashi, Tosafos, Bartenura… in short English)</label>
               <Seg value={s.commSummary ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ commSummary: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>When you open a commentary, a sentence or two under each comment saying what it explains or asks (not a literal translation). Made once per commentator per amud (about 1–2 cents), then kept, free. Only for commentaries you open.</div>

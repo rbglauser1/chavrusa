@@ -3167,3 +3167,12 @@ html:has(.daf-page.mg) :is(.fh-bar, .fh-nav, .fh-offer, .fh-recap, .fh-toast, .f
    commentary summaries; without a chosen size they keep their own. */
 html .sefer .move, html .min .move, html .amud-intro { font-size: var(--ai-size, max(15px, calc(var(--en-size, 16px) - 2px))); }
 html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
+/* Nov 17: Pshat, the AI saying over each move in its own words, after the move's last line (like Steps, which
+   come before). The same soft terracotta note, labeled "✦ PSHAT", at the AI's writing size. */
+.sefer .pshat {
+  font-family: var(--f-body); font-size: var(--ai-size, max(16px, calc(var(--en-size, 16px) - 1px))); line-height: 1.55;
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
+  background: color-mix(in srgb, #CC7C5E 7%, transparent); border-left: 3px solid #CC7C5E; border-radius: 4px 12px 12px 4px;
+  padding: 8px 12px 10px; margin: 6px 0 14px;
+}
+.sefer .pshat::before { content: '✦ PSHAT'; display: block; font: 700 10.5px var(--f-ui); letter-spacing: .1em; color: #CC7C5E; margin-bottom: 3px; }

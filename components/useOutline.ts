@@ -25,6 +25,26 @@ export function useOutline(ref: string | null | undefined, on: boolean): { byLin
   return { byLine, loading, failed, retry: () => setAttempt((n) => n + 1) };
 }
 
+// Pshat (Nov 17): the AI says over each move in its own words, shown after the move's last line. Made once per amud.
+export function usePshat(ref: string | null | undefined, on: boolean): { byLine: Record<number, string[]>; loading: boolean } {
+  const [byLine, setByLine] = useState<Record<number, string[]>>({});
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setByLine({});
+    if (!on || !ref || / on /i.test(ref) || /:\d+(-\d+)?$/.test(ref)) return;
+    let gone = false;
+    setLoading(true);
+    fetch(`/api/pshat?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => {
+      if (gone) return;
+      const m: Record<number, string[]> = {};
+      for (const x of (d.moves ?? []) as { line: number; pshat: string }[]) (m[x.line] ??= []).push(x.pshat);
+      setByLine(m);
+    }).catch(() => {}).finally(() => { if (!gone) setLoading(false); });
+    return () => { gone = true; };
+  }, [ref, on]);
+  return { byLine, loading };
+}
+
 // The amud intro (a paragraph on what's coming), when switched on. Made once per amud on the server, then kept.
 export function useIntro(ref: string | null | undefined, on: boolean): string {
   const [text, setText] = useState('');

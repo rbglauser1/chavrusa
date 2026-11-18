@@ -32,7 +32,7 @@ import Library, { jumpLibrary, libraryTrail } from './Library';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
-import { useIntro, useOutline, useTargum } from './useOutline';
+import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
 import FocusHelp from './FocusHelp';
 import { setVoiceGuide } from '@/lib/voiceGuide';
 
@@ -354,6 +354,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }, [on, autoWho, conns, src?.ref]);
   }
   const outline = useOutline(src?.ref, !!settings.outline);
+  const pshat = usePshat(src?.ref, !!settings.pshat);
 
   // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).
   const prevRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? prevSection(src.ref) : null;
@@ -615,6 +616,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const endRef = useRef<HTMLDivElement | null>(null);
   const nextOutline = useOutline(nextSrc?.ref, !!settings.outline && !!nextSrc);
   const prevOutline = useOutline(prevSrc?.ref, !!settings.outline && !!prevSrc);
+  const nextPshat = usePshat(nextSrc?.ref, !!settings.pshat && !!nextSrc);
+  const prevPshat = usePshat(prevSrc?.ref, !!settings.pshat && !!prevSrc);
   const introOn = settings.amudIntro !== false;
   const intro = useIntro(src?.ref, introOn && !isComm);
   const nextIntro = useIntro(nextSrc?.ref, introOn && !!nextSrc);
@@ -864,6 +867,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         </div>
       )}
 
+      {settings.pshat && pshat.loading && !showLib && !isComm && <div className="move-loading">Saying over the pshat of this {src ? sectionWord(src.ref) : 'page'}…</div>}
       {settings.outline && outline.loading && !showLib && <div className="move-loading">Summarizing the steps of this {src ? sectionWord(src.ref) : 'page'}…</div>}
       {settings.outline && outline.failed && !outline.loading && !showLib && !isComm && <div className="move-loading">Couldn&apos;t summarize the steps of this {src ? sectionWord(src.ref) : 'page'}. <button className="linklike" onClick={outline.retry}>Try again</button></div>}
       <div className="sefer-body" ref={bodyRef} onClick={dbl ? () => tap(() => {}) : undefined} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onWheel={onWheel} style={showLib ? { display: 'none' } : undefined}>
@@ -911,6 +915,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(prevTg, i)}
                         </div>
+                {(prevPshat.byLine[i + 1] ?? []).map((m, k) => <div key={`ps${k}`} className="pshat" dir="auto">{m}</div>)}
                         </div>
                       );
                     })}
@@ -967,6 +972,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
             {isComm && ownGists?.state === 'loading' && <div className="gist muted">Summarizing…</div>}
             {introBox(intro)}
             {settings.outline && Object.keys(outline.byLine).length > 0 && <div className="ai-note left">The step headings are written by AI · AI makes mistakes</div>}
+            {settings.pshat && Object.keys(pshat.byLine).length > 0 && <div className="ai-note left">The pshat notes are written by AI · AI makes mistakes · ask your rav</div>}
             {src.he.map((line, i) => {
               const isOpen = canTranslate && (showAll || open.has(i));
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
@@ -1181,6 +1187,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {tgBox(tg, i)}
                 </div>
+                {(pshat.byLine[i + 1] ?? []).map((m, k) => <div key={`s${k}`} className="pshat" dir="auto">{m}</div>)}
                 </div>
               );
             })}
@@ -1208,6 +1215,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(nextTg, i)}
                         </div>
+                {(nextPshat.byLine[i + 1] ?? []).map((m, k) => <div key={`ns${k}`} className="pshat" dir="auto">{m}</div>)}
                         </div>
                       );
                     })}
