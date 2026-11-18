@@ -13,7 +13,7 @@ import { VoiceRecord, VoicePlay } from './VoiceNote';
 import MyButtonBox from './MyButtonBox';
 import AiHub, { type HubAction } from './AiHub';
 import MapPeek from './MapPeek';
-import LearnWithMe from './LearnWithMe';
+import LearnWoven from './LearnWoven'; // Nov 18: the woven Learn with me (the older one is kept in LearnWithMe.tsx)
 import LineChat from './LineChat';
 import Clamp from './Clamp';
 import Elsewhere from './Elsewhere';
@@ -834,7 +834,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
         {embedded && src && !isComm && !showLib && wholeSec && <FocusHelp settings={settings} refText={src.ref} total={src.he.length} focus={src.focus} picked={picked} talkOn={!!talk?.on} />}
-        {lwmAt != null && <LearnWithMe refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onVoiceTalk={talk && onPoint ? (n) => { onPoint(src, n); if (!talk.on) talk.toggle(); } : undefined} onClose={() => setLwmAt(null)} />}
+        {lwmAt != null && <LearnWoven refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
       </>
     : null;
   return (

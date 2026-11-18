@@ -1,0 +1,163 @@
+'use client';
+// "Learn with me", woven (Nov 18, rebuilt at the learner's request). A panel rises by itself to 3/4 of the screen and
+// learns the text with him phrase by phrase, the way a rebbi learns inside: a few words of the text, their English,
+// and a short explanation woven in; "Go deeper" on any phrase opens more (Rashi, Tosafos, the sevara). Now and then, at a
+// real turning point, one question with a hint, which he can answer. "Next ›" brings the next phrase (and at the end of a
+// line, the next line); the line he is on is lit in the sefer above the panel.
+// Made once per line and kept (app/api/weave), so it costs once, ever; the next line is prepared ahead of time.
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useBackLayer } from '@/lib/back';
+import { isHebText } from './AiNote';
+
+type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string };
+const got = new Map<string, Promise<{ phrases: Phrase[] }>>();
+const weave = (ref: string, n: number) => {
+  const k = `${typeof document !== 'undefined' ? document.documentElement.dataset.ailang ?? 'en' : 'en'}|${ref}:${n}`;
+  if (!got.has(k)) {
+    const p = fetch(`/api/weave?ref=${encodeURIComponent(ref)}&n=${n}`).then((r) => r.json()).then((d) => { if (!d.phrases?.length) throw new Error(d.error || 'none'); return d as { phrases: Phrase[] }; });
+    got.set(k, p); p.catch(() => got.delete(k));
+  }
+  return got.get(k)!;
+};
+
+function Deeper({ refText, n, k }: { refText: string; n: number; k: number }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState<string | null>(null);
+  const [err, setErr] = useState(false);
+  const go = () => {
+    setOpen((v) => !v);
+    if (text || open) return;
+    setErr(false);
+    fetch('/api/weave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: refText, n, k }) })
+      .then((r) => r.json()).then((d) => { if (d.text) setText(d.text); else setErr(true); }).catch(() => setErr(true));
+  };
+  const he = !!text && isHebText(text);
+  return (
+    <>
+      <button className="lw-deeper" onClick={go}>{open ? 'Less ▴' : 'Go deeper ▾'}</button>
+      {open && <div className={`lw-deep ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>{text ?? (err ? 'It couldn’t be written just now. Tap again.' : <span className="wait-dots"><span /><span /><span /></span>)}</div>}
+    </>
+  );
+}
+
+function Ask({ refText, n, q, hint }: { refText: string; n: number; q: string; hint?: string }) {
+  const [showHint, setShowHint] = useState(false);
+  const [ans, setAns] = useState('');
+  const [reply, setReply] = useState<string | null>(null);
+  const send = () => {
+    if (!ans.trim()) return;
+    setReply('wait');
+    fetch('/api/guide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: `${refText}:${n}`, question: q, answer: ans }) })
+      .then((r) => r.json()).then((d) => setReply(d.text || 'It couldn’t answer just now.')).catch(() => setReply('It couldn’t answer just now.'));
+  };
+  return (
+    <div className="lw-ask">
+      <div className="lw-ask-q"><span className="ai-star">✦</span> {q}</div>
+      {showHint && hint && <div className="lw-ask-hint">{hint}</div>}
+      {reply == null ? (
+        <div className="lw-ask-row">
+          <input value={ans} onChange={(e) => setAns(e.target.value)} placeholder="Your answer…" onKeyDown={(e) => { if (e.key === 'Enter') send(); }} />
+          <button className="lw-small" onClick={send} disabled={!ans.trim()}>Answer</button>
+          {hint && !showHint && <button className="lw-small" onClick={() => setShowHint(true)}>Hint</button>}
+        </div>
+      ) : <div className="lw-ask-reply">{reply === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : reply}</div>}
+    </div>
+  );
+}
+
+export default function LearnWoven({ refText, total, start, lineEl, onNext, onVoice, onClose }: {
+  refText: string; total: number; start: number;
+  lineEl: (n: number) => HTMLElement | null;
+  onNext?: () => void; onVoice?: () => void; onClose: () => void;
+}) {
+  useBackLayer(true, onClose);
+  const y0 = useRef<number | null>(null); // a swipe down on the top edge closes it
+  const grab = { onTouchStart: (e: React.TouchEvent) => { y0.current = e.touches[0].clientY; }, onTouchEnd: (e: React.TouchEvent) => { if (y0.current != null && e.changedTouches[0].clientY - y0.current > 70) onClose(); y0.current = null; } };
+  const [n, setN] = useState(Math.min(Math.max(1, start), total));
+  const [data, setData] = useState<{ n: number; phrases: Phrase[] } | null>(null);
+  const [err, setErr] = useState(false);
+  const [shown, setShown] = useState(1); // how many phrases of this line are out
+  const [tick, setTick] = useState(0);
+  const body = useRef<HTMLDivElement | null>(null);
+  const done = n > total;
+
+  useEffect(() => {
+    if (done) return;
+    let gone = false;
+    setData(null); setErr(false); setShown(1);
+    weave(refText, n).then((d) => { if (!gone) setData({ n, phrases: d.phrases }); }).catch(() => { if (!gone) setErr(true); });
+    if (n < total) void weave(refText, n + 1).catch(() => {}); // the next line, ready ahead of time
+    return () => { gone = true; };
+  }, [refText, n, tick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The line he is on, lit in the sefer and brought up into the space above the panel.
+  useEffect(() => {
+    if (done) return;
+    const el = lineEl(n);
+    if (!el) return;
+    el.classList.add('lwm-on');
+    const t = window.setTimeout(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
+    return () => { window.clearTimeout(t); el.classList.remove('lwm-on'); };
+  }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { document.body.classList.add('lw-open'); return () => document.body.classList.remove('lw-open'); }, []);
+
+  // A new phrase comes in near the top, with the end of the one before still in view above it.
+  useEffect(() => {
+    const box = body.current;
+    if (!box || shown <= 1) { box?.scrollTo({ top: 0 }); return; }
+    const el = box.querySelector<HTMLElement>(`[data-ph="${shown - 1}"]`);
+    if (el) box.scrollTo({ top: Math.max(0, el.offsetTop - 70), behavior: 'smooth' });
+  }, [shown, data?.n]);
+
+  const phrases = data?.n === n ? data.phrases : [];
+  const atEnd = phrases.length > 0 && shown >= phrases.length;
+  const next = () => {
+    if (!atEnd) { setShown((v) => v + 1); return; }
+    setN((v) => v + 1);
+  };
+  const back = () => { if (shown > 1) setShown((v) => v - 1); else if (n > 1) setN((v) => v - 1); };
+
+  return createPortal(
+    <div className="lw-sheet" role="dialog" aria-label="Learn with me">
+      <div className="lw-grab" aria-hidden="true" {...grab} />
+      <div className="lw-head" {...grab}>
+        <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}</span>
+        <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (phrases.length ? shown / phrases.length : 0)) / total) * 100)}%` }} /></span>
+        {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
+        <button className="lw-icon" onClick={onClose} aria-label="Close">✕</button>
+      </div>
+      <div className="lw-body" ref={body}>
+        {done ? (
+          <div className="lw-done">
+            <p>Well learned! That’s the end of this {/^Mishnah /.test(refText) ? 'perek' : 'section'}.</p>
+            {onNext && <button className="lw-next" onClick={onNext}>On to the next ›</button>}
+          </div>
+        ) : err ? (
+          <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
+        ) : !phrases.length ? (
+          <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
+        ) : phrases.slice(0, shown).map((p, k) => {
+          const heNote = isHebText(p.note);
+          return (
+            <div key={k} className="lw-ph" data-ph={k}>
+              <div className="lw-he" dir="rtl">{p.he}</div>
+              {p.en && <div className="lw-en">{p.en}</div>}
+              {p.note && <div className={`lw-note ${heNote ? 'he-note' : ''}`} dir={heNote ? 'rtl' : 'ltr'}>{p.note}</div>}
+              <Deeper refText={refText} n={n} k={k} />
+              {p.ask && <Ask refText={refText} n={n} q={p.ask} hint={p.hint} />}
+            </div>
+          );
+        })}
+        {!done && phrases.length > 0 && <div className="ai-note left">Explanations written by AI · AI makes mistakes · ask your rav</div>}
+      </div>
+      {!done && (
+        <div className="lw-foot">
+          <button className="lw-back" onClick={back} disabled={n === 1 && shown <= 1} aria-label="Back">‹</button>
+          <button className="lw-next" onClick={next} disabled={!phrases.length}>{atEnd ? (n < total ? 'Next line ›' : 'Finish ›') : 'Next ›'}</button>
+        </div>
+      )}
+    </div>,
+    document.body,
+  );
+}
