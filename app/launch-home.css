@@ -351,7 +351,7 @@
 /* Nov 17: the Settings boxes the same size and look as the Library's rows: 68 px tall, 16 px corners, 10 px apart,
    the plain grey line. */
 :is([data-look='clay'],[data-look='chatgpt']) .sg-root .sg-1 { border-radius: 16px; margin-bottom: 10px; border: 1px solid var(--rule) !important; }
-:is([data-look='clay'],[data-look='chatgpt']) .sg-root .sg-1:not(.open) > .sg-head { min-height: 68px; height: 68px; padding: 0 18px; box-sizing: border-box; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-root .sg-1:not(.open) > .sg-head { min-height: 66px; height: 66px; padding: 0 18px; box-sizing: border-box; }
 .sg-root .sg-1 > .sg-head .sg-title { line-height: 1.25; }
 .sg-root .sg-1 > .sg-head .sg-hint { line-height: 1.25; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :is([data-look='clay'],[data-look='chatgpt']) .sg-pagecard { border-color: var(--rule) !important; }
