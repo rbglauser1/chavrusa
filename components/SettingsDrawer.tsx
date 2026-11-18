@@ -83,61 +83,6 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
         {!asPage && <div className="drawer-head"><h2>Settings</h2><button className="icon-btn" onClick={onClose} aria-label="Close">✕</button></div>}
         <div className={asPage ? 'sg-page' : 'drawer-body'}>
           <GroupList id="settings">
-          {rest && <>
-          {loadError && <div className="error">Could not reach the database: {loadError}</div>}
-          <Group id="style" title="Learning style" hint={`${styleById(s.style, s.customStyles).name} · ${s.leads === 'learner' ? 'you explain first' : 'chavrusa explains first'} · ${s.nusach === 'sephardi' ? 'Sephardi' : 'Ashkenaz'}`}>
-            <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Or just tell your chavrusa: “be gentler,” “quiz me,” “go deeper.” <a href="/guide">How we learn</a> · <a href="#" onClick={(e) => { e.preventDefault(); onHelp(); }}>What can I ask for?</a> · <a href="/lab">Compare styles</a></p>
-            <div className="style-list">
-              {STYLES.filter((st) => lab || st.main || st.id === s.style).map((st) => (
-                <button key={st.id} className={`style-opt ${s.style === st.id ? 'on' : ''}`} onClick={() => onChange({ style: st.id, blend: null })}>
-                  <b>{st.name}</b><span>{st.blurb}</span>
-                </button>
-              ))}
-              {(s.customStyles ?? []).map((c) => (
-                <div key={c.id} className={`style-opt custom ${s.style === c.id ? 'on' : ''}`}>
-                  <button className="style-pick" onClick={() => onChange({ style: c.id, blend: null })}>
-                    <b>{c.name}</b><span>{c.blurb || 'Your own style'}</span>
-                  </button>
-                  <span className="style-acts">
-                    <button onClick={() => setEditing(c)}>Edit</button>
-                    <button onClick={() => onChange({ customStyles: (s.customStyles ?? []).filter((x) => x.id !== c.id), ...(s.style === c.id ? { style: STYLES[0].id } : {}) })}>Delete</button>
-                  </span>
-                </div>
-              ))}
-            </div>
-            {/* Nov 16: two switches that go with any style (they were the Mussar, Chassidic and Follow My Lead styles). */}
-            <div className="field">
-              <label>Add a mussar / Chassidus angle</label>
-              <Seg value={s.mussarAngle ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ mussarAngle: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, once the meaning is clear, a short lesson for your avodah from the words.</div>
-            </div>
-            <div className="field">
-              <label>Follow my lead</label>
-              <Seg value={s.followLead ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ followLead: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>You decide each time: it reads and explains, you read and it listens, or it asks you questions.</div>
-            </div>
-            {editing ? (
-              <StyleMaker key={editing.id || 'new'} start={editing} onCancel={() => setEditing(null)} onSave={(c) => {
-                const list = s.customStyles ?? [];
-                const next = list.some((x) => x.id === c.id) ? list.map((x) => (x.id === c.id ? c : x)) : [...list, c];
-                onChange({ customStyles: next, style: c.id, blend: null });
-                setEditing(null);
-              }} />
-            ) : (
-              <button className="btn" style={{ marginTop: 8 }} onClick={() => setEditing({ id: '', name: '', blurb: '', behavior: '' })}>+ Create your own style</button>
-            )}
-            <div className="field" style={{ marginTop: 14 }}>
-              <label>Who explains first</label>
-              <Seg value={s.leads} options={[['learner', 'I do'], ['chavrusa', 'Chavrusa does']]} onPick={(v) => onChange({ leads: v })} />
-            </div>
-            <div className="field">
-              <label>Nusach and pronunciation</label>
-              <Seg value={s.nusach} options={[['ashkenaz', 'Ashkenaz'], ['sephardi', 'Sephardi']]} onPick={(v) => onChange({ nusach: v })} />
-            </div>
-          </Group>
-
-
-          </>}
           {themes && (
           <Group id="look" title={asPage ? 'The page' : 'The page and text'} hint="Background, fonts, colors, sizes, layout, the text, commentaries" flat={part === 'themes'}>
             {/* Nov 16, rethought: Background first, then Fonts, Text colors, Sizes, Commentaries, Page layout. The look
@@ -324,103 +269,64 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </Group>
           </Group>
           )}
+          {rest && <>
+          {loadError && <div className="error">Could not reach the database: {loadError}</div>}
+          <Group id="style" title="Learning style" hint={`${styleById(s.style, s.customStyles).name} · ${s.leads === 'learner' ? 'you explain first' : 'chavrusa explains first'} · ${s.nusach === 'sephardi' ? 'Sephardi' : 'Ashkenaz'}`}>
+            <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Or just tell your chavrusa: “be gentler,” “quiz me,” “go deeper.” <a href="/guide">How we learn</a> · <a href="#" onClick={(e) => { e.preventDefault(); onHelp(); }}>What can I ask for?</a> · <a href="/lab">Compare styles</a></p>
+            <div className="style-list">
+              {STYLES.filter((st) => lab || st.main || st.id === s.style).map((st) => (
+                <button key={st.id} className={`style-opt ${s.style === st.id ? 'on' : ''}`} onClick={() => onChange({ style: st.id, blend: null })}>
+                  <b>{st.name}</b><span>{st.blurb}</span>
+                </button>
+              ))}
+              {(s.customStyles ?? []).map((c) => (
+                <div key={c.id} className={`style-opt custom ${s.style === c.id ? 'on' : ''}`}>
+                  <button className="style-pick" onClick={() => onChange({ style: c.id, blend: null })}>
+                    <b>{c.name}</b><span>{c.blurb || 'Your own style'}</span>
+                  </button>
+                  <span className="style-acts">
+                    <button onClick={() => setEditing(c)}>Edit</button>
+                    <button onClick={() => onChange({ customStyles: (s.customStyles ?? []).filter((x) => x.id !== c.id), ...(s.style === c.id ? { style: STYLES[0].id } : {}) })}>Delete</button>
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* Nov 16: two switches that go with any style (they were the Mussar, Chassidic and Follow My Lead styles). */}
+            <div className="field">
+              <label>Add a mussar / Chassidus angle</label>
+              <Seg value={s.mussarAngle ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ mussarAngle: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, once the meaning is clear, a short lesson for your avodah from the words.</div>
+            </div>
+            <div className="field">
+              <label>Follow my lead</label>
+              <Seg value={s.followLead ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ followLead: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>You decide each time: it reads and explains, you read and it listens, or it asks you questions.</div>
+            </div>
+            {editing ? (
+              <StyleMaker key={editing.id || 'new'} start={editing} onCancel={() => setEditing(null)} onSave={(c) => {
+                const list = s.customStyles ?? [];
+                const next = list.some((x) => x.id === c.id) ? list.map((x) => (x.id === c.id ? c : x)) : [...list, c];
+                onChange({ customStyles: next, style: c.id, blend: null });
+                setEditing(null);
+              }} />
+            ) : (
+              <button className="btn" style={{ marginTop: 8 }} onClick={() => setEditing({ id: '', name: '', blurb: '', behavior: '' })}>+ Create your own style</button>
+            )}
+            <div className="field" style={{ marginTop: 14 }}>
+              <label>Who explains first</label>
+              <Seg value={s.leads} options={[['learner', 'I do'], ['chavrusa', 'Chavrusa does']]} onPick={(v) => onChange({ leads: v })} />
+            </div>
+            <div className="field">
+              <label>Nusach and pronunciation</label>
+              <Seg value={s.nusach} options={[['ashkenaz', 'Ashkenaz'], ['sephardi', 'Sephardi']]} onPick={(v) => onChange({ nusach: v })} />
+            </div>
+          </Group>
+
+
+          </>}
 
           {rest && (
           <>
-          <Group id="focus" title="Focus help" hint={[s.focusMode === 'window' && 'window', s.oneLine && 'one line', s.glowLine && 'glow', s.wins !== false && 'wins', s.fiveMin !== false && '5 minutes', s.sitWithMe !== false && 'sit with me'].filter(Boolean).join(' · ') || 'all off'}>
-            <div className="muted" style={{ fontSize: 12.5, margin: '0 0 10px' }}>For getting into the learning and staying with it: helpful for ADHD, and for anyone on a distracted day.</div>
-            <div className="field">
-              <label>“Just {s.fiveLen ?? 5} minutes” on Home</label>
-              <Seg value={s.fiveMin !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ fiveMin: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A button under Continue: it opens your place with a gentle timer at the top. When it’s up: keep going, more minutes, or done for now. Starting small makes starting easier.</div>
-              {s.fiveMin !== false && <>
-                <label style={{ marginTop: 10 }}>How long (minutes)</label>
-                <Seg value={String(s.fiveLen ?? 5)} options={[['2', '2'], ['5', '5'], ['10', '10'], ['15', '15'], ['20', '20'], ['30', '30']]} onPick={(v) => onChange({ fiveLen: Number(v) })} />
-              </>}
-            </div>
-            <div className="field">
-              <label>Reading window</label>
-              <Seg value={s.focusMode === 'window' ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ focusMode: v === 'on' ? 'window' : 'off', spotlight: false })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A clear oval across the middle of the screen; above and below it is shaded. Scroll the words you're on into it.</div>
-              {s.focusMode === 'window' && (
-                <>
-                  <label style={{ marginTop: 10 }}>Window size</label>
-                  <div className="range"><input type="range" min={1} max={9} value={s.windowSize ?? 5} onChange={(e) => onChange({ windowSize: Number(e.target.value) })} /><span>{s.windowSize ?? 5}</span></div>
-                  <label style={{ marginTop: 6 }}>Shade</label>
-                  <div className="range"><input type="range" min={1} max={9} value={s.windowDark ?? 5} onChange={(e) => onChange({ windowDark: Number(e.target.value) })} /><span>{s.windowDark ?? 5}</span></div>
-                </>
-              )}
-            </div>
-            <div className="field">
-              <label>One line at a time</label>
-              <Seg value={s.oneLine ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ oneLine: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Only the line you’re on is clear; the rest are faint. Next and Back at the bottom, or swipe sideways. Tap a faint line to go to it.</div>
-            </div>
-            <div className="field">
-              <label>Soft glow on the line you’re on</label>
-              <Seg value={s.glowLine ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ glowLine: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A gentle, slow glow on the line you tapped, the line the voice is on, or the line near the top as you scroll. It never blinks.</div>
-            </div>
-            <div className="field">
-              <label>Small wins</label>
-              <Seg value={s.wins !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ wins: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A quiet ✓ after each Step, every 5 lines and at the end of the amud, with how many days in a row you’ve learned (also on Home).</div>
-            </div>
-            <div className="field">
-              <label>Where was I?</label>
-              <Seg value={s.whereWasI !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ whereWasI: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the ✦: a sentence or two on where you are in the sugya, to step back in without rereading. Offered by itself when you come back after 3 minutes away. Made once per line and kept (a fraction of a cent the first time).</div>
-            </div>
-            <div className="field">
-              <label>Sit with me (voice)</label>
-              <Seg value={s.sitWithMe !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ sitWithMe: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the ✦: a quiet voice call. Your chavrusa keeps you company while you read on your own, answers if you ask, and checks in gently after a long quiet. The call isn’t paused for quiet, so it costs the voice’s usual rate the whole time (about 5¢ a minute with GPT-Live, 1–2¢ with Gemini Live).</div>
-            </div>
-            <div className="field">
-              <label>Teasers while learning</label>
-              <Seg value={s.teasers !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ teasers: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. About one for every two or three lines, shown as you reach them (not more often than every 40 seconds), never twice the same day. Made once per page and kept (a few cents the first time).</div>
-            </div>
-            <div className="field">
-              <label>One line button on Home</label>
-              <Seg value={s.homeOneLine !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeOneLine: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>☝ One line under Continue: opens your place showing just the line you’re on.</div>
-            </div>
-            <div className="field">
-              <label>Days in a row on Home</label>
-              <Seg value={s.homeStreak !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeStreak: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>🔥 How many days in a row you’ve learned, at the bottom of the Home card.</div>
-            </div>
-            <div className="field">
-              <label>Reminder box on the Home card</label>
-              <Seg value={s.homeTeaser !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeTeaser: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small box inside the Continue card on Home, to draw you back in: the question you left yourself, else your note on that page, else a short AI question about where you stopped. Off hides the box completely.</div>
-            </div>
-            {s.sitWithMe !== false && <div className="field">
-              <label>Sit with me: check in after</label>
-              <Seg value={String(s.sitCheck ?? 5)} options={[['3', '3 min'], ['5', '5 min'], ['10', '10 min']]} onPick={(v) => onChange({ sitCheck: Number(v) })} />
-            </div>}
-            <div className="field">
-              <label>Progress line</label>
-              <Seg value={s.amudBar ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ amudBar: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line across the top of the reading screen that fills as you go through the amud or perek, so the end always feels reachable.</div>
-            </div>
-            <div className="field">
-              <label>Today’s goal (lines)</label>
-              <Seg value={s.goal ?? 'off'} options={[['off', 'Off'], ['3', '3'], ['5', '5'], ['10', '10'], ['step', '1 Step']]} onPick={(v) => onChange({ goal: v as 'off' | '3' | '5' | '10' | 'step' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small, clear finish line for the day. A 🎯 at the top counts the new lines from where you start; when you get there it offers Stop here (your place is kept) or Keep learning. 1 Step means finish the Step you’re on; it needs Steps on (The AI → What it adds to the page); without them, 5 lines count as a Step.</div>
-            </div>
-            <div className="field">
-              <label>Read along with the voice</label>
-              <Seg value={s.readAlong ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ readAlong: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In a voice call, the line the voice is on is gently lit and kept in the middle of the screen, so your eyes and ears stay together.</div>
-            </div>
-            <div className="field">
-              <label>Quiet mode</label>
-              <Seg value={s.quietMode ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ quietMode: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Only the text, with Next and Back. The ✦, the mic, the scroll button, the daf counter, the tabs at the bottom and the buttons under each line are hidden. The back arrow and ⋯ at the top stay, to get out.</div>
-            </div>
-          </Group>
           {/* Nov 16: everything the AI does, in one place. */}
           <Group id="ai" title="The AI" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''} · ${s.aiHub === false ? 'tools under each line' : 'tools in the ✦'}`}>
             <Group id="ai-tools" level={2} title="The ✦ and its tools" hint="Learn with me, Ask about this line, Where it goes, maps, review…">
@@ -742,6 +648,100 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Learning time goal</label>
               <Seg value={String(s.timeGoal ?? 0)} options={[['0', 'No goal'], ['20', '20 min'], ['30', '30 min'], ['60', '1 hour'], ['120', '2 hours']]} onPick={(v) => onChange({ timeGoal: Number(v) })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The app counts the time you learn (a page open and in use, or a call), and shows today and this week on Home. A goal adds a line that fills up through the day.</div>
+            </div>
+          </Group>
+          <Group id="focus" title="Focus help" hint={[s.focusMode === 'window' && 'window', s.oneLine && 'one line', s.glowLine && 'glow', s.wins !== false && 'wins', s.fiveMin !== false && '5 minutes', s.sitWithMe !== false && 'sit with me'].filter(Boolean).join(' · ') || 'all off'}>
+            <div className="muted" style={{ fontSize: 12.5, margin: '0 0 10px' }}>For getting into the learning and staying with it: helpful for ADHD, and for anyone on a distracted day.</div>
+            <div className="field">
+              <label>“Just {s.fiveLen ?? 5} minutes” on Home</label>
+              <Seg value={s.fiveMin !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ fiveMin: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A button under Continue: it opens your place with a gentle timer at the top. When it’s up: keep going, more minutes, or done for now. Starting small makes starting easier.</div>
+              {s.fiveMin !== false && <>
+                <label style={{ marginTop: 10 }}>How long (minutes)</label>
+                <Seg value={String(s.fiveLen ?? 5)} options={[['2', '2'], ['5', '5'], ['10', '10'], ['15', '15'], ['20', '20'], ['30', '30']]} onPick={(v) => onChange({ fiveLen: Number(v) })} />
+              </>}
+            </div>
+            <div className="field">
+              <label>Reading window</label>
+              <Seg value={s.focusMode === 'window' ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ focusMode: v === 'on' ? 'window' : 'off', spotlight: false })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A clear oval across the middle of the screen; above and below it is shaded. Scroll the words you're on into it.</div>
+              {s.focusMode === 'window' && (
+                <>
+                  <label style={{ marginTop: 10 }}>Window size</label>
+                  <div className="range"><input type="range" min={1} max={9} value={s.windowSize ?? 5} onChange={(e) => onChange({ windowSize: Number(e.target.value) })} /><span>{s.windowSize ?? 5}</span></div>
+                  <label style={{ marginTop: 6 }}>Shade</label>
+                  <div className="range"><input type="range" min={1} max={9} value={s.windowDark ?? 5} onChange={(e) => onChange({ windowDark: Number(e.target.value) })} /><span>{s.windowDark ?? 5}</span></div>
+                </>
+              )}
+            </div>
+            <div className="field">
+              <label>One line at a time</label>
+              <Seg value={s.oneLine ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ oneLine: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Only the line you’re on is clear; the rest are faint. Next and Back at the bottom, or swipe sideways. Tap a faint line to go to it.</div>
+            </div>
+            <div className="field">
+              <label>Soft glow on the line you’re on</label>
+              <Seg value={s.glowLine ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ glowLine: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A gentle, slow glow on the line you tapped, the line the voice is on, or the line near the top as you scroll. It never blinks.</div>
+            </div>
+            <div className="field">
+              <label>Small wins</label>
+              <Seg value={s.wins !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ wins: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A quiet ✓ after each Step, every 5 lines and at the end of the amud, with how many days in a row you’ve learned (also on Home).</div>
+            </div>
+            <div className="field">
+              <label>Where was I?</label>
+              <Seg value={s.whereWasI !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ whereWasI: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the ✦: a sentence or two on where you are in the sugya, to step back in without rereading. Offered by itself when you come back after 3 minutes away. Made once per line and kept (a fraction of a cent the first time).</div>
+            </div>
+            <div className="field">
+              <label>Sit with me (voice)</label>
+              <Seg value={s.sitWithMe !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ sitWithMe: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the ✦: a quiet voice call. Your chavrusa keeps you company while you read on your own, answers if you ask, and checks in gently after a long quiet. The call isn’t paused for quiet, so it costs the voice’s usual rate the whole time (about 5¢ a minute with GPT-Live, 1–2¢ with Gemini Live).</div>
+            </div>
+            <div className="field">
+              <label>Teasers while learning</label>
+              <Seg value={s.teasers !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ teasers: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. About one for every two or three lines, shown as you reach them (not more often than every 40 seconds), never twice the same day. Made once per page and kept (a few cents the first time).</div>
+            </div>
+            <div className="field">
+              <label>One line button on Home</label>
+              <Seg value={s.homeOneLine !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeOneLine: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>☝ One line under Continue: opens your place showing just the line you’re on.</div>
+            </div>
+            <div className="field">
+              <label>Days in a row on Home</label>
+              <Seg value={s.homeStreak !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeStreak: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>🔥 How many days in a row you’ve learned, at the bottom of the Home card.</div>
+            </div>
+            <div className="field">
+              <label>Reminder box on the Home card</label>
+              <Seg value={s.homeTeaser !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeTeaser: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small box inside the Continue card on Home, to draw you back in: the question you left yourself, else your note on that page, else a short AI question about where you stopped. Off hides the box completely.</div>
+            </div>
+            {s.sitWithMe !== false && <div className="field">
+              <label>Sit with me: check in after</label>
+              <Seg value={String(s.sitCheck ?? 5)} options={[['3', '3 min'], ['5', '5 min'], ['10', '10 min']]} onPick={(v) => onChange({ sitCheck: Number(v) })} />
+            </div>}
+            <div className="field">
+              <label>Progress line</label>
+              <Seg value={s.amudBar ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ amudBar: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A thin line across the top of the reading screen that fills as you go through the amud or perek, so the end always feels reachable.</div>
+            </div>
+            <div className="field">
+              <label>Today’s goal (lines)</label>
+              <Seg value={s.goal ?? 'off'} options={[['off', 'Off'], ['3', '3'], ['5', '5'], ['10', '10'], ['step', '1 Step']]} onPick={(v) => onChange({ goal: v as 'off' | '3' | '5' | '10' | 'step' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small, clear finish line for the day. A 🎯 at the top counts the new lines from where you start; when you get there it offers Stop here (your place is kept) or Keep learning. 1 Step means finish the Step you’re on; it needs Steps on (The AI → What it adds to the page); without them, 5 lines count as a Step.</div>
+            </div>
+            <div className="field">
+              <label>Read along with the voice</label>
+              <Seg value={s.readAlong ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ readAlong: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In a voice call, the line the voice is on is gently lit and kept in the middle of the screen, so your eyes and ears stay together.</div>
+            </div>
+            <div className="field">
+              <label>Quiet mode</label>
+              <Seg value={s.quietMode ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ quietMode: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Only the text, with Next and Back. The ✦, the mic, the scroll button, the daf counter, the tabs at the bottom and the buttons under each line are hidden. The back arrow and ⋯ at the top stay, to get out.</div>
             </div>
           </Group>
 
