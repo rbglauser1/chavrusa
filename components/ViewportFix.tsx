@@ -29,7 +29,9 @@ export function ViewportFix() {
       const h = document.documentElement;
       const d = { at: new Date().toISOString(), path: location.pathname, ih: window.innerHeight, iw: window.innerWidth, vv: { h: Math.round(vv.height), top: Math.round(vv.offsetTop), sc: vv.scale }, shift: h.style.getPropertyValue('--vv-shift'), sy: Math.round(window.scrollY), sh: h.scrollHeight,
         attrs: [...h.attributes].map((a) => a.name).filter((n) => /full|fh-|tex|look/.test(n)).join(','), hideDaf: document.body.hasAttribute('data-hide-daf'),
-        dock: q('.daf-dock'), bar: q('.daf-dock .daf-bar'), ctl: q('.st-full-ctl'), hub: q('.ai-hub-btn'), foot: q('.st-study-footer'), mg: !!document.querySelector('.daf-page') };
+        dock: q('.daf-dock'), bar: q('.daf-dock .daf-bar'), ctl: q('.st-full-ctl'), hub: q('.ai-hub-btn'), foot: q('.st-study-footer'), mg: !!document.querySelector('.daf-page'),
+        // Nov 17: which English font the page asks for and whether the phone has it
+        font: (() => { const e = document.querySelector('.line .en, .lib-item, .sg-title') as HTMLElement | null; const ff = e ? getComputedStyle(e).fontFamily : ''; const first = ff.split(',')[0]?.trim() ?? ''; let has = false; try { has = document.fonts.check(`16px ${first}`); } catch { /* */ } return { el: e?.className.slice(0, 30), ff: ff.slice(0, 80), body: h.style.getPropertyValue('--f-body').slice(0, 60), enfont: h.dataset.enfont, has, loaded: document.fonts.status }; })() };
       const key = JSON.stringify({ ...d, at: '' });
       if (key === lastDiag) return;
       lastDiag = key;
