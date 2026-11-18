@@ -1172,9 +1172,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       {en ? (src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)) : aiText[key] ? (
                         <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (
+                        <span className="tr-ai"><small>No approved translation</small>
                         <button className="btn" disabled={loading === key} onClick={() => aiTranslate(key, line)}>
-                          {loading === key ? 'Translating…' : 'No approved translation · AI translate this line'}
-                        </button>
+                          {loading === key ? 'Translating…' : 'AI translate this line'}
+                        </button></span>
                       )}
                     </div>
                   )}
