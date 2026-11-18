@@ -9,6 +9,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { aiLang } from '@/lib/aiLang';
+import { AWAKE_STEPS, awakeOn } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -21,7 +22,7 @@ Reply with JSON only, no other words: [{"line": 1, "summary": "..."}, ...] in or
 
 type Move = { line: number; summary: string };
 
-async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }> {
+async function makeOutline(ref: string, awake = false): Promise<{ moves: Move[]; usd: number }> {
   await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(ref, approved);
@@ -31,7 +32,7 @@ async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }>
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runKept;
   const r = await run({
-    lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
+    lang: true, model: model.id, system: awake ? `${PROMPT}\n\n${AWAKE_STEPS}` : PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);
@@ -50,7 +51,7 @@ async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }>
 // Kept for good (lib/keep): the same amud's outline is never paid for twice. Inside, the server's month cache, so a
 // copy made before is moved into the store for free.
 // (Nov 17: the server's month cache is kept per language too, or a Hebrew outline came back when English was asked.)
-const cached = async (ref: string) => { const lang = await aiLang(); return keep('outline-v3-opus', ref, () => unstable_cache(() => makeOutline(ref), ['outline-v3-opus', lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
+const cached = async (ref: string) => { const lang = await aiLang(); const awake = await awakeOn(); const kind = awake ? 'outline-awake-v1' : 'outline-v3-opus'; return keep(kind, ref, () => unstable_cache(() => makeOutline(ref, awake), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
