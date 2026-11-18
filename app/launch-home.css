@@ -351,3 +351,7 @@
 /* Nov 17: a thin terracotta line around each Settings box (the main list and the page you step into). */
 :is([data-look='clay'],[data-look='chatgpt']) :is(.sg-root .sg-1, .sg-pagecard) { border: 1px solid rgba(168, 82, 53, .45) !important; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.sg-root .sg-1, .sg-pagecard) { border-color: rgba(196, 115, 79, .5) !important; }
+
+/* Nov 17: the moving dots while the AI is thinking, in terracotta. */
+:is([data-look='clay'],[data-look='chatgpt']) :is(.dots, .wait-dots) span { background: #a85235 !important; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.dots, .wait-dots) span { background: #c4734f !important; }
