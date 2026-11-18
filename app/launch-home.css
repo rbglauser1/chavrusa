@@ -184,7 +184,7 @@
 
 /* Background color (Settings → Look → Look and fonts, Nov 16), Claude and ChatGPT looks. "As is" keeps the look's own. */
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='white'] { --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F3F3F1; --src-bg:#FFFFFF; }
-:is([data-look='clay'],[data-look='chatgpt'])[data-paper='cream'] { --bg:#F7F6F1; --surface:#FBFAF7; --surface-2:#EFEDE6; --rule:#E2E0D8; --src-bg:#F7F6F1; --src-rule:#E2E0D8; } /* Nov 18: the learner's cream (#F7F6F1), a softer, less yellow cream */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='cream'] { --bg:#F4F1E9; --surface:#FAF8F2; --surface-2:#ECE8DD; --rule:#E0DBCF; --src-bg:#F4F1E9; --src-rule:#E0DBCF; } /* Nov 18: the learner's cream (#F4F1E9) */
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='blue'] { --bg:#EEF4F9; --surface:#F6F9FC; --surface-2:#E3ECF4; --rule:#D5E0EA; --src-bg:#F6F9FC; --src-rule:#D5E0EA; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='green'] { --bg:#EFF5EE; --surface:#F6FAF5; --surface-2:#E3EDE1; --rule:#D3E2D0; --src-bg:#F6FAF5; --src-rule:#D3E2D0; }
 /* Night: the Midnight Sefer colors; the text colors switch to their light versions. */
@@ -201,7 +201,7 @@
 .paper-sw { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 4px; border:1px solid var(--rule); border-radius:14px; background:var(--surface); color:var(--ink); font:13px var(--f-ui); cursor:pointer; }
 .paper-sw[aria-checked='true'] { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
 .paper-dot { width:34px; height:34px; border-radius:50%; border:1px solid #0000001f; }
-.paper-look .paper-dot { background:#F9F9F7; } .paper-white .paper-dot { background:#FFFFFF; } .paper-cream .paper-dot { background:#F7F6F1; }
+.paper-look .paper-dot { background:#F9F9F7; } .paper-white .paper-dot { background:#FFFFFF; } .paper-cream .paper-dot { background:#F4F1E9; }
 .paper-blue .paper-dot { background:#EEF4F9; } .paper-green .paper-dot { background:#EFF5EE; } .paper-night .paper-dot { background:radial-gradient(circle at 50% 20%,#1f3542,#09141e 70%); }
 /* Night on the Claude Home: the cards go dark too. */
 [data-look='clay'][data-paper='night'] .split-panel { background:var(--surface); border-color:var(--rule); color:var(--ink); }
@@ -217,7 +217,7 @@
 /* Nov 16: each background brings its own accent, so buttons, headings, cards and the chosen tab follow it.
    Only the AI stays terracotta: the ✦ and everything it opens (Guided learning, map, line sheets). */
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='white'] { --accent:#1F1F1F; --accent-ink:#ffffff; --accent-soft:#EFEFEF; --pc:#FFFFFF; --pcb:#E3E3E3; --pn:#F2F2F2; --pnb:#E6E6E6; --pb:#FFFFFF; --pbb:#E3E3E3; --pe:#555555; }
-:is([data-look='clay'],[data-look='chatgpt'])[data-paper='cream'] { --accent:#8A5A2B; --accent-ink:#ffffff; --accent-soft:#EFEADF; --pc:#FBFAF7; --pcb:#E2E0D8; --pn:#EFEDE6; --pnb:#E2E0D8; --pb:#FBFAF7; --pbb:#E2E0D8; --pe:#8A5A2B; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='cream'] { --accent:#8A5A2B; --accent-ink:#ffffff; --accent-soft:#ECE5D6; --pc:#FAF8F2; --pcb:#E0DBCF; --pn:#ECE8DD; --pnb:#E0DBCF; --pb:#FAF8F2; --pbb:#E0DBCF; --pe:#8A5A2B; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='blue'] { --accent:#2F5D8A; --accent-ink:#ffffff; --accent-soft:#DDE8F3; --pc:#F7FAFD; --pcb:#CCDAE8; --pn:#DDE8F3; --pnb:#CCDAE8; --pb:#F7FAFD; --pbb:#CCDAE8; --pe:#2F5D8A; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='green'] { --accent:#3E6B4A; --accent-ink:#ffffff; --accent-soft:#DCEAD8; --pc:#F7FAF6; --pcb:#CADBC6; --pn:#DCEAD8; --pnb:#CADBC6; --pb:#F7FAF6; --pbb:#CADBC6; --pe:#3E6B4A; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] { --accent:#d7b777; --accent-ink:#17202a; }
