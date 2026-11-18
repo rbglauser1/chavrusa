@@ -192,8 +192,12 @@ const YESHIVISH_WORDS: [string, string][] = [
 ];
 const YESHIVISH_RE = new RegExp(`\\b(${YESHIVISH_WORDS.map(([w]) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).sort((a, b) => b.length - a.length).join('|')})\\b`, 'g');
 const YESHIVISH_MAP = new Map(YESHIVISH_WORDS);
+// Nov 18: Settings → The page → Spelling of names: "Yeshivish" (Shabbos, Brachos, Tosafos; the default) or "As in
+// Sefaria" (Shabbat, Berakhot, Tosafot). The page sets html[data-spell]; on the server it is always yeshivish.
+const modernSpelling = () => typeof document !== 'undefined' && document.documentElement.dataset.spell === 'modern';
+
 export function yeshivishEnglish(s: string): string {
-  if (!s) return s;
+  if (!s || modernSpelling()) return s;
   return s
     .replace(YESHIVISH_RE, (w) => YESHIVISH_MAP.get(w) ?? w)
     .replace(/ḥ/g, 'ch').replace(/Ḥ/g, 'Ch')                       // Yoḥanan -> Yochanan, Ḥisda -> Chisda
@@ -304,4 +308,27 @@ export function mildCholam(plain: string, stressed: string): string {
     let n = 0;
     return w.replace(/oi/g, () => (keep[n++] === false ? 'o' : 'oi'));
   }).join(' ');
+}
+
+// Names of seforim, masechtos and parts, as shown in titles, the Library and Recents (Nov 18). Sefaria spells them the
+// modern Israeli way; with "Yeshivish" chosen they are shown the way they're said in yeshiva.
+const TITLE_SPELL: [string, string][] = [
+  ['Berakhot', 'Brachos'], ['Shabbat', 'Shabbos'], ['Taanit', 'Taanis'], ['Yevamot', 'Yevamos'], ['Ketubot', 'Kesubos'],
+  ['Bava Batra', 'Bava Basra'], ['Makkot', 'Makkos'], ['Shevuot', 'Shevuos'], ['Horayot', 'Horayos'], ['Menachot', 'Menachos'],
+  ['Bekhorot', 'Bechoros'], ['Arakhin', 'Erchin'], ['Keritot', 'Kerisos'], ['Middot', 'Middos'], ['Sheviit', 'Sheviis'],
+  ['Terumot', 'Terumos'], ['Maasrot', 'Maasros'], ['Ohalot', 'Oholos'], ['Tahorot', 'Taharos'], ['Mikvaot', 'Mikvaos'],
+  ['Makhshirin', 'Machshirin'], ['Oktzin', 'Uktzin'], ['Avot', 'Avos'], ['Eduyot', 'Eduyos'], ['Beitzah', 'Beitzah'],
+  ['Tosafot', 'Tosafos'], ['Rosh Hashanah', 'Rosh Hashanah'], ['Moed Katan', 'Moed Katan'], ['Kiddushin', 'Kiddushin'],
+  ['Pirkei Avot', 'Pirkei Avos'], ['Shulchan Arukh', 'Shulchan Aruch'], ['Orach Chaim', 'Orach Chaim'], ['Mishneh Torah', 'Mishneh Torah'],
+  ['Kitzur Shulchan Arukh', 'Kitzur Shulchan Aruch'], ['Chayyei Adam', 'Chayei Adam'], ['Mishnah Berurah', 'Mishnah Berurah'],
+  ['Sukkot', 'Sukkos'], ['Shavuot', 'Shavuos'], ['Mitzvot', 'Mitzvos'], ['Halakhot', 'Halachos'], ['Hilkhot', 'Hilchos'],
+  ['Teshuvot', 'Teshuvos'], ['Midot', 'Midos'], ['Toldot', 'Toldos'], ['Shemot', 'Shemos'], ['Bereshit', 'Bereishis'],
+];
+const TITLE_RE = new RegExp(`\\b(${TITLE_SPELL.map(([a]) => a.replace(/ /g, '\\s')).join('|')})\\b`, 'g');
+const TITLE_MAP = new Map(TITLE_SPELL.map(([a, b]) => [a.replace(/\s+/g, ' '), b]));
+/** A name or reference as the learner wants it spelled ("Mishnah Shabbat 1" → "Mishnah Shabbos 1"). */
+export function spellName(s: string): string {
+  if (!s || modernSpelling()) return s;
+  return yeshivishEnglish(s.replace(TITLE_RE, (w) => TITLE_MAP.get(w.replace(/\s+/g, ' ')) ?? w))
+    .replace(/\b([A-Z][a-z]{2,})ot\b/g, '$1os'); // other names ending -ot (…ot → …os), the yeshivish tav
 }

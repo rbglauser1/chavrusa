@@ -1,4 +1,5 @@
 'use client';
+import { spellName } from '@/lib/hebrew';
 import { useMineTitles } from './useMineTitles';
 import { useEffect, useState } from 'react';
 import { useBackLayer } from '@/lib/back';
@@ -80,7 +81,7 @@ function OfflineShelf({ onPick }: { onPick: (title: string) => void }) {
   return (
     <div className="mine">
       <div className="lib-recent-head"><span className="muted lib-hint">On this phone (offline)</span></div>
-      {books.map((b) => <button key={b.title} className="lib-item book" onClick={() => onPick(b.title)}><span className="en">{b.title}</span><span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{b.refs.length}</span></button>)}
+      {books.map((b) => <button key={b.title} className="lib-item book" onClick={() => onPick(b.title)}><span className="en">{spellName(b.title)}</span><span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{b.refs.length}</span></button>)}
     </div>
   );
 }
@@ -220,7 +221,7 @@ export default function Library({ onOpen, onClose, shown = true, mine = false }:
           {!items && !msg && <div className="muted">Opening the library…</div>}
           {items?.map((it) => (
             <button key={`${it.kind}-${it.name}`} className={`lib-item ${it.kind}`} onClick={() => (it.kind === 'category' ? setPath([...path, it.name]) : setBook({ title: it.name }))}>
-              <span className="en">{it.name}</span>
+              <span className="en">{spellName(it.name)}</span>
               {it.he && <span className="he" dir="rtl">{it.he}</span>}
               <span className="chev" aria-hidden="true">{it.kind === 'category' ? '›' : ''}</span>
             </button>
@@ -244,7 +245,7 @@ export default function Library({ onOpen, onClose, shown = true, mine = false }:
                   return (
                     <div key={p.name} className={`parsha ${openParsha === i ? 'on' : ''}`}>
                       <button className="lib-item book" onClick={() => setOpenParsha((v) => (v === i ? null : i))} aria-expanded={openParsha === i}>
-                        <span className="en">{p.name}</span>
+                        <span className="en">{spellName(p.name)}</span>
                         {p.he && <span className="he" dir="rtl">{p.he}</span>}
                         <span className="chev" aria-hidden="true">{openParsha === i ? '▴' : '▾'}</span>
                       </button>

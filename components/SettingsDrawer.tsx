@@ -124,6 +124,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>The AI’s Hebrew font</label>
               <Seg value={s.aiHeFont ?? 'text'} options={[['text', 'Same as the text'], ['times', 'Times New Roman']]} onPick={(v) => onChange({ aiHeFont: v as 'text' | 'times' })} />
             </div>
+            <div className="field">
+              <label>Spelling of names</label>
+              <Seg value={s.spelling ?? 'yeshivish'} options={[['yeshivish', 'Shabbos, Brachos'], ['modern', 'Shabbat, Berakhot']]} onPick={(v) => onChange({ spelling: v as 'yeshivish' | 'modern' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>How the names of seforim and the learning words are spelled in English: in the title of the page, the Library, Recents, Home and the English text. Shabbos, Brachos, Tosafos, Bava Basra; or as Sefaria spells them: Shabbat, Berakhot, Tosafot, Bava Batra.</div>
+            </div>
             </Group>
             <Group id="look-colors" level={2} title="Text colors and bold">
             <div className="field">

@@ -1,4 +1,5 @@
 'use client';
+import { spellName } from '@/lib/hebrew';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ContinueInfo } from './Home';
 import { SandIcon } from './SandTeal';
@@ -30,7 +31,7 @@ function Overview({ children, onClose }: { children: ReactNode; onClose: () => v
   return <div className="launch-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}><section ref={panel} className="launch-overview" role="dialog" aria-modal="true" aria-label="Your learning" onKeyDown={e => { if (e.key === 'Escape') onClose(); if (e.key === 'Tab') { const items = Array.from(panel.current?.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea') ?? []).filter(x => !x.hasAttribute('disabled')); if (e.shiftKey && document.activeElement === items[0]) { e.preventDefault(); items.at(-1)?.focus(); } else if (!e.shiftKey && document.activeElement === items.at(-1)) { e.preventDefault(); items[0]?.focus(); } } }}><header><h2>Your learning</h2><button ref={close} className="launch-icon" aria-label="Close learning overview" onClick={onClose}><SandIcon name="close"/></button></header>{children}</section></div>;
 }
 // Nov 16: the place (Yoma 4a), never the chavrusa's first words; a talk with no text open is "Your last conversation".
-const titleOf = (c: ContinueInfo | null) => (c ? (c.ref || c.heRef || 'Your last conversation') : 'Choose a sefer').replace('Berakhot', 'Berachos');
+const titleOf = (c: ContinueInfo | null) => spellName(c ? (c.ref || c.heRef || 'Your last conversation') : 'Choose a sefer');
 export function SplitCanvasHome(p: LaunchHomeProps) {
   const [overview, setOverview] = useState(false);
   const [days, setDays] = useState(0);
