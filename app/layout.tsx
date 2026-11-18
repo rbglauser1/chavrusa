@@ -39,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const jar = await cookies();
   const [look, he, en, rashi, comm, fEn, fHe, cols, bolds, fComm, palette] = (jar.get('ui')?.value ?? '').split('|');
   const paperC = jar.get('paper')?.value ?? '';
-  const paper = ['white', 'cream', 'blue', 'green', 'night'].includes(paperC) ? paperC : 'look'; // the background color, Nov 16
+  const paper = ['white', 'cream', 'creamy', 'blue', 'green', 'night'].includes(paperC) ? paperC : 'look'; // the background color, Nov 16
   const texC = jar.get('tex')?.value ?? '';
   const tex = ['light', 'stone', 'ink'].includes(texC) ? texC : 'off'; // the paper texture, Nov 17
   // Colors of the Hebrew, English, meforshim and intro (Settings → Look → Colors).

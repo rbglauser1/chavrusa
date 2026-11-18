@@ -535,7 +535,7 @@ export interface Settings {
   showSteinsaltz?: boolean; // Nov 16: Steinsaltz among the commentaries on a Gemara line (off: the English already is his)
   mussarAngle?: boolean;   // Nov 16: add a mussar / Chassidus angle to any style (was the Mussar and Chassidic styles)
   followLead?: boolean;    // Nov 16: the learner decides each time how we go (was the Follow My Lead style)
-  paper?: 'look' | 'white' | 'cream' | 'blue' | 'green' | 'night'; // the app's background color (Claude and ChatGPT looks), Nov 16
+  paper?: 'look' | 'white' | 'cream' | 'creamy' | 'blue' | 'green' | 'night'; // the app's background color (Claude and ChatGPT looks), Nov 16
   enBold?: boolean;         // Sefaria's word-for-word translation in bold, as on Sefaria (default on)
   ilEn?: 'full' | 'only';   // phrase by phrase: under each phrase Sefaria's full English, or only its word-for-word translation (unset: as the English setting)
   interlinear?: boolean;    // the English phrase by phrase: each short Hebrew phrase with its English right under it

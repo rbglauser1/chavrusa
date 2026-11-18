@@ -221,17 +221,17 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='blue'] { --accent:#2F5D8A; --accent-ink:#ffffff; --accent-soft:#DDE8F3; --pc:#F7FAFD; --pcb:#CCDAE8; --pn:#DDE8F3; --pnb:#CCDAE8; --pb:#F7FAFD; --pbb:#CCDAE8; --pe:#2F5D8A; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='green'] { --accent:#3E6B4A; --accent-ink:#ffffff; --accent-soft:#DCEAD8; --pc:#F7FAF6; --pcb:#CADBC6; --pn:#DCEAD8; --pnb:#CADBC6; --pb:#F7FAF6; --pbb:#CADBC6; --pe:#3E6B4A; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] { --accent:#d7b777; --accent-ink:#17202a; }
-[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-panel { background:var(--pc); border-color:var(--pcb); }
-[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-new { background:var(--pn); border-color:var(--pnb); }
-[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-new button { background:var(--pb); border-color:var(--pbb); }
-[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='blue'],[data-paper='green']) .split-home .launch-eyebrow { color:var(--pe); }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy'],[data-paper='blue'],[data-paper='green']) .split-panel { background:var(--pc); border-color:var(--pcb); }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy'],[data-paper='blue'],[data-paper='green']) .split-new { background:var(--pn); border-color:var(--pnb); }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy'],[data-paper='blue'],[data-paper='green']) .split-new button { background:var(--pb); border-color:var(--pbb); }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy'],[data-paper='blue'],[data-paper='green']) .split-home .launch-eyebrow { color:var(--pe); }
 [data-look='clay']:not([data-paper='look']) .split-panel .launch-primary { background:var(--accent); color:var(--accent-ink); }
 [data-look='clay']:not([data-paper='look']) .home-talk-btn { background:var(--accent); box-shadow:none; }
 /* The AI keeps its terracotta whatever the background. */
 :is([data-look='clay'],[data-look='chatgpt']) :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent:#CC7C5E; --accent-ink:#ffffff; --accent-soft:#F5E9E3; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent-soft:#3a2e2a; }
 /* Nov 16: on White and Cream the Continue button stays terracotta. */
-[data-look='clay']:is([data-paper='white'],[data-paper='cream']) .split-panel .launch-primary { background:#a85235; color:#fff; }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy']) .split-panel .launch-primary { background:#a85235; color:#fff; }
 /* Nov 16, Off-white and White: the reading screen's back arrow and ⋯ are black; the title (e.g. Yoma 3a) is terracotta. */
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header .st-icon { color:#131313; }
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#a85235; }
@@ -414,3 +414,7 @@
    the "On …" label, over a faint warm tint. */
 :is([data-look='clay'],[data-look='chatgpt']) .line-note { border-left: 3px solid #CC7C5E; background: color-mix(in srgb, #CC7C5E 6%, var(--surface, #fff)); border-radius: 4px 12px 12px 4px; }
 :is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-mark, :is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-on { color: #a85235; }
+
+/* Nov 18: a seventh background, the learner's cream (#FBF0D9, from a book page he likes): warmer than "Light cream". */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='creamy'] { --bg:#FBF0D9; --surface:#FDF7EA; --surface-2:#F3E6CA; --rule:#E7D7B6; --src-bg:#FBF0D9; --src-rule:#E7D7B6; --accent:#8A5A2B; --accent-ink:#ffffff; --accent-soft:#F1E2C3; --pc:#FDF7EA; --pcb:#E7D7B6; --pn:#F3E6CA; --pnb:#E7D7B6; --pb:#FDF7EA; --pbb:#E7D7B6; }
+.paper-creamy .paper-dot { background:#FBF0D9; }
