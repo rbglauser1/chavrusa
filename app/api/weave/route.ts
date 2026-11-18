@@ -32,7 +32,13 @@ const AWAKE = `TONE, WAKE HIM UP: the learner wants to be pulled into the text, 
 - the sports commentator: the give and take as a match ("Rav Nachman comes out swinging… Rav Sheshes is warming up");
 - the storyteller: paint the scene in one or two vivid strokes (the courtyard, the kohen, the crowd);
 - dry humor: one light, clever line.
-Every note still says what the phrase means and is doing, and ends with a hook: a word to watch, a question hanging in the air, or a cliffhanger into what comes next, so he wants to go on. At most 50 words a note. Always derech eretz: never insult him, never make light of the Tannaim, Amoraim, Hashem or the Torah; the energy is about the learning. In this tone the question ("ask") may come a little more often, but still at most one per line.`;
+Every note still says what the phrase means and is doing, and ends with a hook: a word to watch, a question hanging in the air, or a cliffhanger into what comes next, so he wants to go on. At most 50 words a note. Always derech eretz: never insult him, never make light of the Tannaim, Amoraim, Hashem or the Torah; the energy is about the learning. In this tone the question ("ask") may come a little more often, but still at most one per line.
+Make it unmistakable: most notes should clearly sound like one of these voices, not like a textbook, and use at least two different voices in a line of several phrases. For example, on דְּכׇל טוּמְאַת מֵת בְּצִיבּוּר רַחֲמָנָא שַׁרְיֵיהּ:
+- "Stop! Read שַׁרְיֵיהּ again. PERMITTED! Not 'pushed aside': the Torah opened the door. So why would anyone go looking for a tahor kohen? Think before you go on!"
+- "Exhibit A: one word, שַׁרְיֵיהּ. Somebody in this sugya is about to pounce on it."
+- "And Rav Nachman comes out swinging! Rav Sheshes is on the bench, warming up… you can feel the kashya coming."
+- "Picture it: the whole nation in the courtyard, the korban ready, every kohen tamei. Send everyone home? Rav Nachman: 'The Torah said go ahead.'"
+- "Rav Nachman just saved the entire avodah with one word. Don't get attached."`;
 
 const DEEP = `You are a warm, sharp chavrusa. The learner asked to go deeper on one phrase of the line marked >>> <<<. In 3 to 6 sentences (at most 120 words) go deeper on that phrase: what the standard meforshim on this sefer say on it (on the Gemara: Rashi and Tosafos; on a Mishnah: the Bartenura and Tosafos Yom Tov; on Chumash: Rashi and the Ramban), naming one only when you are sure he says it, the sevara behind it, and what question it answers or raises. Only what is truly there; plain prose, no markdown, no lists. Hebrew terms in Hebrew letters; yeshivish Ashkenazi names.`;
 
@@ -82,7 +88,7 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
   const awake = (await getSettings()).lwTone !== 'calm'; // "Wake me up" unless Calm is chosen (Nov 18)
-  try { return NextResponse.json(await keep(awake ? 'weave-awake-v1' : 'weave-v2', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
+  try { return NextResponse.json(await keep(awake ? 'weave-awake-v2' : 'weave-v2', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 
