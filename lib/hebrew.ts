@@ -322,7 +322,7 @@ const TITLE_SPELL: [string, string][] = [
   ['Pirkei Avot', 'Pirkei Avos'], ['Shulchan Arukh', 'Shulchan Aruch'], ['Orach Chaim', 'Orach Chaim'], ['Mishneh Torah', 'Mishneh Torah'],
   ['Kitzur Shulchan Arukh', 'Kitzur Shulchan Aruch'], ['Chayyei Adam', 'Chayei Adam'], ['Mishnah Berurah', 'Mishnah Berurah'],
   ['Sukkot', 'Sukkos'], ['Shavuot', 'Shavuos'], ['Mitzvot', 'Mitzvos'], ['Halakhot', 'Halachos'], ['Hilkhot', 'Hilchos'],
-  ['Teshuvot', 'Teshuvos'], ['Midot', 'Midos'], ['Toldot', 'Toldos'], ['Shemot', 'Shemos'], ['Bereshit', 'Bereishis'],
+  ['Chasidut', 'Chassidus'], ['Teshuvot', 'Teshuvos'], ['Midot', 'Midos'], ['Toldot', 'Toldos'], ['Shemot', 'Shemos'], ['Bereshit', 'Bereishis'],
 ];
 const TITLE_RE = new RegExp(`\\b(${TITLE_SPELL.map(([a]) => a.replace(/ /g, '\\s')).join('|')})\\b`, 'g');
 const TITLE_MAP = new Map(TITLE_SPELL.map(([a, b]) => [a.replace(/\s+/g, ' '), b]));
