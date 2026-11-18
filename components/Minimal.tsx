@@ -181,7 +181,14 @@ export default function Minimal(p: Props) {
   const [tab, setTab] = useState<'text' | 'talk'>('text'); // quiet chat: the text, or the conversation (from the ⋯ menu)
   useEffect(() => {
     if (!experience) return;
-    const revealLatest = () => { const pane = workspaceScroll.current; if (pane && pane.clientHeight) pane.scrollTop = pane.scrollHeight; };
+    const revealLatest = () => {
+      const pane = workspaceScroll.current; if (!pane || !pane.clientHeight) return;
+      const answers = pane.querySelectorAll('.min-them, .min-them-group');
+      const a = answers[answers.length - 1] as HTMLElement | undefined;
+      const last = p.items[p.items.length - 1];
+      if (last?.kind === 'assistant' && a) pane.scrollTop = a.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 8; // the answer's beginning
+      else pane.scrollTop = pane.scrollHeight;
+    };
     revealLatest();
     window.addEventListener('resize', revealLatest);
     return () => window.removeEventListener('resize', revealLatest);
@@ -235,7 +242,15 @@ export default function Minimal(p: Props) {
     return () => document.documentElement.removeAttribute('data-paper-full');
   }, [paperFull]);
   const endRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [p.items.length, p.busy, sheet, typing, tab]);
+  // Nov 18: an answer from the AI is shown from its beginning (its first line at the top), never scrolled to its end;
+  // your own message and the "thinking" dots still bring the end into view.
+  useEffect(() => {
+    const last = p.items[p.items.length - 1];
+    const answers = endRef.current?.parentElement?.querySelectorAll('.min-them, .min-them-group');
+    const a = answers?.[answers.length - 1] as HTMLElement | undefined;
+    if (last?.kind === 'assistant' && a) a.scrollIntoView({ block: 'start' });
+    else endRef.current?.scrollIntoView({ block: 'end' });
+  }, [p.items.length, p.busy, sheet, typing, tab]); // eslint-disable-line react-hooks/exhaustive-deps
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';
   const caption = lastSaid.replace(/^\s*>.*$/gm, '').replace(/\*\*|__|`|\[\[\/?say\]\]/g, '').replace(/\s+/g, ' ').trim();
   const src = p.current;

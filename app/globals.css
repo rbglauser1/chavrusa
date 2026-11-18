@@ -3191,3 +3191,5 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
 /* Nov 18: Yes / No under an AI question in the line chat. */
 .lchat-yesno { display: flex; gap: 10px; margin: 8px 0 4px; }
 .lchat-yesno button { min-width: 84px; min-height: 40px; padding: 6px 18px; border-radius: 999px; border: 1px solid color-mix(in srgb, #CC7C5E 55%, transparent); background: color-mix(in srgb, #CC7C5E 8%, var(--surface, #fff)); color: #a85235; font: 600 15px var(--f-ui); }
+/* Nov 18: an answer brought into view from its beginning keeps a little room above it. */
+.lchat-ai, .min-them, .min-them-group { scroll-margin-top: 14px; }

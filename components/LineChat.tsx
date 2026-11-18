@@ -25,7 +25,14 @@ export default function LineChat({ lineRef, onClose, follow, ask, onAsked, onVoi
   const [savedAll, setSavedAll] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { try { if (msgs.length) localStorage.setItem(KEY(store), JSON.stringify(msgs.slice(-40))); else localStorage.removeItem(KEY(store)); } catch { /* optional */ } }, [msgs, store]);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [msgs.length, busy]);
+  // Nov 18: a new answer is shown from its beginning, not scrolled to its end.
+  useEffect(() => {
+    const last = msgs[msgs.length - 1];
+    const answers = endRef.current?.parentElement?.querySelectorAll('.lchat-ai');
+    const a = answers?.[answers.length - 1] as HTMLElement | undefined;
+    if (!busy && last && last.role !== 'user' && a) a.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    else endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [msgs.length, busy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Opened from the ✦ with a question already chosen ("Ask me a kashya"): sent once, at once.
   const asked = useRef(false);
