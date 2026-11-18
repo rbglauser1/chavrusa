@@ -518,6 +518,7 @@ export interface Settings {
   quietMode?: boolean;  // Nov 16, Focus help: only the text and Next / Back (no bottom buttons, tabs, or line buttons)
   paperTex?: 'off' | 'light' | 'stone' | 'ink'; // 'stone' is now the Stone look's Yerushalayim stone, 'ink' the Ink look's quartz // Nov 17: a paper texture over the background color (Claude / ChatGPT looks)
   teasers?: boolean;    // Nov 17, Focus help: pop-ups that draw you into the text while learning (on unless off)
+  bigPictureText?: boolean; // Nov 17: ✦ Big picture under a line, written (a short note to read)
   bigPicture?: boolean; // Nov 17: 🔊 Big picture under a line: the voice says where the line stands in the sugya, then stops
   stepsMode?: 'auto' | 'tap'; // Nov 17: Steps always shown, or a quiet ✦ marker to tap
   pshatMode?: 'auto' | 'tap'; // Nov 17: the same for Pshat
@@ -652,7 +653,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['bigPicture', 'stepsMode', 'pshatMode', 'pshat', 'homeOneLine', 'homeStreak', 'windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode', 'fiveLen', 'paperTex', 'teasers', 'leftQ', 'homeTeaser'] as const;
+export const OPTIONAL_SETTING_KEYS = ['bigPictureText', 'bigPicture', 'stepsMode', 'pshatMode', 'pshat', 'homeOneLine', 'homeStreak', 'windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode', 'fiveLen', 'paperTex', 'teasers', 'leftQ', 'homeTeaser'] as const;
 
 export const OWNER_ID = 'owner';
 

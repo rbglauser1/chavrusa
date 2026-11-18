@@ -35,7 +35,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
   const themes = part !== 'settings', rest = part !== 'themes';
   const [editing, setEditing] = useState<CustomStyle | null>(null);
   // Nov 16: one renderer for the on/off rows (the AI tools, your learning, calls). Same defaults as before.
-  const DEFAULT_ON = ['bigPicture', 'cacheTexts', 'mapComms', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'explainLine', 'listenDaf', 'halachaTrail', 'tosSteps', 'wordTap', 'lineChat', 'lineSources'];
+  const DEFAULT_ON = ['bigPictureText', 'bigPicture', 'cacheTexts', 'mapComms', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'explainLine', 'listenDaf', 'halachaTrail', 'tosSteps', 'wordTap', 'lineChat', 'lineSources'];
   const renderToggles = (rows: [keyof Settings, string, string][]) => rows.map(([k, label, about]) => {
     const on = DEFAULT_ON.includes(k as string) ? s[k] !== false : !!s[k];
     return (
@@ -346,6 +346,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
               {renderToggles([
+                ['bigPictureText', '✦ Big picture (written)', 'Under a line: a short note to read, where this line stands in the sugya (what it is doing and where the discussion is going). In the language the AI writes in. Made once per line (about a cent), then free.'],
                 ['bigPicture', '🔊 Big picture (by voice)', 'Under a line: one tap and the voice tells you, in about half a minute, where this line stands in the sugya (what it is doing and where the discussion is going), then stops. Tap again to stop it. In the same voice as Listen. Made once per line (about 1–2¢), then free.'],
                 ['explainLine', 'Full depth explanation', 'In ✦ → Ask about this line, and ✦ Full depth in Learn with me: what the line says and where it stands in the sugya, with the meforshim, each source tappable. Made once per line and kept.'],
                 ['lineChat', 'Back and forth', 'Under the explanation in Ask about this line (and in Learn with me): ask about the line in your own words or tap a ready question (a kashya, a chakira…). Short answers, in your learning style.'],

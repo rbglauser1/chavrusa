@@ -52,6 +52,32 @@ async function speak(input: string, voice: string, nusach: 'ashkenaz' | 'sephard
   throw new Error(`Could not create the speech: ${lastError}`);
 }
 
+// The written Big picture (Nov 17): the same big picture to read, under the line. Written in the language the AI
+// writes in (Settings → The AI writes in), with Hebrew terms as usual; kept once per line.
+const READ_PROMPT = `You are a chavrusa. In 3 to 5 short sentences (at most 110 words), give the learner the big picture of the one line he is on: what the sugya here is about, what this line is doing in it (asking, answering, proving, bringing a new opinion…), and where the discussion is going next. Only the big picture: no word-by-word translation, no meforshim, no tangents. Plain prose, no headings or lists, no line numbers or references. Use yeshivish Ashkenazi transliteration for names and terms (Shabbos, Rav Yehudah, Tosafos), and say Hashem for G-d's Name.`;
+async function makeRead(base: string, n: number): Promise<{ text: string }> {
+  await needCredit();
+  const approved = await approvedList();
+  const s = await getText(base, approved);
+  if (!s.verdict.allowed || !s.he[n - 1]) return { text: '' };
+  const clip = (t: string, k: number) => (t.length > k ? `${t.slice(0, k)}…` : t);
+  const lines = s.he.map((he, i) => `[${i + 1}]${i + 1 === n ? ' ← THE LINE HE IS ON' : ''} ${clip(stripNikud(he), 500)}${s.en[i] ? `\n    ${clip(s.en[i], 500)}` : ''}`).join('\n');
+  const model = await keptModel();
+  const r = await runAnthropic({ lang: true, model: model.id, system: READ_PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lines.slice(0, 20000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  await logCost({ sessionId: null, kind: 'bigpicture-read', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__/g, '').trim();
+  if (text.length < 60) throw new Error('The big picture did not come back.');
+  return { text: text.slice(0, 1600) };
+}
+
+// GET ?ref=Yoma 6b:3 → { text }: the written big picture.
+export async function GET(req: NextRequest) {
+  const m = String(req.nextUrl.searchParams.get('ref') ?? '').match(/^(.+):(\d+)$/);
+  if (!m || / on /i.test(m[1]) || /^Mine /.test(m[1])) return NextResponse.json({ error: 'Nothing to say here.' }, { status: 400 });
+  try { return NextResponse.json(await keep('bigpicture-read-v1', `${m[1]}:${m[2]}`, () => makeRead(m[1], Number(m[2])), (x) => !x.text)); }
+  catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
+}
+
 // POST { ref: "Yoma 6b:3" } → { url, text }
 export async function POST(req: NextRequest) {
   const key = process.env.OPENAI_API_KEY;

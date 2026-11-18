@@ -34,7 +34,7 @@ import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
 import { AiNote, isHebText } from './AiNote';
-import { BigPictureBtn } from './BigPicture';
+import { BigPictureBtn, BigPictureTextBtn } from './BigPicture';
 import FocusHelp from './FocusHelp';
 import { setVoiceGuide } from '@/lib/voiceGuide';
 
@@ -1029,6 +1029,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                         ))}
                         {aiX && settings.bigPicture !== false && <BigPictureBtn lineRef={`${src.ref}:${i + 1}`} />}
+                        {aiX && settings.bigPictureText !== false && <BigPictureTextBtn lineRef={`${src.ref}:${i + 1}`} />}
                         {aiX && !hubOn && settings.explainLine !== false && (
                           <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}><span className="ai-star">✦</span> Explain</button>
                         )}

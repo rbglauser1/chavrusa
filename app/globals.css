@@ -3184,3 +3184,7 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
 :is(.sefer, .min) :is(.move, .pshat).he-note, .amud-intro.he-note { text-align: right; border-left: 0; border-right: 3px solid #CC7C5E; border-radius: 12px 4px 4px 12px; font-family: var(--f-he); }
 .amud-intro.he-note > span, .amud-intro.he-note .ai-note { direction: ltr; text-align: left; }
 [data-aihe='times'] :is(.move, .pshat, .amud-intro).he-note { font-family: 'Times New Roman', Times, serif; }
+/* Nov 17: the written Big picture under a line. */
+.sefer .bp-text { flex-basis: 100%; width: 100%; box-sizing: border-box; margin: 6px 0 4px; padding: 9px 12px 10px; font-family: var(--f-body); font-size: var(--ai-size, max(16px, calc(var(--en-size, 16px) - 1px))); line-height: 1.55; color: color-mix(in srgb, var(--ink) 85%, transparent); background: color-mix(in srgb, #CC7C5E 7%, transparent); border-left: 3px solid #CC7C5E; border-radius: 4px 12px 12px 4px; }
+.sefer .bp-text .bp-label { display: block; font: 700 10.5px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: #CC7C5E; margin-bottom: 4px; direction: ltr; text-align: left; }
+.sefer .bp-text.he-note { border-left: 0; border-right: 3px solid #CC7C5E; border-radius: 12px 4px 4px 12px; text-align: right; font-family: var(--f-he); }
