@@ -34,6 +34,7 @@ import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
 import { AiNote, isHebText } from './AiNote';
+import { getOfflineText, putText } from '@/lib/offlineStore';
 import { BigPictureBtn, BigPictureTextBtn } from './BigPicture';
 import FocusHelp from './FocusHelp';
 import { setVoiceGuide } from '@/lib/voiceGuide';
@@ -370,7 +371,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const prevHeight = useRef<number | null>(null);
   // The amud before and after are fetched quietly as soon as this one opens, so the pull shows them at once.
   const ahead = useRef<Record<string, Promise<SourceData | null>>>({});
-  const fetchAhead = (ref: string) => (ahead.current[ref] ??= fetch(`/api/peek?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => (d.source ?? null) as SourceData | null).catch(() => { delete ahead.current[ref]; return null; }));
+  // Nov 18: the amud before and after are kept on the phone too, and with no internet they come from there.
+  const fetchAhead = (ref: string) => (ahead.current[ref] ??= fetch(`/api/peek?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => { const sd = (d.source ?? null) as SourceData | null; if (sd?.he?.length) void putText(ref, sd).catch(() => {}); return sd; }).catch(() => getOfflineText(ref).then((x) => { if (!x) delete ahead.current[ref]; return x ?? null; }).catch(() => { delete ahead.current[ref]; return null; })));
   useEffect(() => { if (restoring.current) return; setPrevSrc(null); setPrevState('idle'); setInView('main'); }, [src?.ref]);
   function loadPrev() {
     if (!prevRef || prevSrc || prevState !== 'idle') return;

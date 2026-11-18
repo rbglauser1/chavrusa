@@ -21,7 +21,7 @@ import { useBackLayer } from '@/lib/back';
 import DriveMode from '@/components/DriveMode';
 import CallScreen from '@/components/CallScreen';
 import UpdateBar from '@/components/UpdateBar';
-import { getOfflineText } from '@/lib/offlineStore';
+import { getOfflineText, putText } from '@/lib/offlineStore';
 import { Disclaimer, Help } from '@/components/Modals';
 import { stripNikud } from '@/lib/hebrew';
 import { splitSentences, useVoice } from '@/components/useVoice';
@@ -144,9 +144,9 @@ export default function Home() {
   // Offline reading (Settings → Extras): the Library reads the switch from the phone; the app itself is kept on the
   // phone by a service worker (public/sw.js), registered only while it's on.
   useEffect(() => {
-    try { localStorage.setItem('chavrusa-offline', settings.offline ? '1' : '0'); } catch { /* optional */ }
+    try { localStorage.setItem('chavrusa-offline', settings.offline !== false ? '1' : '0'); } catch { /* optional */ }
     if (!('serviceWorker' in navigator)) return;
-    if (settings.offline) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    if (settings.offline !== false) navigator.serviceWorker.register('/sw.js').catch(() => {}); // on unless turned off (Nov 18)
     else navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => { if (r.active?.scriptURL.endsWith('/sw.js')) void r.unregister(); })).catch(() => {});
   }, [settings.offline]);
   // Why the voice didn't start (or dropped), shown right by the Talk button for a few seconds: on the
@@ -414,7 +414,7 @@ export default function Home() {
       if (s && !s.error) { setSettings(previewLook ? { ...s, theme: previewLook } : s); try { localStorage.setItem('chavrusa_settings', JSON.stringify(s)); } catch { /* optional */ } }
       else setItems([{ kind: 'error', text: `Could not reach the database: ${s?.error ?? 'unknown error'}` }]);
       setLoaded(true);
-    }).catch((e) => { window.clearTimeout(fallback); setReady(true); setItems([{ kind: 'error', text: `Could not load settings: ${String(e)}` }]); setLoaded(true); });
+    }).catch((e) => { window.clearTimeout(fallback); setReady(true); if (navigator.onLine !== false) setItems([{ kind: 'error', text: `Could not load settings: ${String(e)}` }]); setLoaded(true); }); // offline: the settings kept on the phone are used, quietly
     refreshSessions();
     try { if (localStorage.getItem('chavrusa_disclaimer2') === '1') setSeenDisclaimer(true); } catch { /* storage unavailable */ }
     const mq = window.matchMedia('(min-width: 1000px)');
@@ -658,6 +658,8 @@ export default function Home() {
   // ---------- Send ----------
   // Put a source on screen (Sefer panel and the bar at the top).
   function showSource(src: SourceData) {
+    // Nov 18: every text opened is also kept on the phone, so it opens again with no internet.
+    if (settings.offline !== false && src?.ref && src.he?.length && !/ on /i.test(src.ref)) void putText(src.ref, src).catch(() => {});
     setSources((s) => {
       const existing = s.findIndex((x) => x.ref === src.ref);
       if (existing >= 0) {

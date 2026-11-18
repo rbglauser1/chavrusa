@@ -619,7 +619,7 @@ export const DEFAULT_SETTINGS: Settings = {
   progress: false,
   plans: [],
   driveMode: false,
-  offline: false,
+  offline: true, // Nov 18: on by default: the app opens with no internet, and what you opened can be read again
   // Every setting needs a default here, or the settings API won't save it (it only takes known keys).
   livePauses: 'normal',
   mgMeforshim: ['Rashi', 'Ramban', 'Ibn Ezra', 'Sforno', 'Or HaChaim'],

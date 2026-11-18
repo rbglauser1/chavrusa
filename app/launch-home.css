@@ -139,7 +139,7 @@
   overflow: hidden;
 }
 [data-look='clay'] .split-panel p { margin: 0; color: #705e50; font: 13px/1.4 var(--f-body); }
-[data-look='clay'] .split-panel .launch-primary { margin-top: auto; background: #a85235; color: white; }
+[data-look='clay'] .split-panel .launch-primary { margin-top: auto; background: var(--tc-ink, #a85235); color: white; }
 [data-look='clay'] .split-new { background: #f0d7c5; border-color: #ead1bd; }
 [data-look='clay'] .split-new h2 { font-size: clamp(21px, 3dvh, 34px); }
 [data-look='clay'] .split-new button {
@@ -231,10 +231,10 @@
 :is([data-look='clay'],[data-look='chatgpt']) :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent:#CC7C5E; --accent-ink:#ffffff; --accent-soft:#F5E9E3; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent-soft:#3a2e2a; }
 /* Nov 16: on White and Cream the Continue button stays terracotta. */
-[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy']) .split-panel .launch-primary { background:#a85235; color:#fff; }
+[data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy']) .split-panel .launch-primary { background:var(--tc-ink, #a85235); color:#fff; }
 /* Nov 16, Off-white and White: the reading screen's back arrow and ⋯ are black; the title (e.g. Yoma 3a) is terracotta. */
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header .st-icon { color:#131313; }
-[data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#a85235; }
+[data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:var(--tc-ink, #a85235); }
 
 /* Nov 16: Off-white works like White: black and greys throughout, only Continue in terracotta (and the AI). The
    reading screen's title is black on both. */
@@ -243,7 +243,7 @@
 [data-look='clay'][data-paper='look'] .split-new { background:#F0EFEC; border-color:#E6E5E2; }
 [data-look='clay'][data-paper='look'] .split-new button { background:#FAFAF8; border-color:#E3E3E1; }
 [data-look='clay'][data-paper='look'] .split-home .launch-eyebrow { color:#555555; }
-[data-look='clay'][data-paper='look'] .split-panel .launch-primary { background:#a85235; color:#fff; }
+[data-look='clay'][data-paper='look'] .split-panel .launch-primary { background:var(--tc-ink, #a85235); color:#fff; }
 [data-look='clay'][data-paper='look'] .home-talk-btn { background:var(--accent); box-shadow:none; }
 [data-look='clay']:is([data-paper='look'],[data-paper='white']) .st-study-header h1 { color:#131313; }
 /* Nov 16: the Home card's title (e.g. Yoma 3a) was clipped top and bottom: a little more line height and room. */
@@ -261,7 +261,7 @@
 :is([data-look='clay'],[data-look='chatgpt']) .nb-tabs button { font:14px var(--f-ui); padding:9px; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-tabs button.on { color:var(--ink); font-weight:600; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-bar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px auto 18px; }
-:is([data-look='clay'],[data-look='chatgpt']) .nb-bar .nb-new { border:0; border-radius:999px; background:#CC7C5E; color:#fff; font:600 14px var(--f-ui); padding:10px 16px; cursor:pointer; white-space:nowrap; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-bar .nb-new { border:0; border-radius:999px; background:var(--tc, #CC7C5E); color:#fff; font:600 14px var(--f-ui); padding:10px 16px; cursor:pointer; white-space:nowrap; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-acts { display:flex; gap:6px; flex-wrap:wrap; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-acts button { border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink); font:13px var(--f-ui); padding:7px 10px; cursor:pointer; white-space:nowrap; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-book { border:1px solid var(--rule); border-radius:16px; background:var(--surface); margin:0 auto 10px; padding:0 16px; box-shadow:0 3px 12px rgba(0,0,0,.03); }
@@ -272,7 +272,7 @@
 :is([data-look='clay'],[data-look='chatgpt']) .nb-chev.on { transform:rotate(90deg); }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-book .nb-sec { padding-bottom:8px; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-book .nb-note { box-shadow:none; padding:14px 16px; border-radius:12px; background:var(--bg); }
-:is([data-look='clay'],[data-look='chatgpt']) .nb-sec-head { color:#CC7C5E; font-weight:600; }
+:is([data-look='clay'],[data-look='chatgpt']) .nb-sec-head { color:var(--tc, #CC7C5E); font-weight:600; }
 :is([data-look='clay'],[data-look='chatgpt']) .nb-actions button, :is([data-look='clay'],[data-look='chatgpt']) .nb-actions .linklike { text-decoration:none; color:var(--accent); }
 @media (min-width: 900px) { :is([data-look='clay'],[data-look='chatgpt']) .nb-body { display:block; } }
 
@@ -288,8 +288,8 @@
 :is([data-look='clay'],[data-look='chatgpt']) .sg-1:not(.open) > .sg-head { min-height:80px; box-sizing:border-box; }
 :is([data-look='clay'],[data-look='chatgpt']) .sg-head .sg-text { display:flex; flex-direction:column; justify-content:center; min-width:0; }
 /* Nov 16: the chosen Settings choice in dark terracotta (lighter on the eye than black, matches the ✦ and Continue). */
-:is([data-look='clay'],[data-look='chatgpt']) .seg button.on { background:#a85235 !important; border-color:#a85235 !important; color:#fff !important; }
-:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] .seg button.on { background:#c4734f !important; border-color:#c4734f !important; }
+:is([data-look='clay'],[data-look='chatgpt']) .seg button.on { background:var(--tc-ink, #a85235) !important; border-color:var(--tc-ink, #a85235) !important; color:#fff !important; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] .seg button.on { background:var(--tc-night, #c4734f) !important; border-color:var(--tc-night, #c4734f) !important; }
 
 /* Nov 17: paper texture (Settings → The page → Background → Paper texture), on top of whichever background color
    is chosen: neutral fibers and patina that darken the color a touch (lighten it on Night), so they take on its tone.
@@ -334,7 +334,7 @@
 .sg-top { height: 0; scroll-margin-top: 90px; }
 .sg-crumb { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0 2px 16px; }
 .sg-backbtn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 6px 6px 6px 0; font: 500 15px var(--f-ui); color: var(--accent); cursor: pointer; }
-:is([data-look='clay'],[data-look='chatgpt']) .sg-backbtn { color: #a85235; }
+:is([data-look='clay'],[data-look='chatgpt']) .sg-backbtn { color: var(--tc-ink, #a85235); }
 .sg-pagetitle { margin: 0; font: 500 26px var(--f-brand, var(--f-body)); letter-spacing: -.01em; color: var(--ink); }
 .sg-pagecard { border: 1px solid var(--rule); border-radius: 22px; background: var(--surface); padding: 6px 18px 14px; margin-bottom: 14px; }
 .sg-pagecard > .field:first-child, .sg-pagecard > .sg-2:first-child { margin-top: 10px; }
@@ -412,9 +412,21 @@
 
 /* Nov 17: your notes under a line, set apart from the text with a touch of terracotta: the line at the side, the ✎ and
    the "On …" label, over a faint warm tint. */
-:is([data-look='clay'],[data-look='chatgpt']) .line-note { border-left: 3px solid #CC7C5E; background: color-mix(in srgb, #CC7C5E 6%, var(--surface, #fff)); border-radius: 4px 12px 12px 4px; }
-:is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-mark, :is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-on { color: #a85235; }
+:is([data-look='clay'],[data-look='chatgpt']) .line-note { border-left: 3px solid var(--tc, #CC7C5E); background: color-mix(in srgb, var(--tc, #CC7C5E) 6%, var(--surface, #fff)); border-radius: 4px 12px 12px 4px; }
+:is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-mark, :is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-on { color: var(--tc-ink, #a85235); }
 
 /* Nov 18: a seventh background, the learner's cream (#FBF0D9, from a book page he likes): warmer than "Light cream". */
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='creamy'] { --bg:#FBF0D9; --surface:#FDF7EA; --surface-2:#F3E6CA; --rule:#E7D7B6; --src-bg:#FBF0D9; --src-rule:#E7D7B6; --accent:#8A5A2B; --accent-ink:#ffffff; --accent-soft:#F1E2C3; --pc:#FDF7EA; --pcb:#E7D7B6; --pn:#F3E6CA; --pnb:#E7D7B6; --pb:#FDF7EA; --pbb:#E7D7B6; }
 .paper-creamy .paper-dot { background:#FBF0D9; }
+
+
+/* Nov 18: the Light blue and Light green backgrounds are a touch richer, and everything that was terracotta (buttons,
+   chosen pills, the AI's notes and lines) is in that background's own blues or greens. Terracotta stays only on the
+   AI's symbols (the ✦). */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='blue'] { --bg:#E6EFF8; --surface:#F1F6FB; --surface-2:#D9E6F2; --rule:#C8D8E8; --src-bg:#F1F6FB; --src-rule:#C8D8E8;
+  --accent:#2B5A8C; --accent-soft:#D6E4F2; --pc:#F1F6FB; --pcb:#C3D5E8; --pn:#D6E4F2; --pnb:#C3D5E8; --pb:#F1F6FB; --pbb:#C3D5E8;
+  --tc:#4F86BF; --tc-ink:#2B5A8C; --tc-night:#6E9FD0; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='green'] { --bg:#E7F1E4; --surface:#F2F8F0; --surface-2:#DAE9D5; --rule:#C6DCC0; --src-bg:#F2F8F0; --src-rule:#C6DCC0;
+  --accent:#356B44; --accent-soft:#D5E7CF; --pc:#F2F8F0; --pcb:#C2D9BB; --pn:#D5E7CF; --pnb:#C2D9BB; --pb:#F2F8F0; --pbb:#C2D9BB;
+  --tc:#5C9C6C; --tc-ink:#356B44; --tc-night:#78B488; }
+.paper-blue .paper-dot { background:#E6EFF8; } .paper-green .paper-dot { background:#E7F1E4; }
