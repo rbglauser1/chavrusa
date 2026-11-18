@@ -41,7 +41,7 @@ const explained = new Map<string, Promise<Explained>>();
 // Nov 16: "Show me" gives the short one (this line only); "✦ Explain" the full one, with the meforshim, and the learner
 // can keep asking under it.
 function getExplain(ref: string, short = true): Promise<Explained> {
-  const k = `${short ? 's' : 'f'}|${ref}`;
+  const k = `${short ? 's' : 'f'}|${typeof document !== 'undefined' ? document.documentElement.dataset.ailang ?? 'en' : 'en'}|${ref}`; // per language: switching it gets the new one
   let p = explained.get(k);
   if (!p) {
     p = fetch(`/api/explain?ref=${encodeURIComponent(ref)}${short ? '&short=1' : ''}`).then((r) => r.json()).then((d) => { if (!d?.text) throw new Error(d?.error || 'none'); return d as Explained; });

@@ -8,7 +8,8 @@ export type MapData = { overview: string; topics: MapTopic[] };
 const got = new Map<string, Promise<MapData>>();
 
 export function getMap(ref: string): Promise<MapData> {
-  const had = got.get(ref);
+  const key = `${typeof document !== 'undefined' ? document.documentElement.dataset.ailang ?? 'en' : 'en'}|${ref}`; // per language
+  const had = got.get(key);
   if (had) return had;
   const p = fetch(`/api/map?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => {
     const topics: MapTopic[] = d.topics?.length ? d.topics
@@ -16,8 +17,8 @@ export function getMap(ref: string): Promise<MapData> {
     if (!topics.length) throw new Error(d.error || 'No map');
     return { overview: String(d.overview ?? ''), topics };
   });
-  got.set(ref, p);
-  p.catch(() => got.delete(ref)); // a failure is tried again next time
+  got.set(key, p);
+  p.catch(() => got.delete(key)); // a failure is tried again next time
   return p;
 }
 
