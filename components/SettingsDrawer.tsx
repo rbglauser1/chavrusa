@@ -402,6 +402,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <Seg value={s.aiLang ?? 'en'} options={[['en', 'English'], ['he', 'Hebrew'], ['both', 'Both']]} onPick={(v) => onChange({ aiLang: v as 'en' | 'he' | 'both' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Everything the AI writes on the screen: the chat, ✦ Chat, Explain, Ideas, the sugya map, outlines, steps, review questions, Chazara and notes. Both: the English, then the same in Hebrew. Quotes stay as written. The voice in a call stays in English. Things already made are made again in the new language the first time you open them (a few cents each), then kept.</div>
             </div>
+            <div className="field">
+              <label>Learn with me’s tone</label>
+              <Seg value={s.lwTone ?? 'awake'} options={[['awake', 'Wake me up'], ['calm', 'Calm']]} onPick={(v) => onChange({ lwTone: v as 'awake' | 'calm' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Wake me up: the explanations pull you into the text, in a mix of voices: the rebbi who won’t let you coast (loud, in words), the detective, the sports commentator, the storyteller, dry humor; each ends with a hook into what comes next. Calm: plain, quiet explanations. Each tone is made once per line and kept.</div>
+            </div>
             </Group>
             <Group id="ai-model" level={2} title="Depth and cost" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''}`}>
             <div className="field">
@@ -415,12 +420,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 Using {MODELS[s.provider][s.tier].label} · about ${MODELS[s.provider][s.tier].inputPerM}/${MODELS[s.provider][s.tier].outputPerM} per million tokens in/out
               </div>
             </div>
-            <div className="field">
-              <label>Learn with me’s tone</label>
-              <Seg value={s.lwTone ?? 'awake'} options={[['awake', 'Wake me up'], ['calm', 'Calm']]} onPick={(v) => onChange({ lwTone: v as 'awake' | 'calm' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Wake me up: the explanations pull you into the text, in a mix of voices: the rebbi who won’t let you coast (loud, in words), the detective, the sports commentator, the storyteller, dry humor; each ends with a hook into what comes next. Calm: plain, quiet explanations. Each tone is made once per line and kept.</div>
-            </div>
-            <div className="field">
+                        <div className="field">
               <label>Made once and kept</label>
               <Seg value={s.keptModel ?? 'opus'} options={[['opus', 'Opus'], ['sonnet', 'Sonnet'], ['astra', 'Astra'], ['sol', 'Sol']]} onPick={(v) => onChange({ keptModel: v as 'opus' | 'sonnet' | 'astra' | 'sol' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
