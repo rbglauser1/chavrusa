@@ -3208,7 +3208,7 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
 .sefer .sefer-flow > div:first-child .mishnah-head, .sefer .mishnah-head:first-child { margin-top: 6px; }
 
 /* Nov 18: the woven Learn with me (components/LearnWoven.tsx): a sheet over 3/4 of the screen. */
-.lw-sheet { position: fixed; left: 0; right: 0; bottom: 0; height: 75vh; height: 75dvh; z-index: 90; display: flex; flex-direction: column; background: var(--surface, var(--bg)); color: var(--ink); border-radius: 22px 22px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.14); border-top: 1px solid var(--rule); animation: lw-up .28s ease-out; max-width: 760px; margin: 0 auto; }
+.lw-sheet { position: fixed; left: 0; right: 0; bottom: 0; height: 82dvh; z-index: 90; touch-action: auto; display: flex; flex-direction: column; background: var(--surface, var(--bg)); color: var(--ink); border-radius: 22px 22px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.14); border-top: 1px solid var(--rule); animation: lw-up .28s ease-out; max-width: 760px; margin: 0 auto; }
 @keyframes lw-up { from { transform: translateY(100%); } to { transform: none; } }
 .lw-grab { width: 44px; height: 5px; border-radius: 3px; background: var(--rule); margin: 8px auto 2px; flex: 0 0 auto; }
 .lw-head { display: flex; align-items: center; gap: 10px; padding: 6px 16px 10px; flex: 0 0 auto; }
@@ -3241,3 +3241,6 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
 .lw-done .lw-next { width: 100%; margin-top: 12px; }
 /* The sefer above it: the line he is on, lit; the bottom row stays out of the way. */
 body.lw-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visibility: hidden; }
+/* Nov 18: the top edge of Learn with me is a handle: a bigger grip, and dragging it doesn't scroll the page. */
+.lw-grab { width: 56px; height: 6px; margin: 10px auto 4px; }
+.lw-grab, .lw-head { touch-action: none; }

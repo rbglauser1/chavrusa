@@ -72,8 +72,22 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   onNext?: () => void; onVoice?: () => void; onClose: () => void;
 }) {
   useBackLayer(true, onClose);
-  const y0 = useRef<number | null>(null); // a swipe down on the top edge closes it
-  const grab = { onTouchStart: (e: React.TouchEvent) => { y0.current = e.touches[0].clientY; }, onTouchEnd: (e: React.TouchEvent) => { if (y0.current != null && e.changedTouches[0].clientY - y0.current > 70) onClose(); y0.current = null; } };
+  // Nov 18: drag the top edge to move it: up for bigger, down for smaller, and down from the smallest (or one long pull
+  // down) takes it away. It follows the finger while dragging.
+  const SIZES = [0.42, 0.82, 0.94];
+  const [size, setSize] = useState(1);
+  const [drag, setDrag] = useState(0);
+  const y0 = useRef<number | null>(null);
+  const grab = {
+    onTouchStart: (e: React.TouchEvent) => { y0.current = e.touches[0].clientY; },
+    onTouchMove: (e: React.TouchEvent) => { if (y0.current != null) setDrag(e.touches[0].clientY - y0.current); },
+    onTouchEnd: () => {
+      const d = drag; y0.current = null; setDrag(0);
+      if (d > 220 || (d > 50 && size === 0)) { onClose(); return; }
+      if (d > 50) setSize((v) => Math.max(0, v - 1));
+      else if (d < -50) setSize((v) => Math.min(SIZES.length - 1, v + 1));
+    },
+  };
   const [n, setN] = useState(Math.min(Math.max(1, start), total));
   const [data, setData] = useState<{ n: number; phrases: Phrase[] } | null>(null);
   const [err, setErr] = useState(false);
@@ -119,7 +133,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   const back = () => { if (shown > 1) setShown((v) => v - 1); else if (n > 1) setN((v) => v - 1); };
 
   return createPortal(
-    <div className="lw-sheet" role="dialog" aria-label="Learn with me">
+    <div className="lw-sheet" role="dialog" aria-label="Learn with me" style={{ height: `calc(${SIZES[size] * 100}dvh - ${drag}px)`, transition: drag ? 'none' : 'height .22s ease' }}>
       <div className="lw-grab" aria-hidden="true" {...grab} />
       <div className="lw-head" {...grab}>
         <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}</span>
