@@ -3248,3 +3248,5 @@ body.lw-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visib
 .lw-before { margin: 12px 0 4px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, #CC7C5E 10%, var(--surface, #fff)); border: 1px dashed color-mix(in srgb, #CC7C5E 55%, transparent); font-family: var(--f-body); font-size: var(--ai-size, max(16px, calc(var(--en-size, 16px) - 1px))); line-height: 1.55; animation: lw-in .25s ease-out; }
 .lw-before .he-note { text-align: right; font-family: var(--f-he); }
 .lw-before-label { display: block; font: 700 11px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: #a85235; margin-bottom: 4px; }
+/* Nov 18: the box for the learner's own tone. */
+.tone-box { width: 100%; box-sizing: border-box; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface, var(--bg)); color: var(--ink); font: 15px/1.45 var(--f-body); resize: vertical; }

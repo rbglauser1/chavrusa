@@ -404,8 +404,12 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>Tone</label>
-              <Seg value={s.lwTone ?? 'awake'} options={[['awake', 'Wake me up'], ['calm', 'Calm']]} onPick={(v) => onChange({ lwTone: v as 'awake' | 'calm' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>For Learn with me, the Steps and the amud intro. Wake me up: they pull you into the text, in a mix of voices: the rebbi who won’t let you coast (loud, in words), the detective, the sports commentator, the storyteller, dry humor; each ends with a hook into what comes next. Calm: plain and quiet. Each tone is made once and kept, so switching back finds it again.</div>
+              <Seg value={s.lwTone ?? 'awake'} options={[['awake', 'Wake me up'], ['calm', 'Calm'], ['custom', 'My own']]} onPick={(v) => onChange({ lwTone: v as 'awake' | 'calm' | 'custom' })} />
+              {s.lwTone === 'custom' && (
+                <textarea key={s.customTone ?? ''} className="tone-box" rows={3} maxLength={500} defaultValue={s.customTone ?? ''} placeholder="Describe the tone you want, e.g. “like a Brisker rosh yeshiva, short and sharp”, “like a coach at halftime”, “explain it like I’m 12 with a joke now and then”"
+                  onBlur={(e) => { const v = e.currentTarget.value.trim(); if (v !== (s.customTone ?? '')) onChange({ customTone: v }); }} />
+              )}
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>For Learn with me, the Steps and the amud intro. Wake me up: they pull you into the text, in a mix of voices: the rebbi who won’t let you coast (loud, in words), the detective, the sports commentator, the storyteller, dry humor; each ends with a hook into what comes next. Calm: plain and quiet. My own: describe any tone you like, in your words; anything goes within derech eretz (no cursing, no crude jokes, nothing improper), and a part that asks for that is left out. Each tone is made once and kept, so switching back finds it again.</div>
             </div>
             </Group>
             <Group id="ai-model" level={2} title="Depth and cost" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''}`}>

@@ -9,7 +9,7 @@ import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
-import { AWAKE_DEEP, awakeOn } from '@/lib/tone';
+import { AWAKE_DEEP, customBlock, toneNow } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -65,7 +65,7 @@ async function phrasesOf(ref: string, n: number) {
   return { s, list: list.length ? list : [{ he, en }] };
 }
 
-async function makeWeave(ref: string, n: number, awake = false): Promise<{ phrases: Phrase[] }> {
+async function makeWeave(ref: string, n: number, awake = false, custom: string | null = null): Promise<{ phrases: Phrase[] }> {
   await needCredit();
   const got = await phrasesOf(ref, n);
   if (!got) return { phrases: [] };
@@ -73,7 +73,7 @@ async function makeWeave(ref: string, n: number, awake = false): Promise<{ phras
   const st = await getSettings();
   const model = await keptModel();
   const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(st)}\n\n${SCOPE}${awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
+  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(st)}\n\n${SCOPE}${custom ? `\n\n${customBlock(custom, 'these notes (and anything before the text, and the questions)')}` : awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
   await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string; before?: { kind?: string; text?: string } }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
@@ -89,18 +89,19 @@ async function makeWeave(ref: string, n: number, awake = false): Promise<{ phras
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
-  const awake = (await getSettings()).lwTone !== 'calm'; // "Wake me up" unless Calm is chosen (Nov 18)
-  try { return NextResponse.json(await keep(awake ? 'weave-awake-v4' : 'weave-v3', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
+  const t = await toneNow(); // "Wake me up" unless Calm, or his own tone, is chosen (Nov 18)
+  const kind = t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v4' : 'weave-v3';
+  try { return NextResponse.json(await keep(kind, `${ref}:${n}`, () => makeWeave(ref, n, t.awake, t.custom), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 
-async function makeDeep(ref: string, n: number, k: number, awake = false): Promise<{ text: string }> {
+async function makeDeep(ref: string, n: number, k: number, awake = false, custom: string | null = null): Promise<{ text: string }> {
   await needCredit();
   const got = await phrasesOf(ref, n);
   if (!got || !got.list[k]) return { text: '' };
   const model = await keptModel();
   const ask = `${got.s.ref}, line ${n}\n\n${context(got.s.he, got.s.en, n)}\n\nGo deeper on this phrase of line ${n}: ${stripNikud(got.list[k].he)}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}${awake ? `\n\n${AWAKE_DEEP}` : ''}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  const r = await runKept({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}${custom ? `\n\n${customBlock(custom, 'going deeper')}` : awake ? `\n\n${AWAKE_DEEP}` : ''}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'weave-deep', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/\*\*|__/g, '').trim();
   if (text.length < 40) throw new Error('It did not come back.');
@@ -110,7 +111,8 @@ async function makeDeep(ref: string, n: number, k: number, awake = false): Promi
 export async function POST(req: NextRequest) {
   const { ref, n, k } = await req.json().catch(() => ({}));
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
-  const awake = await awakeOn(); // the same Tone as the rest (Nov 18)
-  try { return NextResponse.json(await keep(awake ? 'weave-deep-awake-v1' : 'weave-deep-v2', `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), awake), (x) => !x.text)); }
+  const t = await toneNow(); // the same Tone as the rest (Nov 18)
+  const kind = t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v1' : 'weave-deep-v2';
+  try { return NextResponse.json(await keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }

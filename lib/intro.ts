@@ -8,7 +8,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from './credits';
 import { keptModel, runKept } from './keptModel';
-import { AWAKE_INTRO, awakeOn } from './tone';
+import { AWAKE_INTRO, customBlock, toneNow } from './tone';
 import { aiLang } from './aiLang';
 
 // The amud intro: one paragraph telling the learner what's coming on this amud (or perek / siman), shown at its top
@@ -20,7 +20,7 @@ Write ONE paragraph of about 90 to 140 words, in plain, warm, modern English, as
 - where it ends up, or where it leaves off for the next amud.
 It is a map of the amud, not the explanation: no line-by-line detail. Do not quote Hebrew or Aramaic, no lists, no headings, no markdown. Use yeshivish Ashkenazi transliteration for names and terms (Shabbos, Rav Yehudah, Tosafos, the Gemara), say Hashem for G-d's Name, and add nothing that is not in the text.`;
 
-async function makeIntro(ref: string, awake = false): Promise<string> {
+async function makeIntro(ref: string, awake = false, custom: string | null = null): Promise<string> {
   await needCredit(); // credits on and none left: nothing new is made (what was made before still opens)
   const approved = await approvedList();
   const s = await getText(ref, approved);
@@ -30,7 +30,7 @@ async function makeIntro(ref: string, awake = false): Promise<string> {
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runKept;
   const r = await run({
-    lang: true, model: model.id, system: awake ? `${PROMPT}\n\n${AWAKE_INTRO}` : PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
+    lang: true, model: model.id, system: custom ? `${PROMPT}\n\n${customBlock(custom, 'the introduction')}` : awake ? `${PROMPT}\n\n${AWAKE_INTRO}` : PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);
@@ -41,7 +41,7 @@ async function makeIntro(ref: string, awake = false): Promise<string> {
 }
 
 // Kept for good (lib/keep): the same amud's intro is never paid for twice.
-export const getIntro = async (ref: string): Promise<string> => { const awake = await awakeOn(); const lang = await aiLang(); const kind = awake ? 'intro-awake-v1' : 'intro-v2-opus'; return keep(kind, ref, () => unstable_cache(() => makeIntro(ref, awake), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
+export const getIntro = async (ref: string): Promise<string> => { const t = await toneNow(); const lang = await aiLang(); const kind = t.custom ? `intro-${t.tag}` : t.awake ? 'intro-awake-v1' : 'intro-v2-opus'; return keep(kind, ref, () => unstable_cache(() => makeIntro(ref, t.awake, t.custom), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 // The intro if it's ready within a few seconds (it keeps being made, and kept, in the background otherwise).
 export async function introSoon(ref: string, ms = 7000): Promise<string> {

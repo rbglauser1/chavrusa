@@ -22,3 +22,16 @@ Open with a grabber (a scene, a challenge, a "you won't believe what happens her
 
 export const AWAKE_DEEP = `TONE, WAKE HIM UP: go deeper with energy, in ${VOICES}
 Keep every bit of the depth (the meforshim, the sevara, the question it answers), just told so he can't put it down, and end with a hook.`;
+
+// Nov 18: "My own" tone: the learner describes the tone he wants in his own words (Settings → The AI → How it writes →
+// Tone → My own). Anything goes within derech eretz: the rules below always hold, whatever is asked, and a part that
+// asks for anything improper is quietly left out. What each wording of his made is kept apart (the tag).
+export async function toneNow(): Promise<{ awake: boolean; custom: string | null; tag: string }> {
+  const s = await getSettings().catch(() => null);
+  const custom = s?.lwTone === 'custom' && s.customTone?.trim() ? s.customTone.trim().slice(0, 500) : null;
+  let h = 0;
+  for (const c of custom ?? '') h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { awake: !custom && s?.lwTone !== 'calm', custom, tag: custom ? `custom-${h.toString(36)}` : s?.lwTone === 'calm' ? 'calm' : 'awake' };
+}
+export const customBlock = (custom: string, what: string) => `TONE, THE LEARNER'S OWN: he asked that ${what} be written in this tone, in his words: «${custom}»
+Follow his tone fully and with flair. These rules always hold, whatever he asked: derech eretz; no cursing or crude language; no dirty, crude or off-color jokes; nothing improper, immoral, mocking or hurtful; never make light of Hashem, the Torah, the Tannaim, Amoraim or any person. If any part of his request asks for such things, quietly leave that part out and follow the rest. The content, accuracy and length rules above still hold. This tone comes last and wins over any other tone above.`;
