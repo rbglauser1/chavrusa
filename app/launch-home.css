@@ -395,3 +395,9 @@
 /* The reading screen's own background takes the texture's color under the layer, so no white shows at the edges. */
 :is([data-look='clay'],[data-look='chatgpt'])[data-tex='ink'] body:has(.sefer-flow) { background-color: #eeeeec; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] body:has(.sefer-flow) { background-color: #e6d8bb; }
+
+/* Nov 17 (2): full screen had its own "overflow: visible !important" that beat the clip above, so the page still came
+   out wider than the phone. The texture layer now reaches exactly to the screen's edges (no further), and the clip is
+   set with full screen's own weight. */
+:is([data-look='clay'],[data-look='chatgpt']):is([data-tex='light'],[data-tex='stone'],[data-tex='ink']) .sefer-flow::before { left: calc(50% - 50vw); right: calc(50% - 50vw); }
+:is([data-look='clay'],[data-look='chatgpt'])[data-st-full] :is(.st-study, .st-source) { overflow-x: clip !important; overflow-y: visible !important; }
