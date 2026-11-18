@@ -21,7 +21,7 @@ export function LaunchNav(p: { dockOnly?: boolean; view: View; onHome: () => voi
   const go = (fn: () => void) => { setMore(false); fn(); };
   return <>{!p.dockOnly && <header className="launch-header"><button className="launch-brand" onClick={() => go(p.onHome)}>Chavrusa</button><button className="launch-icon" aria-label="Settings" onClick={() => go(p.onSettings)}><SandIcon name="settings" size={25}/></button></header>}<nav className="launch-dock" aria-label="Main navigation"><button aria-current={p.view === 'home' ? 'page' : undefined} onClick={() => go(p.onHome)}><SandIcon name="home"/><span>Home</span></button><button onClick={() => go(p.onLibrary)}><SandIcon name="book"/><span>Library</span></button><button aria-current={p.view === 'recent' ? 'page' : undefined} onClick={() => go(p.onRecent)}><SandIcon name="review"/><span>Recents</span></button><button onClick={() => go(p.onNotebook)}><SandIcon name="notes"/><span>Notebook</span></button></nav></>; // Nov 16: Home, Library, Recents, Notebook
 }
-export type LaunchHomeProps = { five?: boolean; fiveLen?: number; leftQ?: { ref: string; line: number; text: string; at: string } | null; teasersOn?: boolean; busy?: boolean; cont: ContinueInfo | null; onContinue: () => void; onLibrary: () => void; onRecent: () => void; onThemes: () => void; onTalk: () => void; talkSupported: boolean; talkOn: boolean; extras?: ReactNode; onGuide: () => void; onReview?: () => void; onAsk?: (text: string) => void | Promise<void> };
+export type LaunchHomeProps = { five?: boolean; fiveLen?: number; leftQ?: { ref: string; line: number; text: string; at: string } | null; teasersOn?: boolean; oneLineOn?: boolean; streakOn?: boolean; busy?: boolean; cont: ContinueInfo | null; onContinue: () => void; onLibrary: () => void; onRecent: () => void; onThemes: () => void; onTalk: () => void; talkSupported: boolean; talkOn: boolean; extras?: ReactNode; onGuide: () => void; onReview?: () => void; onAsk?: (text: string) => void | Promise<void> };
 function Overview({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
@@ -81,9 +81,9 @@ export function SplitCanvasHome(p: LaunchHomeProps) {
           {/* Nov 16, Focus help: a small promise is easier to start */}
           <div className="launch-small">
             {p.five && <button className="launch-five" onClick={() => { startFive(p.fiveLen ?? 5); (p.cont ? p.onContinue : p.onLibrary)(); }}>⏱ Just {p.fiveLen ?? 5} min</button>}
-            {p.cont?.ref && <button className="launch-five" onClick={() => { try { sessionStorage.setItem('chavrusa-oneline', '1'); } catch { /* optional */ } p.onContinue(); }}>☝ One line</button>}
+            {p.cont?.ref && p.oneLineOn !== false && <button className="launch-five" onClick={() => { try { sessionStorage.setItem('chavrusa-oneline', '1'); } catch { /* optional */ } p.onContinue(); }}>☝ One line</button>}
           </div>
-          {days >= 2 && <span className="launch-streak">🔥 {days} days in a row</span>}
+          {days >= 2 && p.streakOn !== false && <span className="launch-streak">🔥 {days} days in a row</span>}
         </section>
       </div>
       <footer className="split-footer">

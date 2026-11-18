@@ -64,6 +64,8 @@ export function Home(p: {
   fiveLen?: number;
   leftQ?: { ref: string; line: number; text: string; at: string } | null;
   teasersOn?: boolean;
+  oneLineOn?: boolean;
+  streakOn?: boolean;
 }) {
   const c = p.cont;
   // The guide (components/Guide.tsx): one tap away, and it opens by itself the first time, once the disclaimer has

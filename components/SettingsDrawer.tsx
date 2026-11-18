@@ -382,6 +382,16 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Now and then, a small card about the exact words you’re on, the way a chavrusa draws you in: a question to start a page, “What would you say?” before the Gemara answers, “Did you notice?”, a Rishon’s question, how it plays out today, and in Mishnah and Chumash, what changed in the case or what caught Rashi’s eye. About one for every two or three lines, shown as you reach them (not more often than every 40 seconds), never twice the same day. Made once per page and kept (a few cents the first time).</div>
             </div>
             <div className="field">
+              <label>One line button on Home</label>
+              <Seg value={s.homeOneLine !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeOneLine: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>☝ One line under Continue: opens your place showing just the line you’re on.</div>
+            </div>
+            <div className="field">
+              <label>Days in a row on Home</label>
+              <Seg value={s.homeStreak !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeStreak: v === 'on' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>🔥 How many days in a row you’ve learned, at the bottom of the Home card.</div>
+            </div>
+            <div className="field">
               <label>Reminder box on the Home card</label>
               <Seg value={s.homeTeaser !== false ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ homeTeaser: v === 'on' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>A small box inside the Continue card on Home, to draw you back in: the question you left yourself, else your note on that page, else a short AI question about where you stopped. Off hides the box completely.</div>

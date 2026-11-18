@@ -973,6 +973,8 @@ export default function Home() {
             fiveLen={settings.fiveLen ?? 5}
             leftQ={settings.leftQ ?? null}
             teasersOn={settings.homeTeaser !== false}
+            oneLineOn={settings.homeOneLine !== false}
+            streakOn={settings.homeStreak !== false}
             extras={<HomeExtras settings={settings} onSettings={updateSettings} onOpen={(ref) => { goLearn(); void openExact(ref); }} />}
           />
         )}
