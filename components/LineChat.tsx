@@ -107,6 +107,13 @@ export default function LineChat({ lineRef, onClose, follow, ask, onAsked, onVoi
           ))}
         {busy && <div className="muted lchat-wait"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
         {err && <div className="muted">{err} <button className="linklike" onClick={() => { const last = msgs[msgs.length - 1]; if (last?.role === 'user') void send(last.content, true); }}>Try again</button></div>}
+        {/* Nov 18: when the AI ends on a question ("Want to see why…?"), answer with one tap. */}
+        {!busy && msgs.length > 0 && msgs[msgs.length - 1].role !== 'user' && /\?["'”’)\s]*$/.test(msgs[msgs.length - 1].content.trim()) && (
+          <div className="lchat-yesno">
+            <button onClick={() => void send('Yes')}>Yes</button>
+            <button onClick={() => void send('No, thanks')}>No</button>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
       {msgs.length > 0 && !busy && STARTERS.some((q) => !msgs.some((x) => x.role === 'user' && x.content === q)) && (
