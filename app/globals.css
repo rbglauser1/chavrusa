@@ -3156,3 +3156,10 @@ html[data-fh-quiet] .fh-nav { bottom: calc(env(safe-area-inset-bottom) + 22px); 
 [data-c-he]:not([data-c-he='ink']) .mgp-he { color: color-mix(in srgb, var(--he-hue) 94%, var(--ink)); }
 /* While Mikraos Gedolos is open, the reading screen's Focus help cards (teasers, recap, goal, toasts) stay hidden. */
 html:has(.daf-page.mg) :is(.fh-bar, .fh-nav, .fh-offer, .fh-recap, .fh-toast, .fh-goal) { display: none !important; }
+
+/* Nov 17: the AI's writing size and Hebrew font (Settings → The page) reach the chat answers too, not only Explain
+   and the ✦ tools. Without a chosen size the chat keeps its own. */
+.min-them { font-size: var(--ai-size, calc(var(--en-size, 16px) + 2px)); }
+.min-them-group .c-say { font-size: var(--ai-size, calc(var(--en-size, 16px) + 1px)); }
+.min-them-group .c-he { font-size: calc(var(--ai-size, calc(var(--en-size, 16px) + 1px)) * 1.12); }
+[data-aihe='times'] :is(.min-them-group .c-he, .min-them .heb, .min-them [dir='rtl']) { font-family: 'Times New Roman', Times, serif; }

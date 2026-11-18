@@ -346,6 +346,8 @@
    so the end pills keep their round edges). */
 :is([data-look='clay'],[data-look='chatgpt']) .seg { overflow: visible !important; flex-wrap: nowrap; }
 :is([data-look='clay'],[data-look='chatgpt']) .seg button { flex: 1 1 0; min-width: 0; white-space: nowrap; padding: 8px 4px; min-height: 42px; }
+/* …but a choice with few, long names ("Same as the text") may take two lines rather than be cut off. */
+:is([data-look='clay'],[data-look='chatgpt']) .seg:not(:has(> button:nth-child(4))) button { white-space: normal; padding: 8px 10px; line-height: 1.2; }
 :is([data-look='clay'],[data-look='chatgpt']) .seg:has(> button:nth-child(5)) { gap: 7px !important; }
 
 /* Nov 17: the Settings boxes the same size and look as the Library's rows: 68 px tall, 16 px corners, 10 px apart,

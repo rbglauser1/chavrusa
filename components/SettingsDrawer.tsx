@@ -120,6 +120,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <FontPicker list={FONTS_COMM} sample="וַיִּהְיוּ חַיֵּי שָׂרָה – לכך נכתב שנה" rtl value={s.fonts?.[s.theme]?.comm || (s.rashiScript ? 'rashi' : 'same')} onPick={(id) => onChange({ rashiScript: id === 'rashi', fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), comm: id } } })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The commentaries&apos; font is for Rashi, Tosafos and all the meforshim.</div>
             </div>
+            <div className="field">
+              <label>The AI’s Hebrew font</label>
+              <Seg value={s.aiHeFont ?? 'text'} options={[['text', 'Same as the text'], ['times', 'Times New Roman']]} onPick={(v) => onChange({ aiHeFont: v as 'text' | 'times' })} />
+            </div>
             </Group>
             <Group id="look-colors" level={2} title="Text colors and bold">
             <div className="field">
@@ -160,6 +164,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>English text size</label>
               <div className="range"><input type="range" min={13} max={24} value={s.enSize} onChange={(e) => onChange({ enSize: Number(e.target.value) })} /><span style={{ fontSize: s.enSize }}>Abc</span></div>
+            </div>
+            <div className="field">
+              <label>The AI’s writing size (Explain, Chat, Ideas, outlines)</label>
+              <div className="range"><input type="range" min={14} max={32} value={s.aiSize ?? Math.max(17, s.enSize)} onChange={(e) => onChange({ aiSize: Number(e.target.value) })} /><span style={{ fontSize: s.aiSize ?? Math.max(17, s.enSize) }}>Abc אבג</span></div>
             </div>
             </Group>
             <Group id="look-comms" level={2} title="Commentaries on the page" hint={`${s.autoComms ? 'under every line' : 'when I tap a line'}${s.autoRashi ? ' · Rashi open' : ''}${s.autoTosfos ? ' · Tosafos open' : ''}${s.rashiScript ? ' · Rashi script' : ''}`}>
@@ -376,19 +384,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>When you open a commentary, a sentence or two under each comment saying what it explains or asks (not a literal translation). Made once per commentator per amud (about 1–2 cents), then kept, free. Only for commentaries you open.</div>
             </div>
             </Group>
-            <Group id="ai-write" level={2} title="How it writes" hint={`${(s.aiLang ?? 'en') === 'en' ? 'English' : s.aiLang === 'he' ? 'Hebrew' : 'English and Hebrew'} · size ${s.aiSize ?? Math.max(17, s.enSize)}`}>
+            <Group id="ai-write" level={2} title="How it writes" hint={`${(s.aiLang ?? 'en') === 'en' ? 'English' : s.aiLang === 'he' ? 'Hebrew' : 'English and Hebrew'}`}>
             <div className="field">
               <label>The AI writes in</label>
               <Seg value={s.aiLang ?? 'en'} options={[['en', 'English'], ['he', 'Hebrew'], ['both', 'Both']]} onPick={(v) => onChange({ aiLang: v as 'en' | 'he' | 'both' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Everything the AI writes on the screen: the chat, ✦ Chat, Explain, Ideas, the sugya map, outlines, steps, review questions, Chazara and notes. Both: the English, then the same in Hebrew. Quotes stay as written. The voice in a call stays in English. Things already made are made again in the new language the first time you open them (a few cents each), then kept.</div>
-            </div>
-            <div className="field">
-              <label>AI writing size (Explain, Chat, Ideas, outlines)</label>
-              <div className="range"><input type="range" min={14} max={32} value={s.aiSize ?? Math.max(17, s.enSize)} onChange={(e) => onChange({ aiSize: Number(e.target.value) })} /><span style={{ fontSize: s.aiSize ?? Math.max(17, s.enSize) }}>Abc אבג</span></div>
-            </div>
-            <div className="field">
-              <label>The AI's Hebrew in</label>
-              <Seg value={s.aiHeFont ?? 'text'} options={[['text', 'The text’s Hebrew font'], ['times', 'Times New Roman']]} onPick={(v) => onChange({ aiHeFont: v as 'text' | 'times' })} />
             </div>
             </Group>
             <Group id="ai-model" level={2} title="Depth and cost" hint={`${MODELS[s.provider][s.tier].label}${s.saver !== false ? ' · Saver' : ''}`}>
