@@ -23,7 +23,8 @@ You get the text with numbered lines; the line you are learning now is marked >>
 - "en": a short literal translation of the phrase (keep the given one if it is good);
 - "note": the explanation woven in, 1 or 2 short sentences (at most 40 words): what this phrase means and is doing, filling in what the terse words leave unsaid the way the standard meforshim explain (on the Gemara: Rashi; on a Mishnah: the Bartenura; on Chumash: Rashi). Name a meforesh only when you are sure he says it. Do not just repeat the translation. A phrase that is only a connector or a name may get a very short note.
 - At most ONE phrase in the whole line, and only if the line has a real turning point (a question, a contradiction, a proof, a surprising ruling or a turn), may also have "ask": one short question to get him thinking at that point, and "hint": one short sentence nudging toward the answer without giving it. Most lines have none.
-Reply with JSON only: {"phrases": [{"en": "...", "note": "...", "ask": "...", "hint": "..."}, ...]}, exactly one entry per phrase, in order. For learning terms and quoted words write the Hebrew or Aramaic in Hebrew letters. Use yeshivish Ashkenazi transliteration for names (Rav Yehudah, Tosafos). No markdown.`;
+- Sometimes, where the sugya calls for it, put something BEFORE the text of a phrase, to keep him on his toes and thinking before he reads it: "before": {"kind": "think" | "chakira" | "kashya" | "setup", "text": "..."}. For example: the Gemara could go two ways here, which would you expect? (think); a chakira that this phrase is about to decide; a kashya to hold in mind that the phrase will answer; or, at the start of a new topic, the scene or the question in a sentence or two (setup). At most 40 words, ending with a question or a challenge, and never giving away what the phrase says. Use it on the phrases where it really fits: in most lines one, sometimes two, sometimes none; never on every phrase.
+Reply with JSON only: {"phrases": [{"before": {"kind": "...", "text": "..."}, "en": "...", "note": "...", "ask": "...", "hint": "..."}, ...]} ("before", "ask" and "hint" only where used), exactly one entry per phrase, in order. For learning terms and quoted words write the Hebrew or Aramaic in Hebrew letters. Use yeshivish Ashkenazi transliteration for names (Rav Yehudah, Tosafos). No markdown.`;
 
 // Nov 18: "Wake me up" (Settings → The AI → Learn with me's tone): the notes are written to pull him into the text.
 const AWAKE = `TONE, WAKE HIM UP: the learner wants to be pulled into the text, not lulled. Write each note with energy, and vary the voice from phrase to phrase, whichever fits that phrase best:
@@ -51,7 +52,7 @@ const context = (he: string[], en: string[], n: number) => {
   }).filter(Boolean).join('\n');
 };
 
-type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string };
+type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string; before?: { kind: string; text: string } };
 
 async function phrasesOf(ref: string, n: number) {
   const approved = await approvedList();
@@ -73,13 +74,13 @@ async function makeWeave(ref: string, n: number, awake = false): Promise<{ phras
   const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
   const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(st)}\n\n${SCOPE}${awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
   await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
-  const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string }[] }>(r.text, '{'); } catch { return null; } })();
+  const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string; before?: { kind?: string; text?: string } }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
   if (!out.length) throw new Error('The learning did not come back in the right form.');
   return {
     phrases: list.map((p, i) => {
       const o = out[i] ?? {};
-      return { he: p.he, en: (o.en || p.en || '').trim(), note: (o.note ?? '').trim(), ...(o.ask ? { ask: o.ask.trim(), hint: (o.hint ?? '').trim() } : {}) };
+      return { he: p.he, en: (o.en || p.en || '').trim(), note: (o.note ?? '').trim(), ...(o.ask ? { ask: o.ask.trim(), hint: (o.hint ?? '').trim() } : {}), ...(o.before?.text ? { before: { kind: String(o.before.kind ?? 'think'), text: o.before.text.trim() } } : {}) };
     }),
   };
 }
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
   const awake = (await getSettings()).lwTone !== 'calm'; // "Wake me up" unless Calm is chosen (Nov 18)
-  try { return NextResponse.json(await keep(awake ? 'weave-awake-v3' : 'weave-v2', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
+  try { return NextResponse.json(await keep(awake ? 'weave-awake-v4' : 'weave-v3', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 

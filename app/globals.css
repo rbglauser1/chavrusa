@@ -3244,3 +3244,7 @@ body.lw-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visib
 /* Nov 18: the top edge of Learn with me is a handle: a bigger grip, and dragging it doesn't scroll the page. */
 .lw-grab { width: 56px; height: 6px; margin: 10px auto 4px; }
 .lw-grab, .lw-head { touch-action: none; }
+/* Nov 18: something before the text in Learn with me (a challenge, a chakira, a kashya to hold, the scene). */
+.lw-before { margin: 12px 0 4px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, #CC7C5E 10%, var(--surface, #fff)); border: 1px dashed color-mix(in srgb, #CC7C5E 55%, transparent); font-family: var(--f-body); font-size: var(--ai-size, max(16px, calc(var(--en-size, 16px) - 1px))); line-height: 1.55; animation: lw-in .25s ease-out; }
+.lw-before .he-note { text-align: right; font-family: var(--f-he); }
+.lw-before-label { display: block; font: 700 11px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: #a85235; margin-bottom: 4px; }

@@ -10,7 +10,12 @@ import { createPortal } from 'react-dom';
 import { useBackLayer } from '@/lib/back';
 import { isHebText } from './AiNote';
 
-type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string };
+type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string; before?: { kind: string; text: string } };
+// Nov 18: a line is a row of steps: some phrases have something before their text (a challenge, a chakira, a kashya to
+// hold, the scene), shown first, alone; Next then brings the text.
+type Step = { k: number; part: 'before' | 'text' };
+const stepsOf = (ps: Phrase[]): Step[] => ps.flatMap((p, k) => (p.before ? [{ k, part: 'before' as const }, { k, part: 'text' as const }] : [{ k, part: 'text' as const }]));
+const BEFORE_LABEL: Record<string, string> = { think: 'Think first', chakira: 'A chakira', kashya: 'Hold this kashya', setup: 'Before we read' };
 const got = new Map<string, Promise<{ phrases: Phrase[] }>>();
 const weave = (ref: string, n: number) => {
   const d0 = typeof document !== 'undefined' ? document.documentElement.dataset : {} as DOMStringMap;
@@ -126,7 +131,8 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   }, [shown, data?.n]);
 
   const phrases = data?.n === n ? data.phrases : [];
-  const atEnd = phrases.length > 0 && shown >= phrases.length;
+  const steps = stepsOf(phrases);
+  const atEnd = steps.length > 0 && shown >= steps.length;
   const next = () => {
     if (!atEnd) { setShown((v) => v + 1); return; }
     setN((v) => v + 1);
@@ -138,7 +144,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
       <div className="lw-grab" aria-hidden="true" {...grab} />
       <div className="lw-head" {...grab}>
         <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}</span>
-        <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (phrases.length ? shown / phrases.length : 0)) / total) * 100)}%` }} /></span>
+        <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} /></span>
         {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
         <button className="lw-icon" onClick={onClose} aria-label="Close">✕</button>
       </div>
@@ -152,10 +158,20 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
           <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
         ) : !phrases.length ? (
           <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
-        ) : phrases.slice(0, shown).map((p, k) => {
+        ) : steps.slice(0, shown).map((st, idx) => {
+          const p = phrases[st.k], k = st.k;
+          if (st.part === 'before' && p.before) {
+            const he = isHebText(p.before.text);
+            return (
+              <div key={`b${k}`} className="lw-before" data-ph={idx}>
+                <span className="lw-before-label"><span className="ai-star">✦</span> {BEFORE_LABEL[p.before.kind] ?? 'Think first'}</span>
+                <div dir={he ? 'rtl' : 'ltr'} className={he ? 'he-note' : ''}>{p.before.text}</div>
+              </div>
+            );
+          }
           const heNote = isHebText(p.note);
           return (
-            <div key={k} className="lw-ph" data-ph={k}>
+            <div key={k} className="lw-ph" data-ph={idx}>
               <div className="lw-he" dir="rtl">{p.he}</div>
               {p.en && <div className="lw-en">{p.en}</div>}
               {p.note && <div className={`lw-note ${heNote ? 'he-note' : ''}`} dir={heNote ? 'rtl' : 'ltr'}>{p.note}</div>}
@@ -169,7 +185,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
       {!done && (
         <div className="lw-foot">
           <button className="lw-back" onClick={back} disabled={n === 1 && shown <= 1} aria-label="Back">‹</button>
-          <button className="lw-next" onClick={next} disabled={!phrases.length}>{atEnd ? (n < total ? 'Next line ›' : 'Finish ›') : 'Next ›'}</button>
+          <button className="lw-next" onClick={next} disabled={!phrases.length}>{atEnd ? (n < total ? 'Next line ›' : 'Finish ›') : steps[shown - 1]?.part === 'before' ? 'Show the text ›' : 'Next ›'}</button>
         </div>
       )}
     </div>,
