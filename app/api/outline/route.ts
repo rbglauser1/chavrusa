@@ -8,7 +8,7 @@ import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
-import { aiLang } from '@/lib/aiLang';
+import { aiLang, parseAiJson } from '@/lib/aiLang';
 import { AWAKE_STEPS, awakeOn } from '@/lib/tone';
 
 export const runtime = 'nodejs';
@@ -37,10 +37,15 @@ async function makeOutline(ref: string, awake = false): Promise<{ moves: Move[];
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);
   await logCost({ sessionId: null, kind: 'outline', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: usd }).catch(() => {});
-  const json = r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]';
+  // (Nov 18: parsed the forgiving way, ר"ש-style quotes inside the Hebrew included, and an object holding the list too.)
+  const list = (): Move[] => {
+    try { return parseAiJson<Move[]>(r.text, '['); } catch { /* */ }
+    const o = parseAiJson<Record<string, unknown>>(r.text, '{');
+    return (Object.values(o).find(Array.isArray) as Move[] | undefined) ?? [];
+  };
   let moves: Move[] = [];
   try {
-    moves = (JSON.parse(json) as Move[])
+    moves = list()
       .filter((m) => m && Number.isFinite(Number(m.line)) && typeof m.summary === 'string')
       .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: clipWords(m.summary, 220) }));
   } catch { moves = []; }
