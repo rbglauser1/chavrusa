@@ -25,6 +25,15 @@ You get the text with numbered lines; the line you are learning now is marked >>
 - At most ONE phrase in the whole line, and only if the line has a real turning point (a question, a contradiction, a proof, a surprising ruling or a turn), may also have "ask": one short question to get him thinking at that point, and "hint": one short sentence nudging toward the answer without giving it. Most lines have none.
 Reply with JSON only: {"phrases": [{"en": "...", "note": "...", "ask": "...", "hint": "..."}, ...]}, exactly one entry per phrase, in order. For learning terms and quoted words write the Hebrew or Aramaic in Hebrew letters. Use yeshivish Ashkenazi transliteration for names (Rav Yehudah, Tosafos). No markdown.`;
 
+// Nov 18: "Wake me up" (Settings → The AI → Learn with me's tone): the notes are written to pull him into the text.
+const AWAKE = `TONE, WAKE HIM UP: the learner wants to be pulled into the text, not lulled. Write each note with energy, and vary the voice from phrase to phrase, whichever fits that phrase best:
+- the rebbi who won't let him coast: loud and loving ("Stop! Read that word again. PERMITTED, not pushed aside!"), urgency in words only;
+- the detective: point at the exact word that matters ("Exhibit A: …"), and who is going to pounce on it;
+- the sports commentator: the give and take as a match ("Rav Nachman comes out swinging… Rav Sheshes is warming up");
+- the storyteller: paint the scene in one or two vivid strokes (the courtyard, the kohen, the crowd);
+- dry humor: one light, clever line.
+Every note still says what the phrase means and is doing, and ends with a hook: a word to watch, a question hanging in the air, or a cliffhanger into what comes next, so he wants to go on. At most 50 words a note. Always derech eretz: never insult him, never make light of the Tannaim, Amoraim, Hashem or the Torah; the energy is about the learning. In this tone the question ("ask") may come a little more often, but still at most one per line.`;
+
 const DEEP = `You are a warm, sharp chavrusa. The learner asked to go deeper on one phrase of the line marked >>> <<<. In 3 to 6 sentences (at most 120 words) go deeper on that phrase: what the standard meforshim on this sefer say on it (on the Gemara: Rashi and Tosafos; on a Mishnah: the Bartenura and Tosafos Yom Tov; on Chumash: Rashi and the Ramban), naming one only when you are sure he says it, the sevara behind it, and what question it answers or raises. Only what is truly there; plain prose, no markdown, no lists. Hebrew terms in Hebrew letters; yeshivish Ashkenazi names.`;
 
 const context = (he: string[], en: string[], n: number) => {
@@ -48,7 +57,7 @@ async function phrasesOf(ref: string, n: number) {
   return { s, list: list.length ? list : [{ he, en }] };
 }
 
-async function makeWeave(ref: string, n: number): Promise<{ phrases: Phrase[] }> {
+async function makeWeave(ref: string, n: number, awake = false): Promise<{ phrases: Phrase[] }> {
   await needCredit();
   const got = await phrasesOf(ref, n);
   if (!got) return { phrases: [] };
@@ -56,7 +65,7 @@ async function makeWeave(ref: string, n: number): Promise<{ phrases: Phrase[] }>
   const st = await getSettings();
   const model = await keptModel();
   const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(st)}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
+  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${awake ? `${AWAKE}\n\n` : ''}${styleForChat(st)}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
   await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
@@ -72,7 +81,8 @@ async function makeWeave(ref: string, n: number): Promise<{ phrases: Phrase[] }>
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
-  try { return NextResponse.json(await keep('weave-v2', `${ref}:${n}`, () => makeWeave(ref, n), (x) => !x.phrases.length)); }
+  const awake = (await getSettings()).lwTone !== 'calm'; // "Wake me up" unless Calm is chosen (Nov 18)
+  try { return NextResponse.json(await keep(awake ? 'weave-awake-v1' : 'weave-v2', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 

@@ -13,7 +13,8 @@ import { isHebText } from './AiNote';
 type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string };
 const got = new Map<string, Promise<{ phrases: Phrase[] }>>();
 const weave = (ref: string, n: number) => {
-  const k = `${typeof document !== 'undefined' ? document.documentElement.dataset.ailang ?? 'en' : 'en'}|${ref}:${n}`;
+  const d0 = typeof document !== 'undefined' ? document.documentElement.dataset : {} as DOMStringMap;
+  const k = `${d0.ailang ?? 'en'}|${d0.lwtone ?? 'awake'}|${ref}:${n}`;
   if (!got.has(k)) {
     const p = fetch(`/api/weave?ref=${encodeURIComponent(ref)}&n=${n}`).then((r) => r.json()).then((d) => { if (!d.phrases?.length) throw new Error(d.error || 'none'); return d as { phrases: Phrase[] }; });
     got.set(k, p); p.catch(() => got.delete(k));
