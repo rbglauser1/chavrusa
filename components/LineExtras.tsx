@@ -30,7 +30,12 @@ export function WithSources({ text, sources, pClass = 'lx-p' }: { text: string; 
               if (!sources.includes(r)) return null;
               return <button key={k} className={`lx-src ${openRef === r ? 'on' : ''}`} onClick={() => setOpenRef(openRef === r ? null : r)}>{short(r)}</button>;
             })}</p>
-            {openRef && here.includes(openRef) && <RefText refs={[openRef]} />}
+            {openRef && here.includes(openRef) && (
+              <div className="lx-src-box">
+                <div className="lx-src-head"><span>📖 The source: {short(openRef)} <small>(from Sefaria)</small></span><button className="lx-src-x" onClick={() => setOpenRef(null)} aria-label="Close the source">✕</button></div>
+                <RefText refs={[openRef]} />
+              </div>
+            )}
           </div>
         );
       })}

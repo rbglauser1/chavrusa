@@ -11,6 +11,10 @@ const clean = (t: string) => t.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').t
 export function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void }) {
   const [text, setText] = useState<{ he: string[]; en: string[] } | null | 'none'>(null);
   const [ai, setAi] = useState<Record<number, string>>({});
+  // Nov 18: a whole amud or perek opened from a chip (⟦Shabbat 11a⟧) was shown in full, and looked like the AI going on
+  // and on. A long text now shows its first few lines, with "Show all".
+  const [all, setAll] = useState(false);
+  const SHOW = 4;
   useEffect(() => {
     let gone = false;
     fetch(`/api/commentary?refs=${encodeURIComponent(refs.join('|'))}`).then((r) => r.json())
@@ -20,7 +24,7 @@ export function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void 
         const he = d.he as string[], en = (d.en ?? []) as string[];
         setText({ he, en });
         he.forEach((h, i) => {
-          if (clean(en[i] ?? '') || !clean(h) || i >= 16) return;
+          if (clean(en[i] ?? '') || !clean(h) || i >= (he.length > SHOW + 2 ? SHOW : 16)) return; // only what is shown
           setAi((a) => ({ ...a, [i]: 'busy' }));
           fetch('/api/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: clean(h) }) })
             .then((r) => r.json()).then((t) => { if (!gone) setAi((a) => ({ ...a, [i]: t.translation ? String(t.translation) : 'failed' })); })
@@ -35,7 +39,7 @@ export function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void 
       {usedAi && <div className="ai-note left">English translated by AI · AI makes mistakes</div>}
       {!text ? <div className="muted">Opening…</div>
         : text === 'none' ? <div className="muted">Couldn’t open it.</div>
-        : text.he.map((h, i) => {
+        : (all || text.he.length <= SHOW + 2 ? text.he : text.he.slice(0, SHOW)).map((h, i) => {
           const en = clean(text.en[i] ?? ''), mine = ai[i];
           return (
             <div key={i}>
@@ -47,6 +51,7 @@ export function RefText({ refs, onOpen }: { refs: string[]; onOpen?: () => void 
             </div>
           );
         })}
+      {text && text !== 'none' && !all && text.he.length > SHOW + 2 && <button className="linklike" onClick={() => setAll(true)}>Show all {text.he.length} lines</button>}
       {onOpen && <button className="linklike" onClick={onOpen}>Learn it in the Sefer ↗</button>}
     </div>
   );

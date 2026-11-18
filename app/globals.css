@@ -3193,3 +3193,10 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
 .lchat-yesno button { min-width: 84px; min-height: 40px; padding: 6px 18px; border-radius: 999px; border: 1px solid color-mix(in srgb, #CC7C5E 55%, transparent); background: color-mix(in srgb, #CC7C5E 8%, var(--surface, #fff)); color: #a85235; font: 600 15px var(--f-ui); }
 /* Nov 18: an answer brought into view from its beginning keeps a little room above it. */
 .lchat-ai, .min-them, .min-them-group { scroll-margin-top: 14px; }
+/* Nov 18: a source opened from an AI answer: framed and labeled as the source (not more of the answer), with ✕. */
+.lx-src-box { margin: 8px 0 12px; padding: 8px 12px 10px; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 6px 12px 12px 6px; background: var(--surface-2, transparent); }
+.lx-src-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 600 12.5px var(--f-ui); color: var(--soft); margin-bottom: 6px; }
+.lx-src-head small { font-weight: 400; }
+.lx-src-x { border: 0; background: none; color: var(--soft); font-size: 16px; padding: 2px 6px; }
+[data-look='clay'] .lx-src.on, [data-look='chatgpt'] .lx-src.on { background: #CC7C5E; border-color: #CC7C5E; color: #fff; }
+[data-look='clay'] .lx-src-box { border-left-color: #CC7C5E; }
