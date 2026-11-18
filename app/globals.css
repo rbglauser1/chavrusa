@@ -3163,3 +3163,7 @@ html:has(.daf-page.mg) :is(.fh-bar, .fh-nav, .fh-offer, .fh-recap, .fh-toast, .f
 .min-them-group .c-say { font-size: var(--ai-size, calc(var(--en-size, 16px) + 1px)); }
 .min-them-group .c-he { font-size: calc(var(--ai-size, calc(var(--en-size, 16px) + 1px)) * 1.12); }
 [data-aihe='times'] :is(.min-them-group .c-he, .min-them .heb, .min-them [dir='rtl']) { font-family: 'Times New Roman', Times, serif; }
+/* Nov 17: the AI's writing size (Settings → The page → Text sizes) also sets the Steps, the amud intro and the
+   commentary summaries; without a chosen size they keep their own. */
+html .sefer .move, html .min .move, html .amud-intro { font-size: var(--ai-size, max(15px, calc(var(--en-size, 16px) - 2px))); }
+html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
