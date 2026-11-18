@@ -516,7 +516,7 @@ export interface Settings {
   goal?: 'off' | '3' | '5' | '10' | 'step'; // Nov 16, Focus help: today's small goal (lines, or one Step)
   readAlong?: boolean;  // Nov 16, Focus help: in a call, the line the voice is on is lit and kept in view
   quietMode?: boolean;  // Nov 16, Focus help: only the text and Next / Back (no bottom buttons, tabs, or line buttons)
-  paperTex?: 'off' | 'light' | 'stone'; // Nov 17: a paper texture over the background color (Claude / ChatGPT looks)
+  paperTex?: 'off' | 'light' | 'stone' | 'ink'; // 'stone' is now the Stone look's Yerushalayim stone, 'ink' the Ink look's quartz // Nov 17: a paper texture over the background color (Claude / ChatGPT looks)
   teasers?: boolean;    // Nov 17, Focus help: pop-ups that draw you into the text while learning (on unless off)
   homeOneLine?: boolean; // Nov 17: the ☝ One line button on the Home card (on unless off)
   homeStreak?: boolean; // Nov 17: the 🔥 days-in-a-row count on the Home card (on unless off)

@@ -104,8 +104,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   ))}
                 </div>
                 <label style={{ marginTop: 14 }}>Paper texture</label>
-                <Seg value={s.paperTex ?? 'off'} options={[['off', 'Smooth'], ['light', 'Light paper'], ['stone', 'Light stone']]} onPick={(v) => onChange({ paperTex: v as 'off' | 'light' | 'stone' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The feel of paper on top of the color you chose: Light paper is fine fibers, seen up close; Light stone is a pale, softly clouded stone with a few faint veins. It takes on the background's own color.</div>
+                <Seg value={s.paperTex ?? 'off'} options={[['off', 'Smooth'], ['light', 'Paper'], ['ink', 'Ink'], ['stone', 'Stone']]} onPick={(v) => onChange({ paperTex: v as 'off' | 'light' | 'stone' | 'ink' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Paper is fine fibers over the color you chose. Ink is the Ink look’s pale grey quartz with soft veins; Stone is the Stone look’s honey Yerushalayim stone. Ink and Stone bring their own color.</div>
               </div>
             )}
             </Group>
