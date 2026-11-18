@@ -332,3 +332,16 @@ body:has(.launch-home) .five-pill { display:none; }
    screen, it scrolls. */
 [data-look='clay'] .split-home .split-panels.one, [data-look='clay'] .split-home .split-panels.one > .split-panel { flex-shrink:0; height:auto; min-height:0; }
 [data-look='clay'] .split-home:has(.split-panels.one) { overflow-y:auto; }
+
+/* Nov 18: more room for the text on the phone's reading screen (not full screen): the title bar sits higher and
+   thinner (the gap under the clock was 30px; now 12px), and the tab bar at the bottom is 8px shorter, with everything
+   above it following it down. */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(4px + env(safe-area-inset-top)) !important; padding-bottom:2px; }
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-header>div>span { margin-top:1px; }
+  :is([data-look='clay'],[data-look='chatgpt']) { --dock-h:calc(56px + var(--dock-pad)); }
+  :is([data-look='clay'],[data-look='chatgpt']) .launch-dock button { gap:3px; }
+}
+@media (max-width:1049px) and (display-mode: standalone) {
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(12px + env(safe-area-inset-top)) !important; }
+}
