@@ -9,6 +9,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from '@/lib/credits';
 import { keptModel } from '@/lib/keptModel';
+import { aiLang } from '@/lib/aiLang';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -49,13 +50,13 @@ async function makePshat(ref: string): Promise<{ moves: Move[]; usd: number }> {
 
 // Kept for good (lib/keep): the same amud's pshat is never paid for twice. Inside, the server's month cache, so a
 // copy made before is moved into the store for free.
-const cached = (ref: string) => keep('pshat-v1', ref, () => unstable_cache(() => makePshat(ref), ['pshat-v1', ref], { revalidate: 60 * 60 * 24 * 30 })());
+const cached = (ref: string, lang: string) => keep(`pshat-v1-${lang}`, ref, () => unstable_cache(() => makePshat(ref), [`pshat-v1-${lang}`, ref], { revalidate: 60 * 60 * 24 * 30 })());
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
   if (!ref || / on /i.test(ref)) return NextResponse.json({ moves: [] });
   try {
-    const { moves } = await cached(ref);
+    const { moves } = await cached(ref, await aiLang()); // kept per language: the AI writes in English, Hebrew or both
     return NextResponse.json({ moves });
   } catch (e) {
     return NextResponse.json({ moves: [], error: (e as Error).message });

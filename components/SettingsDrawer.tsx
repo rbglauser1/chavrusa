@@ -375,13 +375,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>Steps (a one-line summary above each move)</label>
-              <Seg value={s.outline ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ outline: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The AI summarizes each step of an amud or perek once (about 1–2 cents the first time), then it's kept, free. With Steps on, every long meforesh opened under a line (Ramban, Rashba, Maharsha…) also gets a “Steps” button that cuts it into its steps, the way Tosafos has (Extras → Tosafos steps).</div>
+              <Seg value={!s.outline ? 'off' : s.stepsMode === 'tap' ? 'tap' : 'auto'} options={[['off', 'Off'], ['tap', 'Tap to show'], ['auto', 'Always']]} onPick={(v) => onChange(v === 'off' ? { outline: false } : { outline: true, stepsMode: v as 'auto' | 'tap' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The AI summarizes each step of an amud or perek once (about 1–2 cents the first time), then it's kept, free. With Steps on, every long meforesh opened under a line (Ramban, Rashba, Maharsha…) also gets a “Steps” button that cuts it into its steps, the way Tosafos has (Extras → Tosafos steps). Tap to show: a small ✦ Step marker where each move begins; tap it to read, tap the note to fold it.</div>
             </div>
             <div className="field">
               <label>Pshat (the AI says it over, after each move)</label>
-              <Seg value={s.pshat ? 'on' : 'off'} options={[['off', 'Off'], ['on', 'On']]} onPick={(v) => onChange({ pshat: v === 'on' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Like Steps, but after the words instead of before them: when a move of the Gemara ends, a short note says it over in plain words, the pshat, the way a chavrusa would. Made once per amud or perek (about 2–4 cents the first time), then kept, free.</div>
+              <Seg value={!s.pshat ? 'off' : s.pshatMode === 'tap' ? 'tap' : 'auto'} options={[['off', 'Off'], ['tap', 'Tap to show'], ['auto', 'Always']]} onPick={(v) => onChange(v === 'off' ? { pshat: false } : { pshat: true, pshatMode: v as 'auto' | 'tap' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Like Steps, but after the words instead of before them: when a move of the Gemara ends, a short note says it over in plain words, the pshat, the way a chavrusa would. Made once per amud or perek (about 2–4 cents the first time), then kept, free. Tap to show: a small ✦ Pshat marker after the move; tap it to read, tap the note to fold it.</div>
             </div>
             <div className="field">
               <label>Commentary summaries (Rashi, Tosafos, Bartenura… in short English)</label>

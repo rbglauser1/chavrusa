@@ -3176,3 +3176,11 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
   padding: 8px 12px 10px; margin: 6px 0 14px;
 }
 .sefer .pshat::before { content: '✦ PSHAT'; display: block; font: 700 10.5px var(--f-ui); letter-spacing: .1em; color: #CC7C5E; margin-bottom: 3px; }
+/* Nov 17: "Tap to show" for Steps and Pshat: a quiet marker in the note's place. */
+.sefer .ai-dot, .min .ai-dot { display: inline-flex; align-items: center; gap: 4px; margin: 4px 0; padding: 2px 9px; border: 1px solid color-mix(in srgb, #CC7C5E 35%, transparent); border-radius: 999px; background: transparent; color: #CC7C5E; font: 600 11px var(--f-ui); letter-spacing: .06em; opacity: .75; cursor: pointer; }
+.sefer .ai-dot span, .min .ai-dot span { text-transform: uppercase; }
+.sefer .ai-dot-move { margin-top: 12px; }
+/* When the AI writes in Hebrew: the Steps, Pshat and intro notes read right to left, the colored line on the right. */
+:is(.sefer, .min) :is(.move, .pshat).he-note, .amud-intro.he-note { text-align: right; border-left: 0; border-right: 3px solid #CC7C5E; border-radius: 12px 4px 4px 12px; font-family: var(--f-he); }
+.amud-intro.he-note > span, .amud-intro.he-note .ai-note { direction: ltr; text-align: left; }
+[data-aihe='times'] :is(.move, .pshat, .amud-intro).he-note { font-family: 'Times New Roman', Times, serif; }

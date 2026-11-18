@@ -33,6 +33,7 @@ import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
+import { AiNote, isHebText } from './AiNote';
 import FocusHelp from './FocusHelp';
 import { setVoiceGuide } from '@/lib/voiceGuide';
 
@@ -650,7 +651,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       {canTranslate && showAll && t.en[i] && <div className="tg-en">{yeshivishEnglish(t.en[i])}</div>}
     </div>
   ) : null);
-  const introBox = (t: string) => (t ? <div className="amud-intro"><span>✦ Intro · this {sectionWord(src?.ref ?? '')}</span><div className="ai-note left">Written by AI · AI makes mistakes</div>{t}</div> : null);
+  const introBox = (t: string) => (t ? <div className={`amud-intro ${isHebText(t) ? 'he-note' : ''}`} dir={isHebText(t) ? 'rtl' : 'ltr'}><span>✦ Intro · this {sectionWord(src?.ref ?? '')}</span><div className="ai-note left">Written by AI · AI makes mistakes</div>{t}</div> : null);
 
   async function aiTranslate(key: string, text: string) {
     setLoading(key);
@@ -905,7 +906,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, prevSrc.enB?.[i], en) : null;
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
-                        {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`pm${k}`} className="move">{m}</div>)}
+                        {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`pm${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); }); } else { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
@@ -915,7 +916,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(prevTg, i)}
                         </div>
-                {(prevPshat.byLine[i + 1] ?? []).map((m, k) => <div key={`ps${k}`} className="pshat" dir="auto">{m}</div>)}
+                {(prevPshat.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`ps${k}`} kind="pshat" text={m} tap={settings.pshatMode === 'tap'} />)}
                         </div>
                       );
                     })}
@@ -980,7 +981,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const pairs = settings.interlinear && isOpen && en ? pairPhrases(line, src.enB?.[i], en) : null;
               return (
                 <div key={i} style={{ display: 'contents' }}>
-                {(outline.byLine[i + 1] ?? []).map((m, k) => <div key={`m${k}`} className="move">{m}</div>)}
+                {(outline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`m${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
@@ -1187,7 +1188,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {tgBox(tg, i)}
                 </div>
-                {(pshat.byLine[i + 1] ?? []).map((m, k) => <div key={`s${k}`} className="pshat" dir="auto">{m}</div>)}
+                {(pshat.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`s${k}`} kind="pshat" text={m} tap={settings.pshatMode === 'tap'} />)}
                 </div>
               );
             })}
@@ -1205,7 +1206,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, nextSrc.enB?.[i], en) : null;
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
-                        {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <div key={`nm${k}`} className="move">{m}</div>)}
+                        {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`nm${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); }); } else { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
@@ -1215,7 +1216,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(nextTg, i)}
                         </div>
-                {(nextPshat.byLine[i + 1] ?? []).map((m, k) => <div key={`ns${k}`} className="pshat" dir="auto">{m}</div>)}
+                {(nextPshat.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`ns${k}`} kind="pshat" text={m} tap={settings.pshatMode === 'tap'} />)}
                         </div>
                       );
                     })}

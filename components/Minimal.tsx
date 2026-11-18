@@ -14,6 +14,7 @@ import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactEl
 import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
+import { AiNote } from './AiNote';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
@@ -100,7 +101,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const pairs = settings.interlinear && showEn && en && (englishAll || on) ? pairPhrases(line, src.enB?.[i], en) : null;
         return (
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''}`}>
-            {(outline.byLine[n] ?? []).map((m, k) => <div key={k} className="move">{m}</div>)}
+            {(outline.byLine[n] ?? []).map((m, k) => <AiNote key={k} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} /> : showHe(line)}
             </button>
