@@ -41,7 +41,7 @@ async function makeIntro(ref: string, awake = false): Promise<string> {
 }
 
 // Kept for good (lib/keep): the same amud's intro is never paid for twice.
-export const getIntro = async (ref: string) => { const awake = await awakeOn(); const kind = awake ? 'intro-awake-v1' : 'intro-v2-opus'; return keep(kind, ref, () => unstable_cache(() => makeIntro(ref, awake), [kind, await aiLang(), ref], { revalidate: 60 * 60 * 24 * 30 })()); };
+export const getIntro = async (ref: string): Promise<string> => { const awake = await awakeOn(); const lang = await aiLang(); const kind = awake ? 'intro-awake-v1' : 'intro-v2-opus'; return keep(kind, ref, () => unstable_cache(() => makeIntro(ref, awake), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 // The intro if it's ready within a few seconds (it keeps being made, and kept, in the background otherwise).
 export async function introSoon(ref: string, ms = 7000): Promise<string> {

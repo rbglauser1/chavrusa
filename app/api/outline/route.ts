@@ -51,7 +51,7 @@ async function makeOutline(ref: string, awake = false): Promise<{ moves: Move[];
 // Kept for good (lib/keep): the same amud's outline is never paid for twice. Inside, the server's month cache, so a
 // copy made before is moved into the store for free.
 // (Nov 17: the server's month cache is kept per language too, or a Hebrew outline came back when English was asked.)
-const cached = async (ref: string) => { const lang = await aiLang(); const awake = await awakeOn(); const kind = awake ? 'outline-awake-v1' : 'outline-v3-opus'; return keep(kind, ref, () => unstable_cache(() => makeOutline(ref, awake), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
+const cached = async (ref: string): Promise<Awaited<ReturnType<typeof makeOutline>>> => { const lang = await aiLang(); const awake = await awakeOn(); const kind = awake ? 'outline-awake-v1' : 'outline-v3-opus'; return keep(kind, ref, () => unstable_cache(() => makeOutline(ref, awake), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
