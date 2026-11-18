@@ -62,6 +62,10 @@ interface Props {
 
 // Where the learner was, kept while the Sefer is closed (Nov 7: opening Settings from 5b and coming back put him at the
 // top of 5a): the amud above and below that were showing, and how far down he was. Kept for 10 minutes.
+
+// Nov 18: in a perek of Mishnah each line is one mishnah; a clear heading marks where each one begins.
+const HE_NUM = (n: number) => { const o = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'], t = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ']; return n === 15 ? 'טו' : n === 16 ? 'טז' : t[Math.floor(n / 10)] + o[n % 10]; };
+const mishnahHead = (ref: string | undefined, n: number) => (ref && /^Mishnah [^:]+ \d+$/.test(ref) ? <div className="mishnah-head" aria-hidden="true"><span>Mishnah {n}</span><span className="he" dir="rtl">משנה {HE_NUM(n)}</span></div> : null);
 const kept = new Map<string, { prev: SourceData | null; next: SourceData | null; top: number; at: number }>();
 
 // The reading window's shade (Settings → Reading window): size 1–9 sets how tall the clear area is, shade 1–9 how dark
@@ -431,6 +435,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         const s2 = d.startsWith('p') ? prevSrc : d.startsWith('n') ? nextSrc : src;
         const n = Number(d.replace(/^[pn]/, ''));
         if (s2 && n && !/ on /i.test(s2.ref) && !/:\d+(-\d+)?$/.test(s2.ref)) onSeen(s2.ref, s2.heRef, n);
+        // Nov 18: the exact spot, kept on this device: the line at the top, how far into it, and which AI boxes are
+        // open under the lines (Explain, the line's chat, Sources, Ideas…), so reopening the app comes back right here.
+        if (s2 === src && n) {
+          const arr = (x: Set<number>) => Array.from(x);
+          try { localStorage.setItem('chavrusa-spot', JSON.stringify({ ref: src.ref, line: n, off: Math.round(top - el.getBoundingClientRect().top), x: arr(xOpen), c: arr(cOpen), s: arr(sOpen), i: arr(iOpen), e: arr(eOpen), h: arr(hOpen), b: bOpen, at: Date.now() })); } catch { /* */ }
+        }
       }, 800);
     }
   }
@@ -438,6 +448,36 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const latest = useRef({ sid: sessionId, ref: src?.ref });
   latest.current = { sid: sessionId, ref: src?.ref };
   useEffect(() => () => { if (seenTimer.current) window.clearTimeout(seenTimer.current); }, []);
+  // Nov 18: back to the exact spot after the app was closed: the same AI boxes open, and the screen where it was.
+  const spotDone = useRef<string | null>(null);
+  useEffect(() => {
+    if (!src || isComm || spotDone.current === src.ref) return;
+    spotDone.current = src.ref;
+    let spot: { ref: string; line: number; off: number; x?: number[]; c?: number[]; s?: number[]; i?: number[]; e?: number[]; h?: number[]; b?: string | null; at: number } | null = null;
+    try { spot = JSON.parse(localStorage.getItem('chavrusa-spot') ?? 'null'); } catch { /* */ }
+    if (!spot || spot.ref !== src.ref || Date.now() - spot.at > 14 * 86400_000 || (src.focus && Math.abs(src.focus - spot.line) > 1)) return;
+    const s0 = spot;
+    const set = (a?: number[]) => new Set((a ?? []).filter((k) => k >= 0 && k < src.he.length));
+    if (s0.x?.length) setXOpen(set(s0.x));
+    if (s0.c?.length) setCOpen(set(s0.c));
+    if (s0.s?.length) setSOpen(set(s0.s));
+    if (s0.i?.length) setIOpen(set(s0.i));
+    if (s0.e?.length) setEOpen(set(s0.e));
+    if (s0.h?.length) setHOpen(set(s0.h));
+    if (s0.b) setBOpen(s0.b);
+    let moved = false;
+    const stop = () => { moved = true; };
+    const put = () => {
+      if (moved) return;
+      const box = sc(), el = bodyRef.current?.querySelector<HTMLElement>(`.sefer-flow [data-line="${s0.line}"]`);
+      if (!box || !el) return;
+      box.scrollTop += el.getBoundingClientRect().top - (viewTop(box) + 8) + s0.off;
+    };
+    const ts = [700, 1600, 3000].map((ms) => window.setTimeout(put, ms)); // again as the boxes fill in
+    window.addEventListener('touchstart', stop, { once: true, passive: true });
+    window.addEventListener('wheel', stop, { once: true, passive: true });
+    return () => { ts.forEach((t) => window.clearTimeout(t)); window.removeEventListener('touchstart', stop); window.removeEventListener('wheel', stop); };
+  }, [src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The bumper: at the very top or bottom of an amud the page stops. A gentle extra push (pulling a little further
   // with your finger, or scrolling a little further with a mouse) brings in the previous / next amud.
@@ -907,6 +947,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, prevSrc.enB?.[i], en) : null;
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
+                        {mishnahHead(prevSrc?.ref, i + 1)}
                         {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`pm${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); }); } else { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); } }}>
                           {pairs
@@ -982,6 +1023,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const pairs = settings.interlinear && isOpen && en ? pairPhrases(line, src.enB?.[i], en) : null;
               return (
                 <div key={i} style={{ display: 'contents' }}>
+                {mishnahHead(src.ref, i + 1)}
                 {(outline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`m${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
@@ -1209,6 +1251,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, nextSrc.enB?.[i], en) : null;
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
+                        {mishnahHead(nextSrc?.ref, i + 1)}
                         {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`nm${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); }); } else { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); } }}>
                           {pairs

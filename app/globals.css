@@ -3202,3 +3202,7 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
 [data-look='clay'] .lx-src-box { border-left-color: #CC7C5E; }
 /* Nov 18: when an answer comes, your question sits near the top with the last lines of what came before above it. */
 .lchat-me, .min-me { scroll-margin-top: 90px; }
+/* Nov 18: where each mishnah begins, in a perek of Mishnah. */
+.sefer .mishnah-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 1px solid color-mix(in srgb, #CC7C5E 45%, transparent); font: 700 12px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: #CC7C5E; }
+.sefer .mishnah-head .he { font: 700 15px var(--f-he); letter-spacing: 0; text-transform: none; }
+.sefer .sefer-flow > div:first-child .mishnah-head, .sefer .mishnah-head:first-child { margin-top: 6px; }
