@@ -3,9 +3,8 @@ import { VOICE, VOICES, costUsd } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { needCredit } from '@/lib/credits';
 import { prepareForSpeech, speechInstructions } from '@/lib/pronounce';
 import { safeKey, signedUrl, writeBytes, writtenAt } from '@/lib/store';
@@ -36,8 +35,8 @@ async function makeScript(ref: string, nusach: string): Promise<{ text: string; 
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const model = await keptModel();
-  const r = await runAnthropic({ model: model.id, system: PROMPT(nusach), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 26000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
-  await logCost({ sessionId: null, kind: 'listen-script', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const r = await runKept({ model: model.id, system: PROMPT(nusach), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 26000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  await logCost({ sessionId: null, kind: 'listen-script', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__|[\[\]()]/g, '').replace(/[א-ת֑-ׇ]+/g, '').trim();
   if (text.length < 1500) throw new Error('The talk did not come back.'); // not kept: tried again
   return { text: text.slice(0, 12000), title: s.ref };
@@ -78,7 +77,7 @@ async function place(ref: string) {
   const s = await getSettings();
   const voice = VOICES.some((v) => v.id === s.voice) ? s.voice : VOICES[0].id;
   const nusach: 'ashkenaz' | 'sephardi' = s.nusach === 'sephardi' ? 'sephardi' : 'ashkenaz';
-  const model = s.keptModel === 'sonnet' ? 'sonnet' : 'opus';
+  const model = s.keptModel ?? 'opus';
   return { voice, nusach, path: `audio/listen/${safeKey(`${voice}-${nusach}-${model}`)}/${safeKey(ref)}.mp3` };
 }
 const scriptOf = (ref: string, nusach: string) => keep(`listen-v1-${nusach}`, ref, () => makeScript(ref, nusach), (x) => !x.text);

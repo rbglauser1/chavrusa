@@ -35,7 +35,9 @@ export const MODELS: Record<Provider, Record<Tier, ModelInfo>> = {
 // outlines, meforshim summaries, chazara, the learner's own buttons): Claude Opus 5.5 or Claude Sonnet 5.5, by the
 // setting "Made once and kept" (keptModel; Opus unless chosen). Each is paid for once, ever. (A quick translation of
 // a tapped line stays on the basic model.)
-export const keptModelOf = (s: { keptModel?: 'opus' | 'sonnet' }) => (s.keptModel === 'sonnet' ? MODELS.anthropic.middle : MODELS.anthropic.top);
+// Nov 18: OpenAI too: GPT-6 Astra (OpenAI's top) or GPT-6 Sol (its middle, Sonnet's level).
+export type KeptPick = 'opus' | 'sonnet' | 'astra' | 'sol';
+export const keptModelOf = (s: { keptModel?: KeptPick }) => (s.keptModel === 'sonnet' ? MODELS.anthropic.middle : s.keptModel === 'astra' ? MODELS.openai.top : s.keptModel === 'sol' ? MODELS.openai.middle : MODELS.anthropic.top);
 
 export const TIER_LABELS: Record<Tier, string> = { basic: 'Basic', middle: 'Standard', top: 'Deep' };
 
@@ -409,7 +411,7 @@ export interface Settings {
   costWarnUsd: number | null;
   disclaimerAccepted: boolean;
   disclaimer2?: boolean;   // the Nov 9 wording (not rabbinically approved; AI makes mistakes; not a replacement for a chavrusa) was accepted
-  keptModel?: 'opus' | 'sonnet'; // the AI for everything made once and kept (maps, explanations…); unset = Opus
+  keptModel?: 'opus' | 'sonnet' | 'astra' | 'sol'; // the AI for everything made once and kept (maps, explanations…); unset = Opus
   notebookPins?: string[];        // topics pinned at the top of the Notebook
   myButtons?: MyButton[];         // the learner's own AI buttons (Settings → Extras → My buttons)
   voice: string;            // voice for Basic talk mode (OpenAI text-to-speech)

@@ -4,9 +4,8 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
 
 export const runtime = 'nodejs';
@@ -42,12 +41,12 @@ async function makeOutline(ref: string): Promise<{ outline: string }> {
   } catch { /* optional */ }
   const en = c.en.length ? `\n\nSefaria's English of the piece (may be missing or loose):\n${c.en.join(' ').replace(/<[^>]+>/g, '').slice(0, 4000)}` : '';
   const model = await keptModel();
-  const r = await runAnthropic({
+  const r = await runKept({
     lang: true, model: model.id, system: PROMPT,
     history: [{ role: 'user', content: `${on}The piece (${c.ref}):\n${piece}${en}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 2000,
   });
-  await logCost({ sessionId: null, kind: 'commoutline', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'commoutline', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const outline = r.text.split('\n').filter((l) => /^\s*[-•*]\s+\S/.test(l)).map((l) => l.replace(/\s+$/, '').slice(0, 400)).slice(0, 30).join('\n');
   if (!outline) throw new Error('The outline did not come back in the right form.');
   return { outline };

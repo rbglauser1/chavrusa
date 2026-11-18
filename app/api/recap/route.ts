@@ -3,10 +3,9 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -34,8 +33,8 @@ async function makeRecap(base: string, n: number): Promise<Recap> {
     return `[${i + 1}] ${mark}${clip(stripNikud(he), 500)}${end}${s.en[i] ? `\n    ${clip(s.en[i], 500)}` : ''}`;
   }).join('\n');
   const model = await keptModel();
-  const r = await runAnthropic({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}, he is at line ${n}\n\n${lines.slice(-20000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 700 });
-  await logCost({ sessionId: null, kind: 'recap', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const r = await runKept({ lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}, he is at line ${n}\n\n${lines.slice(-20000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 700 });
+  await logCost({ sessionId: null, kind: 'recap', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const raw = r.text.trim();
   let out: Recap = { text: '' };
   try {

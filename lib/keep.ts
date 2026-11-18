@@ -15,11 +15,13 @@ const pathOf = (kind: string, key: string) => `ai/${safeKey(kind)}/${safeKey(key
  *  nor an empty one (`empty` says so): a text that couldn't be read just then is tried again next time. */
 export async function keep<T>(kind: string, key: string, make: () => Promise<T>, empty?: (v: T) => boolean): Promise<T> {
   // Made by Sonnet (Settings → Made once and kept): kept apart from Opus's (translations are the same either way).
-  const sonnet = !kind.startsWith('translate') && (await getSettings().catch(() => null))?.keptModel === 'sonnet';
+  // (Nov 18: OpenAI's Astra and Sol each kept apart too.)
+  const pick = kind.startsWith('translate') ? undefined : (await getSettings().catch(() => null))?.keptModel;
+  const sonnet = pick === 'sonnet' || pick === 'astra' || pick === 'sol';
   // Written in Hebrew, or in both (Settings → The AI writes in): kept apart from the English. Translations: always one.
   const lang = kind.startsWith('translate') ? 'en' : await aiLang();
   const kinded = `${kind}${lang === 'en' ? '' : `-${lang}`}`;
-  const path = pathOf(sonnet ? `${kinded}-sonnet` : kinded, key);
+  const path = pathOf(sonnet ? `${kinded}-${pick}` : kinded, key);
   const had = await readJson<{ v: T }>(path);
   // English chosen, but the kept copy came out in Hebrew (Nov 15: Tanya, a text with no English): made again, once.
   const checkLang = lang === 'en' && !/^(translate|targum|word|literal|interlinear|pieces)/.test(kind);

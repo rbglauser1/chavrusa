@@ -4,11 +4,10 @@ import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { pairPhrases, voicePhrases } from '@/lib/interlinear';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { parseAiJson } from '@/lib/aiLang';
 import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
 
 export const runtime = 'nodejs';
@@ -57,8 +56,8 @@ async function makeWeave(ref: string, n: number): Promise<{ phrases: Phrase[] }>
   const st = await getSettings();
   const model = await keptModel();
   const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
-  const r = await runAnthropic({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(st)}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
-  await logCost({ sessionId: null, kind: 'weave', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(st)}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
+  await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
   if (!out.length) throw new Error('The learning did not come back in the right form.');
@@ -83,8 +82,8 @@ async function makeDeep(ref: string, n: number, k: number): Promise<{ text: stri
   if (!got || !got.list[k]) return { text: '' };
   const model = await keptModel();
   const ask = `${got.s.ref}, line ${n}\n\n${context(got.s.he, got.s.en, n)}\n\nGo deeper on this phrase of line ${n}: ${stripNikud(got.list[k].he)}`;
-  const r = await runAnthropic({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
-  await logCost({ sessionId: null, kind: 'weave-deep', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const r = await runKept({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  await logCost({ sessionId: null, kind: 'weave-deep', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/\*\*|__/g, '').trim();
   if (text.length < 40) throw new Error('It did not come back.');
   return { text };

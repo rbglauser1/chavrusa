@@ -4,11 +4,10 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { clipWords, cutOff } from '@/lib/clip';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // Opus can take a while on a long amud
@@ -68,12 +67,12 @@ async function makeMap(ref: string): Promise<SugyaMapData> {
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const k = kindOf(s.ref);
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
-  const run = runAnthropic;
+  const run = runKept;
   const r = await run({
     lang: true, model: model.id, system: promptFor(k), history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000,
   });
-  await logCost({ sessionId: null, kind: 'map', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'map', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const n = s.he.length;
   const lineOf = (x: unknown) => Math.min(Math.max(1, Math.round(Number(x) || 1)), n);
   const str = (x: unknown, max: number) => clipWords(x, max);

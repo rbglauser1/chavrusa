@@ -3,9 +3,8 @@ import { VOICE, VOICES, costUsd } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { needCredit } from '@/lib/credits';
 import { prepareForSpeech, speechInstructions } from '@/lib/pronounce';
 import { safeKey, signedUrl, writeBytes, writtenAt } from '@/lib/store';
@@ -28,8 +27,8 @@ async function makeText(base: string, n: number, nusach: string): Promise<{ text
   const clip = (t: string, k: number) => (t.length > k ? `${t.slice(0, k)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}]${i + 1 === n ? ' ← THE LINE HE IS ON' : ''} ${clip(stripNikud(he), 500)}${s.en[i] ? `\n    ${clip(s.en[i], 500)}` : ''}`).join('\n');
   const model = await keptModel();
-  const r = await runAnthropic({ model: model.id, system: PROMPT(nusach), history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lines.slice(0, 20000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
-  await logCost({ sessionId: null, kind: 'bigpicture-text', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const r = await runKept({ model: model.id, system: PROMPT(nusach), history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lines.slice(0, 20000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  await logCost({ sessionId: null, kind: 'bigpicture-text', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__|[\[\]()]/g, '').replace(/[א-ת֑-ׇ]+/g, '').replace(/\s+/g, ' ').trim();
   if (text.length < 120) throw new Error('The big picture did not come back.'); // not kept: tried again
   return { text: text.slice(0, 1200) };
@@ -63,8 +62,8 @@ async function makeRead(base: string, n: number): Promise<{ text: string }> {
   const clip = (t: string, k: number) => (t.length > k ? `${t.slice(0, k)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}]${i + 1 === n ? ' ← THE LINE HE IS ON' : ''} ${clip(stripNikud(he), 500)}${s.en[i] ? `\n    ${clip(s.en[i], 500)}` : ''}`).join('\n');
   const model = await keptModel();
-  const r = await runAnthropic({ lang: true, model: model.id, system: READ_PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lines.slice(0, 20000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
-  await logCost({ sessionId: null, kind: 'bigpicture-read', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const r = await runKept({ lang: true, model: model.id, system: READ_PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lines.slice(0, 20000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  await logCost({ sessionId: null, kind: 'bigpicture-read', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__/g, '').trim();
   if (text.length < 60) throw new Error('The big picture did not come back.');
   return { text: text.slice(0, 1600) };
@@ -90,7 +89,7 @@ export async function POST(req: NextRequest) {
     const st = await getSettings();
     const voice = VOICES.some((v) => v.id === st.voice) ? st.voice : VOICES[0].id;
     const nusach: 'ashkenaz' | 'sephardi' = st.nusach === 'sephardi' ? 'sephardi' : 'ashkenaz';
-    const kept = st.keptModel === 'sonnet' ? 'sonnet' : 'opus';
+    const kept = st.keptModel ?? 'opus';
     const path = `audio/bigpicture/${safeKey(`${voice}-${nusach}-${kept}`)}/${safeKey(`${base}:${n}`)}.mp3`;
     if (await writtenAt(path)) return NextResponse.json({ url: await signedUrl(path) });
     const { text } = await keep(`bigpicture-v1-${nusach}`, `${base}:${n}`, () => makeText(base, n, nusach), (x) => !x.text);

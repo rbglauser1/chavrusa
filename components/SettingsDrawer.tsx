@@ -417,10 +417,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>Made once and kept</label>
-              <Seg value={s.keptModel === 'sonnet' ? 'sonnet' : 'opus'} options={[['opus', 'Claude Opus'], ['sonnet', 'Claude Sonnet']]} onPick={(v) => onChange({ keptModel: v as 'opus' | 'sonnet' })} />
+              <Seg value={s.keptModel ?? 'opus'} options={[['opus', 'Opus'], ['sonnet', 'Sonnet'], ['astra', 'Astra'], ['sol', 'Sol']]} onPick={(v) => onChange({ keptModel: v as 'opus' | 'sonnet' | 'astra' | 'sol' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                Sugya maps, explanations, ideas, review questions, summaries, intros, chazara and your own buttons. Each is made once, the first time it’s opened, then kept and free. {s.keptModel === 'sonnet' ? 'Sonnet costs about half as much; Opus goes deeper.' : 'Opus goes deeper; Sonnet costs about half as much.'} What each one made is kept apart, so switching never mixes them.
-              </div>
+                Learn with me, Explain, Steps, Pshat, Big picture, sugya maps, ideas, review questions, summaries, intros, chazara and your own buttons. Each is made once, the first time it’s opened, then kept and free. Claude: Opus (the deepest; $4 / $20 a million words read / written) or Sonnet (half that). OpenAI: Astra (its top; $10 / $50) or Sol (Sonnet’s level and price). What each one made is kept apart, so switching back finds it again; switching to another makes things anew the first time.</div>
             </div>
             <div className="field">
               <label>Saver (typing and talking)</label>

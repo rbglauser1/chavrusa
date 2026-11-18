@@ -6,9 +6,8 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -49,12 +48,12 @@ async function makeSteps(ref: string): Promise<{ steps: Step[] }> {
   const want = letters(piece);
   let lastErr = 'The steps did not come back in the right form.';
   for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await runAnthropic({
+    const r = await runKept({
       lang: true, model: model.id, system: PROMPT,
       history: [{ role: 'user', content: `${on}The piece (${c.ref}):\n${piece}${attempt ? '\n\n(Your last reply changed, added or dropped words. Copy every word exactly, in order.)' : ''}` }],
       tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 12000,
     });
-    await logCost({ sessionId: null, kind: 'commsteps', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+    await logCost({ sessionId: null, kind: 'commsteps', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
     let arr: unknown = [];
     try { arr = parseAiJson(r.text, '['); } catch { arr = []; }
     const steps: Step[] = (Array.isArray(arr) ? arr : [])

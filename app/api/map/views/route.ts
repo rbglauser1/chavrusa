@@ -4,11 +4,10 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { clipWords } from '@/lib/clip';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { LIBRARY_TOOLS, libraryExecutor } from '@/lib/libraryTools';
 
 export const runtime = 'nodejs';
@@ -53,10 +52,10 @@ async function makeViews(ref: string): Promise<{ disputes: Dispute[]; made: bool
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const model = await keptModel();
   const tanakh = TANAKH.test(s.ref);
-  const r = await runAnthropic(tanakh
+  const r = await runKept(tanakh
     ? { lang: true, model: model.id, system: PROMPT_TANAKH, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }], tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, new Set<string>()), effort: model.effort, thinking: 'disabled', maxSteps: 8, maxTokens: 5000 }
     : { lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
-  await logCost({ sessionId: null, kind: 'mapviews', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'mapviews', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const str = (x: unknown, max: number) => clipWords(x, max);
   let d: { disputes?: unknown };
   try { d = parseAiJson(r.text, '{'); } catch { throw new Error('The table did not come back in the right form.'); }

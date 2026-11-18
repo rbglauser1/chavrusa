@@ -8,7 +8,7 @@ import { runOpenAI } from '@/lib/llm/openai';
 import { parseAiJson } from '@/lib/aiLang';
 import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
 
 export const runtime = 'nodejs';
@@ -47,11 +47,11 @@ async function makeGuide(base: string, n: number): Promise<Guide> {
   const s = await getText(base, approved);
   if (!s.verdict.allowed || !s.he.length || n > s.he.length) return { question: '', hint: '', kashya: null };
   const model = await keptModel();
-  const r = await runAnthropic({
+  const r = await runKept({
     lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n}${await endOfPrevious(base, n, approved)}\n\n${lineText(s.he, s.en, n)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 700,
   });
-  await logCost({ sessionId: null, kind: 'guide', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'guide', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const d = parseAiJson(r.text, '{') as { question?: unknown; hint?: unknown; kashya?: { q?: unknown; teretz?: unknown } | null };
   const str = (x: unknown, m: number) => String(x ?? '').replace(/\*\*/g, '').trim().slice(0, m);
   const question = str(d.question, 400);

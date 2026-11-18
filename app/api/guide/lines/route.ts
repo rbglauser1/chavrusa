@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText, endOfPrevious } from '@/lib/sefaria';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { parseAiJson } from '@/lib/aiLang';
 import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { sectionText } from '@/lib/guideText';
 
 export const runtime = 'nodejs';
@@ -34,11 +33,11 @@ export async function GET(req: NextRequest) {
       const s = await getText(ref, await approvedList());
       if (!s.verdict.allowed || !s.he.length) return { lines: [] as Row[] };
       const model = await keptModel();
-      const r = await runAnthropic({
+      const r = await runKept({
         lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref} (${s.he.length} lines)${await endOfPrevious(ref, 1, await approvedList())}\n\n${sectionText(s.he, s.en, 30000)}` }],
         tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: Math.min(6000, 300 + s.he.length * 110),
       });
-      await logCost({ sessionId: null, kind: 'guide-lines', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+      await logCost({ sessionId: null, kind: 'guide-lines', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
       const arr = parseAiJson(r.text, '[') as Partial<Row>[];
       const str = (x: unknown, m: number) => String(x ?? '').replace(/\*/g, '').trim().slice(0, m);
       const lines = (Array.isArray(arr) ? arr : []).map((x, i) => ({ n: Number(x.n) || i + 1, where: str(x.where, 300), ask: str(x.ask, 400), hint: str(x.hint, 300) }))

@@ -3,11 +3,10 @@ import { costUsd, type MyButton } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { LIBRARY_TOOLS, libraryExecutor, sourcesNamed } from '@/lib/libraryTools';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 180;
@@ -39,14 +38,14 @@ async function run(b: MyButton, ref: string): Promise<{ text: string; sources: s
   const used = new Set<string>([s.ref]);
   const library = b.reach === 'library';
   const model = await keptModel();
-  const r = await runAnthropic({
+  const r = await runKept({
     lang: true, model: model.id,
     system: `${GUARD}${library ? '\nYou have the whole library: "links" shows what is linked to a line, "read" opens any sefer, "search" and "find" look further. Read what the request needs, no more.' : ''}\n\nTHE LEARNER'S BUTTON: "${b.name}"\nHis request: ${b.prompt}`,
     history: [{ role: 'user', content: context }],
     tools: library ? LIBRARY_TOOLS : [], execute: library ? libraryExecutor(approved, used) : async () => '',
     effort: model.effort, thinking: 'disabled', maxSteps: library ? 6 : 1,
   });
-  await logCost({ sessionId: null, kind: 'mybutton', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'mybutton', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, '').trim();
   if (text.length < 10) throw new Error('Nothing came back.');
   return { text: text.slice(0, 5000), sources: sourcesNamed(text, used) };

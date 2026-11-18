@@ -7,7 +7,7 @@ import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from './credits';
-import { keptModel } from './keptModel';
+import { keptModel, runKept } from './keptModel';
 
 // The amud intro: one paragraph telling the learner what's coming on this amud (or perek / siman), shown at its top
 // and, in Read, Explain, Ask, said by the voice when the amud begins. Made once per amud by the AI, then kept.
@@ -26,13 +26,13 @@ async function makeIntro(ref: string): Promise<string> {
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
-  const run = runAnthropic;
+  const run = runKept;
   const r = await run({
     lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);
-  await logCost({ sessionId: null, kind: 'intro', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: usd }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'intro', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: usd }).catch(() => {});
   const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim();
   if (text.length < 40) throw new Error('The intro did not come back.'); // not kept: tried again next time
   return text.slice(0, 1400);

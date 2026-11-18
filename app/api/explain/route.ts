@@ -3,11 +3,10 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText, endOfPrevious } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { LIBRARY_TOOLS, libraryExecutor, sourcesNamed } from '@/lib/libraryTools';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 180; // it may read several sources first
@@ -58,11 +57,11 @@ async function makeExplain(base: string, n: number, short = false): Promise<{ te
     if (c.verdict.allowed && c.he.length) { comm = `\n\n${MAIN_COMM(base)} on line ${n} (${c.ref}):\n${clip(c.he.map(stripNikud).join(' '), 2500)}`; used.add(c.ref); }
   } catch { /* optional */ }
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
-  const r = await runAnthropic({
+  const r = await runKept({
     lang: true, model: model.id, system: short ? PROMPT + SHORT : PROMPT, history: [{ role: 'user', content: `${s.ref}, line ${n} (the line's own reference: ${s.ref}:${n})${await endOfPrevious(base, n, approved)}\n\n${lines.slice(0, 26000)}${comm}` }],
     tools: LIBRARY_TOOLS, execute: libraryExecutor(approved, used), effort: model.effort, thinking: 'disabled', maxSteps: short ? 3 : 6,
   });
-  await logCost({ sessionId: null, kind: 'explain', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'explain', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__/g, '').trim();
   if (text.length < 60) throw new Error('The explanation did not come back.'); // not kept: tried again next time
   let out = text;

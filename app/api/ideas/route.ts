@@ -5,11 +5,10 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { keep } from '@/lib/keep';
 import { relatedLines, type Item } from '@/lib/related';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -45,12 +44,12 @@ async function makeIdeas(base: string, n: number): Promise<{ points: { text: str
   }).filter(Boolean);
   if (!srcs.length) return { points: [] };
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
-  const r = await runAnthropic({
+  const r = await runKept({
     lang: true, model: model.id, system: PROMPT,
     history: [{ role: 'user', content: `The line: ${base}, line ${n}\n${he}\n${en}\n\nThe linked seforim:\n\n${srcs.join('\n\n')}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
-  await logCost({ sessionId: null, kind: 'ideas', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'ideas', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const known = new Set(pick.map((x) => x.ref));
   let points: { text: string; refs: string[] }[] = [];
   let answered = false; // a proper answer came back, even if it was "nothing to add"

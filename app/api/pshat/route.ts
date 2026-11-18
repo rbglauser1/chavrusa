@@ -6,9 +6,8 @@ import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
 import { stripNikud } from '@/lib/hebrew';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { aiLang } from '@/lib/aiLang';
 
 export const runtime = 'nodejs';
@@ -30,13 +29,13 @@ async function makePshat(ref: string): Promise<{ moves: Move[]; usd: number }> {
   const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}…` : t);
   const lines = s.he.map((he, i) => `[${i + 1}] ${clip(stripNikud(he), 700)}${s.en[i] ? `\n    ${clip(s.en[i], 700)}` : ''}`).join('\n');
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
-  const run = runAnthropic;
+  const run = runKept;
   const r = await run({
     lang: true, model: model.id, system: PROMPT, maxTokens: 8000, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);
-  await logCost({ sessionId: null, kind: 'pshat', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: usd }).catch(() => {});
+  await logCost({ sessionId: null, kind: 'pshat', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: usd }).catch(() => {});
   const json = r.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]';
   let moves: Move[] = [];
   try {

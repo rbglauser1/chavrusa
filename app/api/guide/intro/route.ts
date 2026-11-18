@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { costUsd } from '@/lib/config';
 import { approvedList, logCost } from '@/lib/db';
 import { getText } from '@/lib/sefaria';
-import { runAnthropic } from '@/lib/llm/anthropic';
 import { parseAiJson } from '@/lib/aiLang';
 import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
-import { keptModel } from '@/lib/keptModel';
+import { keptModel, runKept } from '@/lib/keptModel';
 import { sectionText } from '@/lib/guideText';
 
 export const runtime = 'nodejs';
@@ -30,11 +29,11 @@ export async function GET(req: NextRequest) {
       const s = await getText(ref, await approvedList());
       if (!s.verdict.allowed || !s.he.length) return { hook: '', watch: '' };
       const model = await keptModel();
-      const r = await runAnthropic({
+      const r = await runKept({
         lang: true, model: model.id, system: PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${sectionText(s.he, s.en)}` }],
         tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 700,
       });
-      await logCost({ sessionId: null, kind: 'guide-intro', provider: 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+      await logCost({ sessionId: null, kind: 'guide-intro', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
       const d = parseAiJson(r.text, '{') as { hook?: unknown; watch?: unknown };
       const hook = String(d.hook ?? '').replace(/\*\*/g, '').trim().slice(0, 1400);
       if (!hook) throw new Error('The opening did not come back.');
