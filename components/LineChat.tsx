@@ -30,7 +30,9 @@ export default function LineChat({ lineRef, onClose, follow, ask, onAsked, onVoi
     const last = msgs[msgs.length - 1];
     const answers = endRef.current?.parentElement?.querySelectorAll('.lchat-ai');
     const a = answers?.[answers.length - 1] as HTMLElement | undefined;
-    if (!busy && last && last.role !== 'user' && a) a.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // …and what led to it stays in view above it: your question, and the end of what came before (Nov 18).
+    const q = a?.previousElementSibling as HTMLElement | null | undefined;
+    if (!busy && last && last.role !== 'user' && a) (q?.classList.contains('lchat-me') ? q : a).scrollIntoView({ block: 'start', behavior: 'smooth' });
     else endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [msgs.length, busy]); // eslint-disable-line react-hooks/exhaustive-deps
 

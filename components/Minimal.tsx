@@ -186,7 +186,9 @@ export default function Minimal(p: Props) {
       const answers = pane.querySelectorAll('.min-them, .min-them-group');
       const a = answers[answers.length - 1] as HTMLElement | undefined;
       const last = p.items[p.items.length - 1];
-      if (last?.kind === 'assistant' && a) pane.scrollTop = a.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 8; // the answer's beginning
+      const q = a?.previousElementSibling as HTMLElement | null | undefined;
+      const t = q?.classList.contains('min-me') ? q : a;
+      if (last?.kind === 'assistant' && t) pane.scrollTop = t.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 90; // the question, with the end of what came before above it
       else pane.scrollTop = pane.scrollHeight;
     };
     revealLatest();
@@ -248,7 +250,8 @@ export default function Minimal(p: Props) {
     const last = p.items[p.items.length - 1];
     const answers = endRef.current?.parentElement?.querySelectorAll('.min-them, .min-them-group');
     const a = answers?.[answers.length - 1] as HTMLElement | undefined;
-    if (last?.kind === 'assistant' && a) a.scrollIntoView({ block: 'start' });
+    const q = a?.previousElementSibling as HTMLElement | null | undefined; // your question and the end of what came before stay in view
+    if (last?.kind === 'assistant' && a) (q?.classList.contains('min-me') ? q : a).scrollIntoView({ block: 'start' });
     else endRef.current?.scrollIntoView({ block: 'end' });
   }, [p.items.length, p.busy, sheet, typing, tab]); // eslint-disable-line react-hooks/exhaustive-deps
   const lastSaid = [...p.items].reverse().find((x) => x.kind === 'assistant')?.text ?? '';

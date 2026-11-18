@@ -3200,3 +3200,5 @@ html .sefer .gist { font-size: var(--ai-size, var(--en-size, 16px)); }
 .lx-src-x { border: 0; background: none; color: var(--soft); font-size: 16px; padding: 2px 6px; }
 [data-look='clay'] .lx-src.on, [data-look='chatgpt'] .lx-src.on { background: #CC7C5E; border-color: #CC7C5E; color: #fff; }
 [data-look='clay'] .lx-src-box { border-left-color: #CC7C5E; }
+/* Nov 18: when an answer comes, your question sits near the top with the last lines of what came before above it. */
+.lchat-me, .min-me { scroll-margin-top: 90px; }
