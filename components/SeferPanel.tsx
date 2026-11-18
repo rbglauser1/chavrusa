@@ -572,7 +572,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         {settings.review && <button className="smap-btn" onClick={() => open('review')}>✓ Review questions</button>}
         {settings.sourceSheet !== false && kind !== 'none' && <button className="smap-btn" onClick={() => setSheetFor(s2)}>📄 Source sheet</button>}
         {settings.listenDaf !== false && kind !== 'none' && <button className={`smap-btn ${main && listenOpen ? 'on' : ''}`} onClick={() => open('listen')}>🎧 Listen</button>}
-        {main && amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}>✦ {b.name}</button>)}
+        {main && amudButtons.map((b) => <button key={b.id} className={`smap-btn ${topOpen === b.id ? 'on' : ''}`} onClick={() => setTopOpen(topOpen === b.id ? null : b.id)}><span className="ai-star">✦</span> {b.name}</button>)}
       </div>
     );
   };
@@ -1028,10 +1028,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                         ))}
                         {aiX && !hubOn && settings.explainLine !== false && (
-                          <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}>✦ Explain</button>
+                          <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}><span className="ai-star">✦</span> Explain</button>
                         )}
                         {aiX && !hubOn && settings.lineChat !== false && (
-                          <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}>✦ Back and forth</button>
+                          <button className={`comm-btn ai ${cOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setCOpen, i)}><span className="ai-star">✦</span> Back and forth</button>
                         )}
                         {lineX && !hubOn && settings.lineSources !== false && rel?.ref === src.ref && sourcesCount(rel.lines[partNum(i)]) > 0 && (
                           <button className={`comm-btn ${sOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setSOpen, i)}>Sources ({sourcesCount(rel.lines[partNum(i)])})</button>
@@ -1046,10 +1046,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           <button className={`comm-btn ${hOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setHOpen, i)}>⚖ Halacha</button>
                         )}
                         {lineX && !hubOn && settings.lineSources !== false && rel?.ref === src.ref && hasIdeas(rel.lines[partNum(i)]) && (
-                          <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Ideas</button>
+                          <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}><span className="ai-star">✦</span> Ideas</button>
                         )}
                         {aiX && !hubOn && lineButtons.map((b) => (
-                          <button key={b.id} className={`comm-btn ai ${bOpen === `${i}|${b.id}` ? 'on' : ''}`} onClick={() => setBOpen(bOpen === `${i}|${b.id}` ? null : `${i}|${b.id}`)}>✦ {b.name}</button>
+                          <button key={b.id} className={`comm-btn ai ${bOpen === `${i}|${b.id}` ? 'on' : ''}`} onClick={() => setBOpen(bOpen === `${i}|${b.id}` ? null : `${i}|${b.id}`)}><span className="ai-star">✦</span> {b.name}</button>
                         ))}
                         {conns === null && !fallback.length && i === 0 && connState === 'loading' && <span className="muted comm-note">Finding commentaries…</span>}
                         {conns === null && i === 0 && connState === 'failed' && (
@@ -1104,7 +1104,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                           {tab('elsewhere', 'Elsewhere in Shas', c.elsewhere)}
                           {tab('halacha', 'Halacha', c.halacha)}
                           {mapOn && <button className="comm-btn" onClick={() => (wholeSec ? setPeekAt(i + 1) : (setMapOpen(true), toAmud()))}>🗺 Map</button>}
-                          {aiX && wTab === 'sources' && L && hasIdeas(L) && <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}>✦ Summarize</button>}
+                          {aiX && wTab === 'sources' && L && hasIdeas(L) && <button className={`comm-btn ai ${iOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setIOpen, i)}><span className="ai-star">✦</span> Summarize</button>}
                         </div>
                         {L && wTab === 'sources' && c.sources > 0 && <SourcesBox groups={L} tanakh={rel!.tanakh} onClose={() => setWOpen(null)} onOpen={go} />}
                         {L && wTab === 'elsewhere' && c.elsewhere > 0 && <Elsewhere items={L.parallels} lineRef={partRef(i)} onClose={() => setWOpen(null)} onOpen={go} />}
