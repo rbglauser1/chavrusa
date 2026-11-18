@@ -345,3 +345,13 @@ body:has(.launch-home) .five-pill { display:none; }
 @media (max-width:1049px) and (display-mode: standalone) {
   :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(12px + env(safe-area-inset-top)) !important; }
 }
+
+/* Nov 18 (2): the reading screen's title bar on the phone: only the English name (the Hebrew under it is gone), set a
+   little lower, clear of the iPhone's blur under the clock, and the text starts right under it. */
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']):not([data-st-full]) .st-study-header>div>span { display:none; }
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-bottom:4px; }
+}
+@media (max-width:1049px) and (display-mode: standalone) {
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(18px + env(safe-area-inset-top)) !important; }
+}
