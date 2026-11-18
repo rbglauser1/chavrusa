@@ -9,6 +9,7 @@ import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
+import { AWAKE_DEEP, awakeOn } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -93,13 +94,13 @@ export async function GET(req: NextRequest) {
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 
-async function makeDeep(ref: string, n: number, k: number): Promise<{ text: string }> {
+async function makeDeep(ref: string, n: number, k: number, awake = false): Promise<{ text: string }> {
   await needCredit();
   const got = await phrasesOf(ref, n);
   if (!got || !got.list[k]) return { text: '' };
   const model = await keptModel();
   const ask = `${got.s.ref}, line ${n}\n\n${context(got.s.he, got.s.en, n)}\n\nGo deeper on this phrase of line ${n}: ${stripNikud(got.list[k].he)}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  const r = await runKept({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}${awake ? `\n\n${AWAKE_DEEP}` : ''}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'weave-deep', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = r.text.replace(/\*\*|__/g, '').trim();
   if (text.length < 40) throw new Error('It did not come back.');
@@ -109,6 +110,7 @@ async function makeDeep(ref: string, n: number, k: number): Promise<{ text: stri
 export async function POST(req: NextRequest) {
   const { ref, n, k } = await req.json().catch(() => ({}));
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
-  try { return NextResponse.json(await keep('weave-deep-v2', `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k)), (x) => !x.text)); }
+  const awake = await awakeOn(); // the same Tone as the rest (Nov 18)
+  try { return NextResponse.json(await keep(awake ? 'weave-deep-awake-v1' : 'weave-deep-v2', `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), awake), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }

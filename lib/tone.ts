@@ -19,3 +19,6 @@ Each heading still says what the step does, in at most 18 words, and may end on 
 
 export const AWAKE_INTRO = `TONE, WAKE HIM UP: write the introduction to pull him in, in ${VOICES}
 Open with a grabber (a scene, a challenge, a "you won't believe what happens here"), keep everything the introduction has to say, and end with a hook that makes him want to start the first line.`;
+
+export const AWAKE_DEEP = `TONE, WAKE HIM UP: go deeper with energy, in ${VOICES}
+Keep every bit of the depth (the meforshim, the sevara, the question it answers), just told so he can't put it down, and end with a hook.`;
