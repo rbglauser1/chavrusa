@@ -101,6 +101,8 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   const [tick, setTick] = useState(0);
   const body = useRef<HTMLDivElement | null>(null);
   const done = n > total;
+  const firstRef = useRef(refText);
+  useEffect(() => { if (firstRef.current !== refText) { firstRef.current = refText; setN(Math.min(Math.max(1, start), total)); } }, [refText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (done) return;
@@ -135,6 +137,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   const atEnd = steps.length > 0 && shown >= steps.length;
   const next = () => {
     if (!atEnd) { setShown((v) => v + 1); return; }
+    if (n >= total && onNext) { onNext(); return; } // straight on into the next amud, the panel stays open
     setN((v) => v + 1);
   };
   const back = () => { if (shown > 1) setShown((v) => v - 1); else if (n > 1) setN((v) => v - 1); };
@@ -185,7 +188,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
       {!done && (
         <div className="lw-foot">
           <button className="lw-back" onClick={back} disabled={n === 1 && shown <= 1} aria-label="Back">‹</button>
-          <button className="lw-next" onClick={next} disabled={!phrases.length}>{atEnd ? (n < total ? 'Next line ›' : 'Finish ›') : steps[shown - 1]?.part === 'before' ? 'Show the text ›' : 'Next ›'}</button>
+          <button className="lw-next" onClick={next} disabled={!phrases.length}>{atEnd ? (n < total ? 'Next line ›' : onNext ? (/^Mishnah |^[A-Z][a-z]+ \d+$/.test(refText) && !/\d+[ab]$/.test(refText) ? 'Next perek ›' : 'Next amud ›') : 'Finish ›') : steps[shown - 1]?.part === 'before' ? 'Show the text ›' : 'Next ›'}</button>
         </div>
       )}
     </div>,

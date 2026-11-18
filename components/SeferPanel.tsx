@@ -759,7 +759,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Learn with me (from a line, or from the top) and this line's piece of the map (Nov 15): whole sections only.
   const [lwmAt, setLwmAt] = useState<number | null>(null);
   const [peekAt, setPeekAt] = useState<number | null>(null);
-  useEffect(() => { setLwmAt(null); setPeekAt(null); }, [src?.ref]);
+  // Nov 18: Learn with me carries on into the next amud (or perek) without closing, from its first line.
+  const lwmCarry = useRef(false);
+  useEffect(() => { setLwmAt(lwmCarry.current ? 1 : null); lwmCarry.current = false; setPeekAt(null); }, [src?.ref]);
   const wholeSec = !!src && aiX && !/:\d+(-\d+)?$/.test(src.ref);
   // Learn with me by voice: start the call; if one is on, end it and start again (the new one leads).
   const [voiceRestart, setVoiceRestart] = useState(false);
@@ -834,7 +836,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
         <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
         {embedded && src && !isComm && !showLib && wholeSec && <FocusHelp settings={settings} refText={src.ref} total={src.he.length} focus={src.focus} picked={picked} talkOn={!!talk?.on} />}
-        {lwmAt != null && <LearnWoven refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => turn(nextRef) : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
+        {lwmAt != null && <LearnWoven refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => { lwmCarry.current = true; void turn(nextRef); } : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
       </>
     : null;
   return (
