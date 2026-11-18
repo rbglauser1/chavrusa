@@ -1,5 +1,5 @@
 import { clipWords } from '@/lib/clip';
-import { parseAiJson } from '@/lib/aiLang';
+import { aiLang, parseAiJson } from '@/lib/aiLang';
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { keep } from '@/lib/keep';
@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
   try {
     const key = ['gist-v2-opus', String(section), String(title), list.slice().sort().join('|')];
     // Kept for good (lib/keep): a meforesh's summaries on an amud are made once, ever.
-    const gists = await keep('gist-v2-opus', key.join('|'), () => unstable_cache(() => makeGists(String(title), list), key, { revalidate: 60 * 60 * 24 * 30 })());
+    const lang = await aiLang(); // the server's month cache per language too (Nov 17)
+    const gists = await keep('gist-v2-opus', key.join('|'), () => unstable_cache(() => makeGists(String(title), list), [...key, lang], { revalidate: 60 * 60 * 24 * 30 })());
     return NextResponse.json({ gists });
   } catch (e) {
     return NextResponse.json({ gists: {}, error: (e as Error).message });

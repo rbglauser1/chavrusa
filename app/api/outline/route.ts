@@ -9,6 +9,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from '@/lib/credits';
 import { keptModel } from '@/lib/keptModel';
+import { aiLang } from '@/lib/aiLang';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -49,7 +50,8 @@ async function makeOutline(ref: string): Promise<{ moves: Move[]; usd: number }>
 
 // Kept for good (lib/keep): the same amud's outline is never paid for twice. Inside, the server's month cache, so a
 // copy made before is moved into the store for free.
-const cached = (ref: string) => keep('outline-v3-opus', ref, () => unstable_cache(() => makeOutline(ref), ['outline-v3-opus', ref], { revalidate: 60 * 60 * 24 * 30 })());
+// (Nov 17: the server's month cache is kept per language too, or a Hebrew outline came back when English was asked.)
+const cached = async (ref: string) => { const lang = await aiLang(); return keep('outline-v3-opus', ref, () => unstable_cache(() => makeOutline(ref), ['outline-v3-opus', lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
