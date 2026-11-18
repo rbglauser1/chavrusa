@@ -22,11 +22,11 @@ export const maxDuration = 120;
 const PROMPT = `You are a warm, sharp chavrusa learning a sefer with the learner, one line at a time, phrase by phrase, the way a rebbi learns inside: read a few words, translate, explain, go on.
 You get the text with numbered lines; the line you are learning now is marked >>> <<<, and under it its phrases, numbered. For EACH phrase, in order, return:
 - "en": a short literal translation of the phrase (keep the given one if it is good);
-- "note": the explanation woven in, 1 or 2 short sentences (at most 40 words): what this phrase means and is doing, filling in what the terse words leave unsaid the way Rashi and the standard meforshim explain. Do not just repeat the translation. A phrase that is only a connector or a name may get a very short note.
+- "note": the explanation woven in, 1 or 2 short sentences (at most 40 words): what this phrase means and is doing, filling in what the terse words leave unsaid the way the standard meforshim explain (on the Gemara: Rashi; on a Mishnah: the Bartenura; on Chumash: Rashi). Name a meforesh only when you are sure he says it. Do not just repeat the translation. A phrase that is only a connector or a name may get a very short note.
 - At most ONE phrase in the whole line, and only if the line has a real turning point (a question, a contradiction, a proof, a surprising ruling or a turn), may also have "ask": one short question to get him thinking at that point, and "hint": one short sentence nudging toward the answer without giving it. Most lines have none.
 Reply with JSON only: {"phrases": [{"en": "...", "note": "...", "ask": "...", "hint": "..."}, ...]}, exactly one entry per phrase, in order. For learning terms and quoted words write the Hebrew or Aramaic in Hebrew letters. Use yeshivish Ashkenazi transliteration for names (Rav Yehudah, Tosafos). No markdown.`;
 
-const DEEP = `You are a warm, sharp chavrusa. The learner asked to go deeper on one phrase of the line marked >>> <<<. In 3 to 6 sentences (at most 120 words) go deeper on that phrase: what Rashi or Tosafos (or the standard meforshim on this sefer) say on it, the sevara behind it, and what question it answers or raises. Only what is truly there; plain prose, no markdown, no lists. Hebrew terms in Hebrew letters; yeshivish Ashkenazi names.`;
+const DEEP = `You are a warm, sharp chavrusa. The learner asked to go deeper on one phrase of the line marked >>> <<<. In 3 to 6 sentences (at most 120 words) go deeper on that phrase: what the standard meforshim on this sefer say on it (on the Gemara: Rashi and Tosafos; on a Mishnah: the Bartenura and Tosafos Yom Tov; on Chumash: Rashi and the Ramban), naming one only when you are sure he says it, the sevara behind it, and what question it answers or raises. Only what is truly there; plain prose, no markdown, no lists. Hebrew terms in Hebrew letters; yeshivish Ashkenazi names.`;
 
 const context = (he: string[], en: string[], n: number) => {
   const clip = (t: string, m: number) => (t.length > m ? `${t.slice(0, m)}…` : t);
@@ -73,7 +73,7 @@ async function makeWeave(ref: string, n: number): Promise<{ phrases: Phrase[] }>
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
-  try { return NextResponse.json(await keep('weave-v1', `${ref}:${n}`, () => makeWeave(ref, n), (x) => !x.phrases.length)); }
+  try { return NextResponse.json(await keep('weave-v2', `${ref}:${n}`, () => makeWeave(ref, n), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 
@@ -93,6 +93,6 @@ async function makeDeep(ref: string, n: number, k: number): Promise<{ text: stri
 export async function POST(req: NextRequest) {
   const { ref, n, k } = await req.json().catch(() => ({}));
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
-  try { return NextResponse.json(await keep('weave-deep-v1', `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k)), (x) => !x.text)); }
+  try { return NextResponse.json(await keep('weave-deep-v2', `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k)), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
