@@ -71,7 +71,7 @@ async function makeWeave(ref: string, n: number, awake = false): Promise<{ phras
   const st = await getSettings();
   const model = await keptModel();
   const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${awake ? `${AWAKE}\n\n` : ''}${styleForChat(st)}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
+  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${styleForChat(st)}\n\n${SCOPE}${awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
   await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
   const awake = (await getSettings()).lwTone !== 'calm'; // "Wake me up" unless Calm is chosen (Nov 18)
-  try { return NextResponse.json(await keep(awake ? 'weave-awake-v2' : 'weave-v2', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
+  try { return NextResponse.json(await keep(awake ? 'weave-awake-v3' : 'weave-v2', `${ref}:${n}`, () => makeWeave(ref, n, awake), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 
