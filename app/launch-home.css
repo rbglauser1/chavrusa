@@ -364,3 +364,9 @@
 .tr-ai { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .tr-ai small { font: 12.5px var(--f-ui); color: var(--soft); }
 .tr-ai .btn { min-height: 34px !important; padding: 5px 16px !important; font-size: 14px !important; line-height: 1.2; white-space: nowrap; width: auto; }
+
+/* Nov 17: the texture layer reaches past the text's margins to the page edges, and in full screen nothing clipped it,
+   so the page was 50 px wider than the phone: the iPhone zoomed the whole app out to fit (the buttons looked moved and
+   could slip off the bottom). Clip it at the reading area, and never let the page be wider than the screen. */
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-source, .st-study) { overflow-x: clip !important; }
+:is([data-look='clay'],[data-look='chatgpt']) body { overflow-x: clip; }
