@@ -409,3 +409,8 @@
 .ai-star { color: #CC7C5E; }
 :is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai .ai-star { color: #CC7C5E !important; }
 :is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai.on .ai-star { color: #E09A7E !important; }
+
+/* Nov 17: your notes under a line, set apart from the text with a touch of terracotta: the line at the side, the ✎ and
+   the "On …" label, over a faint warm tint. */
+:is([data-look='clay'],[data-look='chatgpt']) .line-note { border-left: 3px solid #CC7C5E; background: color-mix(in srgb, #CC7C5E 6%, var(--surface, #fff)); border-radius: 4px 12px 12px 4px; }
+:is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-mark, :is([data-look='clay'],[data-look='chatgpt']) .line-note .ln-on { color: #a85235; }
