@@ -31,6 +31,7 @@ import Notebook from '@/components/Notebook';
 import FiveMinutes from '@/components/FiveMinutes';
 import LeaveQuestion from '@/components/LeaveQuestion';
 import { isSitting, setSitting } from '@/lib/focus';
+import { useHomePhoto } from '@/components/HomePhoto';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -63,6 +64,7 @@ const STARTERS = [
 
 export default function Home() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  useHomePhoto(); // Nov 18: the learner's own photo behind Home (kept on this device)
   const [loaded, setLoaded] = useState(false);
   // Nothing is drawn until the settings are known (from this phone's copy, or the server), so the default
   // screen never flashes before the one you chose.

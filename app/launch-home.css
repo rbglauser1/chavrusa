@@ -514,3 +514,17 @@
 /* A row of six choices wraps into two rows of three */
 .seg-grid .seg { display: grid !important; grid-template-columns: repeat(3, 1fr); border-radius: 20px !important; }
 .seg-grid .seg button { border-left: 0 !important; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Nov 18: My photo behind Home: the learner's own picture (components/HomePhoto.tsx sets --home-photo), softened by
+   the background color so the words stay easy to read. */
+[data-homebg='own'] .home-shell:not(.inner) {
+  background:
+    linear-gradient(color-mix(in srgb, var(--bg) 62%, transparent), color-mix(in srgb, var(--bg) 40%, transparent) 55%, color-mix(in srgb, var(--bg) 55%, transparent)),
+    var(--home-photo, none) center / cover no-repeat !important;
+}
+[data-paper='night'][data-homebg='own'] .home-shell:not(.inner) { background: linear-gradient(rgba(15, 20, 28, .7), rgba(15, 20, 28, .55)), var(--home-photo, none) center / cover no-repeat !important; }
+[data-homebg='own'] .home-shell:not(.inner) .split-panel { background: color-mix(in srgb, var(--surface, #fff) 90%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.home-photo-pick { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.home-photo-thumb { width: 64px; height: 64px; border-radius: 12px; background: center / cover no-repeat; border: 1px solid var(--rule); flex-shrink: 0; }
+.home-photo-btns { display: flex; gap: 8px; }
+.home-photo-btns button { min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--rule); background: var(--surface, #fff); color: var(--ink); font: 500 14px var(--f-ui); }

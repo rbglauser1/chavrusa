@@ -520,7 +520,7 @@ export interface Settings {
   quietMode?: boolean;  // Nov 16, Focus help: only the text and Next / Back (no bottom buttons, tabs, or line buttons)
   paperTex?: 'off' | 'light' | 'stone' | 'ink'; // 'stone' is now the Stone look's Yerushalayim stone, 'ink' the Ink look's quartz // Nov 17: a paper texture over the background color (Claude / ChatGPT looks)
   teasers?: boolean;    // Nov 17, Focus help: pop-ups that draw you into the text while learning (on unless off)
-  homeBg?: 'none' | 'kotel' | 'bm' | 'shelves' | 'candle' | 'yerushalayim'; // Nov 18: a picture behind the Home screen (the Kosel)
+  homeBg?: 'none' | 'kotel' | 'bm' | 'shelves' | 'candle' | 'yerushalayim' | 'own'; // Nov 18: a picture behind the Home screen (the Kosel)
   lwTone?: 'awake' | 'calm' | 'custom';
   customTones?: { id: string; name: string; text: string }[]; // Nov 18: up to four tones of his own
   customToneId?: string; // which of them is in use
