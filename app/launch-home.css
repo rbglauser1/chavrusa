@@ -480,14 +480,17 @@
 }
 [data-homebg='candle'] .home-shell:not(.inner) {
   position: relative; isolation: isolate;
-  background: radial-gradient(ellipse at 88% 20%, #8e622845, transparent 55%), linear-gradient(160deg, #08121b, #0d1925 55%, #17130f) !important;
+  background: radial-gradient(ellipse at 85% 25%, #8e622828, transparent 50%), linear-gradient(125deg, #07101a, #0c1723 55%, #171711) !important;
 }
 [data-homebg='candle'] .home-shell:not(.inner) .split-panel { background: linear-gradient(145deg, #19303bee, #101e29ee) !important; border-color: #d7b77766 !important; }
 [data-homebg='candle'] .home-shell:not(.inner) > :not(.launch-header, .launch-dock) :is(h1, h2, strong) { color: #f3eee3; }
 [data-homebg='candle'] .home-shell:not(.inner) .split-panel .launch-eyebrow { color: #d7b777; opacity: .9; }
 [data-homebg='candle'] .home-shell:not(.inner) .split-panel > p { color: #c3c9cc; }
 .hb-candle { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.hb-candle video { position: absolute; top: 0; height: 100%; object-fit: fill; }
-.hb-flame { right: 0; width: 110px; opacity: .8; -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%); mask-image: linear-gradient(90deg, transparent, #000 45%); }
-.hb-candle::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 100% 30%, #e0a85a22, transparent 60%), linear-gradient(90deg, #09141e00 60%, #09141e66 80%, #09141e00); }
+/* Exactly the Midnight Sefer scene: the sefer and steam at the left, the candle at the right, the same shade. */
+.hb-candle video { position: absolute; top: 0; height: 100%; object-fit: fill; opacity: .75; }
+.hb-flame { right: 0; width: 100px; }
+.hb-steam { left: 0; width: 120px; opacity: .38; }
+.hb-candle::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #09141e00, #09141ee8 27%, #09141edb 73%, #09141e00), linear-gradient(0deg, #09141e 4%, #09141e00 90%); }
+@media (min-width: 700px) { .hb-flame { width: 180px; } .hb-steam { width: 220px; } }
 @media (prefers-reduced-motion: reduce) { .hb-candle video { display: none; } }

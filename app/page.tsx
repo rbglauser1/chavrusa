@@ -958,6 +958,7 @@ export default function Home() {
         {/* Nov 18: Candlelight behind Home: the candle and steam footage of the Midnight Sefer look, at the edges. */}
         {view === 'home' && settings.homeBg === 'candle' && (settings.theme === 'clay' || settings.theme === 'chatgpt') && (
           <div className="hb-candle" aria-hidden="true">
+            <video className="hb-steam" muted loop playsInline autoPlay preload="metadata" poster="/media/midnight-steam.webp"><source src="/media/midnight-steam.mp4" type="video/mp4" /></video>
             <video className="hb-flame" muted loop playsInline autoPlay preload="metadata" poster="/media/midnight-candle.webp"><source src="/media/midnight-candle.mp4" type="video/mp4" /></video>
           </div>
         )}
