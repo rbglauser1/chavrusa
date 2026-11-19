@@ -440,3 +440,14 @@
 /* Nov 18: on Night the quartz's grey veins are swapped for the paper's night fibers. */
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='ink'],[data-tex='stone']) :is(.hpage-body, .nb, .lib),
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='ink'],[data-tex='stone']) .sefer-flow::before { background-image: var(--pt-fib-n); background-size: 520px 520px; }
+/* Nov 18: a beis medrash behind Home (public/home/beis-medrash.svg, an original drawing): arched windows and lamps,
+   shelves of seforim, a shtender with an open Gemara. Darker than the Kosel, so a fuller veil. */
+[data-homebg='bm'] .home-shell {
+  background:
+    linear-gradient(color-mix(in srgb, var(--bg) 70%, transparent), color-mix(in srgb, var(--bg) 52%, transparent) 55%, color-mix(in srgb, var(--bg) 58%, transparent)),
+    url('/home/beis-medrash.svg') center bottom / cover no-repeat !important;
+}
+[data-homebg='bm'][data-paper='night'] .home-shell {
+  background: linear-gradient(rgba(15, 20, 28, .74), rgba(15, 20, 28, .6)), url('/home/beis-medrash.svg') center bottom / cover no-repeat !important;
+}
+[data-homebg='bm'] .home-shell .split-panel { background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
