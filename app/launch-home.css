@@ -528,3 +528,17 @@
 .home-photo-thumb { width: 64px; height: 64px; border-radius: 12px; background: center / cover no-repeat; border: 1px solid var(--rule); flex-shrink: 0; }
 .home-photo-btns { display: flex; gap: 8px; }
 .home-photo-btns button { min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--rule); background: var(--surface, #fff); color: var(--ink); font: 500 14px var(--f-ui); }
+
+/* Nov 18: the Continue card on a picture is frosted glass: the picture carries on through it, lighter and softly
+   blurred, instead of a solid white box. */
+:is([data-homebg='kotel'], [data-homebg='bm'], [data-homebg='shelves'], [data-homebg='yerushalayim'], [data-homebg='own']) .home-shell:not(.inner) .split-panel {
+  background: color-mix(in srgb, var(--surface, #fff) 52%, transparent) !important;
+  backdrop-filter: blur(9px) saturate(1.15) brightness(1.1); -webkit-backdrop-filter: blur(9px) saturate(1.15) brightness(1.1);
+  border-color: color-mix(in srgb, #fff 55%, transparent) !important;
+  box-shadow: 0 6px 24px rgba(40, 30, 20, .1);
+}
+[data-paper='night']:is([data-homebg='kotel'], [data-homebg='bm'], [data-homebg='shelves'], [data-homebg='yerushalayim'], [data-homebg='own']) .home-shell:not(.inner) .split-panel {
+  background: color-mix(in srgb, var(--surface, #1b1f26) 55%, transparent) !important;
+  backdrop-filter: blur(9px) saturate(1.1); -webkit-backdrop-filter: blur(9px) saturate(1.1);
+  border-color: rgba(255, 255, 255, .12) !important;
+}
