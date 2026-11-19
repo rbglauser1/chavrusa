@@ -440,15 +440,15 @@
 /* Nov 18: on Night the quartz's grey veins are swapped for the paper's night fibers. */
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='ink'],[data-tex='stone']) :is(.hpage-body, .nb, .lib),
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='ink'],[data-tex='stone']) .sefer-flow::before { background-image: var(--pt-fib-n); background-size: 520px 520px; }
-/* Nov 18: a beis medrash behind Home (public/home/beis-medrash.svg, an original drawing): arched windows and lamps,
-   shelves of seforim, a shtender with an open Gemara. Darker than the Kosel, so a fuller veil. */
+/* Nov 18 (2): a beis medrash behind Home: the real-looking one from the Beis Medrash look (public/experiences/
+   beis-medrash.webp: stone arches, brass lamps, shtenders, shelves of seforim), its right side on a phone. */
 [data-homebg='bm'] .home-shell {
   background:
-    linear-gradient(color-mix(in srgb, var(--bg) 70%, transparent), color-mix(in srgb, var(--bg) 52%, transparent) 55%, color-mix(in srgb, var(--bg) 58%, transparent)),
-    url('/home/beis-medrash.svg') center bottom / cover no-repeat !important;
+    linear-gradient(color-mix(in srgb, var(--bg) 72%, transparent), color-mix(in srgb, var(--bg) 48%, transparent) 55%, color-mix(in srgb, var(--bg) 60%, transparent)),
+    url('/experiences/beis-medrash.webp') 78% center / cover no-repeat !important;
 }
 [data-homebg='bm'][data-paper='night'] .home-shell {
-  background: linear-gradient(rgba(15, 20, 28, .74), rgba(15, 20, 28, .6)), url('/home/beis-medrash.svg') center bottom / cover no-repeat !important;
+  background: linear-gradient(rgba(15, 20, 28, .62), rgba(15, 20, 28, .5)), url('/experiences/beis-medrash.webp') 78% center / cover no-repeat !important;
 }
 [data-homebg='bm'] .home-shell .split-panel { background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 
@@ -472,3 +472,19 @@
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='white']:is([data-tex='ink'],[data-tex='stone']) .sefer-flow::before {
   background-image: linear-gradient(rgba(255,255,255,.4), rgba(255,255,255,.4)), var(--pt2-tx-q-grain), var(--pt2-tx-q-veins), var(--pt2-tx-q-cloud);
 }
+
+/* Nov 18: Candlelight behind Home, like the Midnight Sefer look: a deep night-blue room with a warm glow, the candle
+   flickering at the right edge and steam rising at the left. Home's words and card turn light-on-dark to match. */
+[data-homebg='candle'] .home-shell:not(.inner) {
+  --ink:#f3eee3; --soft:#c3c9cc; --rule:#344653; --surface:#122330; --surface-2:#1b2d3a; --pc:#122330; --pcb:#d7b77766;
+  position: relative; isolation: isolate; color: var(--ink);
+  background: radial-gradient(ellipse at 88% 20%, #8e622845, transparent 55%), linear-gradient(160deg, #08121b, #0d1925 55%, #17130f) !important;
+}
+[data-homebg='candle'] .home-shell:not(.inner) .split-panel { background: linear-gradient(145deg, #19303bee, #101e29ee) !important; border-color: #d7b77766 !important; }
+[data-homebg='candle'] .home-shell:not(.inner) :is(h1, h2, .launch-title, .launch-header *) { color: var(--ink); }
+.hb-candle { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.hb-candle video { position: absolute; top: 0; height: 100%; object-fit: fill; }
+.hb-flame { right: 0; width: 100px; opacity: .78; }
+.hb-steam { left: 0; width: 120px; opacity: .38; }
+.hb-candle::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #09141e00, #09141ed0 28%, #09141ec8 72%, #09141e00), linear-gradient(0deg, #09141e 3%, #09141e00 70%); }
+@media (prefers-reduced-motion: reduce) { .hb-candle video { display: none; } }
