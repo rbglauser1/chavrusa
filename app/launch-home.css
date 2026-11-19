@@ -432,10 +432,10 @@
 [data-homebg='kotel'] .home-shell {
   background:
     linear-gradient(color-mix(in srgb, var(--bg) 55%, transparent), color-mix(in srgb, var(--bg) 32%, transparent) 55%, color-mix(in srgb, var(--bg) 42%, transparent)),
-    url('/home/kosel-drawn.webp') center / cover no-repeat !important;
+    url('/home/kotel.svg') center bottom / cover no-repeat !important;
 }
 [data-homebg='kotel'][data-paper='night'] .home-shell {
-  background: linear-gradient(rgba(15, 20, 28, .72), rgba(15, 20, 28, .55)), url('/home/kosel-drawn.webp') center / cover no-repeat !important;
+  background: linear-gradient(rgba(15, 20, 28, .72), rgba(15, 20, 28, .55)), url('/home/kotel.svg') center bottom / cover no-repeat !important;
 }
 [data-homebg='kotel'] .home-shell .split-panel { background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 /* Nov 18: on Night the quartz's grey veins are swapped for the paper's night fibers. */
