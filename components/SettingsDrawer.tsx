@@ -104,8 +104,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                   ))}
                 </div>
                 <label style={{ marginTop: 14 }}>Paper texture</label>
-                <Seg value={s.paperTex ?? 'off'} options={[['off', 'Smooth'], ['light', 'Paper'], ['ink', 'Ink'], ['stone', 'Stone']]} onPick={(v) => onChange({ paperTex: v as 'off' | 'light' | 'stone' | 'ink' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Paper is fine fibers over the color you chose. Ink is the Ink look’s pale grey quartz with soft veins; Stone is the Stone look’s honey Yerushalayim stone. Ink and Stone bring their own color.</div>
+                <Seg value={s.paperTex === 'ink' ? 'stone' : s.paperTex ?? 'off'} options={[['off', 'Smooth'], ['light', 'Paper'], ['stone', 'Stone']]} onPick={(v) => onChange({ paperTex: v as 'off' | 'light' | 'stone' | 'ink' })} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Paper is fine fibers over the color you chose. Stone is the white quartz of the Ink and stone look: very light white-grey with soft grey veins (it brings its own color).</div>
                 <label style={{ marginTop: 14 }}>Home screen picture</label>
                 <Seg value={s.homeBg ?? 'none'} options={[['none', 'None'], ['kotel', 'The Kosel']]} onPick={(v) => onChange({ homeBg: v as 'none' | 'kotel' })} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>The Kosel’s stones behind the Home screen, softened so the words stay easy to read. Only on Home.</div>
