@@ -107,8 +107,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 <Seg value={s.paperTex === 'ink' ? 'stone' : s.paperTex ?? 'off'} options={[['off', 'Smooth'], ['light', 'Paper'], ['stone', 'Stone']]} onPick={(v) => onChange({ paperTex: v as 'off' | 'light' | 'stone' | 'ink' })} />
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Paper is fine fibers over the color you chose. Stone is the white quartz of the Ink and stone look: very light white-grey with soft grey veins (it brings its own color).</div>
                 <label style={{ marginTop: 14 }}>Home screen picture</label>
-                <Seg value={s.homeBg ?? 'none'} options={[['none', 'None'], ['kotel', 'Kosel'], ['bm', 'Beis Medrash'], ['candle', 'Candlelight']]} onPick={(v) => onChange({ homeBg: v as 'none' | 'kotel' | 'bm' | 'candle' })} />
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Behind the Home screen: the Kosel’s stones; a beis medrash (stone arches, lamps, shtenders and shelves of seforim); or Candlelight, a night scene with a flickering candle and rising steam, like the Midnight Sefer look. Softened so the words stay easy to read. Only on Home.</div>
+                <div className="seg-grid"><Seg value={s.homeBg ?? 'none'} options={[['none', 'None'], ['kotel', 'Kosel'], ['bm', 'Beis Medrash'], ['shelves', 'Shelves'], ['candle', 'Candlelight'], ['yerushalayim', 'Yerushalayim']]} onPick={(v) => onChange({ homeBg: v as NonNullable<Settings['homeBg']> })} /></div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Behind the Home screen: the Kosel’s stones; a beis medrash (stone arches, lamps, shtenders and seforim); Shelves, a drawn beis medrash with arched windows and shelves of seforim; Candlelight, a night scene with a flickering candle and rising steam, like the Midnight Sefer look; or Yerushalayim, the Old City walls and gate at sunrise. Softened so the words stay easy to read. Only on Home.</div>
               </div>
             )}
             </Group>

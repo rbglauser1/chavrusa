@@ -494,3 +494,23 @@
 .hb-candle::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #09141e00, #09141ee8 27%, #09141edb 73%, #09141e00), linear-gradient(0deg, #09141e 4%, #09141e00 90%); }
 @media (min-width: 700px) { .hb-flame { width: 180px; } .hb-steam { width: 220px; } }
 @media (prefers-reduced-motion: reduce) { .hb-candle video { display: none; } }
+
+/* Nov 18: two more pictures behind Home: Shelves (the earlier drawn beis medrash, public/home/shelves.svg) and
+   Yerushalayim (an original drawing of the Old City walls and gate at sunrise). Softened like the others. */
+[data-homebg='shelves'] .home-shell:not(.inner) {
+  background:
+    linear-gradient(color-mix(in srgb, var(--bg) 70%, transparent), color-mix(in srgb, var(--bg) 52%, transparent) 55%, color-mix(in srgb, var(--bg) 58%, transparent)),
+    url('/home/shelves.svg') center bottom / cover no-repeat !important;
+}
+[data-homebg='yerushalayim'] .home-shell:not(.inner) {
+  background:
+    linear-gradient(color-mix(in srgb, var(--bg) 55%, transparent), color-mix(in srgb, var(--bg) 30%, transparent) 50%, color-mix(in srgb, var(--bg) 45%, transparent)),
+    url('/home/yerushalayim.svg') center bottom / cover no-repeat !important;
+}
+[data-paper='night']:is([data-homebg='shelves'], [data-homebg='yerushalayim']) .home-shell:not(.inner) { background-blend-mode: normal; }
+[data-paper='night'][data-homebg='shelves'] .home-shell:not(.inner) { background: linear-gradient(rgba(15, 20, 28, .74), rgba(15, 20, 28, .6)), url('/home/shelves.svg') center bottom / cover no-repeat !important; }
+[data-paper='night'][data-homebg='yerushalayim'] .home-shell:not(.inner) { background: linear-gradient(rgba(15, 20, 28, .7), rgba(15, 20, 28, .55)), url('/home/yerushalayim.svg') center bottom / cover no-repeat !important; }
+:is([data-homebg='shelves'], [data-homebg='yerushalayim']) .home-shell:not(.inner) .split-panel { background: color-mix(in srgb, var(--surface, #fff) 90%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+/* A row of six choices wraps into two rows of three */
+.seg-grid .seg { display: grid !important; grid-template-columns: repeat(3, 1fr); border-radius: 20px !important; }
+.seg-grid .seg button { border-left: 0 !important; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
