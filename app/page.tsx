@@ -31,7 +31,7 @@ import Notebook from '@/components/Notebook';
 import FiveMinutes from '@/components/FiveMinutes';
 import LeaveQuestion from '@/components/LeaveQuestion';
 import { isSitting, setSitting } from '@/lib/focus';
-import { useHomePhoto } from '@/components/HomePhoto';
+import { HomePhotoLayer } from '@/components/HomePhoto';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -64,7 +64,6 @@ const STARTERS = [
 
 export default function Home() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  useHomePhoto(); // Nov 18: the learner's own photo behind Home (kept on this device)
   const [loaded, setLoaded] = useState(false);
   // Nothing is drawn until the settings are known (from this phone's copy, or the server), so the default
   // screen never flashes before the one you chose.
@@ -958,6 +957,8 @@ export default function Home() {
     return (
       <div className={`home-shell${view !== 'home' ? ' inner' : ''}`}>
         {/* Nov 18: Candlelight behind Home: the candle and steam footage of the Midnight Sefer look, at the edges. */}
+        {/* Nov 19: My photo, placed where the learner put it */}
+        {view === 'home' && settings.homeBg === 'own' && <HomePhotoLayer />}
         {view === 'home' && settings.homeBg === 'candle' && (settings.theme === 'clay' || settings.theme === 'chatgpt') && (
           <div className="hb-candle" aria-hidden="true">
             <video className="hb-steam" muted loop playsInline autoPlay preload="metadata" poster="/media/midnight-steam.webp"><source src="/media/midnight-steam.mp4" type="video/mp4" /></video>
