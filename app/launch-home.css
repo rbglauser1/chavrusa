@@ -475,16 +475,19 @@
 
 /* Nov 18: Candlelight behind Home, like the Midnight Sefer look: a deep night-blue room with a warm glow, the candle
    flickering at the right edge and steam rising at the left. Home's words and card turn light-on-dark to match. */
+[data-homebg='candle'] .home-shell:not(.inner) > :not(.launch-header, .launch-dock) {
+  --ink:#f3eee3; --soft:#c3c9cc; --rule:#344653; --surface:#122330; --surface-2:#1b2d3a; --pc:#122330; --pcb:#d7b77766; color: var(--ink);
+}
 [data-homebg='candle'] .home-shell:not(.inner) {
-  --ink:#f3eee3; --soft:#c3c9cc; --rule:#344653; --surface:#122330; --surface-2:#1b2d3a; --pc:#122330; --pcb:#d7b77766;
-  position: relative; isolation: isolate; color: var(--ink);
+  position: relative; isolation: isolate;
   background: radial-gradient(ellipse at 88% 20%, #8e622845, transparent 55%), linear-gradient(160deg, #08121b, #0d1925 55%, #17130f) !important;
 }
 [data-homebg='candle'] .home-shell:not(.inner) .split-panel { background: linear-gradient(145deg, #19303bee, #101e29ee) !important; border-color: #d7b77766 !important; }
-[data-homebg='candle'] .home-shell:not(.inner) :is(h1, h2, .launch-title, .launch-header *) { color: var(--ink); }
+[data-homebg='candle'] .home-shell:not(.inner) > :not(.launch-header, .launch-dock) :is(h1, h2, strong) { color: #f3eee3; }
+[data-homebg='candle'] .home-shell:not(.inner) .split-panel .launch-eyebrow { color: #d7b777; opacity: .9; }
+[data-homebg='candle'] .home-shell:not(.inner) .split-panel > p { color: #c3c9cc; }
 .hb-candle { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
 .hb-candle video { position: absolute; top: 0; height: 100%; object-fit: fill; }
-.hb-flame { right: 0; width: 100px; opacity: .78; }
-.hb-steam { left: 0; width: 120px; opacity: .38; }
-.hb-candle::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #09141e00, #09141ed0 28%, #09141ec8 72%, #09141e00), linear-gradient(0deg, #09141e 3%, #09141e00 70%); }
+.hb-flame { right: 0; width: 110px; opacity: .8; -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%); mask-image: linear-gradient(90deg, transparent, #000 45%); }
+.hb-candle::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 100% 30%, #e0a85a22, transparent 60%), linear-gradient(90deg, #09141e00 60%, #09141e66 80%, #09141e00); }
 @media (prefers-reduced-motion: reduce) { .hb-candle video { display: none; } }
