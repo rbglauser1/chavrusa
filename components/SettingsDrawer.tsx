@@ -405,10 +405,33 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Tone</label>
               <Seg value={s.lwTone ?? 'awake'} options={[['awake', 'Wake me up'], ['calm', 'Calm'], ['custom', 'My own']]} onPick={(v) => onChange({ lwTone: v as 'awake' | 'calm' | 'custom' })} />
-              {s.lwTone === 'custom' && (
-                <textarea key={s.customTone ?? ''} className="tone-box" rows={3} maxLength={500} defaultValue={s.customTone ?? ''} placeholder="Describe the tone you want, e.g. “like a Brisker rosh yeshiva, short and sharp”, “like a coach at halftime”, “explain it like I’m 12 with a joke now and then”"
-                  onBlur={(e) => { const v = e.currentTarget.value.trim(); if (v !== (s.customTone ?? '')) onChange({ customTone: v }); }} />
-              )}
+              {s.lwTone === 'custom' && (() => {
+                // Nov 18: up to four tones of his own, each with a name; one is in use at a time.
+                const list = (s.customTones?.length ? s.customTones : (s.customTone ? [{ id: 't1', name: 'My tone', text: s.customTone }] : [])).slice(0, 4);
+                const slots = [...list, ...Array.from({ length: 4 - list.length }, (_, i) => ({ id: `t${Date.now()}${i}`, name: '', text: '' }))];
+                const active = s.customToneId ?? list.find((t) => t.text === s.customTone)?.id;
+                const save = (id: string, patch: { name?: string; text?: string }) => {
+                  const next = slots.map((t) => (t.id === id ? { ...t, ...patch } : t)).filter((t) => t.text.trim() || t.name.trim());
+                  const on = next.find((t) => t.id === (active ?? id));
+                  onChange({ customTones: next, ...(on && (on.id === id) ? { customTone: on.text.trim(), customToneId: on.id } : {}) });
+                };
+                return (
+                  <div className="tone-slots">
+                    {slots.map((t, i) => (
+                      <div key={t.id} className={`tone-slot ${t.id === active && t.text.trim() ? 'on' : ''}`}>
+                        <div className="tone-slot-head">
+                          <input key={`n${t.id}${t.name}`} className="tone-name" defaultValue={t.name} placeholder={`Tone ${i + 1}: a name`} maxLength={40}
+                            onBlur={(e) => { const v = e.currentTarget.value.trim(); if (v !== t.name) save(t.id, { name: v }); }} />
+                          {t.text.trim() && <button className={`tone-use ${t.id === active ? 'on' : ''}`} onClick={() => onChange({ customTone: t.text.trim(), customToneId: t.id })}>{t.id === active ? '✓ In use' : 'Use this'}</button>}
+                        </div>
+                        <textarea key={`x${t.id}${t.text}`} className="tone-box" rows={2} maxLength={500} defaultValue={t.text}
+                          placeholder={i === 0 ? 'e.g. “like a Brisker rosh yeshiva, short and sharp”' : i === 1 ? 'e.g. “like a coach at halftime”' : i === 2 ? 'e.g. “explain it like I’m 12, with a joke now and then”' : 'e.g. “a warm grandfather telling a story”'}
+                          onBlur={(e) => { const v = e.currentTarget.value.trim(); if (v !== t.text) save(t.id, { text: v }); }} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>For Learn with me, the Steps and the amud intro. Wake me up: they pull you into the text, in a mix of voices: the rebbi who won’t let you coast (loud, in words), the detective, the sports commentator, the storyteller, dry humor; each ends with a hook into what comes next. Calm: plain and quiet. My own: describe any tone you like, in your words; anything goes within derech eretz (no cursing, no crude jokes, nothing improper), and a part that asks for that is left out. Each tone is made once and kept, so switching back finds it again.</div>
             </div>
             </Group>

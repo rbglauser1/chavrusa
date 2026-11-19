@@ -3250,3 +3250,12 @@ body.lw-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visib
 .lw-before-label { display: block; font: 700 11px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--tc-ink, #a85235); margin-bottom: 4px; }
 /* Nov 18: the box for the learner's own tone. */
 .tone-box { width: 100%; box-sizing: border-box; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface, var(--bg)); color: var(--ink); font: 15px/1.45 var(--f-body); resize: vertical; }
+/* Nov 18: up to four tones of his own. */
+.tone-slots { display: grid; gap: 10px; margin-top: 10px; }
+.tone-slot { border: 1px solid var(--rule); border-radius: 14px; padding: 10px 12px; background: var(--surface, var(--bg)); }
+.tone-slot.on { border-color: var(--tc-ink, #a85235); box-shadow: 0 0 0 1px var(--tc-ink, #a85235) inset; }
+.tone-slot-head { display: flex; gap: 8px; align-items: center; }
+.tone-name { flex: 1; min-width: 0; border: 0; border-bottom: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 15px var(--f-ui); padding: 4px 2px; }
+.tone-slot .tone-box { margin-top: 8px; }
+.tone-use { flex: 0 0 auto; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 13px var(--f-ui); }
+.tone-use.on { background: var(--tc-ink, #a85235); border-color: var(--tc-ink, #a85235); color: #fff; }
