@@ -426,16 +426,16 @@
 .paper-blue .paper-dot { background:#E6EFF8; } .paper-green .paper-dot { background:#E7F1E4; }
 
 /* Nov 18: the Kosel behind the Home screen (Settings → The page → Background → Home screen picture). An original
-   rendering (public/home/kosel.webp, made by scripts/render-kosel.py): the wall seen from a scaffolding, running from
-   the lower left up to the upper right, its drafted stones, set-back courses and plants in the joints, sky at the top right. A veil
+   drawing (public/home/kosel-drawn.webp, made by scripts/draw-kosel.py): ink and wash, the wall at a gentle angle,
+   its drafted stones, greenish-brown plants in the joints, sky at the top. A veil
    of the background color keeps the words readable; the Continue card keeps its own background. */
 [data-homebg='kotel'] .home-shell {
   background:
     linear-gradient(color-mix(in srgb, var(--bg) 55%, transparent), color-mix(in srgb, var(--bg) 32%, transparent) 55%, color-mix(in srgb, var(--bg) 42%, transparent)),
-    url('/home/kosel.webp') center / cover no-repeat !important;
+    url('/home/kosel-drawn.webp') center / cover no-repeat !important;
 }
 [data-homebg='kotel'][data-paper='night'] .home-shell {
-  background: linear-gradient(rgba(15, 20, 28, .72), rgba(15, 20, 28, .55)), url('/home/kosel.webp') center / cover no-repeat !important;
+  background: linear-gradient(rgba(15, 20, 28, .72), rgba(15, 20, 28, .55)), url('/home/kosel-drawn.webp') center / cover no-repeat !important;
 }
 [data-homebg='kotel'] .home-shell .split-panel { background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 /* Nov 18: on Night the quartz's grey veins are swapped for the paper's night fibers. */
