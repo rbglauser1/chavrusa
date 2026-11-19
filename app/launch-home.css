@@ -385,12 +385,12 @@
 /* Nov 18 (2): "Stone" is the Ink and stone look's white quartz (the learner's wish); the Yerushalayim stone is gone. */
 :is([data-look='clay'],[data-look='chatgpt']):is([data-tex='ink'],[data-tex='stone']) :is(.hpage-body, .nb, .lib),
 :is([data-look='clay'],[data-look='chatgpt']):is([data-tex='ink'],[data-tex='stone']) .sefer-flow::before {
-  background-color: #eeeeec; background-image: var(--pt2-tx-q-grain), var(--pt2-tx-q-veins), var(--pt2-tx-q-cloud); background-size: 300px 300px, 900px 900px, 800px 800px;
+  background-color: var(--bg); /* Nov 18: on the background color chosen (whiter on White) */ background-image: var(--pt2-tx-q-grain), var(--pt2-tx-q-veins), var(--pt2-tx-q-cloud); background-size: 300px 300px, 900px 900px, 800px 800px;
 }
 :is([data-look='clay'],[data-look='chatgpt']):is([data-tex='ink'],[data-tex='stone']) :is(.hpage-body, .nb, .lib) { background-attachment: local; }
 /* The reading screen's own background takes the texture's color under the layer, so no white shows at the edges. */
-:is([data-look='clay'],[data-look='chatgpt'])[data-tex='ink'] body:has(.sefer-flow) { background-color: #eeeeec; }
-:is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] body:has(.sefer-flow) { background-color: #eeeeec; }
+:is([data-look='clay'],[data-look='chatgpt'])[data-tex='ink'] body:has(.sefer-flow) { background-color: var(--bg); }
+:is([data-look='clay'],[data-look='chatgpt'])[data-tex='stone'] body:has(.sefer-flow) { background-color: var(--bg); }
 
 /* Nov 17 (2): full screen had its own "overflow: visible !important" that beat the clip above, so the page still came
    out wider than the phone. The texture layer now reaches exactly to the screen's edges (no further), and the clip is
@@ -437,3 +437,6 @@
   background: linear-gradient(rgba(15, 20, 28, .72), rgba(15, 20, 28, .55)), url('/home/kotel.svg') center bottom / cover no-repeat !important;
 }
 [data-homebg='kotel'] .home-shell .split-panel { background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+/* Nov 18: on Night the quartz's grey veins are swapped for the paper's night fibers. */
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='ink'],[data-tex='stone']) :is(.hpage-body, .nb, .lib),
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night']:is([data-tex='ink'],[data-tex='stone']) .sefer-flow::before { background-image: var(--pt-fib-n); background-size: 520px 520px; }
