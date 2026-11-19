@@ -532,13 +532,14 @@
 /* Nov 18: the Continue card on a picture is frosted glass: the picture carries on through it, lighter and softly
    blurred, instead of a solid white box. */
 :is([data-homebg='kotel'], [data-homebg='bm'], [data-homebg='shelves'], [data-homebg='yerushalayim'], [data-homebg='own']) .home-shell:not(.inner) .split-panel {
-  background: color-mix(in srgb, var(--surface, #fff) 52%, transparent) !important;
-  backdrop-filter: blur(9px) saturate(1.15) brightness(1.1); -webkit-backdrop-filter: blur(9px) saturate(1.15) brightness(1.1);
+  background: color-mix(in srgb, var(--surface, #fff) 40%, transparent) !important;
+  backdrop-filter: blur(2.5px) brightness(1.18); -webkit-backdrop-filter: blur(2.5px) brightness(1.18);
   border-color: color-mix(in srgb, #fff 55%, transparent) !important;
   box-shadow: 0 6px 24px rgba(40, 30, 20, .1);
 }
+:is([data-homebg='kotel'], [data-homebg='bm'], [data-homebg='shelves'], [data-homebg='yerushalayim'], [data-homebg='own']) .home-shell:not(.inner) .split-panel :is(h2, p, .launch-eyebrow) { text-shadow: 0 0 10px color-mix(in srgb, var(--surface, #fff) 85%, transparent); }
 [data-paper='night']:is([data-homebg='kotel'], [data-homebg='bm'], [data-homebg='shelves'], [data-homebg='yerushalayim'], [data-homebg='own']) .home-shell:not(.inner) .split-panel {
-  background: color-mix(in srgb, var(--surface, #1b1f26) 55%, transparent) !important;
-  backdrop-filter: blur(9px) saturate(1.1); -webkit-backdrop-filter: blur(9px) saturate(1.1);
+  background: color-mix(in srgb, var(--surface, #1b1f26) 48%, transparent) !important;
+  backdrop-filter: blur(2.5px); -webkit-backdrop-filter: blur(2.5px);
   border-color: rgba(255, 255, 255, .12) !important;
 }
