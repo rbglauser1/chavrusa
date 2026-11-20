@@ -9,7 +9,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { aiLang, parseAiJson } from '@/lib/aiLang';
-import { AWAKE_STEPS, customBlock, toneNow } from '@/lib/tone';
+import { AWAKE_STEPS, customBlock, toneNow, toneTail } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -32,7 +32,7 @@ async function makeOutline(ref: string, awake = false, custom: string | null = n
   const model = await keptModel(); // Opus or Sonnet, by the setting (lib/keptModel)
   const run = runKept;
   const r = await run({
-    lang: true, model: model.id, system: custom ? `${PROMPT}\n\n${customBlock(custom, 'the step headings (still short, one line each)')}` : awake ? `${PROMPT}\n\n${AWAKE_STEPS}` : PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}` }],
+    lang: true, model: model.id, system: custom ? `${PROMPT}\n\n${customBlock(custom, 'the step headings (still short, one line each)')}` : awake ? `${PROMPT}\n\n${AWAKE_STEPS}` : PROMPT, history: [{ role: 'user', content: `${s.ref}\n\n${lines.slice(0, 24000)}${toneTail({ awake, custom })}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1,
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);
@@ -56,7 +56,7 @@ async function makeOutline(ref: string, awake = false, custom: string | null = n
 // Kept for good (lib/keep): the same amud's outline is never paid for twice. Inside, the server's month cache, so a
 // copy made before is moved into the store for free.
 // (Nov 17: the server's month cache is kept per language too, or a Hebrew outline came back when English was asked.)
-const cached = async (ref: string): Promise<Awaited<ReturnType<typeof makeOutline>>> => { const lang = await aiLang(); const t = await toneNow(); const kind = t.custom ? `outline-${t.tag}` : t.awake ? 'outline-awake-v1' : 'outline-v3-opus'; return keep(kind, ref, () => unstable_cache(() => makeOutline(ref, t.awake, t.custom), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
+const cached = async (ref: string): Promise<Awaited<ReturnType<typeof makeOutline>>> => { const lang = await aiLang(); const t = await toneNow(); const kind = t.custom ? `outline-${t.tag}` : t.awake ? 'outline-awake-v2' : 'outline-v3-opus'; return keep(kind, ref, () => unstable_cache(() => makeOutline(ref, t.awake, t.custom), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');

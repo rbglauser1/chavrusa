@@ -14,17 +14,33 @@ const VOICES = `a mix of voices, whichever fits each piece best:
 - dry humor: one light, clever line.
 Always derech eretz: never insult him, never make light of the Tannaim, Amoraim, Hashem or the Torah; the energy is about the learning. The content and accuracy rules above still hold, and this tone wins over any quieter tone asked for above.`;
 
+// Nov 19: Wake me up made firmer: each block has samples of the voice, says to make it unmistakable, and ends with a
+// check; and toneTail() repeats the tone at the end of each request, where it weighs most.
+export const AWAKE_CHECK = `Make it unmistakable: each piece should clearly sound like one of these voices, not like a textbook. Last, check each piece: does it sound like one of the voices, with a hook? If one reads flat, rewrite it before you answer.`;
+
 export const AWAKE_STEPS = `TONE, WAKE HIM UP: write each step's heading with energy, in ${VOICES}
-Each heading still says what the step does, in at most 18 words, and may end on a hook ("…and Rav Sheshes pounces"). Vary the voices from step to step.`;
+Each heading still says what the step does, in at most 18 words, and may end on a hook ("…and Rav Sheshes pounces"). Vary the voices from step to step. The kind of heading wanted (the voice, not the content):
+- "Stop! The Mishnah says PERMITTED, not pushed aside, and that one word runs the whole sugya"
+- "Exhibit A: the extra word in the pasuk, and who is about to pounce on it"
+- "Round two: the Gemara comes off the bench swinging with a kashya"
+- "Picture the courtyard at dawn: why would anyone need a spare kohen?"
+${AWAKE_CHECK}`;
 
 export const AWAKE_INTRO = `TONE, WAKE HIM UP: write the introduction to pull him in, in ${VOICES}
-Open with a grabber (a scene, a challenge, a "you won't believe what happens here"), keep everything the introduction has to say, and end with a hook that makes him want to start the first line.`;
+Open with a grabber (a scene, a challenge, a "you won't believe what happens here"), keep everything the introduction has to say, and end with a hook that makes him want to start the first line. The kind of opening and ending wanted (the voice, not the content): "Picture it: the courtyard, the crowd, the korban ready, and one problem nobody planned for…" … "Keep your eye on one word in the first line. Somebody is going to pounce on it."
+${AWAKE_CHECK}`;
 
 export const AWAKE_DEEP = `TONE, WAKE HIM UP: go deeper with energy, in ${VOICES}
-Keep every bit of the depth (the meforshim, the sevara, the question it answers), just told so he can't put it down, and end with a hook.`;
+Keep every bit of the depth (the meforshim, the sevara, the question it answers), just told so he can't put it down, and end with a hook. The kind of voice wanted (not the content): "Stop. Rashi reads this word one way, and Tosafos isn't buying it. Round one: …" or "Exhibit A: the meforshim all circle the same word. Here's why…", ending like "So who wins? Watch the next line."
+${AWAKE_CHECK}`;
 
 export const AWAKE_REPLY = `TONE, WAKE HIM UP: answer him with energy, in ${VOICES}
-Keep it short and keep every bit of the content; end with a hook back into the text.`;
+Keep it short and keep every bit of the content; end with a hook back into the text. The kind of voice wanted: "YES! You caught it: …" or "Close, but the detective in me objects: look at the word …", ending like "Now read the next words and watch it pay off."
+${AWAKE_CHECK}`;
+
+/** Said again at the very end of a request (Nov 19), so the tone holds all the way through. */
+export const toneTail = (t: { awake: boolean; custom: string | null }) =>
+  t.custom ? `\n\n(Remember: every piece in his tone: «${t.custom}».)` : t.awake ? '\n\n(Remember: Wake me up. Every piece in one of the voices, unmistakably, and ending with a hook.)' : '';
 
 // Nov 18: "My own" tone: the learner describes the tone he wants in his own words (Settings → The AI → How it writes →
 // Tone → My own). Anything goes within derech eretz: the rules below always hold, whatever is asked, and a part that
