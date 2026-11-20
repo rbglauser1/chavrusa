@@ -10,6 +10,7 @@ import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
+import { toneNow, customBlock, AWAKE_REPLY } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -87,8 +88,11 @@ export async function POST(req: NextRequest) {
     const settings = await getSettings();
     const model = MODELS[settings.provider][settings.tier];
     const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
+    // Nov 19: his answers in Learn with me are answered in the same tone as the rest of it.
+    const t = await toneNow();
+    const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your replies')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
     const r = await run({
-      lang: true, model: model.id, system: `${REPLY}\n\n${styleForChat(settings)}\n\n${SCOPE}`,
+      lang: true, model: model.id, system: `${REPLY}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}`,
       history: [{ role: 'user', content: `${s.ref}, line ${n}${await endOfPrevious(m[1], n, approved)}\n\n${lineText(s.he, s.en, n)}\n\n---\nYou asked: ${String(b.question ?? '').slice(0, 500)}\nHe answered: ${answer}` }],
       tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 500,
     });

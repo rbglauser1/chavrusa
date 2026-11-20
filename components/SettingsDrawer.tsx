@@ -413,12 +413,15 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               {s.lwTone === 'custom' && (() => {
                 // Nov 18: up to four tones of his own, each with a name; one is in use at a time.
                 const list = (s.customTones?.length ? s.customTones : (s.customTone ? [{ id: 't1', name: 'My tone', text: s.customTone }] : [])).slice(0, 4);
-                const slots = [...list, ...Array.from({ length: 4 - list.length }, (_, i) => ({ id: `t${Date.now()}${i}`, name: '', text: '' }))];
-                const active = s.customToneId ?? list.find((t) => t.text === s.customTone)?.id;
+                // Nov 19: empty slots get steady names (not new ones every redraw, which wiped what he was typing).
+                const used = new Set(list.map((t) => t.id));
+                const fresh = (): string => { let k = 1; while (used.has(`s${k}`)) k++; used.add(`s${k}`); return `s${k}`; };
+                const slots = [...list, ...Array.from({ length: 4 - list.length }, () => ({ id: fresh(), name: '', text: '' }))];
+                const active = (list.some((t) => t.id === s.customToneId) ? s.customToneId : undefined) ?? list.find((t) => t.text === s.customTone)?.id;
                 const save = (id: string, patch: { name?: string; text?: string }) => {
                   const next = slots.map((t) => (t.id === id ? { ...t, ...patch } : t)).filter((t) => t.text.trim() || t.name.trim());
-                  const on = next.find((t) => t.id === (active ?? id));
-                  onChange({ customTones: next, ...(on && (on.id === id) ? { customTone: on.text.trim(), customToneId: on.id } : {}) });
+                  const on = next.find((t) => t.id === (active ?? id)) ?? next.find((t) => t.text.trim());
+                  onChange({ customTones: next, ...(on ? { customTone: on.text.trim(), customToneId: on.id } : { customTone: '', customToneId: undefined }) });
                 };
                 return (
                   <div className="tone-slots">

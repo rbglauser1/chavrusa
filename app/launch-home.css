@@ -553,3 +553,6 @@
 
 /* Nov 19: Learn with me: "Show the answer" under a question, for when he'd rather be told. */
 .lw-show-ans { display: block; margin: 10px 0 0; padding: 4px 0; background: none; border: 0; color: var(--tc-ink, var(--soft)); font: 500 15px var(--f-ui); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Nov 19: which tone is writing, under the line count in Learn with me */
+.lw-where .lw-tone { display: block; margin-top: 2px; font: 500 11px var(--f-ui); letter-spacing: .02em; color: var(--soft); opacity: .85; }

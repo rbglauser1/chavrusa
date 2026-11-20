@@ -157,7 +157,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
     <div className="lw-sheet" role="dialog" aria-label="Learn with me" style={{ height: `calc(${SIZES[size] * 100}dvh - ${drag}px)`, transition: drag ? 'none' : 'height .22s ease' }}>
       <div className="lw-grab" aria-hidden="true" {...grab} />
       <div className="lw-head" {...grab}>
-        <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}</span>
+        <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}{typeof document !== 'undefined' && document.documentElement.dataset.lwtonename ? <small className="lw-tone">{document.documentElement.dataset.lwtonename}</small> : null}</span>
         <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} /></span>
         {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
         <button className="lw-icon" onClick={onClose} aria-label="Close">✕</button>

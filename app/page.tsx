@@ -453,7 +453,12 @@ export default function Home() {
     root.dataset.ailang = settings.aiLang ?? 'en';
     root.dataset.spell = settings.spelling ?? 'yeshivish';
     root.dataset.homebg = settings.homeBg ?? 'none'; // Nov 18: the Kosel behind Home
-    root.dataset.lwtone = settings.lwTone === 'custom' ? `custom:${settings.customTone ?? ''}` : settings.lwTone ?? 'awake'; // Learn with me's copies kept per tone // Nov 18: Shabbos or Shabbat, in titles, the Library and the English // the app's own copies of AI writing are kept per language
+    root.dataset.lwtone = settings.lwTone === 'custom' ? `custom:${settings.customTone ?? ''}` : settings.lwTone ?? 'awake';
+    { // Nov 19: the tone's name, shown at the top of Learn with me so he can see which one is writing
+      const own = (settings.customTones ?? []).filter((t) => t.text?.trim());
+      const cur = own.find((t) => t.id === settings.customToneId) ?? own.find((t) => t.text.trim() === settings.customTone?.trim()) ?? own[0];
+      root.dataset.lwtonename = settings.lwTone === 'calm' ? 'Calm' : settings.lwTone === 'custom' && (cur || settings.customTone?.trim()) ? (cur?.name?.trim() || 'My own tone') : 'Wake me up';
+    } // Learn with me's copies kept per tone // Nov 18: Shabbos or Shabbat, in titles, the Library and the English // the app's own copies of AI writing are kept per language
     if (settings.aiSize) root.style.setProperty('--ai-size', `${settings.aiSize}px`); else root.style.removeProperty('--ai-size');
     // Fonts chosen for this look (or the look's own).
     const f = settings.fonts?.[settings.theme] ?? {};
@@ -467,7 +472,7 @@ export default function Home() {
     root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
     const cs = fontStack(FONTS_COMM, cf);
     if (cf !== 'rashi' && cf !== 'same' && cs) root.style.setProperty('--f-comm', cs); else root.style.removeProperty('--f-comm');
-  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.aiLang, settings.spelling, settings.lwTone, settings.customTone, settings.homeBg, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin, settings.paper, settings.paperTex]);
+  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.aiLang, settings.spelling, settings.lwTone, settings.customTone, settings.customTones, settings.customToneId, settings.homeBg, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin, settings.paper, settings.paperTex]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 

@@ -23,12 +23,21 @@ Open with a grabber (a scene, a challenge, a "you won't believe what happens her
 export const AWAKE_DEEP = `TONE, WAKE HIM UP: go deeper with energy, in ${VOICES}
 Keep every bit of the depth (the meforshim, the sevara, the question it answers), just told so he can't put it down, and end with a hook.`;
 
+export const AWAKE_REPLY = `TONE, WAKE HIM UP: answer him with energy, in ${VOICES}
+Keep it short and keep every bit of the content; end with a hook back into the text.`;
+
 // Nov 18: "My own" tone: the learner describes the tone he wants in his own words (Settings → The AI → How it writes →
 // Tone → My own). Anything goes within derech eretz: the rules below always hold, whatever is asked, and a part that
 // asks for anything improper is quietly left out. What each wording of his made is kept apart (the tag).
 export async function toneNow(): Promise<{ awake: boolean; custom: string | null; tag: string }> {
   const s = await getSettings().catch(() => null);
-  const custom = s?.lwTone === 'custom' && s.customTone?.trim() ? s.customTone.trim().slice(0, 500) : null;
+  // Nov 19: his own tone is read from the one marked in use, else the saved wording, else the first he wrote, so a
+  // tone he wrote is never silently swapped for "Wake me up".
+  const slots = (s?.customTones ?? []).filter((t) => t.text?.trim());
+  const own = s?.lwTone === 'custom'
+    ? (slots.find((t) => t.id === s.customToneId)?.text || s.customTone || slots[0]?.text || '').trim()
+    : '';
+  const custom = own ? own.slice(0, 500) : null;
   let h = 0;
   for (const c of custom ?? '') h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return { awake: !custom && s?.lwTone !== 'calm', custom, tag: custom ? `custom-${h.toString(36)}` : s?.lwTone === 'calm' ? 'calm' : 'awake' };
