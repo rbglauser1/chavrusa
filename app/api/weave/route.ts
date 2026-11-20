@@ -9,7 +9,7 @@ import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
-import { AWAKE_DEEP, AWAKE_CHECK, customBlock, toneNow, toneTail } from '@/lib/tone';
+import { AWAKE_DEEP, AWAKE_CHECK, customBlock, toneNow, toneTail, unlabel } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -84,7 +84,7 @@ async function makeWeave(ref: string, n: number, awake = false, custom: string |
   return {
     phrases: list.map((p, i) => {
       const o = out[i] ?? {};
-      return { he: p.he, en: (o.en || p.en || '').trim(), note: (o.note ?? '').trim(), ...(o.ask ? { ask: o.ask.trim(), hint: (o.hint ?? '').trim() } : {}), ...(o.before?.text ? { before: { kind: String(o.before.kind ?? 'think'), text: o.before.text.trim() } } : {}) };
+      return { he: p.he, en: (o.en || p.en || '').trim(), note: unlabel(o.note ?? ''), ...(o.ask ? { ask: unlabel(o.ask), hint: (o.hint ?? '').trim() } : {}), ...(o.before?.text ? { before: { kind: String(o.before.kind ?? 'think'), text: unlabel(o.before.text) } } : {}) };
     }),
   };
 }
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
   const t = await toneNow(); // "Wake me up" unless Calm, or his own tone, is chosen (Nov 18)
-  const kind = t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v5' : 'weave-v3';
+  const kind = t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v6' : 'weave-v3';
   try { return NextResponse.json(await keep(kind, `${ref}:${n}`, () => makeWeave(ref, n, t.awake, t.custom), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
@@ -106,7 +106,7 @@ async function makeDeep(ref: string, n: number, k: number, awake = false, custom
   const ask = `${got.s.ref}, line ${n}\n\n${context(got.s.he, got.s.en, n)}\n\nGo deeper on this phrase of line ${n}: ${stripNikud(got.list[k].he)}`;
   const r = await runKept({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}${custom ? `\n\n${customBlock(custom, 'going deeper')}` : awake ? `\n\n${AWAKE_DEEP}` : ''}`, history: [{ role: 'user', content: `${ask}${toneTail({ awake, custom })}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'weave-deep', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
-  const text = r.text.replace(/\*\*|__/g, '').trim();
+  const text = unlabel(r.text.replace(/\*\*|__/g, ''));
   if (text.length < 40) throw new Error('It did not come back.');
   return { text };
 }
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
   const { ref, n, k } = await req.json().catch(() => ({}));
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
   const t = await toneNow(); // the same Tone as the rest (Nov 18)
-  const kind = t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v2' : 'weave-deep-v2';
+  const kind = t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2';
   try { return NextResponse.json(await keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }

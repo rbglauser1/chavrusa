@@ -8,7 +8,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { needCredit } from './credits';
 import { keptModel, runKept } from './keptModel';
-import { AWAKE_INTRO, customBlock, toneNow, toneTail } from './tone';
+import { AWAKE_INTRO, customBlock, toneNow, toneTail, unlabel } from './tone';
 import { aiLang } from './aiLang';
 
 // The amud intro: one paragraph telling the learner what's coming on this amud (or perek / siman), shown at its top
@@ -35,13 +35,13 @@ async function makeIntro(ref: string, awake = false, custom: string | null = nul
   });
   const usd = costUsd(model, r.inputTokens, r.outputTokens);
   await logCost({ sessionId: null, kind: 'intro', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: usd }).catch(() => {});
-  const text = r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim();
+  const text = unlabel(r.text.replace(/^#+.*$/gm, '').replace(/\*\*|__/g, '').replace(/\s+/g, ' '));
   if (text.length < 40) throw new Error('The intro did not come back.'); // not kept: tried again next time
   return text.slice(0, 1400);
 }
 
 // Kept for good (lib/keep): the same amud's intro is never paid for twice.
-export const getIntro = async (ref: string): Promise<string> => { const t = await toneNow(); const lang = await aiLang(); const kind = t.custom ? `intro-${t.tag}` : t.awake ? 'intro-awake-v2' : 'intro-v2-opus'; return keep(kind, ref, () => unstable_cache(() => makeIntro(ref, t.awake, t.custom), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
+export const getIntro = async (ref: string): Promise<string> => { const t = await toneNow(); const lang = await aiLang(); const kind = t.custom ? `intro-${t.tag}` : t.awake ? 'intro-awake-v3' : 'intro-v2-opus'; return keep(kind, ref, () => unstable_cache(() => makeIntro(ref, t.awake, t.custom), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 // The intro if it's ready within a few seconds (it keeps being made, and kept, in the background otherwise).
 export async function introSoon(ref: string, ms = 7000): Promise<string> {

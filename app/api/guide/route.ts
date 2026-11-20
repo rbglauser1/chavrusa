@@ -10,7 +10,7 @@ import { keep } from '@/lib/keep';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
-import { toneNow, customBlock, AWAKE_REPLY } from '@/lib/tone';
+import { toneNow, customBlock, AWAKE_REPLY, unlabel } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
       tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 500,
     });
     await logCost({ sessionId: null, kind: 'guide-reply', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
-    const text = r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, '').trim();
+    const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, ''));
     if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
     return NextResponse.json({ text: text.slice(0, 2000) });
   } catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }

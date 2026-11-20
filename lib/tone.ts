@@ -16,7 +16,7 @@ Always derech eretz: never insult him, never make light of the Tannaim, Amoraim,
 
 // Nov 19: Wake me up made firmer: each block has samples of the voice, says to make it unmistakable, and ends with a
 // check; and toneTail() repeats the tone at the end of each request, where it weighs most.
-export const AWAKE_CHECK = `Make it unmistakable: each piece should clearly sound like one of these voices, not like a textbook. Last, check each piece: does it sound like one of the voices, with a hook? If one reads flat, rewrite it before you answer.`;
+export const AWAKE_CHECK = `Never name or label a voice ("Storyteller:", "Detective:", "The rebbi:"): just BE that voice, so he hears it without being told. Make it unmistakable: each piece should clearly sound like one of these voices, not like a textbook. Last, check each piece: does it sound like one of the voices, with a hook? If one reads flat, rewrite it before you answer.`;
 
 export const AWAKE_STEPS = `TONE, WAKE HIM UP: write each step's heading with energy, in ${VOICES}
 Each heading still says what the step does, in at most 18 words, and may end on a hook ("…and Rav Sheshes pounces"). Vary the voices from step to step. The kind of heading wanted (the voice, not the content):
@@ -38,9 +38,12 @@ export const AWAKE_REPLY = `TONE, WAKE HIM UP: answer him with energy, in ${VOIC
 Keep it short and keep every bit of the content; end with a hook back into the text. The kind of voice wanted: "YES! You caught it: …" or "Close, but the detective in me objects: look at the word …", ending like "Now read the next words and watch it pay off."
 ${AWAKE_CHECK}`;
 
+/** Nov 19: a voice's name the AI wrote at the start anyway ("Storyteller: …") is taken off. */
+export const unlabel = (t: string) => t.replace(/^\s*(?:the\s+)?(?:rebbi|detective|sports\s+commentator|commentator|storyteller|dry\s+humou?r|humou?r)\s*(?:voice)?\s*[:\u2014\u2013-]\s*/i, '').trim();
+
 /** Said again at the very end of a request (Nov 19), so the tone holds all the way through. */
 export const toneTail = (t: { awake: boolean; custom: string | null }) =>
-  t.custom ? `\n\n(Remember: every piece in his tone: «${t.custom}».)` : t.awake ? '\n\n(Remember: Wake me up. Every piece in one of the voices, unmistakably, and ending with a hook.)' : '';
+  t.custom ? `\n\n(Remember: every piece in his tone: «${t.custom}».)` : t.awake ? '\n\n(Remember: Wake me up. Every piece in one of the voices, unmistakably, never naming the voice, and ending with a hook.)' : '';
 
 // Nov 18: "My own" tone: the learner describes the tone he wants in his own words (Settings → The AI → How it writes →
 // Tone → My own). Anything goes within derech eretz: the rules below always hold, whatever is asked, and a part that

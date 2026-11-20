@@ -9,7 +9,7 @@ import { stripNikud } from '@/lib/hebrew';
 import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { aiLang, parseAiJson } from '@/lib/aiLang';
-import { AWAKE_STEPS, customBlock, toneNow, toneTail } from '@/lib/tone';
+import { AWAKE_STEPS, customBlock, toneNow, toneTail, unlabel } from '@/lib/tone';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -47,7 +47,7 @@ async function makeOutline(ref: string, awake = false, custom: string | null = n
   try {
     moves = list()
       .filter((m) => m && Number.isFinite(Number(m.line)) && typeof m.summary === 'string')
-      .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: clipWords(m.summary, 220) }));
+      .map((m) => ({ line: Math.min(Math.max(1, Math.round(Number(m.line))), s.he.length), summary: clipWords(unlabel(m.summary), 220) }));
   } catch { moves = []; }
   if (!moves.length) throw new Error('The summary did not come back in the right form.'); // not kept: tried again next time
   return { moves, usd };
@@ -56,7 +56,7 @@ async function makeOutline(ref: string, awake = false, custom: string | null = n
 // Kept for good (lib/keep): the same amud's outline is never paid for twice. Inside, the server's month cache, so a
 // copy made before is moved into the store for free.
 // (Nov 17: the server's month cache is kept per language too, or a Hebrew outline came back when English was asked.)
-const cached = async (ref: string): Promise<Awaited<ReturnType<typeof makeOutline>>> => { const lang = await aiLang(); const t = await toneNow(); const kind = t.custom ? `outline-${t.tag}` : t.awake ? 'outline-awake-v2' : 'outline-v3-opus'; return keep(kind, ref, () => unstable_cache(() => makeOutline(ref, t.awake, t.custom), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
+const cached = async (ref: string): Promise<Awaited<ReturnType<typeof makeOutline>>> => { const lang = await aiLang(); const t = await toneNow(); const kind = t.custom ? `outline-${t.tag}` : t.awake ? 'outline-awake-v3' : 'outline-v3-opus'; return keep(kind, ref, () => unstable_cache(() => makeOutline(ref, t.awake, t.custom), [kind, lang, ref], { revalidate: 60 * 60 * 24 * 30 })()); };
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? '');
