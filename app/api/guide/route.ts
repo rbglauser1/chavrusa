@@ -75,7 +75,9 @@ export async function POST(req: NextRequest) {
     const b = await req.json();
     const ref = String(b.ref ?? '');
     const m = ref.match(/^(.*?):(\d+)$/);
-    const answer = String(b.answer ?? '').trim().slice(0, 2000);
+    // Nov 19: "Show answer": he didn't answer and asks to be told; the chavrusa gives the answer plainly.
+    const reveal = b.reveal === true;
+    const answer = reveal ? '(He didn’t answer. He asks you to tell him the answer: give it plainly and briefly, then one line on why it matters here.)' : String(b.answer ?? '').trim().slice(0, 2000);
     if (!m || !answer) return NextResponse.json({ error: 'Nothing to answer.' }, { status: 400 });
     await needCredit();
     const n = Number(m[2]);

@@ -51,10 +51,10 @@ function Ask({ refText, n, q, hint }: { refText: string; n: number; q: string; h
   const [showHint, setShowHint] = useState(false);
   const [ans, setAns] = useState('');
   const [reply, setReply] = useState<string | null>(null);
-  const send = () => {
-    if (!ans.trim()) return;
+  const send = (reveal = false) => {
+    if (!reveal && !ans.trim()) return;
     setReply('wait');
-    fetch('/api/guide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: `${refText}:${n}`, question: q, answer: ans }) })
+    fetch('/api/guide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: `${refText}:${n}`, question: q, answer: ans, reveal }) })
       .then((r) => r.json()).then((d) => setReply(d.text || 'It couldn’t answer just now.')).catch(() => setReply('It couldn’t answer just now.'));
   };
   return (
@@ -64,9 +64,12 @@ function Ask({ refText, n, q, hint }: { refText: string; n: number; q: string; h
       {reply == null ? (
         <div className="lw-ask-row">
           <input value={ans} onChange={(e) => setAns(e.target.value)} placeholder="Your answer…" onKeyDown={(e) => { if (e.key === 'Enter') send(); }} />
-          <button className="lw-small" onClick={send} disabled={!ans.trim()}>Answer</button>
+          <button className="lw-small" onClick={() => send()} disabled={!ans.trim()}>Answer</button>
           {hint && !showHint && <button className="lw-small" onClick={() => setShowHint(true)}>Hint</button>}
         </div>
+      ) : null}
+      {reply == null ? (
+        <button className="lw-show-ans" onClick={() => send(true)}>Show the answer</button>
       ) : <div className="lw-ask-reply">{reply === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : reply}</div>}
     </div>
   );
