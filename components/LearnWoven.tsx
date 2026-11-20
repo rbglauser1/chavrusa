@@ -90,9 +90,17 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   const grab = {
     onTouchStart: (e: React.TouchEvent) => { y0.current = e.touches[0].clientY; },
     onTouchMove: (e: React.TouchEvent) => { if (y0.current != null) setDrag(e.touches[0].clientY - y0.current); },
-    onTouchEnd: () => {
+    onTouchEnd: (e: React.TouchEvent) => {
       const d = drag; y0.current = null; setDrag(0);
-      if (d > 220 || (d > 50 && size === 0)) { onClose(); return; }
+      if (d > 220 || (d > 50 && size === 0)) {
+        // Nov 19: the phone's tap that follows the lifted finger would land on whatever is under it once the sheet is
+        // gone (it took him Home). Stop it, and swallow any stray tap for a moment.
+        if (e.cancelable) e.preventDefault();
+        const eat = (ev: Event) => { ev.preventDefault(); ev.stopPropagation(); };
+        window.addEventListener('click', eat, true);
+        window.setTimeout(() => window.removeEventListener('click', eat, true), 450);
+        onClose(); return;
+      }
       if (d > 50) setSize((v) => Math.max(0, v - 1));
       else if (d < -50) setSize((v) => Math.min(SIZES.length - 1, v + 1));
     },
