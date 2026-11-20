@@ -59,7 +59,7 @@ export async function toneNow(): Promise<{ awake: boolean; custom: string | null
   const custom = own ? own.slice(0, 500) : null;
   let h = 0;
   for (const c of custom ?? '') h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return { awake: !custom && s?.lwTone !== 'calm', custom, tag: custom ? `custom3-${h.toString(36)}` : s?.lwTone === 'calm' ? 'calm' : 'awake' };
+  return { awake: !custom && s?.lwTone !== 'calm', custom, tag: custom ? `custom4-${h.toString(36)}` : s?.lwTone === 'calm' ? 'calm' : 'awake' };
 }
 // Nov 19: written much more firmly. His tone had been followed faintly ("be hilarious" came out as a smile now and
 // then): now it is the voice of every piece, with a plan for how to do it, a length allowance, and a check at the end.
@@ -67,6 +67,6 @@ export const customBlock = (custom: string, what: string) => `TONE, THE LEARNER'
 Take him at his word and go all the way with it: this is the voice of EVERY piece you write here, not a flavor added now and then. A piece that could sit in an ordinary commentary or textbook is wrong: rewrite it.
 How to read common requests: "hilarious" or "funny" means every piece makes him laugh (comic exaggeration, absurd comparisons, deadpan asides, a punchline at the end, a running gag); "sarcastic" means dry, knowing, eyebrow-raised lines; "attack me", "roast me", "yell at me" or "push me" means come at HIM like a sharp chavrusa needling a friend: call out the lazy reading he was about to make, dare him, tease his assumptions, demand he defend himself ("Oh, you thought that was obvious? Cute. Read it again."); a person or character means talk exactly the way that person would; "short and sharp" means cut every extra word. Whatever he asks, do it so clearly that he would recognize his tone in each piece at a glance.
 Before you write, decide what his tone means in practice (which moves, which kind of words), then use those moves throughout, varying them so it doesn't get repetitive. If you reply in JSON, put that plan first, as a field "voice" (a few words). To make room for the tone, a piece may run up to half again as long as the length given above.
-The content stays: every piece still says what it has to say, accurately; the tone is how you say it.
+The content stays: every piece still says what it has to say, accurately; the tone is how you say it. The wording rules above stay too: the yeshivish names and terms (Shemos, Vayikra, Rashi, Tosafos, the Gemara), never Exodus or Leviticus.
 These rules always hold, whatever he asked: derech eretz; no cursing or crude language; no dirty, crude or off-color jokes; nothing improper or immoral; the teasing is aimed only at him and his reading of the text, friendly, never cruel and never about his person, family or abilities in general; never make light of Hashem, the Torah, the Tannaim, Amoraim or any other person. If any part of his request asks for more than that, quietly leave that part out and follow the rest.
 This tone wins over any other tone or style of talking above, including the learning style. Last, check each piece: does it clearly sound like «${custom}»? If one doesn't, rewrite it before you answer.`;
