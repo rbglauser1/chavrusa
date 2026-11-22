@@ -30,7 +30,11 @@ For learning terms and words quoted from the text, write the Hebrew or Aramaic i
 const REPLY = `You are a warm, sharp chavrusa learning one line of a sefer with the learner. You asked him a question about the line marked >>> <<< and he answered.
 Answer him in about 30 to 50 words (2 or 3 short sentences), like a chavrusa across the table: first say plainly what he got right (if anything — never false praise), then gently fix or complete what is missing, so he ends up with the right understanding of the line. If he said he doesn't know, just explain it simply and kindly. No headings, no lists, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
 
-const lineText = (he: string[], en: string[], n: number) => {
+// Nov 21: on a card (Learn with me as Cards) he asks his own question about what is on the card; the chavrusa answers it.
+const ASK = `You are a warm, sharp chavrusa learning a sefer with the learner one small card at a time. The card he is looking at now is shown below: a few words of the line marked >>> <<<, their translation, and the short explanation you gave him. He asks you a question about it.
+Answer exactly what he asked, clearly and to the point, like a chavrusa across the table: usually 40 to 90 words; go longer only if he asks for depth (Rashi, Tosafos, the sevara) or the question truly needs it. If his question rests on a misreading, gently set it straight. If it reaches beyond this line, answer briefly and bring it back to the text in front of him. If you are not sure, say so plainly; never invent a source or a quote. If earlier questions on this card are shown, this is a follow-up: build on what you already said, don't repeat it. No headings, no lists, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+
+const lineText =(he: string[], en: string[], n: number) => {
   const clip = (t: string, m: number) => (t.length > m ? `${t.slice(0, m)}…` : t);
   return he.map((h, i) => {
     const near = Math.abs(i + 1 - n) <= 5;
@@ -76,6 +80,7 @@ export async function POST(req: NextRequest) {
     const b = await req.json();
     const ref = String(b.ref ?? '');
     const m = ref.match(/^(.*?):(\d+)$/);
+    if (typeof b.ask === 'string') return askOnCard(b, m);
     // Nov 19: "Show answer": he didn't answer and asks to be told; the chavrusa gives the answer plainly.
     const reveal = b.reveal === true;
     const answer = reveal ? '(He didn’t answer. He asks you to tell him the answer: give it plainly and briefly, then one line on why it matters here.)' : String(b.answer ?? '').trim().slice(0, 2000);
@@ -101,4 +106,33 @@ export async function POST(req: NextRequest) {
     if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
     return NextResponse.json({ text: text.slice(0, 2000) });
   } catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
+}
+
+// POST { ref, ask, card, thread }: his own question on a card; the chavrusa answers (not kept: it's his question).
+async function askOnCard(b: { ask?: unknown; card?: unknown; thread?: unknown }, m: RegExpMatchArray | null) {
+  const q = String(b.ask ?? '').trim().slice(0, 1500);
+  if (!m || !q) return NextResponse.json({ error: 'Nothing to answer.' }, { status: 400 });
+  await needCredit();
+  const n = Number(m[2]);
+  const approved = await approvedList();
+  const s = await getText(m[1], approved);
+  if (!s.verdict.allowed || !s.he.length) return NextResponse.json({ error: 'This text is not open to the AI.' }, { status: 400 });
+  const settings = await getSettings();
+  const model = MODELS[settings.provider][settings.tier];
+  const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
+  const t = await toneNow();
+  const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your replies')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
+  const card = String(b.card ?? '').slice(0, 3000);
+  const earlier = (Array.isArray(b.thread) ? b.thread : []).slice(-4)
+    .map((x: { q?: unknown; a?: unknown }) => `He asked: ${String(x?.q ?? '').slice(0, 800)}\nYou answered: ${String(x?.a ?? '').slice(0, 1500)}`)
+    .join('\n\n');
+  const r = await run({
+    lang: true, model: model.id, system: `${ASK}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}`,
+    history: [{ role: 'user', content: `${s.ref}, line ${n}${await endOfPrevious(m[1], n, approved)}\n\n${lineText(s.he, s.en, n)}\n\n---\nThe card in front of him:\n${card || '(this line)'}${earlier ? `\n\n---\nEarlier on this card:\n${earlier}` : ''}\n\n---\nHe asks: ${q}` }],
+    tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 800,
+  });
+  await logCost({ sessionId: null, kind: 'guide-ask', provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, ''));
+  if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
+  return NextResponse.json({ text: text.slice(0, 3000) });
 }

@@ -3290,3 +3290,28 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .lwc-size { position: absolute; right: 2px; bottom: 2px; width: 30px; height: 30px; touch-action: none; cursor: nwse-resize; z-index: 2;
   background: linear-gradient(135deg, transparent 52%, color-mix(in srgb, var(--soft) 70%, transparent) 53%, color-mix(in srgb, var(--soft) 70%, transparent) 58%, transparent 59%, transparent 68%, color-mix(in srgb, var(--soft) 70%, transparent) 69%, color-mix(in srgb, var(--soft) 70%, transparent) 74%, transparent 75%);
   border-bottom-right-radius: 20px; }
+
+/* Nov 21 (3): the whole card is carried by the finger (the text still scrolls up/down when it is longer than the card),
+   and he can ask the chavrusa his own question on the card: then Ask again or Next. */
+.lwc-card { touch-action: none; cursor: grab; }
+.lwc-body.scrolls { touch-action: pan-y; }
+body.lwc-moving, body.lwc-moving * { user-select: none !important; -webkit-user-select: none !important; cursor: grabbing !important; }
+body.lwc-moving .lwc-card { box-shadow: 0 18px 44px rgba(0, 0, 0, .22); }
+.lwc-card input, .lwc-card button { cursor: auto; }
+.lwc-card button { cursor: pointer; }
+.lwc-thread { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+.lwc-qa { display: flex; flex-direction: column; gap: 6px; }
+.lwc-myq { align-self: flex-end; max-width: 88%; padding: 8px 12px; border-radius: 16px 16px 4px 16px; background: color-mix(in srgb, var(--tc, #CC7C5E) 14%, var(--surface, #fff)); font: 15px/1.45 var(--f-body); color: var(--ink); }
+.lwc-ans { padding: 10px 12px; border-left: 3px solid var(--tc, #CC7C5E); border-radius: 4px 14px 14px 4px; background: color-mix(in srgb, var(--tc, #CC7C5E) 6%, var(--surface, #fff)); font: 15.5px/1.55 var(--f-body); color: var(--ink); white-space: pre-wrap; }
+.lwc-ans.he-note { border-left: 0; border-right: 3px solid var(--tc, #CC7C5E); border-radius: 14px 4px 4px 14px; }
+.lwc-ans.bad { color: var(--soft); font-style: italic; }
+.lwc-askrow { flex: 1; min-width: 0; display: flex; gap: 6px; align-items: center; margin: 0; }
+.lwc-askrow input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--rule); border-radius: 999px; background: var(--bg); color: var(--ink); font: 16px var(--f-body); }
+.lwc-asksend, .lwc-again, .lwc-go { flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; font: 600 14px var(--f-ui); }
+.lwc-asksend { border: 0; background: var(--tc-ink, #a85235); color: #fff; }
+.lwc-asksend:disabled { opacity: .4; }
+.lwc-choose { display: flex; gap: 8px; margin-left: auto; margin-right: 22px; }
+.lwc-again { border: 1px solid var(--rule); background: transparent; color: var(--ink); }
+.lwc-again:disabled { opacity: .45; }
+.lwc-go { border: 0; background: var(--tc-ink, #a85235); color: #fff; }
+.lwc-askrow { margin-right: 22px; }
