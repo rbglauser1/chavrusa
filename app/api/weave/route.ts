@@ -135,12 +135,33 @@ async function makeDeep(ref: string, n: number, k: number, awake = false, custom
   return { text };
 }
 
+// Nov 21: "Simpler" under Go deeper: he read it and didn't get it; the same thing again in a few plain words.
+const SIMPLE = `The learner opened "Go deeper" on a phrase of the line marked >>> <<< and read the explanation below, but it went over his head. Say the same thing again, simply: 2 or 3 short sentences, at most 55 words, in plain everyday English, the way you'd explain it to a friend over coffee. Give only the main point (what is going on and why it matters); drop the names of meforshim unless one is the whole point, drop side points. No jargon: if a Hebrew or Aramaic word is truly needed, write it in Hebrew letters and explain it in a few words. A simple everyday comparison is welcome if it really helps. Stay true to what the explanation said; add nothing new. Plain prose, no markdown.`;
+
+async function makeSimple(ref: string, n: number, k: number, deep: string): Promise<{ text: string }> {
+  await needCredit();
+  const got = await phrasesOf(ref, n);
+  if (!got || !got.list[k] || !deep) return { text: '' };
+  const model = await keptModel();
+  const ask = `${got.s.ref}, line ${n}\n\n${context(got.s.he, got.s.en, n)}\n\nThe phrase: ${stripNikud(got.list[k].he)}\n\nThe "Go deeper" explanation he didn't get:\n${deep}`;
+  const r = await runKept({ lang: true, model: model.id, system: `${SIMPLE}\n\n${SCOPE}`, history: [{ role: 'user', content: ask }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 400 });
+  await logCost({ sessionId: null, kind: 'weave-simple', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const text = unlabel(r.text.replace(/\*\*|__/g, ''));
+  if (text.length < 20) throw new Error('It did not come back.');
+  return { text };
+}
+
 export async function POST(req: NextRequest) {
-  const { ref, n, k } = await req.json().catch(() => ({}));
+  const { ref, n, k, simple } = await req.json().catch(() => ({}));
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
   const t = await toneNow(); // the same Tone as the rest (Nov 18)
   const iyun = (await getSettings().catch(() => null))?.style === 'iyun';
   const kind = `${t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2'}${iyun ? '-iyun2' : ''}`;
-  try { return NextResponse.json(await keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom, iyun), (x) => !x.text)); }
+  const deep = () => keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom, iyun), (x) => !x.text);
+  try {
+    // "Simpler": made from the very Go deeper he read (kept, so this costs nothing more), and kept with it.
+    if (simple) return NextResponse.json(await keep(`weave-simple1-${kind}`, `${ref}:${n}:${k}`, async () => makeSimple(String(ref), Number(n), Number(k), (await deep()).text), (x) => !x.text));
+    return NextResponse.json(await deep());
+  }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }

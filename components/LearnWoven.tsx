@@ -45,6 +45,9 @@ function Deeper({ refText, n, k }: { refText: string; n: number; k: number }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState<string | null>(null);
   const [err, setErr] = useState(false);
+  // Nov 21: "Simpler": he read it and didn't get it; one tap gives the same thing in a few plain words.
+  const [simple, setSimple] = useState<string | null>(null);
+  const [simpleErr, setSimpleErr] = useState(false);
   const go = () => {
     setOpen((v) => !v);
     if (text || open) return;
@@ -52,11 +55,29 @@ function Deeper({ refText, n, k }: { refText: string; n: number; k: number }) {
     fetch('/api/weave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: refText, n, k }) })
       .then((r) => r.json()).then((d) => { if (d.text) setText(d.text); else setErr(true); }).catch(() => setErr(true));
   };
+  const simpler = () => {
+    if (simple && simple !== 'wait') return;
+    setSimple('wait'); setSimpleErr(false);
+    fetch('/api/weave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: refText, n, k, simple: true }) })
+      .then((r) => r.json()).then((d) => { if (d.text) setSimple(d.text); else { setSimple(null); setSimpleErr(true); } })
+      .catch(() => { setSimple(null); setSimpleErr(true); });
+  };
   const he = !!text && isHebText(text);
+  const heS = !!simple && simple !== 'wait' && isHebText(simple);
   return (
     <>
       <button className="lw-deeper" onClick={go}>{open ? 'Less ▴' : 'Go deeper ▾'}</button>
       {open && <div className={`lw-deep ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>{text ?? (err ? 'It couldn’t be written just now. Tap again.' : <span className="wait-dots"><span /><span /><span /></span>)}</div>}
+      {open && text && (
+        simple == null ? (
+          <button className="lw-simpler" onClick={simpler}>💡 Simpler{simpleErr ? ' · try again' : ''}</button>
+        ) : (
+          <div className={`lw-simple ${heS ? 'he-note' : ''}`} dir={heS ? 'rtl' : 'ltr'}>
+            <span className="lw-simple-label">💡 In plain words</span>
+            {simple === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : simple}
+          </div>
+        )
+      )}
     </>
   );
 }

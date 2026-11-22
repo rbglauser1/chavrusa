@@ -3374,3 +3374,8 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .lw-topic-chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lw-topic-chip b { flex: 0 0 auto; font-weight: 600; color: var(--tc-ink, #a85235); }
 .lwc-body .lw-topic-chip { margin: 6px 40px 0 0; width: calc(100% - 40px); }
+
+/* Nov 21: "Simpler" under Go deeper: the same thing in a few plain words. */
+.lw-simpler { display: inline-flex; align-items: center; gap: 6px; margin: 8px 0 2px; padding: 6px 14px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--tc, #CC7C5E) 45%, var(--rule)); background: transparent; color: var(--tc-ink, #a85235); font: 600 14px var(--f-ui); }
+.lw-simple { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, #e9b949 14%, var(--surface, #fff)); border: 1px solid color-mix(in srgb, #e9b949 35%, transparent); font: 15.5px/1.55 var(--f-body); color: var(--ink); }
+.lw-simple-label { display: block; margin-bottom: 4px; font: 700 11px var(--f-ui); letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, #8a6a10 85%, var(--ink)); }
