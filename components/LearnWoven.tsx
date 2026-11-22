@@ -209,14 +209,65 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
     return () => document.body.classList.remove('lw-cards-open');
   }, [cards]);
 
+  // Nov 21 (2): the cards float: move them anywhere by their top bar, and size them by the corner. Kept for next time.
+  type Geom = { x: number; y: number; w: number; h: number | null };
+  const [geom, setGeom] = useState<Geom | null>(null);
+  const live = useRef<Geom | null>(null);
+  useEffect(() => {
+    if (!cards) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let g: Geom | null = null;
+    try { g = JSON.parse(localStorage.getItem('chavrusa-lwc-geom') || 'null'); } catch { g = null; }
+    const w0 = Math.min(vw - 24, 560);
+    const start: Geom = g && typeof g.x === 'number' ? g : { x: (vw - w0) / 2, y: Math.round(vh * 0.36), w: w0, h: null };
+    const fit = fitIn(start);
+    live.current = fit; setGeom(fit);
+  }, [cards]); // eslint-disable-line react-hooks/exhaustive-deps
+  function fitIn(g: Geom): Geom {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = Math.min(Math.max(g.w, 240), vw - 8);
+    const h = g.h == null ? null : Math.min(Math.max(g.h, 160), vh - 80);
+    return { w, h, x: Math.min(Math.max(g.x, 4 - w * 0.6), vw - w * 0.4), y: Math.min(Math.max(g.y, 4), vh - 90) };
+  }
+  const keepGeom = () => { try { if (live.current) localStorage.setItem('chavrusa-lwc-geom', JSON.stringify(live.current)); } catch { /* not kept */ } };
+  const handle = (kind: 'move' | 'size') => {
+    let from: { px: number; py: number; g: Geom } | null = null;
+    return {
+      onPointerDown: (e: React.PointerEvent) => {
+        if (kind === 'move' && (e.target as HTMLElement).closest('button')) return;
+        const g = live.current; if (!g) return;
+        e.preventDefault(); e.stopPropagation();
+        (e.currentTarget as Element).setPointerCapture(e.pointerId);
+        const card = (e.currentTarget as HTMLElement).closest('.lwc')?.querySelector<HTMLElement>('.lwc-card');
+        from = { px: e.clientX, py: e.clientY, g: { ...g, h: g.h ?? (card?.offsetHeight ?? 320) } };
+      },
+      onPointerMove: (e: React.PointerEvent) => {
+        if (!from) return;
+        e.stopPropagation();
+        const dx2 = e.clientX - from.px, dy2 = e.clientY - from.py;
+        const g = kind === 'move'
+          ? fitIn({ ...from.g, h: live.current?.h ?? null, x: from.g.x + dx2, y: from.g.y + dy2 })
+          : fitIn({ ...from.g, w: from.g.w + dx2, h: (from.g.h ?? 320) + dy2 });
+        live.current = g; setGeom(g);
+      },
+      onPointerUp: () => { if (from) { from = null; keepGeom(); } },
+      onPointerCancel: () => { from = null; },
+    };
+  };
+  const moveBy = useRef<ReturnType<typeof handle> | null>(null);
+  const sizeBy = useRef<ReturnType<typeof handle> | null>(null);
+  if (!moveBy.current) moveBy.current = handle('move');
+  if (!sizeBy.current) sizeBy.current = handle('size');
+
   if (cards) {
     const cur = steps[shown - 1];
     const more = !done && (shown < steps.length || n < total);
     const moved = fly ? `translateX(${fly * 130}vw) rotate(${fly * 16}deg)` : `translateX(${dx}px) rotate(${dx / 22}deg)`;
     const nextLabel = atEnd ? (n < total ? 'Next line' : onNext ? 'Next amud' : 'Finish') : 'Next';
     return createPortal(
-      <div className="lwc" role="dialog" aria-label="Learn with me">
-        <div className="lwc-top">
+      <div className="lwc" role="dialog" aria-label="Learn with me" style={geom ? { left: geom.x, top: geom.y, width: geom.w } : { visibility: 'hidden' }}>
+        <div className="lwc-top" {...moveBy.current}>
+          <span className="lwc-grip" aria-hidden="true">⠿</span>
           <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}{document.documentElement.dataset.lwtonename ? <small className="lw-tone">{document.documentElement.dataset.lwtonename}</small> : null}</span>
           <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} /></span>
           {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
@@ -227,7 +278,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
           <div
             key={`${n}-${shown}`}
             className="lwc-card"
-            style={{ transform: moved, transition: dx && !fly ? 'none' : 'transform .23s ease-out, opacity .23s', opacity: fly ? 0 : 1 }}
+            style={{ height: geom?.h ?? undefined, maxHeight: geom?.h ? 'none' : undefined, transform: moved, transition: dx && !fly ? 'none' : 'transform .23s ease-out, opacity .23s', opacity: fly ? 0 : 1 }}
             {...swipe}
           >
             {!done && phrases.length > 0 && <button className="lwc-x" onClick={() => toss(1)} aria-label={nextLabel}>✕</button>}
@@ -249,6 +300,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
                 <span className="lwc-hint">Swipe away or ✕ · {nextLabel.toLowerCase()}</span>
               </div>
             )}
+            <span className="lwc-size" aria-label="Drag to resize" role="separator" {...sizeBy.current} />
           </div>
         </div>
       </div>,

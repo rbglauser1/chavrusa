@@ -3262,7 +3262,7 @@ body.lw-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visib
 
 /* Nov 21: Learn with me as Cards: one card at a time floating over the lower part of the page, the line it belongs to
    lit above it; swiped off either way (or ✕) it flies away and the next card rises from the stack behind. */
-.lwc { position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; padding: 0 12px calc(12px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.lwc { position: fixed; z-index: 90; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .lwc > * { pointer-events: auto; }
 .lwc-top { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 999px; background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0, 0, 0, .08); align-self: stretch; }
 .lwc-top .lw-icon { width: 34px; height: 34px; }
@@ -3281,3 +3281,12 @@ body.lw-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visib
 .lwc-hint { font: 500 12px var(--f-ui); color: var(--soft); }
 body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .lwc-card { animation: none; } }
+
+/* Nov 21 (2): the cards float where he puts them: the top bar moves them, the corner sizes them. */
+.lwc-top { touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.lwc-grip { font-size: 16px; color: var(--soft); margin-right: -2px; }
+.lwc-card { min-height: 160px; }
+.lwc-body { flex: 1; min-height: 0; }
+.lwc-size { position: absolute; right: 2px; bottom: 2px; width: 30px; height: 30px; touch-action: none; cursor: nwse-resize; z-index: 2;
+  background: linear-gradient(135deg, transparent 52%, color-mix(in srgb, var(--soft) 70%, transparent) 53%, color-mix(in srgb, var(--soft) 70%, transparent) 58%, transparent 59%, transparent 68%, color-mix(in srgb, var(--soft) 70%, transparent) 69%, color-mix(in srgb, var(--soft) 70%, transparent) 74%, transparent 75%);
+  border-bottom-right-radius: 20px; }
