@@ -234,8 +234,9 @@ export default function Home() {
   // Nov 22: the chavrusa's face in a voice call (Settings → Voice → His face in a call); × hides it until the call ends.
   const [faceHidden, setFaceHidden] = useState(false);
   useEffect(() => { if (!live.active) setFaceHidden(false); }, [live.active]);
-  const faceEl = live.active && (settings.callFace ?? 'drawn') !== 'off' && !faceHidden
-    ? <TalkingFace state={live.state} kind={settings.callFace ?? 'drawn'} onHide={() => setFaceHidden(true)} />
+  const faceKind = settings.callFace ?? 'drawn';
+  const faceEl = live.active && faceKind !== 'off' && !faceHidden
+    ? <TalkingFace state={live.state} kind={faceKind} onHide={() => setFaceHidden(true)} />
     : null;
 
   function pumpLive() {
