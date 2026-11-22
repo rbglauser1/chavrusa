@@ -235,6 +235,9 @@
 /* Continuous scroll (Nov 16): its button sits in the bottom row, left of the mic, the same size. */
 :is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .ascroll { margin:0; }
 :is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .ascroll-btn { width:48px; height:48px; background:var(--surface); box-shadow:0 2px 10px #0000001a; }
+/* Nov 21: its arrows were drawn in the light look's fixed near-black, unseen on a dark background: now the theme's ink. */
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .ascroll-btn { color:var(--ink); border-color:var(--rule); }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .ascroll.on .ascroll-btn { color:var(--accent); border-color:var(--accent); }
 @media (max-width:1049px) {
   :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-study-footer .ascroll { position:fixed; z-index:61; right:132px; bottom:calc(var(--row-mid) - 24px); }
 }
