@@ -77,7 +77,7 @@ const context = (he: string[], en: string[], n: number) => {
   }).filter(Boolean).join('\n');
 };
 
-type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string; before?: { kind: string; text: string } };
+type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string; before?: { kind: string; text: string }; deep?: string };
 
 async function phrasesOf(ref: string, n: number) {
   const approved = await approvedList();
@@ -89,36 +89,49 @@ async function phrasesOf(ref: string, n: number) {
   return { s, list: list.length ? list : [{ he, en }] };
 }
 
-async function makeWeave(ref: string, n: number, awake = false, custom: string | null = null, iyun = false): Promise<{ phrases: Phrase[] }> {
+// Nov 21: Settings → Learn with me → Go deeper "With the cards": the Go deeper of every phrase is written in the same
+// call as the line's notes (the page is sent once, not again for each phrase), kept where "Go deeper" looks for it, and
+// sent along so it opens at once. Cheaper when he opens Go deeper on most phrases; dearer when he rarely does.
+const TOGETHER = (iyun: boolean, awake: boolean, custom: boolean) => `# Go deeper, written now too
+For EACH phrase also write "deep": what he will read if he taps "Go deeper" on that phrase. Each "deep" stands on its own, goes beyond its note (never repeats it), and follows these instructions as if he had asked on that phrase:
+${DEEP}${iyun ? `\n${IYUN_DEEP}\nThe meforshim given in the request are for the "deep" fields only; the notes still keep to the Iyun rule for notes above.` : ''}${awake ? `\n${AWAKE_DEEP}` : custom ? '\nWrite each "deep" in the same tone as the notes.' : ''}
+So each entry is {"before"?, "en", "note", "ask"?, "hint"?, "deep"}.`;
+const deepKindOf = (t: { custom: string | null; awake: boolean; tag?: string }, iyun: boolean) => `${t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2'}${iyun ? '-iyun2' : ''}`;
+
+async function makeWeave(ref: string, n: number, awake = false, custom: string | null = null, iyun = false, together: string | null = null): Promise<{ phrases: Phrase[] }> {
   await needCredit();
   const got = await phrasesOf(ref, n);
   if (!got) return { phrases: [] };
   const { s, list } = got;
   const st = await getSettings();
   const model = await keptModel();
-  const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
+  const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}${together && iyun ? await meforshim(ref, n) : ''}`;
   // Nov 19: his own tone is said again at the end of the request, where it weighs most.
   const askT = `${ask}${toneTail({ awake, custom })}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${custom ? '' : `${styleForChat(st)}\n\n`}${SCOPE}${custom ? `\n\n${customBlock(custom, 'these notes (and anything before the text, and the questions)')}` : awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}${iyun ? `\n\n${IYUN_NOTES}` : ''}`, history: [{ role: 'user', content: askT }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
+  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${custom ? '' : `${styleForChat(st)}\n\n`}${SCOPE}${custom ? `\n\n${customBlock(custom, 'these notes (and anything before the text, and the questions)')}` : awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}${iyun ? `\n\n${IYUN_NOTES}` : ''}${together ? `\n\n${TOGETHER(iyun, awake, !!custom)}` : ''}`, history: [{ role: 'user', content: askT }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: together ? 14000 : 6000 });
   await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
-  const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string; before?: { kind?: string; text?: string } }[] }>(r.text, '{'); } catch { return null; } })();
+  const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string; deep?: string; before?: { kind?: string; text?: string } }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
   if (!out.length) throw new Error('The learning did not come back in the right form.');
-  return {
-    phrases: list.map((p, i) => {
-      const o = out[i] ?? {};
-      return { he: p.he, en: (o.en || p.en || '').trim(), note: unlabel(o.note ?? ''), ...(o.ask ? { ask: unlabel(o.ask), hint: (o.hint ?? '').trim() } : {}), ...(o.before?.text ? { before: { kind: String(o.before.kind ?? 'think'), text: unlabel(o.before.text) } } : {}) };
-    }),
-  };
+  const phrases: Phrase[] = list.map((p, i) => {
+    const o = out[i] ?? {};
+    const deep = together && o.deep && o.deep.trim().length >= 40 ? unlabel(o.deep.replace(/\*\*|__/g, '')) : '';
+    return { he: p.he, en: (o.en || p.en || '').trim(), note: unlabel(o.note ?? ''), ...(o.ask ? { ask: unlabel(o.ask), hint: (o.hint ?? '').trim() } : {}), ...(o.before?.text ? { before: { kind: String(o.before.kind ?? 'think'), text: unlabel(o.before.text) } } : {}), ...(deep ? { deep } : {}) };
+  });
+  // Each Go deeper kept where the button looks for it (and "Simpler" builds on it); one made earlier by tapping stays.
+  if (together) await Promise.all(phrases.map((p, i) => (p.deep ? keep(together, `${ref}:${n}:${i}`, async () => ({ text: p.deep! }), (x) => !x.text).catch(() => null) : null)));
+  return { phrases };
 }
 
 export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
   const t = await toneNow(); // "Wake me up" unless Calm, or his own tone, is chosen (Nov 18)
-  const iyun = (await getSettings().catch(() => null))?.style === 'iyun'; // Nov 21: Iyun notes are kept apart (they keep the meforshim for Go deeper)
-  const kind = `${t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v6' : 'weave-v3'}${iyun ? '-iyun2' : ''}`;
-  try { return NextResponse.json(await keep(kind, `${ref}:${n}`, () => makeWeave(ref, n, t.awake, t.custom, iyun), (x) => !x.phrases.length)); }
+  const st = await getSettings().catch(() => null);
+  const iyun = st?.style === 'iyun'; // Nov 21: Iyun notes are kept apart (they keep the meforshim for Go deeper)
+  const together = st?.lwDeepTogether ? deepKindOf(t, iyun) : null; // Go deeper written with the cards
+  const kind = `${t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v6' : 'weave-v3'}${iyun ? '-iyun2' : ''}${together ? '-deep1' : ''}`;
+  try { return NextResponse.json(await keep(kind, `${ref}:${n}`, () => makeWeave(ref, n, t.awake, t.custom, iyun, together), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 
@@ -156,7 +169,7 @@ export async function POST(req: NextRequest) {
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
   const t = await toneNow(); // the same Tone as the rest (Nov 18)
   const iyun = (await getSettings().catch(() => null))?.style === 'iyun';
-  const kind = `${t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2'}${iyun ? '-iyun2' : ''}`;
+  const kind = deepKindOf(t, iyun);
   const deep = () => keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom, iyun), (x) => !x.text);
   try {
     // "Simpler": made from the very Go deeper he read (kept, so this costs nothing more), and kept with it.

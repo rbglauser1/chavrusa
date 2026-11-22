@@ -15,7 +15,7 @@ import SugyaChart, { chartKept, loadChart, topicStartOf } from './SugyaChart';
 // of time, and when a new topic begins Learn with me says so (with the chart one tap away).
 let chartUsed = false;
 
-type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string; before?: { kind: string; text: string } };
+type Phrase = { he: string; en: string; note: string; ask?: string; hint?: string; before?: { kind: string; text: string }; deep?: string };
 // Nov 18: a line is a row of steps: some phrases have something before their text (a challenge, a chakira, a kashya to
 // hold, the scene), shown first, alone; Next then brings the text.
 type Step = { k: number; part: 'before' | 'text' };
@@ -24,7 +24,7 @@ const BEFORE_LABEL: Record<string, string> = { think: 'Think first', chakira: 'A
 const got = new Map<string, Promise<{ phrases: Phrase[] }>>();
 const weave = (ref: string, n: number) => {
   const d0 = typeof document !== 'undefined' ? document.documentElement.dataset : {} as DOMStringMap;
-  const k = `${d0.ailang ?? 'en'}|${d0.lwtone ?? 'awake'}|${d0.lstyle ?? ''}|${ref}:${n}`;
+  const k = `${d0.ailang ?? 'en'}|${d0.lwtone ?? 'awake'}|${d0.lstyle ?? ''}|${d0.lwdeep ?? ''}|${ref}:${n}`;
   if (!got.has(k)) {
     const p = fetch(`/api/weave?ref=${encodeURIComponent(ref)}&n=${n}`).then((r) => r.json()).then((d) => { if (!d.phrases?.length) throw new Error(d.error || 'none'); return d as { phrases: Phrase[] }; });
     got.set(k, p); p.catch(() => got.delete(k));
@@ -41,9 +41,9 @@ function eatTaps() {
   window.setTimeout(() => window.removeEventListener('click', eat, true), 450);
 }
 
-function Deeper({ refText, n, k }: { refText: string; n: number; k: number }) {
+function Deeper({ refText, n, k, ready }: { refText: string; n: number; k: number; ready?: string }) {
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState<string | null>(null);
+  const [text, setText] = useState<string | null>(ready ?? null); // written with the cards (Settings), it's here already
   const [err, setErr] = useState(false);
   // Nov 21: "Simpler": he read it and didn't get it; one tap gives the same thing in a few plain words.
   const [simple, setSimple] = useState<string | null>(null);
@@ -231,7 +231,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
         <div className="lw-he" dir="rtl">{p.he}</div>
         {p.en && <div className="lw-en">{p.en}</div>}
         {p.note && <div className={`lw-note ${heNote ? 'he-note' : ''}`} dir={heNote ? 'rtl' : 'ltr'}>{p.note}</div>}
-        <Deeper refText={refText} n={n} k={k} />
+        <Deeper refText={refText} n={n} k={k} ready={p.deep} />
         {p.ask && <Ask refText={refText} n={n} q={p.ask} hint={p.hint} />}
       </div>
     );

@@ -454,6 +454,7 @@ export default function Home() {
     root.dataset.spell = settings.spelling ?? 'yeshivish';
     root.dataset.homebg = settings.homeBg ?? 'none'; // Nov 18: the Kosel behind Home
     root.dataset.lwview = settings.lwView ?? 'panel';
+    root.dataset.lwdeep = settings.lwDeepTogether ? 'with' : 'tap';
     root.dataset.lstyle = settings.style ?? ''; // Nov 21: Learn with me in Iyun brings Rashi and Tosafos
     root.dataset.lwtone = settings.lwTone === 'custom' ? `custom:${settings.customTone ?? ''}` : settings.lwTone ?? 'awake';
     { // Nov 19: the tone's name, shown at the top of Learn with me so he can see which one is writing
@@ -474,7 +475,7 @@ export default function Home() {
     root.dataset.commfont = cf === 'rashi' ? 'rashi' : cf === 'same' ? 'same' : 'chosen';
     const cs = fontStack(FONTS_COMM, cf);
     if (cf !== 'rashi' && cf !== 'same' && cs) root.style.setProperty('--f-comm', cs); else root.style.removeProperty('--f-comm');
-  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.aiLang, settings.spelling, settings.lwTone, settings.lwView, settings.customTone, settings.customTones, settings.customToneId, settings.homeBg, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin, settings.paper, settings.paperTex]);
+  }, [settings.guidedPalette, settings.theme, settings.heSize, settings.enSize, settings.commSize, settings.aiSize, settings.aiHeFont, settings.aiLang, settings.spelling, settings.lwTone, settings.lwView, settings.lwDeepTogether, settings.customTone, settings.customTones, settings.customToneId, settings.homeBg, settings.rashiScript, settings.fonts, settings.enMark, settings.colors, settings.bold, settings.heSpacing, settings.enBold, settings.ilEn, settings.justify, settings.partGap, settings.sideMargin, settings.paper, settings.paperTex]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [items, status]);
 

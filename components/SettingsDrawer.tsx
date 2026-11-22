@@ -410,7 +410,12 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <div className="field">
               <label>Learn with me looks like</label>
               <Seg value={s.lwView ?? 'panel'} options={[['panel', 'Panel'], ['cards', 'Cards']]} onPick={(v) => onChange({ lwView: v as 'panel' | 'cards' })} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Panel: rises over the lower part of the page, the phrases one under the other. Cards: one card at a time over the page; swipe it off the screen (or tap its ✕) and the next one comes up.</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Panel: rises over the lower part of the page, the phrases one under the other. Cards: one card at a time over the page; swipe it off the screen and the next one comes up (its ✕ closes them).</div>
+            </div>
+            <div className="field">
+              <label>Go deeper is made</label>
+              <Seg value={s.lwDeepTogether ? 'together' : 'tap'} options={[['tap', 'When I tap it'], ['together', 'With the cards']]} onPick={(v) => onChange({ lwDeepTogether: v === 'together' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>When I tap it: each phrase’s Go deeper is written the first time you open it. With the cards: all of a line’s Go deepers are written together with its cards, so they open at once. With the cards is cheaper if you open Go deeper on most phrases (about two or more a line), and costs more if you rarely do. Either way each one is made once and kept. Lines already made are made again once.</div>
             </div>
             <div className="field">
               <label>Tone</label>

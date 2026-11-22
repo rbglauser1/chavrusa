@@ -523,6 +523,7 @@ export interface Settings {
   homeBg?: 'none' | 'kotel' | 'bm' | 'shelves' | 'candle' | 'yerushalayim' | 'own'; // Nov 18: a picture behind the Home screen (the Kosel)
   lwTone?: 'awake' | 'calm' | 'custom';
   lwView?: 'panel' | 'cards'; // Nov 21: Learn with me as a panel (default) or as cards swiped away one at a time
+  lwDeepTogether?: boolean;   // Nov 21: Learn with me's Go deeper written together with each line's cards (opens at once)
   customTones?: { id: string; name: string; text: string }[]; // Nov 18: up to four tones of his own
   customToneId?: string; // which of them is in use
   customTone?: string; // Nov 18: the learner's own tone, in his words (used when lwTone is 'custom') // Nov 18: Learn with me's tone: "Wake me up" (a mix of voices, default) or Calm
@@ -662,7 +663,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['lwView', 'homeBg', 'customTones', 'customToneId', 'customTone', 'lwTone', 'spelling', 'bigPictureText', 'bigPicture', 'stepsMode', 'pshatMode', 'pshat', 'homeOneLine', 'homeStreak', 'windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode', 'fiveLen', 'paperTex', 'teasers', 'leftQ', 'homeTeaser'] as const;
+export const OPTIONAL_SETTING_KEYS = ['lwView', 'lwDeepTogether', 'homeBg', 'customTones', 'customToneId', 'customTone', 'lwTone', 'spelling', 'bigPictureText', 'bigPicture', 'stepsMode', 'pshatMode', 'pshat', 'homeOneLine', 'homeStreak', 'windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode', 'fiveLen', 'paperTex', 'teasers', 'leftQ', 'homeTeaser'] as const;
 
 export const OWNER_ID = 'owner';
 
