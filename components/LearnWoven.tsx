@@ -27,6 +27,15 @@ const weave = (ref: string, n: number) => {
   return got.get(k)!;
 };
 
+// Nov 21: on the phone, the tap that follows a lifted finger after a drag can land on whatever is under it (with the
+// card lowered, that is the Home button in the bar at the bottom, and it took him Home). After any drag of the card,
+// stray taps are swallowed for a moment (the same fix as the panel's, Nov 19).
+function eatTaps() {
+  const eat = (ev: Event) => { ev.preventDefault(); ev.stopPropagation(); };
+  window.addEventListener('click', eat, true);
+  window.setTimeout(() => window.removeEventListener('click', eat, true), 450);
+}
+
 function Deeper({ refText, n, k }: { refText: string; n: number; k: number }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState<string | null>(null);
@@ -234,8 +243,8 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
           : fitIn({ ...from.g, w: from.g.w + 2 * dx2, h: (from.g.h ?? 320) + dy2 }); // centered, so it grows both ways
         live.current = g; setGeom(g);
       },
-      onPointerUp: () => { if (from) { from = null; keepGeom(); } },
-      onPointerCancel: () => { from = null; },
+      onPointerUp: () => { if (from) { from = null; keepGeom(); eatTaps(); } },
+      onPointerCancel: () => { if (from) { from = null; keepGeom(); } },
     };
   };
   const moveBy = useRef<ReturnType<typeof handle> | null>(null);
@@ -272,11 +281,13 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
         live.current = ng; setGeom(ng);
       }
     },
-    onTouchEnd: () => {
+    onTouchEnd: (e: React.TouchEvent) => {
       const g = sw.current; sw.current = null;
+      if (g?.lock && !(g.lock === 'v' && g.inText)) { if (e.cancelable) e.preventDefault(); eatTaps(); } // it was a drag, not a tap
       if (g?.lock === 'h' && Math.abs(dx) > 80) toss(dx > 0 ? 1 : -1); else setDx(0);
       if (g?.lock === 'v' && !g.inText) keepGeom();
     },
+    onTouchCancel: () => { const g = sw.current; sw.current = null; setDx(0); if (g?.lock === 'v' && !g.inText) keepGeom(); },
   };
 
   // Nov 21 (3): he can ask the chavrusa his own question right on the card. The answer comes on the card; then he
