@@ -29,6 +29,9 @@ export function PullRefresh() {
       // Not in the Sefer: pulling down at the top there brings in the amud before.
       // The Home screens are marked no-pull to stop them bouncing; that doesn't stop the refresh (Nov 16).
       if (t.closest('input, textarea, select, [contenteditable], .no-pull:not(main), .smap')) return;
+      // Nov 21: nor on Learn with me (the cards and their top bar, the panel, the sugya chart): pulling a card down
+      // moves it, and it was reloading the app (which starts at Home).
+      if (t.closest('.lwc, .lw-sheet, .sch')) return;
       // The Library opens inside the sefer's pane, but it isn't the sefer: pulling down there refreshes (Nov 16).
       if (t.closest('.sefer-body, .min-text') && !t.closest('.lib')) return;
       // Every box that scrolls, from the finger up, has to be at its top (a pixel or two of iPhone bounce is still
