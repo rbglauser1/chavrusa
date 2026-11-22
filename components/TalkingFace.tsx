@@ -17,6 +17,10 @@ export const BUILT_IN_FACES = {
   partner: { name: 'Learning partner', photo: '/faces/partner.jpg', mouth: { x: 53.1, y: 59.5, w: 18, ar: 0.8 } },
   mentor: { name: 'Warm mentor', photo: '/faces/mentor.jpg', mouth: { x: 54.2, y: 56.5, w: 21, ar: 0.8 } },
   teacher: { name: 'Contemporary teacher', photo: '/faces/teacher.jpg', mouth: { x: 52.5, y: 59.2, w: 20, ar: 0.8 } },
+  young: { name: 'Young chavrusa', photo: '/faces/young.jpg', mouth: { x: 53.6, y: 64.6, w: 21, ar: 0.8 } },
+  companion: { name: 'Warm companion', photo: '/faces/companion.jpg', mouth: { x: 51.7, y: 58.7, w: 24, ar: 0.8 } },
+  seasoned: { name: 'Seasoned mentor', photo: '/faces/seasoned.jpg', mouth: { x: 52.4, y: 59.8, w: 23, ar: 0.8 } },
+  chassidish: { name: 'Chassidish chavrusa', photo: '/faces/chassidish.jpg', mouth: { x: 52.1, y: 70.5, w: 22, ar: 0.8 } },
 } as const;
 export type FaceKind = 'drawn' | 'photo' | keyof typeof BUILT_IN_FACES;
 export type Mouth = { x: number; y: number; w: number; ar: number }; // x, y: the mouth's middle, % of the photo; w: mouth width, % of the photo's width; ar: photo width / height
