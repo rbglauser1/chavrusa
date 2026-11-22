@@ -403,7 +403,8 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
             style={{ height: geom?.h ?? undefined, maxHeight: geom?.h ? 'none' : undefined, transform: moved, transition: dx && !fly ? 'none' : 'transform .23s ease-out, opacity .23s', opacity: fly ? 0 : 1 }}
             {...swipe}
           >
-            {!done && phrases.length > 0 && <button className="lwc-x" onClick={() => toss(1)} aria-label={nextLabel}>✕</button>}
+            {/* Nov 21: the ✕ closes the cards (it used to bring the next card; a swipe does that) */}
+            <button className="lwc-x" onClick={onClose} aria-label="Close">✕</button>
             <div className={`lwc-body${scrolls ? ' scrolls' : ''}`} ref={bodyEl}>
               {done ? (
                 <div className="lw-done">
