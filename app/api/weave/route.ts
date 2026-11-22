@@ -10,6 +10,7 @@ import { needCredit } from '@/lib/credits';
 import { keptModel, runKept } from '@/lib/keptModel';
 import { SCOPE } from '@/lib/scope';
 import { AWAKE_DEEP, AWAKE_CHECK, customBlock, toneNow, toneTail, unlabel } from '@/lib/tone';
+import { prepareLamdan } from '@/lib/prefetch';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -45,6 +46,21 @@ ${AWAKE_CHECK}`;
 
 const DEEP = `You are a warm, sharp chavrusa. The learner asked to go deeper on one phrase of the line marked >>> <<<. In 3 to 6 sentences (at most 120 words) go deeper on that phrase: what the standard meforshim on this sefer say on it (on the Gemara: Rashi and Tosafos; on a Mishnah: the Bartenura and Tosafos Yom Tov; on Chumash: Rashi and the Ramban), naming one only when you are sure he says it, the sevara behind it, and what question it answers or raises. Only what is truly there; plain prose, no markdown, no lists. Hebrew terms in Hebrew letters; yeshivish Ashkenazi names.`;
 
+// Nov 21: in the Iyun style (Settings → Learning style), Learn with me brings the meforshim in: the actual words of Rashi
+// and Tosafos (on a Mishnah the Bartenura and Tosafos Yom Tov; on Chumash Rashi and the Ramban) on this line are handed
+// over, and where one of them truly adds to a phrase its gist is woven into that phrase's note, shortened.
+const IYUN_WEAVE = `# Iyun: bring Rashi and Tosafos
+The learner learns b'iyun. Under "The meforshim on this line" you get the actual words of Rashi, Tosafos and others on this line. Where one of them truly adds something on a phrase (Rashi's key pshat that the words alone don't give, or a Tosafos kashya with its teretz, or a chiddush or machlokes that changes how you read the phrase), weave its gist into THAT phrase's note, shortened to the point, naming him: e.g. "Rashi: …" or "Tosafos asks …, and answers …". One sentence, two at most; the gist, not a translation of the whole dibur hamaschil. Use it where it fits, not on every phrase: in a typical line one or two phrases, sometimes none. Prefer Rashi and Tosafos (on a Mishnah the Bartenura and Tosafos Yom Tov; on Chumash Rashi and the Ramban). Say only what the given text actually says; if no meforesh text is given, bring one only when you are certain of it. In Iyun a note may run to 70 words.`;
+
+const IYUN_DEEP = `# Iyun
+The learner learns b'iyun. Under "The meforshim on this line" you get the actual words of the meforshim on this line. Build the going-deeper on them: where Rashi or Tosafos (on a Mishnah the Bartenura or Tosafos Yom Tov; on Chumash Rashi or the Ramban) speak to this phrase, give the gist of what each says, shortened (Rashi's pshat in a line; Tosafos's kashya and teretz in a line or two), name the sevara or chakira behind it, and where they differ say what the difference turns on. Only what the given text says; if none of them speaks to this phrase, say so in a few words and go deeper on the sevara. Up to 170 words.`;
+
+async function meforshim(ref: string, n: number): Promise<string> {
+  const approved = await approvedList();
+  const t = await prepareLamdan(ref, [n], approved, 6000).catch(() => null);
+  return t && !/^\(No commentaries/.test(t) ? `\n\nThe meforshim on this line (from Sefaria):\n${t.replace(/\n\(Also on these lines[\s\S]*$/, '')}` : '\n\n(No meforshim on this line were found on Sefaria.)';
+}
+
 const context = (he: string[], en: string[], n: number) => {
   const clip = (t: string, m: number) => (t.length > m ? `${t.slice(0, m)}…` : t);
   return he.map((h, i) => {
@@ -66,17 +82,17 @@ async function phrasesOf(ref: string, n: number) {
   return { s, list: list.length ? list : [{ he, en }] };
 }
 
-async function makeWeave(ref: string, n: number, awake = false, custom: string | null = null): Promise<{ phrases: Phrase[] }> {
+async function makeWeave(ref: string, n: number, awake = false, custom: string | null = null, iyun = false): Promise<{ phrases: Phrase[] }> {
   await needCredit();
   const got = await phrasesOf(ref, n);
   if (!got) return { phrases: [] };
   const { s, list } = got;
   const st = await getSettings();
   const model = await keptModel();
-  const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
+  const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}${iyun ? await meforshim(ref, n) : ''}`;
   // Nov 19: his own tone is said again at the end of the request, where it weighs most.
   const askT = `${ask}${toneTail({ awake, custom })}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${custom ? '' : `${styleForChat(st)}\n\n`}${SCOPE}${custom ? `\n\n${customBlock(custom, 'these notes (and anything before the text, and the questions)')}` : awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}`, history: [{ role: 'user', content: askT }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
+  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${custom ? '' : `${styleForChat(st)}\n\n`}${iyun ? `${IYUN_WEAVE}\n\n` : ''}${SCOPE}${custom ? `\n\n${customBlock(custom, 'these notes (and anything before the text, and the questions)')}` : awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}`, history: [{ role: 'user', content: askT }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
   await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string; before?: { kind?: string; text?: string } }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
@@ -93,18 +109,19 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
   const t = await toneNow(); // "Wake me up" unless Calm, or his own tone, is chosen (Nov 18)
-  const kind = t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v6' : 'weave-v3';
-  try { return NextResponse.json(await keep(kind, `${ref}:${n}`, () => makeWeave(ref, n, t.awake, t.custom), (x) => !x.phrases.length)); }
+  const iyun = (await getSettings().catch(() => null))?.style === 'iyun'; // Nov 21: Iyun is kept apart, with its meforshim
+  const kind = `${t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v6' : 'weave-v3'}${iyun ? '-iyun1' : ''}`;
+  try { return NextResponse.json(await keep(kind, `${ref}:${n}`, () => makeWeave(ref, n, t.awake, t.custom, iyun), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
 
-async function makeDeep(ref: string, n: number, k: number, awake = false, custom: string | null = null): Promise<{ text: string }> {
+async function makeDeep(ref: string, n: number, k: number, awake = false, custom: string | null = null, iyun = false): Promise<{ text: string }> {
   await needCredit();
   const got = await phrasesOf(ref, n);
   if (!got || !got.list[k]) return { text: '' };
   const model = await keptModel();
-  const ask = `${got.s.ref}, line ${n}\n\n${context(got.s.he, got.s.en, n)}\n\nGo deeper on this phrase of line ${n}: ${stripNikud(got.list[k].he)}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${DEEP}\n\n${SCOPE}${custom ? `\n\n${customBlock(custom, 'going deeper')}` : awake ? `\n\n${AWAKE_DEEP}` : ''}`, history: [{ role: 'user', content: `${ask}${toneTail({ awake, custom })}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
+  const ask = `${got.s.ref}, line ${n}\n\n${context(got.s.he, got.s.en, n)}\n\nGo deeper on this phrase of line ${n}: ${stripNikud(got.list[k].he)}${iyun ? await meforshim(ref, n) : ''}`;
+  const r = await runKept({ lang: true, model: model.id, system: `${DEEP}${iyun ? `\n\n${IYUN_DEEP}` : ''}\n\n${SCOPE}${custom ? `\n\n${customBlock(custom, 'going deeper')}` : awake ? `\n\n${AWAKE_DEEP}` : ''}`, history: [{ role: 'user', content: `${ask}${toneTail({ awake, custom })}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1 });
   await logCost({ sessionId: null, kind: 'weave-deep', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const text = unlabel(r.text.replace(/\*\*|__/g, ''));
   if (text.length < 40) throw new Error('It did not come back.');
@@ -115,7 +132,8 @@ export async function POST(req: NextRequest) {
   const { ref, n, k } = await req.json().catch(() => ({}));
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
   const t = await toneNow(); // the same Tone as the rest (Nov 18)
-  const kind = t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2';
-  try { return NextResponse.json(await keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom), (x) => !x.text)); }
+  const iyun = (await getSettings().catch(() => null))?.style === 'iyun';
+  const kind = `${t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2'}${iyun ? '-iyun1' : ''}`;
+  try { return NextResponse.json(await keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom, iyun), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }

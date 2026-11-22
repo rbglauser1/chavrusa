@@ -454,6 +454,7 @@ export default function Home() {
     root.dataset.spell = settings.spelling ?? 'yeshivish';
     root.dataset.homebg = settings.homeBg ?? 'none'; // Nov 18: the Kosel behind Home
     root.dataset.lwview = settings.lwView ?? 'panel';
+    root.dataset.lstyle = settings.style ?? ''; // Nov 21: Learn with me in Iyun brings Rashi and Tosafos
     root.dataset.lwtone = settings.lwTone === 'custom' ? `custom:${settings.customTone ?? ''}` : settings.lwTone ?? 'awake';
     { // Nov 19: the tone's name, shown at the top of Learn with me so he can see which one is writing
       const own = (settings.customTones ?? []).filter((t) => t.text?.trim());
