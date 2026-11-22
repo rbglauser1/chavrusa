@@ -165,9 +165,47 @@ export default function TalkingFace({ state, kind, onHide }: { state: string; ki
   const stateRef = useRef(state);
   stateRef.current = state;
   const use: FaceKind = kind === 'photo' ? (face.photo && face.mouth ? 'photo' : 'drawn') : kind;
+  // Nov 22 (2): he moves the face anywhere by dragging it; it stays there (kept on this device). A tap still makes it
+  // bigger or smaller.
+  const box = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(() => { try { return JSON.parse(localStorage.getItem('chavrusa-face-pos') || 'null'); } catch { return null; } });
+  const drag = useRef<{ id: number; px: number; py: number; x: number; y: number; moved: boolean } | null>(null);
+  const fit = (p: { x: number; y: number }) => {
+    const el = box.current, w = el?.offsetWidth ?? 96, h = el?.offsetHeight ?? 120;
+    return { x: Math.min(Math.max(p.x, 4), window.innerWidth - w - 4), y: Math.min(Math.max(p.y, 4), window.innerHeight - h - 4) };
+  };
+  useEffect(() => { // bigger, or the phone turned: keep it on the screen
+    if (!pos) return;
+    const t = window.setTimeout(() => setPos((p) => (p ? fit(p) : p)), 280);
+    const re = () => setPos((p) => (p ? fit(p) : p));
+    window.addEventListener('resize', re);
+    return () => { window.clearTimeout(t); window.removeEventListener('resize', re); };
+  }, [big]); // eslint-disable-line react-hooks/exhaustive-deps
+  const onDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const r = box.current?.getBoundingClientRect(); if (!r) return;
+    drag.current = { id: e.pointerId, px: e.clientX, py: e.clientY, x: r.left, y: r.top, moved: false };
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current; if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.px, dy = e.clientY - d.py;
+    if (!d.moved) { if (Math.hypot(dx, dy) < 6) return; d.moved = true; try { box.current?.setPointerCapture(e.pointerId); } catch { /* fine */ } }
+    setPos(fit({ x: d.x + dx, y: d.y + dy }));
+  };
+  const onUp = () => {
+    const d = drag.current; drag.current = null;
+    if (!d?.moved) return;
+    setPos((p) => { try { if (p) localStorage.setItem('chavrusa-face-pos', JSON.stringify(p)); } catch { /* fine */ } return p; });
+    // the tap that follows a lifted finger is not a tap on the face (nor on what's under it)
+    const eat = (ev: Event) => { ev.preventDefault(); ev.stopPropagation(); };
+    window.addEventListener('click', eat, true);
+    window.setTimeout(() => window.removeEventListener('click', eat, true), 400);
+  };
   const toggle = () => setBig((v) => { try { localStorage.setItem('chavrusa-face-big', v ? '0' : '1'); } catch { /* fine */ } return !v; });
   return createPortal(
-    <div className={`tface ${big ? 'big' : ''} s-${state}`} role="img" aria-label={`Your chavrusa · ${SAYS[state] ?? ''}`} onClick={toggle}>
+    <div ref={box} className={`tface ${big ? 'big' : ''} ${drag.current?.moved ? 'moving' : ''} s-${state}`} role="img" aria-label={`Your chavrusa · ${SAYS[state] ?? ''}`}
+      style={pos ? { left: pos.x, top: pos.y, right: 'auto' } : undefined}
+      onClick={toggle} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
       <FaceView speaking={() => stateRef.current === 'speaking'} kind={use} photo={face.photo} mouth={face.mouth} />
       <span className="tface-say">{SAYS[state] ?? ''}</span>
       <button className="tface-x" onClick={(e) => { e.stopPropagation(); onHide(); }} aria-label="Hide the face for this call">×</button>

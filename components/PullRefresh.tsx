@@ -31,7 +31,7 @@ export function PullRefresh() {
       if (t.closest('input, textarea, select, [contenteditable], .no-pull:not(main), .smap')) return;
       // Nov 21: nor on Learn with me (the cards and their top bar, the panel, the sugya chart): pulling a card down
       // moves it, and it was reloading the app (which starts at Home).
-      if (t.closest('.lwc, .lw-sheet, .sch')) return;
+      if (t.closest('.lwc, .lw-sheet, .sch, .tface')) return; // nor on the chavrusa's face (dragged around, Nov 22)
       // The Library opens inside the sefer's pane, but it isn't the sefer: pulling down there refreshes (Nov 16).
       if (t.closest('.sefer-body, .min-text') && !t.closest('.lib')) return;
       // Every box that scrolls, from the finger up, has to be at its top (a pixel or two of iPhone bounce is still
