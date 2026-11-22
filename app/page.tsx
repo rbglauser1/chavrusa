@@ -33,6 +33,7 @@ import LeaveQuestion from '@/components/LeaveQuestion';
 import { isSitting, setSitting } from '@/lib/focus';
 import { HomePhotoLayer } from '@/components/HomePhoto';
 import TalkingFace from '@/components/TalkingFace';
+import { stopClip, useClipPlaying } from '@/lib/voiceClip';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -232,8 +233,17 @@ export default function Home() {
   // The learner gave a new instruction, or changed the style, during a call: the voice is told at its next turn.
   useEffect(() => { if (live.active) live.remind(); }, [requests, settings.style, settings.blend]); // eslint-disable-line react-hooks/exhaustive-deps
   // Nov 22: the chavrusa's face in a voice call (Settings → Voice → His face in a call), with the call's End button,
-  // on every screen. Face set to Off: just a small "Voice on · End" pill.
-  const faceEl = live.active ? <TalkingFace state={live.state} kind={settings.callFace ?? 'drawn'} onEnd={() => live.stop()} /> : null;
+  // on every screen. Face set to Off: just a small "Voice on · End" pill. Also whenever a recorded voice plays (Big
+  // picture, the Chazara recap) when the face is chosen to be seen; then End stops the recording. And in the older
+  // talk mode (not live), the same as a call.
+  const clipOn = useClipPlaying();
+  const faceKind = settings.callFace ?? 'drawn';
+  const callState = live.active ? live.state : convo ? (voice.state === 'speaking' ? 'speaking' : voice.state === 'transcribing' ? 'thinking' : 'listening') : '';
+  const faceEl = live.active || convo
+    ? <TalkingFace state={clipOn ? 'speaking' : callState} kind={faceKind} onEnd={() => { if (clipOn) stopClip(); if (live.active) live.stop(); else if (convo) toggleTalk(); }} />
+    : clipOn && faceKind !== 'off'
+      ? <TalkingFace state="speaking" kind={faceKind} onEnd={stopClip} />
+      : null;
 
   function pumpLive() {
     if (busyRef.current || liveDelegation.current || !liveQueue.current.length) return;

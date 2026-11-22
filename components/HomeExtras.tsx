@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { Settings } from '@/lib/config';
 import Progress from './Progress';
 import LearningTime from './LearningTime';
+import { watchVoice } from '@/lib/voiceClip';
 
 type Recap = { sessionId: string; title: string; when: string; points: string[]; questions: { q: string; a: string }[] };
 
@@ -39,7 +40,7 @@ function Chazara() {
     setSpeaking(true);
     try {
       const res = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: `Chazara. ${r.title}. ${r.points.join(' ')}` }) });
-      if (res.ok) { const a = new Audio(URL.createObjectURL(await res.blob())); a.onended = () => setSpeaking(false); await a.play(); } else setSpeaking(false);
+      if (res.ok) { const a = new Audio(URL.createObjectURL(await res.blob())); watchVoice(a); a.onended = () => setSpeaking(false); await a.play(); } else setSpeaking(false);
     } catch { setSpeaking(false); }
   };
   return (

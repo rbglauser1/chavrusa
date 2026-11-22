@@ -3,6 +3,7 @@
 // half a minute, then stops. A second tap while it speaks stops it. Written and recorded once per line, then free.
 import { useState } from 'react';
 import { isHebText } from './AiNote';
+import { watchVoice } from '@/lib/voiceClip';
 
 // One player for the whole page, unlocked by the tap itself (the iPhone only lets sound start from a tap; the
 // recording may take a few seconds to be made the first time).
@@ -30,6 +31,7 @@ export function BigPictureBtn({ lineRef, onTalk, liveOn }: { lineRef: string; on
     if (liveOn && onTalk) { void talk(); return; } // in a call: the live voice gives it
     stop();
     if (!player) player = new Audio();
+    watchVoice(player); // the chavrusa's face talks while it plays (Nov 22)
     const a = player;
     a.src = SILENT; void a.play().catch(() => {}); // unlock now, during the tap
     const mine = (on: boolean) => setState(on ? 'playing' : 'idle');
