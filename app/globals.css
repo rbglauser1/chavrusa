@@ -3397,13 +3397,14 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 /* the photo: the jaw piece cut from the photo and lowered; the inside of the mouth behind it */
 .tface-photo { position: relative; width: 100%; overflow: hidden; }
 .tface-photo > img { display: block; width: 100%; height: 100%; object-fit: fill; -webkit-user-select: none; user-select: none; }
-.tface-hole { position: absolute; aspect-ratio: 2.6; border-radius: 50%; background: radial-gradient(ellipse at 50% 30%, #3b1210, #160606 75%); transform-origin: 50% 0; transform: translateY(-12%) scaleY(var(--open, 0)); }
-.tface-jaw { position: absolute; overflow: hidden; transform: translateY(calc(var(--open, 0) * 18%)); -webkit-mask-image: radial-gradient(ellipse 50% 72% at 50% 22%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 50% 72% at 50% 22%, #000 62%, transparent 100%); }
+.tface-hole { position: absolute; aspect-ratio: 3.1; border-radius: 50%; background: radial-gradient(ellipse 60% 80% at 50% 25%, #220806 35%, #4a1814 75%, rgba(74, 24, 20, 0) 100%); filter: blur(.5px); transform-origin: 50% 0; transform: translateY(-8%) scaleY(var(--open, 0)); }
+.tface-jaw { position: absolute; overflow: hidden; transform: translateY(calc(var(--open, 0) * 12%)); -webkit-mask-image: radial-gradient(ellipse 50% 72% at 50% 22%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 50% 72% at 50% 22%, #000 62%, transparent 100%); }
 .tface-jaw > img { position: absolute; max-width: none; height: auto; display: block; }
 /* Settings: choosing his photo and placing the mouth */
 .face-pick { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .face-pick-stage { width: min(240px, 70vw); border-radius: 16px; overflow: hidden; background: #2a211b; cursor: crosshair; }
 .face-pick-stage.small { width: 120px; cursor: default; }
+.face-pick-stage.mid { width: 160px; cursor: default; }
 .face-pick-mark { position: absolute; aspect-ratio: 2.6; transform: translate(-50%, -50%); border: 2px dashed #ffd86b; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0, 0, 0, .35); pointer-events: none; }
 .face-pick-w { display: flex; align-items: center; gap: 10px; font: 13px var(--f-ui); color: var(--soft); }
 .face-pick-w input { flex: 1; max-width: 200px; }

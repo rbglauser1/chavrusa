@@ -12,6 +12,13 @@ import { voiceLevel } from '@/lib/voiceLevel';
 export const FACE_PHOTO_KEY = 'chavrusa-face-photo';
 export const FACE_MOUTH_KEY = 'chavrusa-face-mouth';
 export const FACE_EVENT = 'chavrusa-face';
+// Nov 22: three ready-made faces (portraits he made; files in public/faces), each with its mouth already placed.
+export const BUILT_IN_FACES = {
+  partner: { name: 'Learning partner', photo: '/faces/partner.jpg', mouth: { x: 53.1, y: 59.5, w: 18, ar: 0.8 } },
+  mentor: { name: 'Warm mentor', photo: '/faces/mentor.jpg', mouth: { x: 54.2, y: 56.5, w: 21, ar: 0.8 } },
+  teacher: { name: 'Contemporary teacher', photo: '/faces/teacher.jpg', mouth: { x: 52.5, y: 59.2, w: 20, ar: 0.8 } },
+} as const;
+export type FaceKind = 'drawn' | 'photo' | keyof typeof BUILT_IN_FACES;
 export type Mouth = { x: number; y: number; w: number; ar: number }; // x, y: the mouth's middle, % of the photo; w: mouth width, % of the photo's width; ar: photo width / height
 
 export function readFace(): { photo: string | null; mouth: Mouth | null } {
@@ -128,7 +135,7 @@ function PhotoFace({ photo, mouth }: { photo: string; mouth: Mouth }) {
   return (
     <div className="tface-photo" style={{ aspectRatio: String(mouth.ar) }}>
       <img src={photo} alt="" draggable={false} />
-      <span className="tface-hole" style={{ left: `${mouth.x - mouth.w * 0.38}%`, top: `${mouth.y}%`, width: `${mouth.w * 0.76}%` }} />
+      <span className="tface-hole" style={{ left: `${mouth.x - mouth.w * 0.31}%`, top: `${mouth.y}%`, width: `${mouth.w * 0.62}%` }} />
       <div className="tface-jaw" style={{ left: `${jl}%`, top: `${mouth.y}%`, width: `${jw}%`, height: `${jh}%` }}>
         <img src={photo} alt="" draggable={false} style={{ width: `${10000 / jw}%`, left: `${(-jl / jw) * 100}%`, top: `${(-mouth.y / jh) * 100}%` }} />
       </div>
@@ -138,10 +145,11 @@ function PhotoFace({ photo, mouth }: { photo: string; mouth: Mouth }) {
 
 /** The face itself (also the preview in Settings). */
 export function FaceView({ speaking, demo = false, kind, photo, mouth, className = '', style }: {
-  speaking: () => boolean; demo?: boolean; kind: 'drawn' | 'photo'; photo?: string | null; mouth?: Mouth | null; className?: string; style?: CSSProperties;
+  speaking: () => boolean; demo?: boolean; kind: FaceKind; photo?: string | null; mouth?: Mouth | null; className?: string; style?: CSSProperties;
 }) {
   const root = useRef<HTMLDivElement | null>(null);
   useMotion(root, speaking, demo);
+  if (kind !== 'drawn' && kind !== 'photo') { const b = BUILT_IN_FACES[kind]; photo = b.photo; mouth = { ...b.mouth }; kind = 'photo'; }
   return (
     <div ref={root} className={`tface-view ${className}`} style={style}>
       <div className="tface-move">{kind === 'photo' && photo && mouth ? <PhotoFace photo={photo} mouth={mouth} /> : <DrawnFace />}</div>
@@ -151,12 +159,12 @@ export function FaceView({ speaking, demo = false, kind, photo, mouth, className
 
 const SAYS: Record<string, string> = { connecting: 'Joining…', listening: 'Listening', thinking: 'Thinking…', speaking: 'Speaking', paused: 'Paused' };
 
-export default function TalkingFace({ state, kind, onHide }: { state: string; kind: 'drawn' | 'photo'; onHide: () => void }) {
+export default function TalkingFace({ state, kind, onHide }: { state: string; kind: FaceKind; onHide: () => void }) {
   const [big, setBig] = useState(() => { try { return localStorage.getItem('chavrusa-face-big') === '1'; } catch { return false; } });
   const face = useFacePhoto();
   const stateRef = useRef(state);
   stateRef.current = state;
-  const use = kind === 'photo' && face.photo && face.mouth ? 'photo' : 'drawn';
+  const use: FaceKind = kind === 'photo' ? (face.photo && face.mouth ? 'photo' : 'drawn') : kind;
   const toggle = () => setBig((v) => { try { localStorage.setItem('chavrusa-face-big', v ? '0' : '1'); } catch { /* fine */ } return !v; });
   return createPortal(
     <div className={`tface ${big ? 'big' : ''} s-${state}`} role="img" aria-label={`Your chavrusa · ${SAYS[state] ?? ''}`} onClick={toggle}>
@@ -246,12 +254,12 @@ export function FacePhotoPicker() {
   );
 }
 
-/** The drawn face, talking, as a preview in Settings. */
-export function DrawnFacePreview() {
+/** A ready-made face (or the drawn one), talking, as a preview in Settings. */
+export function DrawnFacePreview({ kind = 'drawn' }: { kind?: Exclude<FaceKind, 'photo'> }) {
   const [on, setOn] = useState(false);
   return (
     <div className="face-pick">
-      <div className="face-pick-stage small"><FaceView speaking={() => on} demo={on} kind="drawn" /></div>
+      <div className={`face-pick-stage ${kind === 'drawn' ? 'small' : 'mid'}`}><div key={kind}><FaceView speaking={() => on} demo={on} kind={kind} /></div></div>
       <div className="home-photo-btns"><button type="button" onClick={() => setOn((v) => !v)}>{on ? 'Stop' : '▶ Try it'}</button></div>
     </div>
   );

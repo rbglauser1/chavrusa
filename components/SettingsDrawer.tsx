@@ -510,11 +510,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
           {rest && <>
           <Group id="voice" title="Voice" hint={`${s.liveEngine === 'gemini' ? 'Gemini Live' : (LIVE_VOICES.find((v) => v.id === s.liveVoice)?.name ?? (s.customVoices ?? []).find((v) => v.id === s.liveVoice)?.name ?? s.liveVoice).replace(/ \(.*\)$/, '')} · ${({ slow: 'Slow', relaxed: 'Relaxed', natural: 'Normal', brisk: 'Brisk' } as Record<string, string>)[s.livePace ?? 'natural']} · pauses ${s.livePauses ?? 'normal'}`}>
             <div className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>Live voice: natural, answers almost instantly, and can be interrupted. Choose GPT-Live or Gemini Live and the voice under Which voice.</div>
-            <Group id="voice-face" level={2} title="His face in a call" hint={({ off: 'Off', drawn: 'Drawn', photo: 'My photo' } as Record<string, string>)[s.callFace ?? 'drawn']}>
+            <Group id="voice-face" level={2} title="His face in a call" hint={({ off: 'Off', drawn: 'Drawn', partner: 'Learning partner', mentor: 'Warm mentor', teacher: 'Contemporary teacher', photo: 'My photo' } as Record<string, string>)[s.callFace ?? 'drawn']}>
               <div className="field">
-                <Seg value={s.callFace ?? 'drawn'} options={[['off', 'Off'], ['drawn', 'Drawn'], ['photo', 'My photo']]} onPick={(v) => onChange({ callFace: v as 'off' | 'drawn' | 'photo' })} />
+                <div className="seg-grid"><Seg value={s.callFace ?? 'drawn'} options={[['off', 'Off'], ['drawn', 'Drawn'], ['partner', 'Partner'], ['mentor', 'Mentor'], ['teacher', 'Teacher'], ['photo', 'My photo']]} onPick={(v) => onChange({ callFace: v as NonNullable<Settings['callFace']> })} /></div>
                 <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In a voice call, your chavrusa’s face in the corner: its mouth moves with his voice, and it blinks and moves a little. Tap it to make it bigger; × hides it for that call. My photo: choose a portrait (a made-up person or one you have the right to use), then tap on his mouth once. The photo stays on this device. Nothing extra to pay.</div>
-                {(s.callFace ?? 'drawn') === 'drawn' && <DrawnFacePreview />}
+                {(s.callFace ?? 'drawn') !== 'off' && s.callFace !== 'photo' && <DrawnFacePreview kind={(s.callFace ?? 'drawn') as 'drawn' | 'partner' | 'mentor' | 'teacher'} />}
                 {s.callFace === 'photo' && <FacePhotoPicker />}
               </div>
             </Group>

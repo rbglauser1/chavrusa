@@ -523,7 +523,7 @@ export interface Settings {
   homeBg?: 'none' | 'kotel' | 'bm' | 'shelves' | 'candle' | 'yerushalayim' | 'own'; // Nov 18: a picture behind the Home screen (the Kosel)
   lwTone?: 'awake' | 'calm' | 'custom';
   lwView?: 'panel' | 'cards'; // Nov 21: Learn with me as a panel (default) or as cards swiped away one at a time
-  callFace?: 'off' | 'drawn' | 'photo'; // Nov 22: the chavrusa's face in a voice call, its mouth moving with his voice (default drawn)
+  callFace?: 'off' | 'drawn' | 'photo' | 'partner' | 'mentor' | 'teacher'; // Nov 22: the chavrusa's face in a voice call, its mouth moving with his voice (default drawn)
   lwDeepTogether?: boolean;   // Nov 21: Learn with me's Go deeper written together with each line's cards (opens at once)
   customTones?: { id: string; name: string; text: string }[]; // Nov 18: up to four tones of his own
   customToneId?: string; // which of them is in use

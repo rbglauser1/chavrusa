@@ -235,7 +235,7 @@ export default function Home() {
   const [faceHidden, setFaceHidden] = useState(false);
   useEffect(() => { if (!live.active) setFaceHidden(false); }, [live.active]);
   const faceEl = live.active && (settings.callFace ?? 'drawn') !== 'off' && !faceHidden
-    ? <TalkingFace state={live.state} kind={settings.callFace === 'photo' ? 'photo' : 'drawn'} onHide={() => setFaceHidden(true)} />
+    ? <TalkingFace state={live.state} kind={settings.callFace ?? 'drawn'} onHide={() => setFaceHidden(true)} />
     : null;
 
   function pumpLive() {
