@@ -153,6 +153,109 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   };
   const back = () => { if (shown > 1) setShown((v) => v - 1); else if (n > 1) setN((v) => v - 1); };
 
+  const renderStep = (st: Step, idx: number) => {
+    const p = phrases[st.k], k = st.k;
+    if (st.part === 'before' && p.before) {
+      const he = isHebText(p.before.text);
+      return (
+        <div key={`b${k}`} className="lw-before" data-ph={idx}>
+          <span className="lw-before-label"><span className="ai-star">✦</span> {BEFORE_LABEL[p.before.kind] ?? 'Think first'}</span>
+          <div dir={he ? 'rtl' : 'ltr'} className={he ? 'he-note' : ''}>{p.before.text}</div>
+        </div>
+      );
+    }
+    const heNote = isHebText(p.note);
+    return (
+      <div key={k} className="lw-ph" data-ph={idx}>
+        <div className="lw-he" dir="rtl">{p.he}</div>
+        {p.en && <div className="lw-en">{p.en}</div>}
+        {p.note && <div className={`lw-note ${heNote ? 'he-note' : ''}`} dir={heNote ? 'rtl' : 'ltr'}>{p.note}</div>}
+        <Deeper refText={refText} n={n} k={k} />
+        {p.ask && <Ask refText={refText} n={n} q={p.ask} hint={p.hint} />}
+      </div>
+    );
+  };
+
+  // Nov 21: Cards (Settings → Learn with me looks like): one card at a time over the page; swipe it off the screen
+  // either way, or tap its ✕, and the next card rises up from the stack behind it.
+  const cards = typeof document !== 'undefined' && document.documentElement.dataset.lwview === 'cards';
+  const [dx, setDx] = useState(0);
+  const [fly, setFly] = useState(0);
+  const sw = useRef<{ x: number; y: number; lock?: 'h' | 'v' } | null>(null);
+  const toss = (dir: number) => {
+    if (fly) return;
+    setFly(dir || 1);
+    window.setTimeout(() => { setFly(0); setDx(0); next(); }, 230);
+  };
+  const swipe = {
+    onTouchStart: (e: React.TouchEvent) => {
+      if ((e.target as HTMLElement).closest('input, textarea, button, a')) return;
+      sw.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      const g = sw.current; if (!g) return;
+      const mx = e.touches[0].clientX - g.x, my = e.touches[0].clientY - g.y;
+      if (!g.lock && (Math.abs(mx) > 8 || Math.abs(my) > 8)) g.lock = Math.abs(mx) > Math.abs(my) ? 'h' : 'v';
+      if (g.lock === 'h') setDx(mx);
+    },
+    onTouchEnd: () => {
+      const g = sw.current; sw.current = null;
+      if (g?.lock === 'h' && Math.abs(dx) > 80) toss(dx > 0 ? 1 : -1); else setDx(0);
+    },
+  };
+  useEffect(() => {
+    if (!cards) return;
+    document.body.classList.add('lw-cards-open');
+    return () => document.body.classList.remove('lw-cards-open');
+  }, [cards]);
+
+  if (cards) {
+    const cur = steps[shown - 1];
+    const more = !done && (shown < steps.length || n < total);
+    const moved = fly ? `translateX(${fly * 130}vw) rotate(${fly * 16}deg)` : `translateX(${dx}px) rotate(${dx / 22}deg)`;
+    const nextLabel = atEnd ? (n < total ? 'Next line' : onNext ? 'Next amud' : 'Finish') : 'Next';
+    return createPortal(
+      <div className="lwc" role="dialog" aria-label="Learn with me">
+        <div className="lwc-top">
+          <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}{document.documentElement.dataset.lwtonename ? <small className="lw-tone">{document.documentElement.dataset.lwtonename}</small> : null}</span>
+          <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} /></span>
+          {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
+          <button className="lwc-stop" onClick={onClose}>Stop</button>
+        </div>
+        <div className="lwc-stack">
+          {more && <div className="lwc-under" aria-hidden="true" />}
+          <div
+            key={`${n}-${shown}`}
+            className="lwc-card"
+            style={{ transform: moved, transition: dx && !fly ? 'none' : 'transform .23s ease-out, opacity .23s', opacity: fly ? 0 : 1 }}
+            {...swipe}
+          >
+            {!done && phrases.length > 0 && <button className="lwc-x" onClick={() => toss(1)} aria-label={nextLabel}>✕</button>}
+            <div className="lwc-body">
+              {done ? (
+                <div className="lw-done">
+                  <p>Well learned! That’s the end of this {/^Mishnah /.test(refText) ? 'perek' : 'section'}.</p>
+                  {onNext && <button className="lw-next" onClick={onNext}>On to the next ›</button>}
+                </div>
+              ) : err ? (
+                <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
+              ) : !phrases.length || !cur ? (
+                <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
+              ) : renderStep(cur, shown - 1)}
+            </div>
+            {!done && phrases.length > 0 && (
+              <div className="lwc-foot">
+                <button className="lwc-back" onClick={back} disabled={n === 1 && shown <= 1} aria-label="Back">‹ Back</button>
+                <span className="lwc-hint">Swipe away or ✕ · {nextLabel.toLowerCase()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
   return createPortal(
     <div className="lw-sheet" role="dialog" aria-label="Learn with me" style={{ height: `calc(${SIZES[size] * 100}dvh - ${drag}px)`, transition: drag ? 'none' : 'height .22s ease' }}>
       <div className="lw-grab" aria-hidden="true" {...grab} />
@@ -172,28 +275,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
           <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
         ) : !phrases.length ? (
           <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
-        ) : steps.slice(0, shown).map((st, idx) => {
-          const p = phrases[st.k], k = st.k;
-          if (st.part === 'before' && p.before) {
-            const he = isHebText(p.before.text);
-            return (
-              <div key={`b${k}`} className="lw-before" data-ph={idx}>
-                <span className="lw-before-label"><span className="ai-star">✦</span> {BEFORE_LABEL[p.before.kind] ?? 'Think first'}</span>
-                <div dir={he ? 'rtl' : 'ltr'} className={he ? 'he-note' : ''}>{p.before.text}</div>
-              </div>
-            );
-          }
-          const heNote = isHebText(p.note);
-          return (
-            <div key={k} className="lw-ph" data-ph={idx}>
-              <div className="lw-he" dir="rtl">{p.he}</div>
-              {p.en && <div className="lw-en">{p.en}</div>}
-              {p.note && <div className={`lw-note ${heNote ? 'he-note' : ''}`} dir={heNote ? 'rtl' : 'ltr'}>{p.note}</div>}
-              <Deeper refText={refText} n={n} k={k} />
-              {p.ask && <Ask refText={refText} n={n} q={p.ask} hint={p.hint} />}
-            </div>
-          );
-        })}
+        ) : steps.slice(0, shown).map((st, idx) => renderStep(st, idx))}
         {!done && phrases.length > 0 && <div className="ai-note left">Explanations written by AI · AI makes mistakes · ask your rav</div>}
       </div>
       {!done && (

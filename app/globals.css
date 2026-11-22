@@ -3259,3 +3259,25 @@ body.lw-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visib
 .tone-slot .tone-box { margin-top: 8px; }
 .tone-use { flex: 0 0 auto; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 13px var(--f-ui); }
 .tone-use.on { background: var(--tc-ink, #a85235); border-color: var(--tc-ink, #a85235); color: #fff; }
+
+/* Nov 21: Learn with me as Cards: one card at a time floating over the lower part of the page, the line it belongs to
+   lit above it; swiped off either way (or ✕) it flies away and the next card rises from the stack behind. */
+.lwc { position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; padding: 0 12px calc(12px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.lwc > * { pointer-events: auto; }
+.lwc-top { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 999px; background: color-mix(in srgb, var(--surface, #fff) 92%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0, 0, 0, .08); align-self: stretch; }
+.lwc-top .lw-icon { width: 34px; height: 34px; }
+.lwc-stop { border: 1px solid var(--rule); background: transparent; color: var(--ink); border-radius: 999px; padding: 7px 14px; font: 600 13px var(--f-ui); }
+.lwc-stack { position: relative; }
+.lwc-under { position: absolute; left: 14px; right: 14px; top: 14px; bottom: -8px; border-radius: 22px; background: var(--surface, #fff); border: 1px solid var(--rule); box-shadow: 0 6px 18px rgba(0, 0, 0, .08); transform: scale(.97); opacity: .85; }
+.lwc-card { position: relative; display: flex; flex-direction: column; max-height: 58dvh; border-radius: 22px; background: var(--surface, #fff); border: 1px solid color-mix(in srgb, var(--tc, #CC7C5E) 28%, var(--rule)); box-shadow: 0 12px 32px rgba(0, 0, 0, .16); touch-action: pan-y; animation: lwc-in .3s cubic-bezier(.2, .9, .3, 1.1); will-change: transform; }
+@keyframes lwc-in { from { transform: translateY(18px) scale(.95); opacity: .5; } to { transform: none; opacity: 1; } }
+.lwc-x { position: absolute; top: 10px; right: 10px; z-index: 1; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--rule); background: var(--surface, #fff); color: var(--ink); font-size: 14px; }
+.lwc-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 18px 6px; }
+.lwc-body .lw-ph { border-bottom: 0; padding-top: 28px; animation: none; }
+.lwc-body .lw-before { margin-top: 30px; }
+.lwc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 14px 12px; border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent); }
+.lwc-back { border: 0; background: none; color: var(--ink); font: 600 14px var(--f-ui); padding: 6px 4px; }
+.lwc-back:disabled { opacity: .35; }
+.lwc-hint { font: 500 12px var(--f-ui); color: var(--soft); }
+body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .lwc-card { animation: none; } }

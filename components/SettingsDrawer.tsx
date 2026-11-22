@@ -408,6 +408,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Everything the AI writes on the screen: the chat, ✦ Chat, Explain, Ideas, the sugya map, outlines, steps, review questions, Chazara and notes. Both: the English, then the same in Hebrew. Quotes stay as written. The voice in a call stays in English. Things already made are made again in the new language the first time you open them (a few cents each), then kept.</div>
             </div>
             <div className="field">
+              <label>Learn with me looks like</label>
+              <Seg value={s.lwView ?? 'panel'} options={[['panel', 'Panel'], ['cards', 'Cards']]} onPick={(v) => onChange({ lwView: v as 'panel' | 'cards' })} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Panel: rises over the lower part of the page, the phrases one under the other. Cards: one card at a time over the page; swipe it off the screen (or tap its ✕) and the next one comes up.</div>
+            </div>
+            <div className="field">
               <label>Tone</label>
               <Seg value={s.lwTone ?? 'awake'} options={[['awake', 'Wake me up'], ['calm', 'Calm'], ['custom', 'My own']]} onPick={(v) => onChange({ lwTone: v as 'awake' | 'calm' | 'custom' })} />
               {s.lwTone === 'custom' && (() => {
