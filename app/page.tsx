@@ -32,6 +32,7 @@ import FiveMinutes from '@/components/FiveMinutes';
 import LeaveQuestion from '@/components/LeaveQuestion';
 import { isSitting, setSitting } from '@/lib/focus';
 import { HomePhotoLayer } from '@/components/HomePhoto';
+import TalkingFace from '@/components/TalkingFace';
 
 type Item =
   | { kind: 'user'; text: string }
@@ -230,6 +231,12 @@ export default function Home() {
   useEffect(() => { if (live.active) prefetchNext(); else { nextReady.current = null; nextTry.current++; } }, [live.active]); // eslint-disable-line react-hooks/exhaustive-deps
   // The learner gave a new instruction, or changed the style, during a call: the voice is told at its next turn.
   useEffect(() => { if (live.active) live.remind(); }, [requests, settings.style, settings.blend]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Nov 22: the chavrusa's face in a voice call (Settings → Voice → His face in a call); × hides it until the call ends.
+  const [faceHidden, setFaceHidden] = useState(false);
+  useEffect(() => { if (!live.active) setFaceHidden(false); }, [live.active]);
+  const faceEl = live.active && (settings.callFace ?? 'drawn') !== 'off' && !faceHidden
+    ? <TalkingFace state={live.state} kind={settings.callFace === 'photo' ? 'photo' : 'drawn'} onHide={() => setFaceHidden(true)} />
+    : null;
 
   function pumpLive() {
     if (busyRef.current || liveDelegation.current || !liveQueue.current.length) return;
@@ -1026,6 +1033,7 @@ export default function Home() {
         {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
         <FiveMinutes onDone={() => setView('home')} />
         <LeaveQuestion onSave={(q) => updateSettings({ leftQ: q })} />
+        {faceEl}
       {loaded && !settings.disclaimer2 && !seenDisclaimer && (
           <Disclaimer
             look={settings.theme}
@@ -1400,6 +1408,7 @@ export default function Home() {
       {notebook && <Notebook onClose={() => setNotebook(false)} onOpen={(ref, n) => { setNotebook(false); setView('learn'); void openExact(ref, n); }} />}
         <FiveMinutes onDone={() => setView('home')} />
         <LeaveQuestion onSave={(q) => updateSettings({ leftQ: q })} />
+        {faceEl}
       {loaded && !settings.disclaimer2 && !seenDisclaimer && (
         <Disclaimer
           look={settings.theme}

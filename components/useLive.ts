@@ -1,4 +1,5 @@
 'use client';
+import { clearVoicePeer, setVoicePeer } from '@/lib/voiceLevel';
 import { takeVoiceGuide } from '@/lib/voiceGuide';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { heReadNote, voiceHe, type HeRead } from '@/lib/hebrew';
@@ -229,6 +230,7 @@ export function useLive(opts: {
   const teardown = useCallback(() => {
     window.clearInterval(micTimer.current);
     try { dc.current?.close(); } catch { /* ignore */ }
+    clearVoicePeer(pc.current);
     try { pc.current?.close(); } catch { /* ignore */ }
     releaseMicSoon(); // the page keeps its one microphone a little while (see getMic)
     dc.current = null; pc.current = null; mic.current = null;
@@ -873,6 +875,7 @@ export function useLive(opts: {
       armLimit();
       const peer = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
       pc.current = peer;
+      setVoicePeer(peer); // the talking face reads how loud the voice is (Nov 22)
       peer.ontrack = (ev) => { if (audio.current) { audio.current.removeAttribute('src'); audio.current.srcObject = ev.streams[0]; audio.current.play().catch(() => {}); } };
       stream.getAudioTracks().forEach((t) => peer.addTrack(t, stream));
       const channel = peer.createDataChannel('oai-events');

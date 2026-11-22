@@ -1,4 +1,5 @@
 'use client';
+import { setVoicePeer } from '@/lib/voiceLevel';
 // Gemini Live (a test, side by side with GPT-Live; Settings → Voice → Live voice).
 // The same job as useLive, with the same controls, so the rest of the app doesn't care which voice is talking:
 // the phone talks to Google directly over a WebSocket (with a short-lived pass from our server), streams the
@@ -78,6 +79,7 @@ async function loopback(stream: MediaStream, el: HTMLAudioElement): Promise<() =
   a.onicecandidate = (e) => { if (e.candidate) b.addIceCandidate(e.candidate).catch(() => {}); };
   b.onicecandidate = (e) => { if (e.candidate) a.addIceCandidate(e.candidate).catch(() => {}); };
   stream.getAudioTracks().forEach((t) => a.addTrack(t, stream));
+  setVoicePeer(b); // the talking face reads how loud the voice is (Nov 22)
   const got = new Promise<void>((res) => { b.ontrack = (ev) => { el.removeAttribute('src'); el.srcObject = ev.streams[0]; el.play().catch(() => {}); res(); }; });
   const offer = await a.createOffer();
   // Voice-quality Opus, a little higher than the default, mono.
