@@ -619,6 +619,22 @@ export default function Home() {
     if (live.active) { live.pointText(x.label, x.he, x.en); return; }
     send(`Let's learn ${x.label}. It says: "${x.he.slice(0, 600)}"${x.en ? ` (in English: "${x.en.slice(0, 600)}")` : ''}`);
   }
+  // Nov 22: Big picture → "🎙 Talk about it": the live voice is put on that line and told what the big picture said,
+  // so the conversation picks up from there. No call yet: one starts, and the voice is told once it is listening.
+  const bpNote = useRef<string | null>(null);
+  function talkAbout(src: SourceData, n: number, text: string) {
+    const note = text
+      ? `The learner just heard or read the app's "Big picture" of ${src.ref}, line ${n}: "${text.slice(0, 1500)}". He tapped "Talk about it": pick up the conversation from that big picture. Don't repeat it; build on it: ask what he'd like to go into, or tie it to the line in front of him.`
+      : `The learner asked for the big picture of ${src.ref}, line ${n}: in about half a minute, where this line stands in the sugya and what it is doing; then ask what he'd like to go into.`;
+    if (live.active && live.state !== 'connecting') live.note(note); else bpNote.current = note;
+    pointAt(src, n);
+    if (!live.active) toggleTalk();
+  }
+  useEffect(() => {
+    if (!live.active) { if (Date.now() - talkTapAt.current > 15_000) bpNote.current = null; return; } // a call just asked for may still be starting
+    if (bpNote.current && live.state !== 'connecting') { live.note(bpNote.current); bpNote.current = null; }
+  }, [live.active, live.state]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function pointAt(src: SourceData, n: number) {
     // The tap wins: drop what was waiting and any read-through; an answer still being written isn't spoken.
     if (live.active) { liveQueue.current = []; liveDelegation.current = null; }
@@ -1089,6 +1105,7 @@ export default function Home() {
                 libraryRequest={libReq}
                 onLibraryOpened={acknowledgeLibrary}
                 onPoint={pointAt}
+                onTalkAbout={talkAbout}
                 talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}
                 onOpenRef={(q) => openRef(q, true)}
                 onOpenExact={openExact}
@@ -1365,6 +1382,7 @@ export default function Home() {
           libraryRequest={libReq}
           onLibraryOpened={acknowledgeLibrary}
           onPoint={pointAt}
+          onTalkAbout={talkAbout}
           talk={voice.supported ? { on: talking, toggle: toggleTalk, status: live.active ? (live.state === 'paused' ? 'Paused' : live.state === 'speaking' ? 'Speaking…' : live.state === 'thinking' ? 'Thinking…' : live.state === 'connecting' ? 'Connecting…' : 'Listening…') : '' } : undefined}
           onOpenRef={(q) => openRef(q, true)}
           onOpenExact={openExact}

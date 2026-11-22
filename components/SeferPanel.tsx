@@ -53,6 +53,7 @@ interface Props {
   onLibraryOpened?: () => void; // acknowledge the pending request across screen mounts
   talk?: { on: boolean; toggle: () => void; status: string }; // start or end a voice call from here
   onPoint?: (src: SourceData, n: number) => void; // the learner tapped a line: learn from here
+  onTalkAbout?: (src: SourceData, n: number, bigPicture: string) => void; // Nov 22: Big picture → "Talk about it" with the live voice
   inlineComm?: { main: string; line: number; title: string; ref: string; he: string[]; en: string[]; key: number } | null; // a commentary the Chavrusa opened: show it under its line
   home?: { onMenu: () => void; onSettings: () => void } | null; // Sefer only: the Sefer is the whole app (sessions and settings in its header, no close)
   onDoubleTap?: () => void;
@@ -82,7 +83,7 @@ function windowHole(size: number, dark: number, night: boolean): React.CSSProper
   };
 }
 
-export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, onLibraryOpened, talk, onPoint, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
+export default function SeferPanel({ sources, selected, onSelect, onClose, settings, onSettings, sessionId, onOpenRef, onOpenExact, libraryRequest, onLibraryOpened, talk, onPoint, onTalkAbout, inlineComm, home, embedded, onDoubleTap, docScroll, onSeen }: Props) {
   const [goto, setGoto] = useState('');
   const showHe = heShower(settings); // vowels on/off; trop only when the chosen Hebrew font can draw it
   const [gotoBusy, setGotoBusy] = useState(false);
@@ -1074,8 +1075,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {quick.map((x) => (
                           <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                         ))}
-                        {aiX && settings.bigPicture !== false && <BigPictureBtn lineRef={`${src.ref}:${i + 1}`} />}
-                        {aiX && settings.bigPictureText !== false && <BigPictureTextBtn lineRef={`${src.ref}:${i + 1}`} />}
+                        {aiX && settings.bigPicture !== false && <BigPictureBtn lineRef={`${src.ref}:${i + 1}`} liveOn={!!talk?.on} onTalk={onTalkAbout && talk ? (t) => onTalkAbout(src, i + 1, t) : undefined} />}
+                        {aiX && settings.bigPictureText !== false && <BigPictureTextBtn lineRef={`${src.ref}:${i + 1}`} onTalk={onTalkAbout && talk ? (t) => onTalkAbout(src, i + 1, t) : undefined} />}
                         {aiX && !hubOn && settings.explainLine !== false && (
                           <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}><span className="ai-star">✦</span> Explain</button>
                         )}

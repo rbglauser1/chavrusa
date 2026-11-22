@@ -10,11 +10,24 @@ let player: HTMLAudioElement | null = null;
 let owner: ((on: boolean) => void) | null = null;
 const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 
-export function BigPictureBtn({ lineRef }: { lineRef: string }) {
-  const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'failed'>('idle');
+// Nov 22: "🎙 Talk about it": after (or while) hearing or reading the big picture, one tap and the live voice picks up the
+// conversation from there (it is told what the big picture said, and put on this line). In a call, Big picture is
+// given by the live voice itself, not played over it.
+const bigText = (lineRef: string): Promise<string> => fetch(`/api/bigpicture?ref=${encodeURIComponent(lineRef)}`).then((r) => r.json()).then((d) => String(d.text ?? '')).catch(() => '');
+
+export function BigPictureBtn({ lineRef, onTalk, liveOn }: { lineRef: string; onTalk?: (text: string) => void; liveOn?: boolean }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'done' | 'failed'>('idle');
+  const talk = async () => {
+    if (!onTalk) return;
+    stop(); setState('loading');
+    const t = await bigText(lineRef);
+    setState('idle');
+    onTalk(t);
+  };
   const stop = () => { if (player) { player.pause(); player.currentTime = 0; } owner?.(false); owner = null; };
   const go = async () => {
     if (state === 'playing' || state === 'loading') { stop(); setState('idle'); return; }
+    if (liveOn && onTalk) { void talk(); return; } // in a call: the live voice gives it
     stop();
     if (!player) player = new Audio();
     const a = player;
@@ -27,20 +40,25 @@ export function BigPictureBtn({ lineRef }: { lineRef: string }) {
       if (!d.url) throw new Error(d.error || 'none');
       if (owner !== mine) return; // another line was asked for meanwhile
       a.src = d.url;
-      a.onended = () => { if (owner === mine) { owner = null; setState('idle'); } };
+      a.onended = () => { if (owner === mine) { owner = null; setState(onTalk ? 'done' : 'idle'); } };
       await a.play();
       setState('playing');
     } catch { if (owner === mine) { owner = null; setState('failed'); window.setTimeout(() => setState('idle'), 2500); } }
   };
   return (
-    <button className={`comm-btn ai bp-btn ${state === 'playing' ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); void go(); }} aria-label={state === 'playing' ? 'Stop the big picture' : 'Hear the big picture of this line'}>
-      <span className="ai-star">{state === 'loading' ? '…' : state === 'playing' ? '■' : '🔊'}</span> {state === 'failed' ? 'Couldn’t play' : state === 'playing' ? 'Stop' : 'Big picture'}
-    </button>
+    <>
+      <button className={`comm-btn ai bp-btn ${state === 'playing' ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); void go(); }} aria-label={state === 'playing' ? 'Stop the big picture' : liveOn && onTalk ? 'Your chavrusa gives the big picture of this line' : 'Hear the big picture of this line'}>
+        <span className="ai-star">{state === 'loading' ? '…' : state === 'playing' ? '■' : liveOn && onTalk ? '🎙' : '🔊'}</span> {state === 'failed' ? 'Couldn’t play' : state === 'playing' ? 'Stop' : 'Big picture'}
+      </button>
+      {onTalk && !liveOn && (state === 'playing' || state === 'done') && (
+        <button className="comm-btn ai bp-talk" onClick={(e) => { e.stopPropagation(); void talk(); }}><span className="ai-star">🎙</span> Talk about it</button>
+      )}
+    </>
   );
 }
 
 // Nov 17: the same big picture to read: a button that opens a short note under the line (and folds it again).
-export function BigPictureTextBtn({ lineRef }: { lineRef: string }) {
+export function BigPictureTextBtn({ lineRef, onTalk }: { lineRef: string; onTalk?: (text: string) => void }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'failed'>('idle');
@@ -61,6 +79,7 @@ export function BigPictureTextBtn({ lineRef }: { lineRef: string }) {
         <div className={`bp-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'} onClick={(e) => e.stopPropagation()}>
           <span className="bp-label">✦ Big picture · written by AI</span>
           {state === 'loading' ? <span className="wait-dots"><span /><span /><span /></span> : state === 'failed' ? 'It couldn’t be written just now. Tap again to try.' : text}
+          {onTalk && text && state === 'idle' && <button className="bp-talk-in" onClick={(e) => { e.stopPropagation(); onTalk(text); }}>🎙 Talk about it</button>}
         </div>
       )}
     </>
