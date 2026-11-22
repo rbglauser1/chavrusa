@@ -46,14 +46,21 @@ ${AWAKE_CHECK}`;
 
 const DEEP = `You are a warm, sharp chavrusa. The learner asked to go deeper on one phrase of the line marked >>> <<<. In 3 to 6 sentences (at most 120 words) go deeper on that phrase: what the standard meforshim on this sefer say on it (on the Gemara: Rashi and Tosafos; on a Mishnah: the Bartenura and Tosafos Yom Tov; on Chumash: Rashi and the Ramban), naming one only when you are sure he says it, the sevara behind it, and what question it answers or raises. Only what is truly there; plain prose, no markdown, no lists. Hebrew terms in Hebrew letters; yeshivish Ashkenazi names.`;
 
-// Nov 21: in the Iyun style (Settings → Learning style), Learn with me brings the meforshim in: the actual words of Rashi
-// and Tosafos (on a Mishnah the Bartenura and Tosafos Yom Tov; on Chumash Rashi and the Ramban) on this line are handed
-// over, and where one of them truly adds to a phrase its gist is woven into that phrase's note, shortened.
-const IYUN_WEAVE = `# Iyun: bring Rashi and Tosafos
-The learner learns b'iyun. Under "The meforshim on this line" you get the actual words of Rashi, Tosafos and others on this line. Where one of them truly adds something on a phrase (Rashi's key pshat that the words alone don't give, or a Tosafos kashya with its teretz, or a chiddush or machlokes that changes how you read the phrase), weave its gist into THAT phrase's note, shortened to the point, naming him: e.g. "Rashi: …" or "Tosafos asks …, and answers …". One sentence, two at most; the gist, not a translation of the whole dibur hamaschil. Use it where it fits, not on every phrase: in a typical line one or two phrases, sometimes none. Prefer Rashi and Tosafos (on a Mishnah the Bartenura and Tosafos Yom Tov; on Chumash Rashi and the Ramban). Say only what the given text actually says; if no meforesh text is given, bring one only when you are certain of it. In Iyun a note may run to 70 words.`;
+// Nov 21 (2), at his request: in the Iyun style the meforshim come only in "Go deeper", woven into its explanation.
+// The notes stay the chavrusa's own short explanation, naming no meforesh (the Iyun style card asks for meforshim, so
+// the notes are told plainly to keep them for Go deeper). Go deeper gets the actual words of Rashi and Tosafos (on a
+// Mishnah the Bartenura and Tosafos Yom Tov; on Chumash Rashi and the Ramban) on this line, from Sefaria.
+const IYUN_NOTES = `# Iyun, in these notes
+Keep these notes your own short explanation of each phrase, in your own words. Do NOT bring or name Rashi, Tosafos or any other meforesh here, and no kashya-and-teretz from them: the learner opens "Go deeper" for the meforshim. Note length as above.`;
 
-const IYUN_DEEP = `# Iyun
-The learner learns b'iyun. Under "The meforshim on this line" you get the actual words of the meforshim on this line. Build the going-deeper on them: where Rashi or Tosafos (on a Mishnah the Bartenura or Tosafos Yom Tov; on Chumash Rashi or the Ramban) speak to this phrase, give the gist of what each says, shortened (Rashi's pshat in a line; Tosafos's kashya and teretz in a line or two), name the sevara or chakira behind it, and where they differ say what the difference turns on. Only what the given text says; if none of them speaks to this phrase, say so in a few words and go deeper on the sevara. Up to 170 words.`;
+const IYUN_DEEP = `# Iyun: going deeper, with the meforshim woven in
+The learner learns b'iyun. Under "The meforshim on this line" you get the actual words of the meforshim on this line.
+Going deeper is still YOUR explanation of the phrase: what it is really saying and doing, the sevara behind it, what question it answers or raises, where the sugya is heading. Weave Rashi or Tosafos (on a Mishnah the Bartenura or Tosafos Yom Tov; on Chumash Rashi or the Ramban) INTO that explanation wherever they serve it:
+- to explain: Rashi's pshat that unlocks the words;
+- to sharpen: a kashya Tosafos asks, and his answer if it lands here;
+- to widen: a chiddush, another way to read it, or where they differ and what the difference turns on;
+- to whet his appetite: a question Tosafos leaves open, or a hint of where this will matter later.
+Bring each one in its gist, a clause or a sentence or two, naming who says it, inside the flow of your explanation ("Rashi reads it as …, and that's exactly why …; but Tosafos is bothered: …"). Never a list of what each one says, never a translation of the dibur hamaschil, and never let the meforshim take the place of the explanation. If neither adds anything on this phrase, leave them out. Say only what the given text actually says. Up to 170 words.`;
 
 async function meforshim(ref: string, n: number): Promise<string> {
   const approved = await approvedList();
@@ -89,10 +96,10 @@ async function makeWeave(ref: string, n: number, awake = false, custom: string |
   const { s, list } = got;
   const st = await getSettings();
   const model = await keptModel();
-  const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}${iyun ? await meforshim(ref, n) : ''}`;
+  const ask = `${s.ref}, line ${n}\n\n${context(s.he, s.en, n)}\n\nThe phrases of line ${n}:\n${list.map((p, i) => `(${i + 1}) ${stripNikud(p.he)}${p.en ? `  —  ${p.en}` : ''}`).join('\n')}`;
   // Nov 19: his own tone is said again at the end of the request, where it weighs most.
   const askT = `${ask}${toneTail({ awake, custom })}`;
-  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${custom ? '' : `${styleForChat(st)}\n\n`}${iyun ? `${IYUN_WEAVE}\n\n` : ''}${SCOPE}${custom ? `\n\n${customBlock(custom, 'these notes (and anything before the text, and the questions)')}` : awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}`, history: [{ role: 'user', content: askT }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
+  const r = await runKept({ lang: true, model: model.id, system: `${PROMPT}\n\n${custom ? '' : `${styleForChat(st)}\n\n`}${SCOPE}${custom ? `\n\n${customBlock(custom, 'these notes (and anything before the text, and the questions)')}` : awake ? `\n\n${AWAKE}\nThis tone comes last and wins over any quieter tone asked for above; the content and accuracy rules above still hold.` : ''}${iyun ? `\n\n${IYUN_NOTES}` : ''}`, history: [{ role: 'user', content: askT }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000 });
   await logCost({ sessionId: null, kind: 'weave', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const j = (() => { try { return parseAiJson<{ phrases?: { en?: string; note?: string; ask?: string; hint?: string; before?: { kind?: string; text?: string } }[] }>(r.text, '{'); } catch { return null; } })();
   const out = j?.phrases ?? [];
@@ -109,8 +116,8 @@ export async function GET(req: NextRequest) {
   const ref = String(req.nextUrl.searchParams.get('ref') ?? ''), n = Number(req.nextUrl.searchParams.get('n'));
   if (!ref || !n || / on /i.test(ref)) return NextResponse.json({ error: 'Nothing to learn here.' }, { status: 400 });
   const t = await toneNow(); // "Wake me up" unless Calm, or his own tone, is chosen (Nov 18)
-  const iyun = (await getSettings().catch(() => null))?.style === 'iyun'; // Nov 21: Iyun is kept apart, with its meforshim
-  const kind = `${t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v6' : 'weave-v3'}${iyun ? '-iyun1' : ''}`;
+  const iyun = (await getSettings().catch(() => null))?.style === 'iyun'; // Nov 21: Iyun notes are kept apart (they keep the meforshim for Go deeper)
+  const kind = `${t.custom ? `weave-${t.tag}` : t.awake ? 'weave-awake-v6' : 'weave-v3'}${iyun ? '-iyun2' : ''}`;
   try { return NextResponse.json(await keep(kind, `${ref}:${n}`, () => makeWeave(ref, n, t.awake, t.custom, iyun), (x) => !x.phrases.length)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
@@ -133,7 +140,7 @@ export async function POST(req: NextRequest) {
   if (!ref || !n || k == null) return NextResponse.json({ error: 'Nothing to go deeper on.' }, { status: 400 });
   const t = await toneNow(); // the same Tone as the rest (Nov 18)
   const iyun = (await getSettings().catch(() => null))?.style === 'iyun';
-  const kind = `${t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2'}${iyun ? '-iyun1' : ''}`;
+  const kind = `${t.custom ? `weave-deep-${t.tag}` : t.awake ? 'weave-deep-awake-v3' : 'weave-deep-v2'}${iyun ? '-iyun2' : ''}`;
   try { return NextResponse.json(await keep(kind, `${ref}:${n}:${k}`, () => makeDeep(String(ref), Number(n), Number(k), t.awake, t.custom, iyun), (x) => !x.text)); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 500 }); }
 }
