@@ -231,13 +231,9 @@ export default function Home() {
   useEffect(() => { if (live.active) prefetchNext(); else { nextReady.current = null; nextTry.current++; } }, [live.active]); // eslint-disable-line react-hooks/exhaustive-deps
   // The learner gave a new instruction, or changed the style, during a call: the voice is told at its next turn.
   useEffect(() => { if (live.active) live.remind(); }, [requests, settings.style, settings.blend]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Nov 22: the chavrusa's face in a voice call (Settings → Voice → His face in a call); × hides it until the call ends.
-  const [faceHidden, setFaceHidden] = useState(false);
-  useEffect(() => { if (!live.active) setFaceHidden(false); }, [live.active]);
-  const faceKind = settings.callFace ?? 'drawn';
-  const faceEl = live.active && faceKind !== 'off' && !faceHidden
-    ? <TalkingFace state={live.state} kind={faceKind} onHide={() => setFaceHidden(true)} />
-    : null;
+  // Nov 22: the chavrusa's face in a voice call (Settings → Voice → His face in a call), with the call's End button,
+  // on every screen. Face set to Off: just a small "Voice on · End" pill.
+  const faceEl = live.active ? <TalkingFace state={live.state} kind={settings.callFace ?? 'drawn'} onEnd={() => live.stop()} /> : null;
 
   function pumpLive() {
     if (busyRef.current || liveDelegation.current || !liveQueue.current.length) return;

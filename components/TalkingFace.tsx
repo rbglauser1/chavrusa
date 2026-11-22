@@ -163,12 +163,18 @@ export function FaceView({ speaking, demo = false, kind, photo, mouth, className
 
 const SAYS: Record<string, string> = { connecting: 'Joining…', listening: 'Listening', thinking: 'Thinking…', speaking: 'Speaking', paused: 'Paused' };
 
-export default function TalkingFace({ state, kind, onHide }: { state: string; kind: FaceKind; onHide: () => void }) {
+// Nov 22 (3): the call's off switch lives here, on every screen: a red End button on the face. Shrunk (–), or with
+// the face set to Off, it is a small "Voice on · End" pill instead (tap the pill: the face again). It sits above Learn
+// with me's cards and panel, and can be dragged anywhere.
+export default function TalkingFace({ state, kind, onEnd }: { state: string; kind: FaceKind | 'off'; onEnd: () => void }) {
+  const [mini, setMini] = useState(() => { try { return localStorage.getItem('chavrusa-face-mini') === '1'; } catch { return false; } });
+  const pill = mini || kind === 'off';
+  const setMiniKept = (v: boolean) => { setMini(v); try { localStorage.setItem('chavrusa-face-mini', v ? '1' : '0'); } catch { /* fine */ } };
   const [big, setBig] = useState(() => { try { return localStorage.getItem('chavrusa-face-big') === '1'; } catch { return false; } });
   const face = useFacePhoto();
   const stateRef = useRef(state);
   stateRef.current = state;
-  const use: FaceKind = kind === 'photo' ? (face.photo && face.mouth ? 'photo' : 'drawn') : kind;
+  const use: FaceKind = kind === 'photo' ? (face.photo && face.mouth ? 'photo' : 'drawn') : kind === 'off' ? 'drawn' : kind;
   // Nov 22 (2): he moves the face anywhere by dragging it; it stays there (kept on this device). A tap still makes it
   // bigger or smaller.
   const box = useRef<HTMLDivElement | null>(null);
@@ -184,7 +190,7 @@ export default function TalkingFace({ state, kind, onHide }: { state: string; ki
     const re = () => setPos((p) => (p ? fit(p) : p));
     window.addEventListener('resize', re);
     return () => { window.clearTimeout(t); window.removeEventListener('resize', re); };
-  }, [big]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [big, pill]); // eslint-disable-line react-hooks/exhaustive-deps
   const onDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
     const r = box.current?.getBoundingClientRect(); if (!r) return;
@@ -206,13 +212,25 @@ export default function TalkingFace({ state, kind, onHide }: { state: string; ki
     window.setTimeout(() => window.removeEventListener('click', eat, true), 400);
   };
   const toggle = () => setBig((v) => { try { localStorage.setItem('chavrusa-face-big', v ? '0' : '1'); } catch { /* fine */ } return !v; });
+  const end = (e: React.MouseEvent) => { e.stopPropagation(); onEnd(); };
+  const drags = { onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerCancel: onUp };
+  const at = pos ? { left: pos.x, top: pos.y, right: 'auto' } : undefined;
+  if (pill) return createPortal(
+    <div ref={box} className={`tface-pill s-${state}`} style={at} {...drags} onClick={() => { if (kind !== 'off') setMiniKept(false); }}
+      aria-label={kind !== 'off' ? 'Voice call on. Tap to show his face.' : 'Voice call on'}>
+      <span className="tface-dot" aria-hidden="true" />
+      <span className="tface-pill-say">{state === 'speaking' ? 'Speaking' : state === 'listening' ? 'Listening' : SAYS[state] ?? 'Voice on'}</span>
+      <button className="tface-end" onClick={end} aria-label="End the voice call">End</button>
+    </div>,
+    document.body,
+  );
   return createPortal(
     <div ref={box} className={`tface ${big ? 'big' : ''} ${drag.current?.moved ? 'moving' : ''} s-${state}`} role="img" aria-label={`Your chavrusa · ${SAYS[state] ?? ''}`}
-      style={pos ? { left: pos.x, top: pos.y, right: 'auto' } : undefined}
-      onClick={toggle} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+      style={at} onClick={toggle} {...drags}>
       <FaceView speaking={() => stateRef.current === 'speaking'} kind={use} photo={face.photo} mouth={face.mouth} />
       <span className="tface-say">{SAYS[state] ?? ''}</span>
-      <button className="tface-x" onClick={(e) => { e.stopPropagation(); onHide(); }} aria-label="Hide the face for this call">×</button>
+      <button className="tface-x" onClick={(e) => { e.stopPropagation(); setMiniKept(true); }} aria-label="Make it small">–</button>
+      <button className="tface-end on-face" onClick={end} aria-label="End the voice call">End</button>
     </div>,
     document.body,
   );
