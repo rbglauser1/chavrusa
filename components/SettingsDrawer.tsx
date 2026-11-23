@@ -431,7 +431,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 const active = (list.some((t) => t.id === s.customToneId) ? s.customToneId : undefined) ?? list.find((t) => t.text === s.customTone)?.id;
                 const save = (id: string, patch: { name?: string; text?: string }) => {
                   const next = slots.map((t) => (t.id === id ? { ...t, ...patch } : t)).filter((t) => t.text.trim() || t.name.trim());
-                  const on = next.find((t) => t.id === (active ?? id)) ?? next.find((t) => t.text.trim());
+                  // Nov 22: a tone he has just written (in an empty slot) is the one put in use: he had written a new one,
+                  // the older one stayed "In use", and the new one seemed ignored.
+                  const wroteNew = !!patch.text?.trim() && !slots.find((t) => t.id === id)?.text.trim();
+                  const on = (wroteNew ? next.find((t) => t.id === id) : undefined) ?? next.find((t) => t.id === (active ?? id)) ?? next.find((t) => t.text.trim());
                   onChange({ customTones: next, ...(on ? { customTone: on.text.trim(), customToneId: on.id } : { customTone: '', customToneId: undefined }) });
                 };
                 return (
