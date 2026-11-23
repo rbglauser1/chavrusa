@@ -21,3 +21,27 @@ export function AiNote({ kind, text, tap }: { kind: 'move' | 'pshat'; text: stri
     <div className={`${kind} ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'} onClick={tap ? (e) => { e.stopPropagation(); setOpen(false); } : undefined}>{text}</div>
   );
 }
+
+// Nov 23: several notes of one kind on a line (two Steps beginning on the same line) were a row of chips, "Step Step":
+// now one chip, "2 Steps", and one tap opens them all (a tap on any folds them back).
+export function AiNotes({ kind, texts, tap }: { kind: 'move' | 'pshat'; texts: string[]; tap: boolean }) {
+  const [open, setOpen] = useState(!tap);
+  useEffect(() => { setOpen(!tap); }, [tap]);
+  if (!texts.length) return null;
+  const name = kind === 'move' ? 'Step' : 'Pshat';
+  if (!open) {
+    return (
+      <button type="button" className={`ai-dot ai-dot-${kind}`} onClick={(e) => { e.stopPropagation(); setOpen(true); }} aria-label={texts.length > 1 ? `Show the ${texts.length} ${name.toLowerCase()}s` : `Show the ${name.toLowerCase()}`}>
+        ✦ <span>{texts.length > 1 ? `${texts.length} ${name}s` : name}</span>
+      </button>
+    );
+  }
+  return (
+    <>
+      {texts.map((t, k) => {
+        const he = isHebText(t);
+        return <div key={k} className={`${kind} ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'} onClick={tap ? (e) => { e.stopPropagation(); setOpen(false); } : undefined}>{t}</div>;
+      })}
+    </>
+  );
+}

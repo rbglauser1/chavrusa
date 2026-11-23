@@ -459,6 +459,7 @@ export interface Settings {
   cacheTexts?: boolean;     // keep a copy of each Sefaria text opened (lib/textCache.ts), refreshed monthly
   notes?: boolean;          // notes on the line (lib/notes.ts)
   sugyaMap?: boolean;       // the sugya map of an amud (app/api/map)
+  flowColors?: boolean;     // Nov 23: each line colored by what it does (question, answer, proof, statement), from the sugya map
   mapComms?: boolean;       // the sugya map shows the meforshim on each step (default on)
   focusMode?: 'off' | 'window' | 'line'; // the reading window: a clear oval in the middle, the rest shaded ('line' was removed Nov 14: treated as off)
   windowSize?: number;  // 1–9: how tall the clear oval is (5 = normal)

@@ -33,7 +33,8 @@ import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
-import { AiNote, isHebText } from './AiNote';
+import { AiNotes, isHebText } from './AiNote';
+import { useFlow, toneOf } from './useFlow';
 import { getOfflineText, putText } from '@/lib/offlineStore';
 import { BigPictureBtn, BigPictureTextBtn } from './BigPicture';
 import FocusHelp from './FocusHelp';
@@ -362,6 +363,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   }, [on, autoWho, conns, src?.ref]);
   }
   const outline = useOutline(src?.ref, !!settings.outline);
+  const flow = useFlow(src?.ref, !!settings.flowColors); // Nov 23: color the give and take
   const pshat = usePshat(src?.ref, !!settings.pshat);
 
   // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).
@@ -953,7 +955,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(prevSrc?.ref, i + 1)}
-                        {(prevOutline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`pm${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
+                        <AiNotes kind="move" texts={prevOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); }); } else { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
@@ -963,7 +965,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(prevTg, i)}
                         </div>
-                {(prevPshat.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`ps${k}`} kind="pshat" text={m} tap={settings.pshatMode === 'tap'} />)}
+                <AiNotes kind="pshat" texts={prevPshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />
                         </div>
                       );
                     })}
@@ -1026,11 +1028,15 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
               const key = `${src.ref}#${i}`;
               const pairs = settings.interlinear && isOpen && en ? pairPhrases(line, src.enB?.[i], en, settings.ilBy) : null;
+              const fl = flow?.(i + 1) ?? null;
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {mishnahHead(src.ref, i + 1)}
-                {(outline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`m${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
-                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''}`} onClick={(e) => {
+                <AiNotes kind="move" texts={outline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
+                {fl && fl.starts.length > 0 && (
+                  <div className="flow-tags">{fl.starts.map((s, k) => <span key={k} className={`flow-tag t-${toneOf(s.kind)}`}>{({ q: '?', a: '✓', p: '§', s: '•' } as const)[toneOf(s.kind)]} {s.kind}{s.who ? ` · ${s.who}` : ''}</span>)}</div>
+                )}
+                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${fl ? `flow flow-${fl.tone}` : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
                   if (active && settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he')) {
@@ -1238,7 +1244,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {tgBox(tg, i)}
                 </div>
-                {(pshat.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`s${k}`} kind="pshat" text={m} tap={settings.pshatMode === 'tap'} />)}
+                <AiNotes kind="pshat" texts={pshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />
                 </div>
               );
             })}
@@ -1257,7 +1263,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(nextSrc?.ref, i + 1)}
-                        {(nextOutline.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`nm${k}`} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
+                        <AiNotes kind="move" texts={nextOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); }); } else { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
@@ -1267,7 +1273,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(nextTg, i)}
                         </div>
-                {(nextPshat.byLine[i + 1] ?? []).map((m, k) => <AiNote key={`ns${k}`} kind="pshat" text={m} tap={settings.pshatMode === 'tap'} />)}
+                <AiNotes kind="pshat" texts={nextPshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />
                         </div>
                       );
                     })}
