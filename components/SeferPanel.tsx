@@ -34,7 +34,7 @@ import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
 import { AiNotes, isHebText } from './AiNote';
-import { useFlow, toneOf } from './useFlow';
+import { useFlow, flowTags, MARK } from './useFlow';
 import { getOfflineText, putText } from '@/lib/offlineStore';
 import { BigPictureBtn, BigPictureTextBtn } from './BigPicture';
 import FocusHelp from './FocusHelp';
@@ -1029,14 +1029,17 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const key = `${src.ref}#${i}`;
               const pairs = settings.interlinear && isOpen && en ? pairPhrases(line, src.enB?.[i], en, settings.ilBy) : null;
               const fl = flow?.(i + 1) ?? null;
+              // Sentence by sentence, with the sentences marked: each label and color on its own sentence.
+              const marks = fl?.sents && pairs && settings.ilBy === 'sentence' && pairs.length === fl.sents.length
+                ? fl.sents.map((x) => ({ tone: x.tone, tag: x.change ? `${MARK[x.tone]} ${x.kind}${x.who ? ` · ${x.who}` : ''}` : undefined }))
+                : null;
+              const tags = fl && !marks ? flowTags(fl) : [];
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {mishnahHead(src.ref, i + 1)}
                 <AiNotes kind="move" texts={outline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
-                {fl && fl.starts.length > 0 && (
-                  <div className="flow-tags">{fl.starts.map((s, k) => <span key={k} className={`flow-tag t-${toneOf(s.kind)}`}>{({ q: '?', a: '✓', p: '§', s: '•' } as const)[toneOf(s.kind)]} {s.kind}{s.who ? ` · ${s.who}` : ''}</span>)}</div>
-                )}
-                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${fl ? `flow flow-${fl.tone}` : ''}`} onClick={(e) => {
+                {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
+                <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
                   const active = open.has(i) || (embedded ? picked === i : src.focus === i + 1);
                   if (active && settings.wordTap !== false && (e.target as HTMLElement).closest?.('.he')) {
@@ -1045,7 +1048,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   }
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
-                    ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} />
+                    ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} marks={marks} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {

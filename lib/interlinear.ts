@@ -135,6 +135,19 @@ export function pairPhrases(he: string, enB: string | undefined, en: string, by:
 // lined up as usual, joined into whole sentences, each ending where the Hebrew has a period (or ? ! ׃), so each
 // sentence of the Gemara is followed by its English.
 const SENT_END = /[.?!׃]["'״”’)\]]*\s*$/;
+/** A line's Hebrew cut into sentences where it has a period (or ? ! ׃): the same cut Sentence by sentence makes, used by
+ *  the sentence-by-sentence give and take (app/api/flow). */
+export function heSentences(he: string): string[] {
+  const out: string[] = [];
+  let cur: string[] = [];
+  for (const w of he.trim().split(/\s+/).filter(Boolean)) {
+    cur.push(w);
+    if (SENT_END.test(w.replace(/[\u0591-\u05C7]/g, ''))) { out.push(cur.join(' ')); cur = []; }
+  }
+  if (cur.length) out.push(cur.join(' '));
+  return out;
+}
+
 export function bySentence(pairs: Pair[]): Pair[] {
   // Group the phrases into Hebrew sentences.
   const groups: Pair[][] = [];

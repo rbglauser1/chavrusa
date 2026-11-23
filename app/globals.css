@@ -3456,3 +3456,7 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .min-line.flow-q { --flow-c: #c0504b; } .min-line.flow-a { --flow-c: #2f8a63; } .min-line.flow-p { --flow-c: #3a6fb0; } .min-line.flow-s { --flow-c: #c79a2e; }
 /* Nov 23: the line he is on lost its color (this look clears the side bar on the current line); the color wins there too */
 .sefer .line.flow, .sefer .line.flow.focus, .sefer .line.flow.open, .st-source .line.flow, .min-line.flow { box-shadow: inset 3px 0 0 var(--flow-c) !important; }
+/* Nov 23: Sentence by sentence with the give and take: each sentence its own color bar and label */
+.il-pair.flow { box-shadow: inset 3px 0 0 var(--flow-c) !important; padding-left: 10px; border-radius: 2px; }
+.il-pair.flow-q { --flow-c: #c0504b; } .il-pair.flow-a { --flow-c: #2f8a63; } .il-pair.flow-p { --flow-c: #3a6fb0; } .il-pair.flow-s { --flow-c: #c79a2e; }
+.flow-tags.in-il { margin: 4px 0 6px; direction: ltr; }

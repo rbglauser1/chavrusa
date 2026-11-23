@@ -15,7 +15,7 @@ import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { AiNotes } from './AiNote';
-import { useFlow, toneOf } from './useFlow';
+import { useFlow, flowTags, MARK } from './useFlow';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
@@ -103,14 +103,16 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const c = inlineComm && inlineComm.main === src.ref && inlineComm.line === n ? inlineComm : null;
         const pairs = settings.interlinear && showEn && en && (englishAll || on) ? pairPhrases(line, src.enB?.[i], en, settings.ilBy) : null;
         const fl = flow?.(n) ?? null;
+        const marks = fl?.sents && pairs && settings.ilBy === 'sentence' && pairs.length === fl.sents.length
+          ? fl.sents.map((x) => ({ tone: x.tone, tag: x.change ? `${MARK[x.tone]} ${x.kind}${x.who ? ` · ${x.who}` : ''}` : undefined }))
+          : null;
+        const tags = fl && !marks ? flowTags(fl) : [];
         return (
-          <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''} ${fl ? `flow flow-${fl.tone}` : ''}`}>
+          <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`}>
             <AiNotes kind="move" texts={outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} />
-            {fl && fl.starts.length > 0 && (
-              <div className="flow-tags">{fl.starts.map((s, k) => <span key={k} className={`flow-tag t-${toneOf(s.kind)}`}>{({ q: '?', a: '✓', p: '§', s: '•' } as const)[toneOf(s.kind)]} {s.kind}{s.who ? ` · ${s.who}` : ''}</span>)}</div>
-            )}
+            {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
-              {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} /> : showHe(line)}
+              {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} marks={marks} /> : showHe(line)}
             </button>
             {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}</p>}
             {c && (
