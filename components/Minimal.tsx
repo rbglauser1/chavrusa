@@ -47,6 +47,7 @@ interface Props {
   inlineComm: InlineComm;
   onMenu: () => void;       // sessions
   onSettings: () => void;
+  onSet?: (patch: Partial<Settings>) => void; // Nov 23: the Aa reading options in the study header save straight to settings
   onToggle?: (patch: Partial<Settings>) => void; // Quiet chat: the text's options (nikud, translation, steps, summaries) live in the ⋯ menu
   onLibrary: () => void;
   onSefer: () => void;      // the full Sefer (commentaries, next amud, everything)
@@ -376,7 +377,7 @@ export default function Minimal(p: Props) {
 
   // Nov 15: the Claude and ChatGPT looks learn on the Sand and teal screen too (in their own colors; app/st-shared.css)
   if (p.settings.theme === 'sand-teal' || p.settings.theme === 'clay' || p.settings.theme === 'chatgpt') return <>
-    <SandTealStudy full={stFull} setFull={setStFull} refText={src?.ref} heRef={src?.heRef} sefer={p.sefer && isValidElement(p.sefer) ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void; docScroll?: boolean }>, { onDoubleTap: () => setStFull((v) => !v), docScroll: stFull && p.settings.theme !== 'sand-teal' }) : p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
+    <SandTealStudy full={stFull} setFull={setStFull} refText={src?.ref} heRef={src?.heRef} sefer={p.sefer && isValidElement(p.sefer) ? cloneElement(p.sefer as ReactElement<{ onDoubleTap?: () => void; docScroll?: boolean }>, { onDoubleTap: () => setStFull((v) => !v), docScroll: stFull && p.settings.theme !== 'sand-teal' }) : p.sefer} items={p.items} busy={p.busy} status={p.status} input={p.input} setInput={p.setInput} send={p.send} settings={p.settings} onToggle={p.onToggle} onSet={p.onSet} talk={p.talk} view={tab} setView={setTab} onHome={p.onMenu} onSettings={p.onSettings} onLibrary={p.onLibrary} onNewSession={p.onNewSession} onReview={() => window.dispatchEvent(new Event('sand-review'))} onPrinted={() => { if (src && amudOf(src.ref)) setDafOpen(true); else if (src && /^(Genesis|Exodus|Leviticus|Numbers|Deuteronomy) \d/.test(src.ref)) setMgOpen(true); else p.onSefer(); }}/>
     {dafOpen && src && amudOf(src.ref) && <DafPage start={amudOf(src.ref)!} onClose={() => setDafOpen(false)} status={label}/>}
     {mgOpen && src && <MikraosPage startRef={src.ref.replace(/:.*$/, '')} startPasuk={src.focus ?? 1} onClose={() => setMgOpen(false)} status={label} settings={p.settings} onChange={x=>p.onToggle?.(x)} onLearn={p.learnThis}/>}
   </>;

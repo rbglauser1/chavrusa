@@ -1106,6 +1106,7 @@ export default function Home() {
             starters={STARTERS}
             textTick={quietSefer ? textTick + libReq : undefined}
             onToggle={quietSefer ? updateSettings : undefined}
+            onSet={updateSettings}
             sefer={quietSefer ? (
               <SeferPanel
                 embedded
