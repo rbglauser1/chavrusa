@@ -4,7 +4,7 @@
 // sentence, phrase by phrase), under each piece the full English or only the translation, the translation in bold,
 // nikud, and the size of the Hebrew and the English. "All settings" for the rest.
 import { useEffect, useRef } from 'react';
-import type { Settings } from '@/lib/config';
+import { isSefariaLook, sefariaLook, type Settings } from '@/lib/config';
 
 type Opt<T extends string> = [T, string][];
 function Row<T extends string>({ label, value, options, onPick }: { label: string; value: T; options: Opt<T>; onPick: (v: T) => void }) {
@@ -44,6 +44,7 @@ export default function QuickLook({ settings: s, onSet, onAll, onClose }: { sett
   const layout = s.interlinear ? (s.ilBy === 'sentence' ? 'sentence' : 'phrase') : 'line';
   return (
     <div ref={box} className="ql" role="dialog" aria-label="Reading options">
+      <button className={`ql-sefaria ${isSefariaLook(s) ? 'on' : ''}`} onClick={() => onSet(sefariaLook(s))}>{isSefariaLook(s) ? '✓ Sefaria look' : 'Make it look like Sefaria'}<small>Taamey Frank · Garamond 18 · bold translation</small></button>
       <Row label="Show" value={en ? 'both' : 'he'} options={[['both', 'Hebrew + English'], ['he', 'Hebrew only']]} onPick={(v) => onSet({ seferEnglish: v === 'both' })} />
       {en && (
         <>

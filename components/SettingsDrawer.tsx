@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useLab, setLab } from '@/lib/lab';
 import { ALL_STARTERS } from '@/lib/starters';
-import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_COMM, FONTS_EN, FONTS_HE, GEMINI_VOICES, LIVE_VOICES, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { COLOR_DEFAULTS, COLOR_IDS, COLOR_PARTS, colorOf, CustomStyle, DEFAULT_VOICE_DESIGN, FONTS_COMM, FONTS_EN, FONTS_HE, GEMINI_VOICES, LIVE_VOICES, MODELS, Provider, Settings, STYLES, styleById, Tier, TIER_LABELS, isSefariaLook, sefariaLook } from '@/lib/config';
 import type { Memory } from '@/lib/db';
 import { LookPicker } from './Modals';
 import { VoicePicker } from './VoicePicker';
@@ -116,6 +116,9 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             )}
             </Group>
             <Group id="look-fonts" level={2} title="Fonts">
+            <div className="field">
+              <button className={`ql-sefaria ${isSefariaLook(s) ? 'on' : ''}`} style={{ marginBottom: 12 }} onClick={() => onChange(sefariaLook(s))}>{isSefariaLook(s) ? '✓ Sefaria look' : 'Make it look like Sefaria'}<small>Taamey Frank Hebrew, Garamond English at 18, the translation bold and the added explanation soft grey</small></button>
+            </div>
             <div className="field">
               <label>English font</label>
               <FontPicker list={FONTS_EN} sample="Let's learn the Gemara together" value={s.fonts?.[s.theme]?.en ?? ''} onPick={(id) => onChange({ fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), en: id } } })} />

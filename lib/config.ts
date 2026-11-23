@@ -764,3 +764,15 @@ export function styleForChat(s: { style?: string; customStyles?: CustomStyle[] |
   const card = STYLE_CARDS[st.id] ?? `${st.name}: ${st.blurb}`;
   return `# The learner's learning style\nTalk with him in this style (its tone and the kind of push it gives), within this feature's own length limits: ${card}${s.mussarAngle ? ' Now and then, once the meaning is clear, a short lesson for his avodah from the words.' : ''}`;
 }
+
+// Nov 23: the "Sefaria look", one tap (the Aa panel, and Settings → Look → Fonts): Sefaria's Hebrew font (Taamey Frank,
+// the same file Sefaria uses), Garamond for the English (EB Garamond, the free cut of Sefaria's Adobe Garamond Pro) at
+// Sefaria's 18px, the Hebrew a little larger, normal spacing, the word-for-word translation in bold and the added
+// explanation in soft grey, as on Sefaria. The English layout (under the line, by sentence, by phrase) is left alone.
+export function sefariaLook(s: Settings): Partial<Settings> {
+  return { fonts: { ...(s.fonts ?? {}), [s.theme]: { ...(s.fonts?.[s.theme] ?? {}), he: 'taamey', en: 'garamond' } }, heSize: 26, enSize: 18, heSpacing: 'normal', enBold: true, enMark: 'soft' };
+}
+export function isSefariaLook(s: Settings): boolean {
+  const f = s.fonts?.[s.theme];
+  return f?.he === 'taamey' && f?.en === 'garamond' && s.heSize === 26 && s.enSize === 18 && (s.heSpacing ?? 'normal') === 'normal' && s.enBold !== false && s.enMark === 'soft';
+}
