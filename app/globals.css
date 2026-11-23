@@ -3452,3 +3452,5 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .flow-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
 .flow-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font: 650 11.5px var(--f-ui); letter-spacing: .02em; border: 1px solid currentColor; background: color-mix(in srgb, currentColor 9%, transparent); }
 .flow-tag.t-q { color: #b0413e; } .flow-tag.t-a { color: #2a7a57; } .flow-tag.t-p { color: #2f5f9e; } .flow-tag.t-s { color: #9a7417; }
+.min-line.flow { box-shadow: inset 3px 0 0 var(--flow-c); padding-left: 10px; }
+.min-line.flow-q { --flow-c: #c0504b; } .min-line.flow-a { --flow-c: #2f8a63; } .min-line.flow-p { --flow-c: #3a6fb0; } .min-line.flow-s { --flow-c: #c79a2e; }

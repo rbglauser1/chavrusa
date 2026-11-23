@@ -14,7 +14,8 @@ import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactEl
 import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
-import { AiNote } from './AiNote';
+import { AiNotes } from './AiNote';
+import { useFlow, toneOf } from './useFlow';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
@@ -93,6 +94,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
   const comm = /\s(on)\s/i.test(src.ref);
   const showEn = settings.display !== 'off';
   const outline = useOutline(src.ref, !!settings.outline);
+  const flow = useFlow(src.ref, !!settings.flowColors); // Nov 23: color the give and take, here too
   return (
     <div className={`min-text${/[\u0591-\u05AF]/.test(src.he.slice(0, 4).join(' ')) ? ' pointed' : ''}`} ref={box}>
       {src.he.map((line, i) => {
@@ -100,9 +102,13 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const en = src.en[i] || (src.en.length ? '' : src.altEn?.[i] ?? '');
         const c = inlineComm && inlineComm.main === src.ref && inlineComm.line === n ? inlineComm : null;
         const pairs = settings.interlinear && showEn && en && (englishAll || on) ? pairPhrases(line, src.enB?.[i], en, settings.ilBy) : null;
+        const fl = flow?.(n) ?? null;
         return (
-          <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''}`}>
-            {(outline.byLine[n] ?? []).map((m, k) => <AiNote key={k} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
+          <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''} ${fl ? `flow flow-${fl.tone}` : ''}`}>
+            <AiNotes kind="move" texts={outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} />
+            {fl && fl.starts.length > 0 && (
+              <div className="flow-tags">{fl.starts.map((s, k) => <span key={k} className={`flow-tag t-${toneOf(s.kind)}`}>{({ q: '?', a: '✓', p: '§', s: '•' } as const)[toneOf(s.kind)]} {s.kind}{s.who ? ` · ${s.who}` : ''}</span>)}</div>
+            )}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} /> : showHe(line)}
             </button>
