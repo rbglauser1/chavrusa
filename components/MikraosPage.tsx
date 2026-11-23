@@ -412,7 +412,7 @@ export default function MikraosPage({ startRef, startPasuk, onClose, talk, statu
               <div className="mg-text">
                 {range.map((i) => {
                   // Phrase by phrase (Settings → Look → English layout): each phrase of the pasuk with its English under it.
-                  const pairs = withEn && settings.interlinear && data.pesukimEn[i] ? pairPhrases(data.pesukim[i], undefined, data.pesukimEn[i]) : null;
+                  const pairs = withEn && settings.interlinear && data.pesukimEn[i] ? pairPhrases(data.pesukim[i], undefined, data.pesukimEn[i], settings.ilBy) : null;
                   return pairs
                   ? <div key={i} data-mg={`p:${i}`} className={`mg-pair mg-il ${isSel({ kind: 'p', i }) ? 'mg-sel' : ''}`}>{pairs.map((p, k) => <div key={k} className="mg-il-pair"><div>{k === 0 && <><span className="mg-num">{heNum(i + 1)}</span> </>}{p.he}</div><div className="mg-en" dir="ltr">{p.en.replace(/[\u0002\u0003]/g, '')}</div></div>)}</div>
                   : withEn

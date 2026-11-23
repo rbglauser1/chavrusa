@@ -126,7 +126,53 @@ const heLen = (h: string) => h.replace(/[^א-ת]/g, '').length;
 const heEnd = (h: string) => (h.match(/([,:.?!;׃])["'״׳)\]]*$/)?.[1] ?? '').replace('׃', '.');
 
 /** The line as phrase pairs, or null when it's one phrase or can't be lined up. */
-export function pairPhrases(he: string, enB: string | undefined, en: string): Pair[] | null {
+export function pairPhrases(he: string, enB: string | undefined, en: string, by: 'phrase' | 'sentence' = 'phrase'): Pair[] | null {
+  const pairs = pairByPhrase(he, enB, en);
+  return pairs && by === 'sentence' ? bySentence(pairs) : pairs;
+}
+
+// Nov 23: "Sentence by sentence" (Settings → English layout), between the whole line and phrase by phrase: the phrases,
+// lined up as usual, joined into whole sentences, each ending where the Hebrew has a period (or ? ! ׃), so each
+// sentence of the Gemara is followed by its English.
+const SENT_END = /[.?!׃]["'״”’)\]]*\s*$/;
+export function bySentence(pairs: Pair[]): Pair[] {
+  // Group the phrases into Hebrew sentences.
+  const groups: Pair[][] = [];
+  let cur: Pair[] = [];
+  for (const p of pairs) {
+    cur.push(p);
+    if (SENT_END.test(p.he.replace(/[\u0591-\u05C7]/g, ''))) { groups.push(cur); cur = []; }
+  }
+  if (cur.length) groups.push(cur);
+  if (groups.length < 2) return [{ he: pairs.map((p) => p.he.trim()).join(' '), en: pairs.map((p) => p.en.trim()).join(' ') }];
+  // The English, whole, and where each Hebrew sentence's English would end by the phrase lining-up; each of those cuts
+  // is moved to the nearest real end of an English sentence (. ? !), so a sentence's English never stops halfway (the
+  // phrase lining-up can be a phrase off, and a sentence must be whole).
+  const parts = groups.map((g) => g.map((p) => p.en.trim()).join(' '));
+  const all = parts.join(' ');
+  const ends: number[] = [];
+  for (const m of all.matchAll(/[.?!]["'”’)\u0003]*(?=\s|$)/g)) ends.push((m.index ?? 0) + m[0].length);
+  const cuts: number[] = [];
+  let at = 0, prev = 0;
+  for (let i = 0; i < parts.length - 1; i++) {
+    at += parts[i].length + 1;
+    const want = at - 1;
+    let best = -1, bestD = Infinity;
+    for (const e of ends) { if (e <= prev || e >= all.length) continue; const d = Math.abs(e - want); if (d < bestD) { bestD = d; best = e; } }
+    const cut = best > 0 ? best : want;
+    cuts.push(cut); prev = cut;
+  }
+  const out: Pair[] = [];
+  let from = 0;
+  groups.forEach((g, i) => {
+    const to = i < cuts.length ? cuts[i] : all.length;
+    out.push({ he: g.map((p) => p.he.trim()).join(' '), en: all.slice(from, to).trim() });
+    from = to;
+  });
+  return out.some((p) => !p.en) ? [{ he: pairs.map((p) => p.he.trim()).join(' '), en: all }] : out;
+}
+
+function pairByPhrase(he: string, enB: string | undefined, en: string): Pair[] | null {
   if (!he.trim() || !(en || enB || '').trim()) return null;
   let hp = hebrewPhrases(he);
   if (hp.length < 2 && BREAK.test(he)) hp = tropPhrases(he);

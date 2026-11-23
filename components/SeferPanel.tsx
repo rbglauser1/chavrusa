@@ -949,7 +949,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     {prevSrc.he.map((line, i) => {
                       const en = prevSrc.en[i] || (prevSrc.en.length ? undefined : prevSrc.altEn?.[i]);
                       // Under each phrase here too (Nov 7: the amud before and after the chosen one showed the whole line).
-                      const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, prevSrc.enB?.[i], en) : null;
+                      const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, prevSrc.enB?.[i], en, settings.ilBy) : null;
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(prevSrc?.ref, i + 1)}
@@ -1025,7 +1025,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const isOpen = canTranslate && (showAll || open.has(i));
               const en = src.en[i] || (src.en.length ? undefined : src.altEn?.[i]);
               const key = `${src.ref}#${i}`;
-              const pairs = settings.interlinear && isOpen && en ? pairPhrases(line, src.enB?.[i], en) : null;
+              const pairs = settings.interlinear && isOpen && en ? pairPhrases(line, src.enB?.[i], en, settings.ilBy) : null;
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {mishnahHead(src.ref, i + 1)}
@@ -1253,7 +1253,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                     {nextSrc.he.map((line, i) => {
                       const en = nextSrc.en[i] || (nextSrc.en.length ? undefined : nextSrc.altEn?.[i]);
                       // Under each phrase here too (Nov 7: the amud before and after the chosen one showed the whole line).
-                      const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, nextSrc.enB?.[i], en) : null;
+                      const pairs = settings.interlinear && canTranslate && showAll && en ? pairPhrases(line, nextSrc.enB?.[i], en, settings.ilBy) : null;
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(nextSrc?.ref, i + 1)}

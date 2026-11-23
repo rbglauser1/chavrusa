@@ -98,7 +98,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const n = i + 1, on = n === focus;
         const en = src.en[i] || (src.en.length ? '' : src.altEn?.[i] ?? '');
         const c = inlineComm && inlineComm.main === src.ref && inlineComm.line === n ? inlineComm : null;
-        const pairs = settings.interlinear && showEn && en && (englishAll || on) ? pairPhrases(line, src.enB?.[i], en) : null;
+        const pairs = settings.interlinear && showEn && en && (englishAll || on) ? pairPhrases(line, src.enB?.[i], en, settings.ilBy) : null;
         return (
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''}`}>
             {(outline.byLine[n] ?? []).map((m, k) => <AiNote key={k} kind="move" text={m} tap={settings.stepsMode === 'tap'} />)}
