@@ -561,7 +561,10 @@ export default function Home() {
     return s.at > Math.max(lastMsg, lastTap) ? s : null;
   }
 
-  async function openSession(id: string) {
+  // Nov 23: `named` = the sefer the Recents card shows (the session's first). A session can hold more than one sefer
+  // (he opened Bereishis from inside a Brachos session); tapping "Brachos 37a" took him to Bereishis, where he was last.
+  // Now the card's sefer opens, at the line he was on in it.
+  async function openSession(id: string, named?: string | null) {
     setDrawer(null);
     const res = await fetch(`/api/sessions/${id}`);
     const d = await res.json();
@@ -570,8 +573,15 @@ export default function Home() {
     setItems(d.messages.map((m: { role: 'user' | 'assistant'; content: string; meta?: { usage?: Usage } | null }) => ({ kind: m.role, text: m.content, usage: m.meta?.usage })));
     // Land on where we were: the place's amud / perek, at its line (or where he last scrolled to, if that is newer).
     const seen = seenFor(id, d);
-    const pl = (seen ?? d.place) as { ref: string; line: number } | null;
-    const at = pl ? (d.sources as SourceData[]).findIndex((x) => x.ref === pl.ref) : -1;
+    let pl = (seen ?? d.place) as { ref: string; line: number } | null;
+    const bookOf = (r: string) => r.replace(/[\s.]+[\d:ab.-]+$/i, '').trim();
+    const want = named ? (d.sources as SourceData[]).find((x) => x.ref === named) ?? (d.sources as SourceData[]).find((x) => bookOf(x.ref) === bookOf(named)) : undefined;
+    if (want && (!pl || bookOf(pl.ref) !== bookOf(want.ref))) {
+      const place = d.place as { ref: string; line: number } | null;
+      pl = place && bookOf(place.ref) === bookOf(want.ref) ? place : { ref: want.ref, line: want.focus ?? 1 };
+    }
+    let at = pl ? (d.sources as SourceData[]).findIndex((x) => x.ref === pl!.ref) : -1;
+    if (at < 0 && want) { at = (d.sources as SourceData[]).indexOf(want); pl = { ref: want.ref, line: want.focus ?? 1 }; }
     setSources(at >= 0 ? (d.sources as SourceData[]).map((x, k) => (k === at ? { ...x, focus: pl!.line } : x)) : d.sources);
     setSelected(at >= 0 ? at : Math.max(0, d.sources.length - 1));
     sessionIdRef.current = id;
@@ -580,7 +590,7 @@ export default function Home() {
     setSeferOpen(isWide && d.sources.length > 0);
     warned.current = false;
     // Scrolled on to an amud this session never opened (the next or previous one): open it there.
-    if (seen && at < 0) await openExact(seen.ref, seen.line);
+    if (seen && at < 0 && pl === seen) await openExact(seen.ref, seen.line);
   }
 
   // Read straight through, piece by piece, until the learner talks or it reaches the end.
@@ -1036,7 +1046,7 @@ export default function Home() {
           <HomePage title="Recent" onBack={() => setView(settingsFrom)}>
             <RecentList
               sessions={sessions} currentId={sessionId} clearArmed={clearArmed}
-              onOpen={(id) => { void openSession(id).then(goLearn); }}
+              onOpen={(id, title) => { void openSession(id, title).then(goLearn); }}
               onDelete={(id) => void deleteSessionById(id)}
               onClearAll={() => void clearAllSessions()}
             />

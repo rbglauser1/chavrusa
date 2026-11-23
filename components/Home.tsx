@@ -166,7 +166,7 @@ export function HomePage({ title, onBack, children }: { title: string; onBack: (
 
 export function RecentList({ sessions, currentId, onOpen, onDelete, onClearAll, clearArmed }: {
   sessions: SessionRow[]; currentId: string | null;
-  onOpen: (id: string) => void; onDelete: (id: string) => void; onClearAll: () => void; clearArmed: boolean;
+  onOpen: (id: string, title?: string | null) => void; onDelete: (id: string) => void; onClearAll: () => void; clearArmed: boolean;
 }) {
   // The 8 newest; the rest stay one tap away.
   const [all, setAll] = useState(false);
@@ -178,7 +178,7 @@ export function RecentList({ sessions, currentId, onOpen, onDelete, onClearAll, 
       <ul className="recent-list">
         {shown.map((s) => (
           <li key={s.id} className={`recent-row ${s.id === currentId ? 'on' : ''}`}>
-            <button className="recent-open" onClick={() => onOpen(s.id)}>
+            <button className="recent-open" onClick={() => onOpen(s.id, s.title)}>
               <span className="recent-title" dir="auto">{nice(s.title) || 'Untitled session'}</span>
               <span className="recent-when">{when(s.updated_at)}</span>
             </button>
