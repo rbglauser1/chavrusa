@@ -10,6 +10,10 @@ export function ViewportFix() {
     if (!vv) return;
     const root = document.documentElement;
     let raf = 0, touching = false, settleT = 0, againT = 0;
+    // Nov 23: a shift found wrong (it put the buttons off the screen) is remembered and not tried again until the
+    // screen really changes (the keyboard, a turn, a zoom): applying it and taking it back on every scroll made the
+    // page counter at the bottom flash.
+    let bad: { shift: number; h: number } | null = null;
     const pinned = () => document.querySelector<HTMLElement>('.st-full-ctl, .daf-dock .daf-bar, .min-full-ctl, .gl-full-controls');
     const fit = () => {
       cancelAnimationFrame(raf);
@@ -19,7 +23,9 @@ export function ViewportFix() {
         // auto-scroll on and pulled the page). Measured again once it settles.
         const maxY = document.documentElement.scrollHeight - window.innerHeight;
         if (touching || window.scrollY < -1 || window.scrollY > maxY + 1) { settleSoon(); return; }
-        const shift = Math.round(vv.offsetTop + vv.height - window.innerHeight);
+        let shift = Math.round(vv.offsetTop + vv.height - window.innerHeight);
+        if (bad && Math.abs(vv.height - bad.h) > 40) bad = null; // the screen really changed: measure afresh
+        if (bad && Math.abs(shift - bad.shift) <= 4) shift = 0;
         // Only while not zoomed in, and only a real gap (a pixel or two is just rounding).
         if (vv.scale < 1.05 && Math.abs(shift) > 2) root.style.setProperty('--vv-shift', `${shift}px`);
         else root.style.removeProperty('--vv-shift');
@@ -29,7 +35,7 @@ export function ViewportFix() {
           requestAnimationFrame(() => {
             const el = pinned(); if (!el) return;
             const r = el.getBoundingClientRect(), top = vv.offsetTop, bottom = vv.offsetTop + vv.height;
-            if (r.height && (r.bottom > bottom + 2 || r.top < top - 2)) root.style.removeProperty('--vv-shift');
+            if (r.height && (r.bottom > bottom + 2 || r.top < top - 2)) { bad = { shift: Math.round(vv.offsetTop + vv.height - window.innerHeight), h: vv.height }; root.style.removeProperty('--vv-shift'); }
           });
         }
       });
