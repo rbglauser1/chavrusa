@@ -45,3 +45,14 @@ export function AiNotes({ kind, texts, tap }: { kind: 'move' | 'pshat'; texts: s
     </>
   );
 }
+
+// Nov 23: with Color the give and take on, the colored label right beside the step already says what it is and who says
+// it ("? Question · the Gemara"); the step's heading then gives only the substance ("Why does the Mishnah…"), not
+// "The Gemara asks: why does the Mishnah…" again.
+const LEAD = /^(?:the gemara|the mishnah|the baraita|a baraita|[A-Z][A-Za-z'’\- ]{1,40}?)\s+(?:then\s+)?(?:asks|answers|says|rejects|proves|brings(?: a)?(?: proof)?|concludes|explains|responds|replies|challenges|objects|suggests|counters|qualifies|quotes|cites|teaches|rules|disagrees|adds|notes|derives|clarifies|resolves|retorts)(?:\s+(?:that|whether|why|how|from))?\s*[:—–-]\s*/i;
+export function stepSubstance(t: string): string {
+  const m = t.match(LEAD);
+  if (!m) return t;
+  const rest = t.slice(m[0].length).trim();
+  return rest.length > 8 ? rest.charAt(0).toUpperCase() + rest.slice(1) : t;
+}

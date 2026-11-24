@@ -3487,3 +3487,25 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .sayit-ex-src { display: block; margin-top: 6px; font: 12px var(--f-ui); color: var(--soft); }
 .sayit-reveal { display: inline-block; margin-top: 8px; padding: 5px 12px; border-radius: 999px; border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--rule)); background: transparent; color: var(--accent); font: 600 13px var(--f-ui); }
 .sayit-ex-ans { display: block; margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, #2f8a63 8%, transparent); white-space: pre-wrap; }
+
+/* Nov 23: Steps and Pshat in the same style as the give-and-take labels: small rounded pills that sit in one row with
+   the colored label, in a quiet ink tone (no terracotta); opened, a calm grey note at the AI's writing size. */
+.flow-tags { display: inline-flex; vertical-align: middle; margin: 8px 6px 4px 0; }
+.sefer .ai-dot, .min .ai-dot {
+  display: inline-flex; align-items: center; gap: 4px; margin: 8px 6px 4px 0; padding: 2px 9px; vertical-align: middle;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent); color: color-mix(in srgb, var(--ink) 72%, transparent);
+  font: 650 11.5px var(--f-ui); letter-spacing: .02em;
+}
+.sefer .ai-dot span, .min .ai-dot span { text-transform: none; }
+.sefer .ai-dot-move { margin-top: 8px; }
+.sefer .move, .min .move, .sefer .pshat {
+  font-family: var(--f-body); font-size: var(--ai-size, max(16px, calc(var(--en-size, 16px) - 1px))); font-weight: 400; line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  background: color-mix(in srgb, var(--ink) 4%, transparent); border-left: 3px solid color-mix(in srgb, var(--ink) 28%, transparent); border-radius: 4px 12px 12px 4px;
+  padding: 8px 12px 9px; margin: 8px 0 10px;
+}
+.sefer .move::before, .min .move::before, .sefer .pshat::before { display: block; font: 700 10.5px var(--f-ui); letter-spacing: .08em; color: color-mix(in srgb, var(--ink) 55%, transparent); margin-bottom: 3px; }
+.sefer .move::before, .min .move::before { content: '✦ STEP'; }
+.sefer .pshat::before { content: '✦ PSHAT'; }
+:is(.sefer, .min) :is(.move, .pshat).he-note { border-right: 3px solid color-mix(in srgb, var(--ink) 28%, transparent); border-left: 0; border-radius: 12px 4px 4px 12px; }

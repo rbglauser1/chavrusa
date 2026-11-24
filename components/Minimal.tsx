@@ -14,7 +14,7 @@ import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactEl
 import type { SourceData } from '@/lib/db';
 import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
-import { AiNotes } from './AiNote';
+import { AiNotes, stepSubstance } from './AiNote';
 import { useFlow, flowTags, MARK } from './useFlow';
 import SayIt from './SayIt';
 import { Formatted } from './Message';
@@ -111,7 +111,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const tags = fl && !marks ? flowTags(fl) : [];
         return (
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`}>
-            <AiNotes kind="move" texts={outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} />
+            <AiNotes kind="move" texts={settings.flowColors ? (outline.byLine[n] ?? []).map(stepSubstance) : outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} />
             {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} marks={marks} /> : showHe(line)}
