@@ -8,8 +8,8 @@ import { isHebText } from './AiNote';
 type QA = { q: string; a: string | null; bad?: boolean };
 // Nov 23: ✦ Go deeper, under the plain explanation: a kashya, a chakira, the halacha, the meforshim, or the wider inyan,
 // each built from what Sefaria brings on this line (its meforshim and what it links to), made once and kept.
-const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['widen', 'Widen it']];
-type Ex = { text?: string; sources?: string[]; err?: string };
+const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['widen', 'Widen it']];
+type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean };
 
 export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?: string; si?: number }) {
   const [open, setOpen] = useState(false);
@@ -64,6 +64,19 @@ export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?:
           {exOrder.map((k) => {
             const e = ex[k] ?? {};
             const h = !!e.text && isHebText(e.text);
+            // Sharp kashya: the kashya first; its answer waits for a tap, so he can try first.
+            const cut = k === 'challenge' && e.text ? e.text.search(/\n?\s*ANSWER:/i) : -1;
+            const kq = cut >= 0 ? e.text!.slice(0, cut).trim() : null;
+            const ka = cut >= 0 ? e.text!.slice(cut).replace(/^\s*ANSWER:\s*/i, '').trim() : null;
+            if (kq) return (
+              <span key={k} className="sayit-ex">
+                <span className="sayit-ex-label">Sharp kashya</span>
+                <span className={`sayit-ex-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{kq}</span>
+                {e.shown
+                  ? <span className="sayit-ex-ans"><b>A possible answer: </b>{ka}</span>
+                  : <button type="button" className="sayit-reveal" onClick={() => setEx((x) => ({ ...x, [k]: { ...x[k], shown: true } }))}>Think it over, then tap for an answer</button>}
+              </span>
+            );
             return (
               <span key={k} className="sayit-ex">
                 <span className="sayit-ex-label">{DEEPER.find((d) => d[0] === k)?.[1]}</span>
