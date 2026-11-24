@@ -62,6 +62,7 @@ export default function QuickLook({ settings: s, onSet, onAll, onClose }: { sett
       <Row label="Nikud" value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ nikud: v === 'on' })} />
       <Size label="Hebrew size" value={s.heSize} min={16} max={52} onSet={(v) => onSet({ heSize: v })} sample="אבג" he />
       {en && <Size label="English size" value={s.enSize} min={13} max={24} onSet={(v) => onSet({ enSize: v })} sample="Abc" />}
+      <Size label="AI text size (✦ In my words, notes, answers)" value={s.aiSize ?? Math.max(17, s.enSize)} min={14} max={32} onSet={(v) => onSet({ aiSize: v })} sample="✦ Abc" />
       <button className="ql-all" onClick={() => { onClose(); onAll(); }}>All settings ›</button>
     </div>
   );
