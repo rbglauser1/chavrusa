@@ -3509,3 +3509,9 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .sefer .move::before, .min .move::before { content: '✦ STEP'; }
 .sefer .pshat::before { content: '✦ PSHAT'; }
 :is(.sefer, .min) :is(.move, .pshat).he-note { border-right: 3px solid color-mix(in srgb, var(--ink) 28%, transparent); border-left: 0; border-radius: 12px 4px 4px 12px; }
+/* Nov 23: Pshat beside "In my words?" at the end of the move's last line */
+.pshat-inline { display: inline; }
+.sayit-btn.pshat-btn { border-color: color-mix(in srgb, var(--ink) 30%, transparent); background: color-mix(in srgb, var(--ink) 5%, transparent); color: color-mix(in srgb, var(--ink) 75%, transparent); }
+.sayit-btn.pshat-btn.on { background: color-mix(in srgb, var(--ink) 70%, transparent); color: var(--surface, #fff); }
+.pshat-inline-box { display: block; margin: 10px 0 4px; cursor: auto; }
+.pshat-inline-box .pshat { display: block; text-align: left; }

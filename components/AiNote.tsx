@@ -56,3 +56,20 @@ export function stepSubstance(t: string): string {
   const rest = t.slice(m[0].length).trim();
   return rest.length > 8 ? rest.charAt(0).toUpperCase() + rest.slice(1) : t;
 }
+
+// Nov 23: Pshat at the end of the move's last line, right beside "✦ In my words?" (it used to sit after the line,
+// where it looked like it belonged to the next one). A tap opens the say-over of the whole move right there.
+export function PshatInline({ texts }: { texts: string[] }) {
+  const [open, setOpen] = useState(false);
+  if (!texts.length) return null;
+  return (
+    <span className="pshat-inline" onClick={(e) => e.stopPropagation()}>
+      <button type="button" className={`sayit-btn pshat-btn ${open ? 'on' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open}>✦ Pshat</button>
+      {open && (
+        <span className="pshat-inline-box">
+          {texts.map((t, k) => { const he = isHebText(t); return <span key={k} className={`pshat ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>{t}</span>; })}
+        </span>
+      )}
+    </span>
+  );
+}

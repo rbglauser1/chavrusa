@@ -33,7 +33,7 @@ import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
-import { AiNotes, isHebText } from './AiNote';
+import { AiNotes, PshatInline, isHebText } from './AiNote';
 import { useFlow, flowTags, MARK } from './useFlow';
 import SayIt from './SayIt';
 import { getOfflineText, putText } from '@/lib/offlineStore';
@@ -1036,6 +1036,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                 ? fl.sents.map((x) => ({ tone: x.tone, tag: x.change ? `${MARK[x.tone]} ${x.kind}${x.who ? ` · ${x.who}` : ''}` : undefined }))
                 : null;
               const tags = fl && !marks ? flowTags(fl) : [];
+              // Pshat beside "In my words?" at the end of the move's last line (when tapped to show and the English shows).
+              const pshTexts = pshat.byLine[i + 1] ?? [];
+              const pshIn = settings.pshatMode === 'tap' && pshTexts.length > 0 && isOpen && (!!pairs || !!en);
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {mishnahHead(src.ref, i + 1)}
@@ -1051,7 +1054,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} marks={marks}
-                        after={sayOn ? (k) => (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} /> : null) : undefined} />
+                        after={sayOn || pshIn ? (k) => (<>{pshIn && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayOn && (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} /> : null)}</>) : undefined} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
@@ -1238,7 +1241,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       if ((e.target as HTMLElement).closest('button')) return;
                       if (window.getSelection()?.toString()) return; // words being selected for a color mark
                       if (dbl) tap(() => toggleLine(i)); else toggleLine(i); }}>
-                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{sayOn && <SayIt lineRef={partRef(i)} />}</> : aiText[key] ? (
+                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && <PshatInline texts={pshTexts} />}{sayOn && <SayIt lineRef={partRef(i)} />}</> : aiText[key] ? (
                         <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (
                         <span className="tr-ai"><small>No approved translation</small>
@@ -1250,7 +1253,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {tgBox(tg, i)}
                 </div>
-                <AiNotes kind="pshat" texts={pshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />
+                {!pshIn && <AiNotes kind="pshat" texts={pshTexts} tap={settings.pshatMode === 'tap'} />}
                 </div>
               );
             })}
