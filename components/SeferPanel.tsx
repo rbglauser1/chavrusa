@@ -33,7 +33,7 @@ import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { nextSection, prevSection, sectionWord } from '@/lib/refs';
 import { useIntro, useOutline, usePshat, useTargum } from './useOutline';
-import { AiNotes, isHebText, stepSubstance } from './AiNote';
+import { AiNotes, isHebText } from './AiNote';
 import { useFlow, flowTags, MARK } from './useFlow';
 import SayIt from './SayIt';
 import { getOfflineText, putText } from '@/lib/offlineStore';
@@ -957,7 +957,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(prevSrc?.ref, i + 1)}
-                        <AiNotes kind="move" texts={(settings.flowColors ? (prevOutline.byLine[i + 1] ?? []).map(stepSubstance) : prevOutline.byLine[i + 1] ?? [])} tap={settings.stepsMode === 'tap'} />
+                        <AiNotes kind="move" texts={prevOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); }); } else { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
@@ -1039,7 +1039,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {mishnahHead(src.ref, i + 1)}
-                <AiNotes kind="move" texts={(settings.flowColors ? (outline.byLine[i + 1] ?? []).map(stepSubstance) : outline.byLine[i + 1] ?? [])} tap={settings.stepsMode === 'tap'} />
+                <AiNotes kind="move" texts={outline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
                 {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
@@ -1269,7 +1269,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(nextSrc?.ref, i + 1)}
-                        <AiNotes kind="move" texts={(settings.flowColors ? (nextOutline.byLine[i + 1] ?? []).map(stepSubstance) : nextOutline.byLine[i + 1] ?? [])} tap={settings.stepsMode === 'tap'} />
+                        <AiNotes kind="move" texts={nextOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); }); } else { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />

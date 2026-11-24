@@ -18,8 +18,8 @@ Always derech eretz: never insult him, never make light of the Tannaim, Amoraim,
 // check; and toneTail() repeats the tone at the end of each request, where it weighs most.
 export const AWAKE_CHECK = `Never name or label a voice ("Storyteller:", "Detective:", "The rebbi:"): just BE that voice, so he hears it without being told. Make it unmistakable: each piece should clearly sound like one of these voices, not like a textbook. Last, check each piece: does it sound like one of the voices, with a hook? If one reads flat, rewrite it before you answer.`;
 
-export const AWAKE_STEPS = `TONE, WAKE HIM UP: write each step's heading with energy, in ${VOICES}
-Each heading still says what the step does, in at most 18 words, and may end on a hook ("…and Rav Sheshes pounces"). Vary the voices from step to step. The kind of heading wanted (the voice, not the content):
+export const AWAKE_STEPS = `TONE, WAKE HIM UP: write each step's preview with energy, in ${VOICES}
+Each preview still does its whole job (what is coming up, the case, and why it matters, without giving away the resolution), in two or three sentences, at most 60 words, and may end on a hook ("…and Rav Sheshes pounces"). Vary the voices from step to step. The kind of opening wanted (the voice, not the content):
 - "Stop! The Mishnah says PERMITTED, not pushed aside, and that one word runs the whole sugya"
 - "Exhibit A: the extra word in the pasuk, and who is about to pounce on it"
 - "Round two: the Gemara comes off the bench swinging with a kashya"
