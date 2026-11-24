@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MODELS, costUsd, styleForChat } from '@/lib/config';
 import { approvedList, getSettings, logCost } from '@/lib/db';
-import { getText, endOfPrevious } from '@/lib/sefaria';
+import { getText, endOfPrevious, getLinks } from '@/lib/sefaria';
+import { prepareLamdan } from '@/lib/prefetch';
 import { stripNikud } from '@/lib/hebrew';
 import { runAnthropic } from '@/lib/llm/anthropic';
 import { runOpenAI } from '@/lib/llm/openai';
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
     const m = ref.match(/^(.*?):(\d+)$/);
     if (typeof b.ask === 'string') return askOnCard(b, m);
     if (b.say === true) return sayInMyWords(b, m);
+    if (typeof b.expand === 'string') return expandInyan(b, m);
     // Nov 19: "Show answer": he didn't answer and asks to be told; the chavrusa gives the answer plainly.
     const reveal = b.reveal === true;
     const answer = reveal ? '(He didn’t answer. He asks you to tell him the answer: give it plainly and briefly, then one line on why it matters here.)' : String(b.answer ?? '').trim().slice(0, 2000);
@@ -171,4 +173,66 @@ async function sayInMyWords(b: { piece?: unknown; si?: unknown }, m: RegExpMatch
     }, (x) => !x.text);
     return out.text ? NextResponse.json(out) : NextResponse.json({ error: 'This text is not open to the AI.' }, { status: 400 });
   } catch (e) { return NextResponse.json({ error: (e as Error).message || 'It couldn’t explain just now.' }, { status: 502 }); }
+}
+
+// Nov 23: under "In my words", ✦ Go deeper: a kashya, a chakira, the halacha, the meforshim, or the wider inyan, built
+// from what Sefaria brings on this line: its meforshim (Rashi, Tosafos, the Rishonim) and what it links to (the
+// Rambam, the Shulchan Aruch and Mishnah Berurah, the same sugya elsewhere in Shas, Midrash, mussar). Made once per line
+// or sentence and kind, in his tone, and kept.
+const EXPANDS: Record<string, { label: string; ask: string; cats: string[] }> = {
+  kashya: { label: 'A kashya', cats: ['Commentary', 'Talmud'], ask: `Bring a real kashya on it. If one of the meforshim given asks one (Tosafos above all), bring that: who asks, the kashya sharply in a sentence, and the answer (or answers, and who gives each). If none of them asks one here, bring the natural kashya a sharp learner would ask, say plainly that it is your own question, and show how the sugya or the meforshim given answer it.` },
+  chakira: { label: 'A chakira', cats: ['Commentary', 'Talmud', 'Halakhah'], ask: `Frame the chakira under it: the two ways to understand the din (in the gavra or the cheftza? one din or tzvei dinim? the cause or the definition? …), each side in a sentence, what in the text or the meforshim given leans to each, and the נפקא מינה between them. Only a real chakira that this piece supports; never force one.` },
+  halacha: { label: 'Halacha', cats: ['Halakhah'], ask: `Show how it lands in halacha, from the codes given (the Rambam, the Tur, the Shulchan Aruch, the Mishnah Berurah): what each rules on this, briefly, naming each with its place, and where the halacha differs from or adds to the simple reading of the Gemara. If none of the codes given speaks to this piece, say so in a sentence and say what the halacha would turn on. End with: for practice, ask your rav.` },
+  meforshim: { label: 'Meforshim', cats: ['Commentary'], ask: `Give what the meforshim given say on it: Rashi, Tosafos and the other Rishonim (and Acharonim if given), each in its gist (a sentence or two), naming each, and where they differ, what the difference turns on. Only what the given texts say.` },
+  widen: { label: 'Widen it', cats: ['Talmud', 'Midrash', 'Tanakh', 'Jewish Thought', 'Musar', 'Chasidut'], ask: `Widen the inyan: from the linked sources given (the same sugya elsewhere in Shas, a Midrash, a pasuk, a sefer of mussar or machshava), bring the two or three that shed the most light on this piece, each named, each in a sentence or two on how it opens the inyan up.` },
+};
+const EXPAND_RULES = `You are a warm, sharp chavrusa going deeper with the learner on one line (or one sentence of it, if given) that you just explained to him in plain words.
+Use the sources given below; name each source you use, exactly (Rashi, Tosafos ד"ה …, the Rambam Hilchos … , the Shulchan Aruch O.C. …, Bava Kamma 30a …). Never invent a source or a quote; if a source is not given, don't attribute anything to it. 90 to 170 words. Plain prose (a short list only if it truly helps), no headings, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+
+async function expandInyan(b: { expand?: unknown; piece?: unknown; si?: unknown }, m: RegExpMatchArray | null) {
+  const kindName = String(b.expand ?? '');
+  const ex = EXPANDS[kindName];
+  if (!m || !ex) return NextResponse.json({ error: 'Nothing to go into.' }, { status: 400 });
+  const n = Number(m[2]);
+  const piece = String(b.piece ?? '').trim().slice(0, 1500);
+  const si = Math.max(0, Math.round(Number(b.si) || 0));
+  const t = await toneNow();
+  const kind = `expand1-${kindName}-${t.custom ? t.tag : t.awake ? 'awake' : 'calm'}`;
+  try {
+    const out = await keep(kind, `${m[1]}:${n}:${si}`, async () => {
+      await needCredit();
+      const approved = await approvedList();
+      const s = await getText(m[1], approved);
+      if (!s.verdict.allowed || !s.he.length) return { text: '', sources: [] as string[] };
+      // The meforshim on the line, and a few of the linked texts of the kind asked for.
+      const [lamdan, links] = await Promise.all([
+        kindName === 'widen' || kindName === 'halacha' ? Promise.resolve(null) : prepareLamdan(m[1], [n], approved, 6000).catch(() => null),
+        getLinks(`${m[1]}:${n}`, approved, undefined, 60).catch(() => ({ allowed: [], excluded: [] })),
+      ]);
+      const want = ex.cats.filter((c) => c !== 'Commentary').map((c) => c.toLowerCase());
+      const rank = (r: string) => (/^Mishneh Torah/.test(r) ? 0 : /^Shulchan Arukh/.test(r) ? 1 : /^Tur\b/.test(r) ? 2 : /^Mishnah Berurah/.test(r) ? 3 : 4);
+      const picked = links.allowed.filter((l) => want.some((c) => l.category.toLowerCase().includes(c)))
+        .sort((a, b2) => (kindName === 'halacha' ? rank(a.ref) - rank(b2.ref) : 0)).slice(0, kindName === 'halacha' ? 5 : 4);
+      const texts = (await Promise.all(picked.map(async (l) => {
+        const x = await getText(l.ref, approved).catch(() => null);
+        if (!x || !x.verdict.allowed) return null;
+        const he = stripNikud(x.he.join(' ')).slice(0, 900), en = x.en.join(' ').replace(/<[^>]+>/g, '').slice(0, 700);
+        return { ref: l.ref, body: `${he}${en ? `\n   (${en})` : ''}` };
+      }))).filter(Boolean) as { ref: string; body: string }[];
+      const lam = lamdan && !/^\(No commentaries/.test(lamdan) ? lamdan.replace(/\n\(Also on these lines[\s\S]*$/, '') : '';
+      const sourcesBlock = `${lam ? `The meforshim on this line:\n${lam}\n\n` : ''}${texts.length ? `Linked sources:\n${texts.map((x) => `[${x.ref}]\n${x.body}`).join('\n\n')}` : ''}` || '(Sefaria brings no sources on this line beyond the text itself.)';
+      const model = await keptModel();
+      const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your explanation')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
+      const r = await runKept({
+        lang: true, model: model.id, system: `${EXPAND_RULES}\n\n${ex.ask}\n\n${SCOPE}${toneText}`,
+        history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lineText(s.he, s.en, n)}${piece ? `\n\n---\nJust this sentence of line ${n}:\n${stripNikud(piece)}` : ''}\n\n---\n${sourcesBlock.slice(0, 16000)}` }],
+        tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 900,
+      });
+      await logCost({ sessionId: null, kind: `expand-${kindName}`, provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+      const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, '')).slice(0, 2500);
+      if (text.length < 30) throw new Error('It did not come back.');
+      return { text, sources: texts.map((x) => x.ref) };
+    }, (x) => !x.text);
+    return out.text ? NextResponse.json(out) : NextResponse.json({ error: 'This text is not open to the AI.' }, { status: 400 });
+  } catch (e) { return NextResponse.json({ error: (e as Error).message || 'It couldn’t go deeper just now.' }, { status: 502 }); }
 }

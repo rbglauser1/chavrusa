@@ -3476,3 +3476,12 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .sayit-ask input { flex: 1; min-width: 0; padding: 8px 12px; border: 1px solid var(--rule); border-radius: 999px; background: var(--bg); color: var(--ink); font: 16px var(--f-body); }
 .sayit-ask button { flex: 0 0 auto; padding: 7px 14px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: 600 13.5px var(--f-ui); }
 .sayit-ask button:disabled { opacity: .4; }
+/* Nov 23: ✦ Go deeper under In my words: Kashya · Chakira · Halacha · Meforshim · Widen it */
+.sayit-deeper { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.sayit-deeper-label { font: 700 11px var(--f-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-right: 2px; }
+.sayit-deeper button { padding: 4px 11px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--rule)); background: transparent; color: var(--ink); font: 600 13px var(--f-ui); }
+.sayit-deeper button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sayit-ex { display: block; margin-top: 12px; padding-top: 10px; border-top: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--rule)); }
+.sayit-ex-label { display: block; margin-bottom: 4px; font: 700 11px var(--f-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.sayit-ex-text { display: block; white-space: pre-wrap; }
+.sayit-ex-src { display: block; margin-top: 6px; font: 12px var(--f-ui); color: var(--soft); }
