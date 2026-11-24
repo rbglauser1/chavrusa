@@ -57,6 +57,7 @@ export default function QuickLook({ settings: s, onSet, onAll, onClose }: { sett
           <Row label="Translation" value={s.enBold === false ? 'off' : 'on'} options={[['on', 'Bold'], ['off', 'Not bold']]} onPick={(v) => onSet({ enBold: v === 'on' })} />
         </>
       )}
+      <Row label="✦ In my words? (end of each line)" value={s.sayIt === false ? 'off' : 'on'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ sayIt: v === 'on' })} />
       <Row label="Color the give and take ✦ AI" value={s.flowColors ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ flowColors: v === 'on' })} />
       <Row label="Nikud" value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ nikud: v === 'on' })} />
       <Size label="Hebrew size" value={s.heSize} min={16} max={52} onSet={(v) => onSet({ heSize: v })} sample="אבג" he />

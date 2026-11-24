@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
     const ref = String(b.ref ?? '');
     const m = ref.match(/^(.*?):(\d+)$/);
     if (typeof b.ask === 'string') return askOnCard(b, m);
+    if (b.say === true) return sayInMyWords(b, m);
     // Nov 19: "Show answer": he didn't answer and asks to be told; the chavrusa gives the answer plainly.
     const reveal = b.reveal === true;
     const answer = reveal ? '(He didn’t answer. He asks you to tell him the answer: give it plainly and briefly, then one line on why it matters here.)' : String(b.answer ?? '').trim().slice(0, 2000);
@@ -135,4 +136,39 @@ async function askOnCard(b: { ask?: unknown; card?: unknown; thread?: unknown },
   const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, ''));
   if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
   return NextResponse.json({ text: text.slice(0, 3000) });
+}
+
+// Nov 23: "✦ In my words?" at the end of a line (or of a sentence, in Sentence by sentence): what it says and does, in
+// the chavrusa's own plain words, a few sentences; he can then ask a follow-up (askOnCard). Made once per line or
+// sentence, in his tone, and kept.
+const SAY = `You are a warm, sharp chavrusa. The learner just read the line marked >>> <<< (or, if one sentence of it is given, just that sentence) and tapped "In my words?": say what it means and what it is doing here, in your own plain words, the way you'd put it to him across the table.
+2 to 4 short sentences, at most 70 words. Not a word-for-word translation: the meaning and its point in the flow (what is being asked, answered, proven, or why it matters). Don't repeat the English he already has. No headings, no lists, no markdown, no questions to him. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+
+async function sayInMyWords(b: { piece?: unknown; si?: unknown }, m: RegExpMatchArray | null) {
+  if (!m) return NextResponse.json({ error: 'Nothing to explain.' }, { status: 400 });
+  const n = Number(m[2]);
+  const piece = String(b.piece ?? '').trim().slice(0, 1500);
+  const si = Math.max(0, Math.round(Number(b.si) || 0));
+  const t = await toneNow();
+  const kind = `say1-${t.custom ? t.tag : t.awake ? 'awake' : 'calm'}`;
+  try {
+    const out = await keep(kind, `${m[1]}:${n}:${si}`, async () => {
+      await needCredit();
+      const approved = await approvedList();
+      const s = await getText(m[1], approved);
+      if (!s.verdict.allowed || !s.he.length) return { text: '' };
+      const model = await keptModel();
+      const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your explanation')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
+      const r = await runKept({
+        lang: true, model: model.id, system: `${SAY}\n\n${SCOPE}${toneText}`,
+        history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lineText(s.he, s.en, n)}${piece ? `\n\n---\nJust this sentence of line ${n}:\n${stripNikud(piece)}` : ''}` }],
+        tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 500,
+      });
+      await logCost({ sessionId: null, kind: 'say', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+      const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, '')).slice(0, 1500);
+      if (text.length < 20) throw new Error('It did not come back.');
+      return { text };
+    }, (x) => !x.text);
+    return out.text ? NextResponse.json(out) : NextResponse.json({ error: 'This text is not open to the AI.' }, { status: 400 });
+  } catch (e) { return NextResponse.json({ error: (e as Error).message || 'It couldn’t explain just now.' }, { status: 502 }); }
 }

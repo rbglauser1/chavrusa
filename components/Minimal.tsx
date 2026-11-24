@@ -16,6 +16,7 @@ import type { Settings } from '@/lib/config';
 import { stripNikud, yeshivishEnglish, heShower } from '@/lib/hebrew';
 import { AiNotes } from './AiNote';
 import { useFlow, flowTags, MARK } from './useFlow';
+import SayIt from './SayIt';
 import { Formatted } from './Message';
 import { useOutline } from './useOutline';
 import { BoldEn } from './BoldEn';
@@ -95,6 +96,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
   const showEn = settings.display !== 'off';
   const outline = useOutline(src.ref, !!settings.outline);
   const flow = useFlow(src.ref, !!settings.flowColors); // Nov 23: color the give and take, here too
+  const sayOn = settings.sayIt !== false && !/^Mine /.test(src.ref); // Nov 23: ✦ In my words?
   return (
     <div className={`min-text${/[\u0591-\u05AF]/.test(src.he.slice(0, 4).join(' ')) ? ' pointed' : ''}`} ref={box}>
       {src.he.map((line, i) => {
@@ -114,7 +116,8 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} marks={marks} /> : showHe(line)}
             </button>
-            {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}</p>}
+            {pairs && sayOn && <div className="min-sayit"><SayIt lineRef={`${src.ref}:${n}`} /></div>}
+            {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{sayOn && <SayIt lineRef={`${src.ref}:${n}`} />}</p>}
             {c && (
               <div className="min-comm">
                 <span className="min-comm-title">{c.title === 'Tosafot' ? 'Tosafos' : c.title}</span>

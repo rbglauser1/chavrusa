@@ -37,7 +37,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
   const themes = part !== 'settings', rest = part !== 'themes';
   const [editing, setEditing] = useState<CustomStyle | null>(null);
   // Nov 16: one renderer for the on/off rows (the AI tools, your learning, calls). Same defaults as before.
-  const DEFAULT_ON = ['bigPictureText', 'bigPicture', 'cacheTexts', 'mapComms', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'explainLine', 'listenDaf', 'halachaTrail', 'tosSteps', 'wordTap', 'lineChat', 'lineSources'];
+  const DEFAULT_ON = ['sayIt', 'bigPictureText', 'bigPicture', 'cacheTexts', 'mapComms', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'explainLine', 'listenDaf', 'halachaTrail', 'tosSteps', 'wordTap', 'lineChat', 'lineSources'];
   const renderToggles = (rows: [keyof Settings, string, string][]) => rows.map(([k, label, about]) => {
     const on = DEFAULT_ON.includes(k as string) ? s[k] !== false : !!s[k];
     return (
@@ -367,6 +367,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
                 ['lineSources', 'Sources (in Where it goes)', 'In ✦ → Where it goes: what Sefaria links to the line (pesukim, Midrash, other seforim), with ✦ Summarize to pull them together.'],
                 ['elsewhere', 'Elsewhere in Shas (in Where it goes)', 'In ✦ → Where it goes, on Gemara and Mishnah: the same sugya or statement in other places. From Sefaria’s links, no AI.'],
                 ['halachaTrail', 'Halacha (in Where it goes)', 'In ✦ → Where it goes, on Gemara and Mishnah: the road from the line to the Rambam, the Tur, the Shulchan Aruch and the Mishnah Berurah.'],
+                ['sayIt', '✦ In my words?', 'At the end of each line (in Sentence by sentence, each sentence): one tap and the chavrusa says what it means and what it is doing, in its own plain words (made once and kept), with a box under it to ask a follow-up. Also in the Aa button.'],
                 ['flowColors', 'Color the give and take', 'In the sefer: each line colored by what it is doing, from the sugya map (made once per amud and kept): a question or rejection red, an answer green, a proof blue, a statement amber, with a small label where each begins and who says it. Also in the Aa button.'],
                 ['sugyaMap', 'Sugya map', 'In ✦ → This page and more, and in Where it goes: the big picture of the amud or perek, its topics and their steps, in English. Made once and kept.'],
                 ['mapComms', 'Meforshim in the sugya map', 'Under each step of the map, the meforshim on it; tap one and it opens right there.'],
