@@ -2,7 +2,8 @@
 // Nov 23: the "Aa" button beside ⋯ in the sefer's header: the reading options he reaches for most, one tap away, without
 // going into Settings: Hebrew and English or Hebrew only, how the English is laid out (under the line, sentence by
 // sentence, phrase by phrase), under each piece the full English or only the translation, the translation in bold,
-// nikud, and the size of the Hebrew and the English. "All settings" for the rest.
+// nikud, and the size of the Hebrew and the English. Nov 24: the meforshim (tap a line / under every line) and the
+// ✦ AI buttons on the lines (every line / the line I tap / off). "All settings" for the rest.
 import { useEffect, useRef } from 'react';
 import { isSefariaLook, sefariaLook, type Settings } from '@/lib/config';
 
@@ -57,7 +58,9 @@ export default function QuickLook({ settings: s, onSet, onAll, onClose }: { sett
           <Row label="Translation" value={s.enBold === false ? 'off' : 'on'} options={[['on', 'Bold'], ['off', 'Not bold']]} onPick={(v) => onSet({ enBold: v === 'on' })} />
         </>
       )}
-      <Row label="✦ In my words? (end of each line)" value={s.sayIt === false ? 'off' : 'on'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ sayIt: v === 'on' })} />
+      <Row label="Meforshim (Rashi, Tosafos…)" value={s.autoComms ? 'all' : 'tap'} options={[['tap', 'When I tap a line'], ['all', 'Under every line']]} onPick={(v) => onSet({ autoComms: v === 'all' })} />
+      <Row label="✦ AI buttons on the lines (Step, Pshat, In my words)" value={s.lineAi ?? 'all'} options={[['all', 'Every line'], ['tap', 'Line I tap'], ['off', 'Off']]} onPick={(v) => onSet({ lineAi: v as 'all' | 'tap' | 'off' })} />
+      {(s.lineAi ?? 'all') !== 'off' && <Row label="✦ In my words? (end of each line)" value={s.sayIt === false ? 'off' : 'on'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ sayIt: v === 'on' })} />}
       <Row label="Color the give and take ✦ AI" value={s.flowColors ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ flowColors: v === 'on' })} />
       <Row label="Nikud" value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ nikud: v === 'on' })} />
       <Size label="Hebrew size" value={s.heSize} min={16} max={52} onSet={(v) => onSet({ heSize: v })} sample="אבג" he />

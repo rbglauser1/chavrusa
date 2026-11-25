@@ -94,13 +94,15 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
   }, [src.ref, focus]);
   const comm = /\s(on)\s/i.test(src.ref);
   const showEn = settings.display !== 'off';
-  const outline = useOutline(src.ref, !!settings.outline);
+  const lineAi = settings.lineAi ?? 'all'; // Nov 24: the ✦ on the lines: every line, the line he tapped, or none
+  const outline = useOutline(src.ref, !!settings.outline && lineAi !== 'off');
   const flow = useFlow(src.ref, !!settings.flowColors); // Nov 23: color the give and take, here too
-  const sayOn = settings.sayIt !== false && !/^Mine /.test(src.ref); // Nov 23: ✦ In my words?
+  const sayOn = settings.sayIt !== false && lineAi !== 'off' && !/^Mine /.test(src.ref); // Nov 23: ✦ In my words?
   return (
     <div className={`min-text${/[\u0591-\u05AF]/.test(src.he.slice(0, 4).join(' ')) ? ' pointed' : ''}`} ref={box}>
       {src.he.map((line, i) => {
         const n = i + 1, on = n === focus;
+        const aiHere = lineAi === 'all' || (lineAi === 'tap' && on), sayHere = sayOn && aiHere;
         const en = src.en[i] || (src.en.length ? '' : src.altEn?.[i] ?? '');
         const c = inlineComm && inlineComm.main === src.ref && inlineComm.line === n ? inlineComm : null;
         const pairs = settings.interlinear && showEn && en && (englishAll || on) ? pairPhrases(line, src.enB?.[i], en, settings.ilBy) : null;
@@ -111,13 +113,13 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const tags = fl && !marks ? flowTags(fl) : [];
         return (
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`}>
-            <AiNotes kind="move" texts={outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} />
+            {aiHere && <AiNotes kind="move" texts={outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} />}
             {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} marks={marks} /> : showHe(line)}
             </button>
-            {pairs && sayOn && <div className="min-sayit"><SayIt lineRef={`${src.ref}:${n}`} /></div>}
-            {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{sayOn && <SayIt lineRef={`${src.ref}:${n}`} />}</p>}
+            {pairs && sayHere && <div className="min-sayit"><SayIt lineRef={`${src.ref}:${n}`} /></div>}
+            {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{sayHere && <SayIt lineRef={`${src.ref}:${n}`} />}</p>}
             {c && (
               <div className="min-comm">
                 <span className="min-comm-title">{c.title === 'Tosafot' ? 'Tosafos' : c.title}</span>

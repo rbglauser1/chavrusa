@@ -254,7 +254,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const lineX = kind !== 'none' && !!src && !/^Mine /.test(src.ref);
   // The AI tools (Explain, Chat, a kashya, your own buttons, the map, review): on every sefer, commentaries included (Nov 14).
   const aiX = !!src && !/^Mine /.test(src.ref);
-  const sayOn = aiX && settings.sayIt !== false; // Nov 23: ✦ In my words? at the end of a line or sentence
+  const lineAi = settings.lineAi ?? 'all'; // Nov 24: the ✦ on the lines: every line, the line he tapped, or none
+  const sayOn = aiX && settings.sayIt !== false && lineAi !== 'off'; // Nov 23: ✦ In my words? at the end of a line or sentence
   const [rel, setRel] = useState<{ ref: string; lines: Record<string, Groups>; tanakh: boolean } | null>(null);
   useEffect(() => {
     if (!lineX || !src || (settings.lineSources === false && settings.halachaTrail === false && settings.elsewhere === false)) return;
@@ -364,9 +365,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, autoWho, conns, src?.ref]);
   }
-  const outline = useOutline(src?.ref, !!settings.outline);
+  const outline = useOutline(src?.ref, !!settings.outline && settings.lineAi !== 'off');
   const flow = useFlow(src?.ref, !!settings.flowColors); // Nov 23: color the give and take
-  const pshat = usePshat(src?.ref, !!settings.pshat);
+  const pshat = usePshat(src?.ref, !!settings.pshat && settings.lineAi !== 'off');
 
   // Scrolling up past the top: the end of the previous amud / perek appears above (kept in place while it loads).
   const prevRef = src && !isComm && !/:\d+(-\d+)?$/.test(src.ref) ? prevSection(src.ref) : null;
@@ -663,10 +664,10 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     return () => window.clearTimeout(t);
   }, [src?.ref]);
   const endRef = useRef<HTMLDivElement | null>(null);
-  const nextOutline = useOutline(nextSrc?.ref, !!settings.outline && !!nextSrc);
-  const prevOutline = useOutline(prevSrc?.ref, !!settings.outline && !!prevSrc);
-  const nextPshat = usePshat(nextSrc?.ref, !!settings.pshat && !!nextSrc);
-  const prevPshat = usePshat(prevSrc?.ref, !!settings.pshat && !!prevSrc);
+  const nextOutline = useOutline(nextSrc?.ref, !!settings.outline && settings.lineAi !== 'off' && !!nextSrc);
+  const prevOutline = useOutline(prevSrc?.ref, !!settings.outline && settings.lineAi !== 'off' && !!prevSrc);
+  const nextPshat = usePshat(nextSrc?.ref, !!settings.pshat && settings.lineAi === 'all' && !!nextSrc);
+  const prevPshat = usePshat(prevSrc?.ref, !!settings.pshat && settings.lineAi === 'all' && !!prevSrc);
   const introOn = settings.amudIntro !== false;
   const intro = useIntro(src?.ref, introOn && !isComm);
   const nextIntro = useIntro(nextSrc?.ref, introOn && !!nextSrc);
@@ -957,7 +958,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`p${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(prevSrc?.ref, i + 1)}
-                        <AiNotes kind="move" texts={prevOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
+                        {settings.lineAi !== 'tap' && <AiNotes kind="move" texts={prevOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />}
                         <div data-line={`p${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); }); } else { pickAfter.current = { ref: prevSrc.ref, i }; onPoint?.(prevSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
@@ -967,7 +968,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(prevTg, i)}
                         </div>
-                <AiNotes kind="pshat" texts={prevPshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />
+                {settings.lineAi !== 'tap' && <AiNotes kind="pshat" texts={prevPshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />}
                         </div>
                       );
                     })}
@@ -1038,11 +1039,14 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               const tags = fl && !marks ? flowTags(fl) : [];
               // Pshat beside "In my words?" at the end of the move's last line (when tapped to show and the English shows).
               const pshTexts = pshat.byLine[i + 1] ?? [];
-              const pshIn = settings.pshatMode === 'tap' && pshTexts.length > 0 && isOpen && (!!pairs || !!en);
+              // Nov 24: the ✦ here only on every line, or only on the line he tapped (the same tap that opens the meforshim).
+              const aiHere = lineAi === 'all' || (lineAi === 'tap' && (open.has(i) || (embedded ? picked === i : src.focus === i + 1)));
+              const sayHere = sayOn && aiHere;
+              const pshIn = aiHere && settings.pshatMode === 'tap' && pshTexts.length > 0 && isOpen && (!!pairs || !!en);
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {mishnahHead(src.ref, i + 1)}
-                <AiNotes kind="move" texts={outline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
+                {aiHere && <AiNotes kind="move" texts={outline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />}
                 {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
@@ -1054,7 +1058,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} marks={marks}
-                        after={sayOn || pshIn ? (k) => (<>{pshIn && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayOn && (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} /> : null)}</>) : undefined} />
+                        after={sayHere || pshIn ? (k) => (<>{pshIn && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} /> : null)}</>) : undefined} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
@@ -1241,7 +1245,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       if ((e.target as HTMLElement).closest('button')) return;
                       if (window.getSelection()?.toString()) return; // words being selected for a color mark
                       if (dbl) tap(() => toggleLine(i)); else toggleLine(i); }}>
-                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && <PshatInline texts={pshTexts} />}{sayOn && <SayIt lineRef={partRef(i)} />}</> : aiText[key] ? (
+                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && <PshatInline texts={pshTexts} />}{sayHere && <SayIt lineRef={partRef(i)} />}</> : aiText[key] ? (
                         <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (
                         <span className="tr-ai"><small>No approved translation</small>
@@ -1253,7 +1257,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {tgBox(tg, i)}
                 </div>
-                {!pshIn && <AiNotes kind="pshat" texts={pshTexts} tap={settings.pshatMode === 'tap'} />}
+                {!pshIn && aiHere && <AiNotes kind="pshat" texts={pshTexts} tap={settings.pshatMode === 'tap'} />}
                 </div>
               );
             })}
@@ -1272,7 +1276,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       return (
                         <div key={`n${i}`} style={{ display: 'contents' }}>
                         {mishnahHead(nextSrc?.ref, i + 1)}
-                        <AiNotes kind="move" texts={nextOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />
+                        {settings.lineAi !== 'tap' && <AiNotes kind="move" texts={nextOutline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />}
                         <div data-line={`n${i + 1}`} className="line" onClick={(e) => { if (dbl) { e.stopPropagation(); tap(() => { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); }); } else { pickAfter.current = { ref: nextSrc.ref, i }; onPoint?.(nextSrc, i + 1); } }}>
                           {pairs
                             ? <Interlinear pairs={pairs} heClass="" show={showHe} num={i + 1} />
@@ -1282,7 +1286,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                             </>}
                           {tgBox(nextTg, i)}
                         </div>
-                <AiNotes kind="pshat" texts={nextPshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />
+                {settings.lineAi !== 'tap' && <AiNotes kind="pshat" texts={nextPshat.byLine[i + 1] ?? []} tap={settings.pshatMode === 'tap'} />}
                         </div>
                       );
                     })}

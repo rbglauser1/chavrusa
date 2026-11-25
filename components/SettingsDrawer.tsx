@@ -358,6 +358,11 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>In one ✦ (recommended): the floating button at the bottom right holds Learn with me, Ask about this line, Where it goes, and the page’s map, review, Listen and source sheet. Under each line: the old way, a row of buttons under every line you tap.</div>
             </div>
             <div className="field">
+              <label>✦ AI buttons on the lines (Step, Pshat, In my words?)</label>
+              <Seg value={s.lineAi ?? 'all'} options={[['all', 'Every line'], ['tap', 'Line I tap'], ['off', 'Off']]} onPick={(v) => onChange({ lineAi: v as 'all' | 'tap' | 'off' })} />
+              <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>One switch for all the small ✦ buttons between the lines. Line I tap: they show only on the line you tapped (the same tap that opens the meforshim), so the page stays clean. Off hides them all; your Steps, Pshat and In my words choices are kept for when you turn them back on. Also in the Aa button.</div>
+            </div>
+            <div className="field">
               <div className="muted" style={{ fontSize: 12, margin: '2px 0 10px' }}>Each one is optional: turn on what you want.</div>
               {renderToggles([
                 ['bigPictureText', '✦ Big picture (written)', 'Under a line: a short note to read, where this line stands in the sugya (what it is doing and where the discussion is going). In the language the AI writes in. Made once per line (about a cent), then free.'],

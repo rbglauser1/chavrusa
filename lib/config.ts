@@ -534,6 +534,7 @@ export interface Settings {
   spelling?: 'yeshivish' | 'modern'; // Nov 18: names spelled Shabbos/Brachos (default) or as in Sefaria (Shabbat/Berakhot)
   bigPictureText?: boolean; // Nov 17: ✦ Big picture under a line, written (a short note to read)
   bigPicture?: boolean; // Nov 17: 🔊 Big picture under a line: the voice says where the line stands in the sugya, then stops
+  lineAi?: 'all' | 'tap' | 'off'; // Nov 24: the ✦ on the lines (Step, Pshat, In my words?): on every line, only on the line he tapped, or none
   stepsMode?: 'auto' | 'tap'; // Nov 17: Steps always shown, or a quiet ✦ marker to tap
   pshatMode?: 'auto' | 'tap'; // Nov 17: the same for Pshat
   pshat?: boolean; // Nov 17: the AI says over each move in its own words, after the move's last line (made once per amud)
@@ -667,7 +668,7 @@ export function forNusach<T extends { nusach?: string; heRead?: string; houseSay
 
 // Settings with no default (unset means "as before" or "on"): the server must still accept and save them. Without
 // this list a change to one of them was dropped and came back on the next load (the Credits switch never stayed on).
-export const OPTIONAL_SETTING_KEYS = ['sayIt', 'flowColors', 'ilBy', 'callFace', 'lwView', 'lwDeepTogether', 'homeBg', 'customTones', 'customToneId', 'customTone', 'lwTone', 'spelling', 'bigPictureText', 'bigPicture', 'stepsMode', 'pshatMode', 'pshat', 'homeOneLine', 'homeStreak', 'windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode', 'fiveLen', 'paperTex', 'teasers', 'leftQ', 'homeTeaser'] as const;
+export const OPTIONAL_SETTING_KEYS = ['lineAi', 'sayIt', 'flowColors', 'ilBy', 'callFace', 'lwView', 'lwDeepTogether', 'homeBg', 'customTones', 'customToneId', 'customTone', 'lwTone', 'spelling', 'bigPictureText', 'bigPicture', 'stepsMode', 'pshatMode', 'pshat', 'homeOneLine', 'homeStreak', 'windowSize', 'windowDark', 'focusMode', 'spotlight', 'aiHeFont', 'aiSize', 'aiHub', 'aiLang', 'partGap', 'sideMargin', 'guidedPalette', 'keptModel', 'notebookPins', 'myButtons', 'disclaimer2', 'billing', 'billingSince', 'explainLine', 'lineSources', 'mapComms', 'ilEn', 'darkCall', 'lineChat', 'myQuestions', 'hideQuestions', 'wordTap', 'tosSteps', 'listenDaf', 'halachaTrail', 'elsewhere', 'byHeart', 'marks', 'sourceSheet', 'daySummary', 'timeGoal', 'justify', 'paper', 'autoScrollBtn', 'mussarAngle', 'followLead', 'showSteinsaltz', 'mySeforim', 'diag', 'oneLine', 'glowLine', 'wins', 'whereWasI', 'fiveMin', 'sitWithMe', 'sitCheck', 'amudBar', 'goal', 'readAlong', 'quietMode', 'fiveLen', 'paperTex', 'teasers', 'leftQ', 'homeTeaser'] as const;
 
 export const OWNER_ID = 'owner';
 
