@@ -3543,3 +3543,7 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 .sf-take { display: block; margin-top: 4px; padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 9%, transparent); }
 .sf-take b { display: block; font: 700 11px var(--f-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
 .sf-note, .sf-wait { display: block; margin-top: 8px; font-size: 12px; color: var(--soft); }
+
+/* Nov 25: an English font chosen in its italic (Comic Neue Italic, Shantell Sans Italic). The Hebrew stays upright. */
+html[data-enital="on"] body { font-style: italic; }
+html[data-enital="on"] :is([dir="rtl"], .he, .rashi, .min-he, .he-note, .comm-he, input, textarea, select) { font-style: normal; }

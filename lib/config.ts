@@ -338,7 +338,7 @@ export const LOOKS: { id: Look; name: string; blurb: string }[] = [
 ];
 
 // Fonts the learner can choose for each look (Settings → Look → Fonts). "" = the look's own font.
-export const FONTS_EN: { id: string; name: string; stack: string }[] = [
+export const FONTS_EN: { id: string; name: string; stack: string; italic?: boolean }[] = [
   { id: '', name: "The look's own", stack: '' },
   { id: 'sourceserif', name: 'Source Serif (closest to Claude)', stack: "'Source Serif 4', Georgia, serif" },
   { id: 'times', name: 'Times New Roman', stack: "'Times New Roman', Times, 'Liberation Serif', serif" },
@@ -353,6 +353,8 @@ export const FONTS_EN: { id: string; name: string; stack: string }[] = [
   { id: 'assistant', name: 'Assistant (soft sans)', stack: "'Assistant', system-ui, sans-serif" },
   { id: 'rubik', name: 'Rubik (round sans)', stack: "'Rubik', system-ui, sans-serif" },
   { id: 'comic', name: 'Comic Sans', stack: "'Comic Sans MS', 'Comic Relief', 'Comic Neue', cursive" }, // Nov 24: iPhones have no Comic Sans; Comic Relief is its free, identical-looking twin
+  { id: 'comicneue-i', name: 'Comic Neue Italic (slanted)', stack: "'Comic Neue', 'Comic Relief', cursive", italic: true }, // Nov 25: slanted, like Comic Sans leaning forward
+  { id: 'shantell-i', name: 'Shantell Sans Italic (marker, slanted)', stack: "'Shantell Sans', 'Comic Neue', cursive", italic: true },
   { id: 'patrick', name: 'Patrick Hand (handwritten)', stack: "'Patrick Hand', 'Comic Neue', cursive" },
   { id: 'caveat', name: 'Caveat (marker)', stack: "'Caveat', 'Patrick Hand', cursive" },
   { id: 'fredoka', name: 'Fredoka (bubbly)', stack: "'Fredoka', 'Rubik', sans-serif" },
@@ -380,6 +382,8 @@ export const FONTS_COMM: { id: string; name: string; stack: string }[] = [
   ...FONTS_HE.filter((f) => f.id),
 ];
 export const fontStack = (list: { id: string; stack: string }[], id?: string) => list.find((f) => f.id === id)?.stack ?? '';
+// Nov 25: an English font that is set in its italic (Comic Neue Italic, Shantell Sans Italic): the root gets data-enital.
+export const fontItalic = (id?: string) => !!FONTS_EN.find((f) => f.id === id)?.italic;
 
 // Older saved values from the first version map onto the new looks.
 export function normalizeLook(v: unknown): Look {

@@ -9,12 +9,12 @@ import SugyaFlow from './SugyaFlow';
 type QA = { q: string; a: string | null; bad?: boolean };
 // Nov 23: ✦ Go deeper, under the plain explanation: a kashya, a chakira, the halacha, the meforshim, or the wider inyan,
 // each built from what Sefaria brings on this line (its meforshim and what it links to), made once and kept.
-// Nov 25: Sugya chart: the steps of the sugya this line is in, as a simple chart (SugyaFlow, from the sugya map).
-const DEEPER: [string, string][] = [['chart', 'Sugya chart'], ['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['widen', 'Widen it']];
+const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['widen', 'Widen it']];
 type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean };
 
-export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?: string; si?: number }) {
+export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string; piece?: string; si?: number; noChart?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [chart, setChart] = useState(false); // Nov 25: ✦ Sugya chart, beside In my words
   const [text, setText] = useState<string | null>(null);
   const [err, setErr] = useState('');
   const [thread, setThread] = useState<QA[]>([]);
@@ -24,7 +24,6 @@ export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?:
   const [exOrder, setExOrder] = useState<string[]>([]);
   const deeper = (k: string) => {
     if (ex[k]) { setExOrder((o) => (o.includes(k) ? o.filter((x) => x !== k) : [...o, k])); return; }
-    if (k === 'chart') { setEx((e) => ({ ...e, chart: { text: '' } })); setExOrder((o) => [...o, k]); return; }
     setEx((e) => ({ ...e, [k]: {} })); setExOrder((o) => [...o, k]);
     post({ expand: k, piece: piece ?? '', si: si ?? 0 })
       .then((d) => setEx((e) => ({ ...e, [k]: d.text ? { text: d.text, sources: d.sources ?? [] } : { err: d.error || 'It couldn’t go deeper just now.' } })))
@@ -53,6 +52,12 @@ export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?:
   return (
     <span className="sayit" onClick={(e) => e.stopPropagation()}>
       <button type="button" className={`sayit-btn ${open ? 'on' : ''}`} onClick={go} aria-expanded={open}>✦ {open ? 'Close' : 'In my words?'}</button>
+      {!noChart && <button type="button" className={`sayit-btn ${chart ? 'on' : ''}`} onClick={() => setChart((v) => !v)} aria-expanded={chart}>✦ {chart ? 'Close chart' : 'Sugya chart'}</button>}
+      {chart && (
+        <span className="sayit-box" role="region" aria-label="Sugya chart">
+          <SugyaFlow lineRef={lineRef} />
+        </span>
+      )}
       {open && (
         <span className="sayit-box" role="region" aria-label="In my words">
           <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>
@@ -65,12 +70,6 @@ export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?:
             </span>
           )}
           {exOrder.map((k) => {
-            if (k === 'chart') return (
-              <span key={k} className="sayit-ex">
-                <span className="sayit-ex-label">Sugya chart</span>
-                <SugyaFlow lineRef={lineRef} />
-              </span>
-            );
             const e = ex[k] ?? {};
             const h = !!e.text && isHebText(e.text);
             // Sharp kashya: the kashya first; its answer waits for a tap, so he can try first.

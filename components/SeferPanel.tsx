@@ -1058,7 +1058,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} marks={marks}
-                        after={sayHere || pshIn ? (k) => (<>{pshIn && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} /> : null)}</>) : undefined} />
+                        after={sayHere || pshIn ? (k) => (<>{pshIn && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} noChart={k !== pairs.length - 1} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} /> : null)}</>) : undefined} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
