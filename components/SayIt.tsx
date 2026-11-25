@@ -4,11 +4,13 @@
 // ask a follow-up (and another, and another), answered right there. Settings → The AI → The ✦ and its tools, and Aa.
 import { useRef, useState } from 'react';
 import { isHebText } from './AiNote';
+import SugyaFlow from './SugyaFlow';
 
 type QA = { q: string; a: string | null; bad?: boolean };
 // Nov 23: ✦ Go deeper, under the plain explanation: a kashya, a chakira, the halacha, the meforshim, or the wider inyan,
 // each built from what Sefaria brings on this line (its meforshim and what it links to), made once and kept.
-const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['widen', 'Widen it']];
+// Nov 25: Sugya chart: the steps of the sugya this line is in, as a simple chart (SugyaFlow, from the sugya map).
+const DEEPER: [string, string][] = [['chart', 'Sugya chart'], ['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['widen', 'Widen it']];
 type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean };
 
 export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?: string; si?: number }) {
@@ -22,6 +24,7 @@ export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?:
   const [exOrder, setExOrder] = useState<string[]>([]);
   const deeper = (k: string) => {
     if (ex[k]) { setExOrder((o) => (o.includes(k) ? o.filter((x) => x !== k) : [...o, k])); return; }
+    if (k === 'chart') { setEx((e) => ({ ...e, chart: { text: '' } })); setExOrder((o) => [...o, k]); return; }
     setEx((e) => ({ ...e, [k]: {} })); setExOrder((o) => [...o, k]);
     post({ expand: k, piece: piece ?? '', si: si ?? 0 })
       .then((d) => setEx((e) => ({ ...e, [k]: d.text ? { text: d.text, sources: d.sources ?? [] } : { err: d.error || 'It couldn’t go deeper just now.' } })))
@@ -62,6 +65,12 @@ export default function SayIt({ lineRef, piece, si }: { lineRef: string; piece?:
             </span>
           )}
           {exOrder.map((k) => {
+            if (k === 'chart') return (
+              <span key={k} className="sayit-ex">
+                <span className="sayit-ex-label">Sugya chart</span>
+                <SugyaFlow lineRef={lineRef} />
+              </span>
+            );
             const e = ex[k] ?? {};
             const h = !!e.text && isHebText(e.text);
             // Sharp kashya: the kashya first; its answer waits for a tap, so he can try first.

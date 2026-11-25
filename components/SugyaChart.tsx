@@ -33,14 +33,14 @@ export function loadChart(ref: string): Promise<ChartData> {
 }
 export const topicStartOf = (t: ChartTopic) => Math.min(t.line, ...t.steps.map((s) => s.line));
 
-const VERB: Record<string, string> = { Question: 'asks', Answer: 'answers', Proof: 'brings a proof', Rejection: 'pushes it off', Statement: 'says', Opinion: 'holds', Reason: 'explains', Speech: 'speaks', Prayer: 'prays', Teaching: 'teaches', Ruling: 'rules' };
-const labelOf = (s: ChartStep) => (s.who && VERB[s.kind] ? `${s.who} ${VERB[s.kind]}` : `${s.kind}${s.who ? ` · ${s.who}` : ''}`);
-const MARK: Record<string, string> = {
+export const VERB: Record<string, string> = { Question: 'asks', Answer: 'answers', Proof: 'brings a proof', Rejection: 'pushes it off', Statement: 'says', Opinion: 'holds', Reason: 'explains', Speech: 'speaks', Prayer: 'prays', Teaching: 'teaches', Ruling: 'rules' };
+export const labelOf = (s: ChartStep) => (s.who && VERB[s.kind] ? `${s.who} ${VERB[s.kind]}` : `${s.kind}${s.who ? ` · ${s.who}` : ''}`);
+export const MARK: Record<string, string> = {
   Question: '?', Rejection: '✕', Answer: '✓', Proof: '✓', Conclusion: '★', Ruling: '★', Principle: '★',
   Mishnah: '❝', Teaching: '❝', Source: '❝', Dispute: '⚖', Opinion: '◆', Statement: '•', Reason: '∴', Exception: '!', Case: '•', Story: '•',
 };
-const TONE: Record<string, 'ask' | 'ans' | 'base'> = { Question: 'ask', Rejection: 'ask', Dispute: 'ask', Rebuke: 'ask', Answer: 'ans', Proof: 'ans', Conclusion: 'ans', Ruling: 'ans', Comfort: 'ans', Song: 'ans', Prayer: 'ans' };
-const INSIDE = new Set(['Answer', 'Rejection', 'Proof']); // these answer the step before them
+export const TONE: Record<string, 'ask' | 'ans' | 'base'> = { Question: 'ask', Rejection: 'ask', Dispute: 'ask', Rebuke: 'ask', Answer: 'ans', Proof: 'ans', Conclusion: 'ans', Ruling: 'ans', Comfort: 'ans', Song: 'ans', Prayer: 'ans' };
+export const INSIDE = new Set(['Answer', 'Rejection', 'Proof']); // these answer the step before them
 
 export default function SugyaChart({ refText, title, here, total, onGo, onClose }: {
   refText: string; title: string; here: number; total: number; onGo: (line: number) => void; onClose: () => void;
