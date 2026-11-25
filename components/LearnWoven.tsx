@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom';
 import { useBackLayer } from '@/lib/back';
 import { isHebText } from './AiNote';
 import SugyaChart, { chartKept, loadChart, topicStartOf } from './SugyaChart';
+import { FlowTag, LineEnd, LostBox, QuestionBack, keepQuestion } from './LearnTogether';
 
 // Nov 21: once he has opened the sugya chart, it stays "on" for the session: the chart of each new amud is drawn ahead
 // of time, and when a new topic begins Learn with me says so (with the chart one tap away).
@@ -164,7 +165,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   useBackLayer(chartOpen, () => setChartOpen(false));
   const openChart = () => { chartUsed = true; setChartOpen(true); };
   useEffect(() => {
-    if (!chartUsed || chartKept.has(refText)) return;
+    if (chartKept.has(refText)) return; // Nov 25: always drawn now: the flow tags, I'm lost and What would you answer? read it
     let gone = false;
     loadChart(refText).then(() => { if (!gone) setChartTick((k) => k + 1); }).catch(() => {});
     return () => { gone = true; };
@@ -183,6 +184,8 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
       <span>New topic {newTopic.i} of {newTopic.of}{newTopic.title ? ` · ${newTopic.title}` : ''}</span><b>🗺 Chart ›</b>
     </button>
   ) : null;
+  const [lost, setLost] = useState(false); // Nov 25: I'm lost
+  useEffect(() => setLost(false), [n, refText]);
   const chart = chartOpen ? <SugyaChart refText={refText} title={chartTitle} here={Math.min(n, total)} total={total} onGo={goLine} onClose={() => setChartOpen(false)} /> : null;
 
   // The line he is on, lit in the sefer and brought up into the space above the panel.
@@ -212,6 +215,15 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
     if (n >= total && onNext) { onNext(); return; } // straight on into the next amud, the panel stays open
     setN((v) => v + 1);
   };
+  // Nov 25: the whole line as he had it on the cards (for Say it over), and its Hebrew (for a shaky line in Chazara).
+  const lineCard = phrases.map((p) => [p.he, p.en, p.note].filter(Boolean).join('\n')).join('\n\n');
+  const lineHe = phrases.map((p) => p.he).join(' ');
+  const lineEnd = !done && atEnd && steps[steps.length - 1]?.part === 'text' ? <LineEnd refText={refText} n={n} card={lineCard} text={lineHe} /> : null;
+  const lostBtn = <button className="lw-icon lw-lost" onClick={() => setLost((v) => !v)} aria-label="I'm lost" aria-expanded={lost}>Lost?</button>;
+  useEffect(() => { // a kashya he is told to hold stays open until the Gemara answers it (Your question comes back)
+    const st = steps[shown - 1]; const p = st && phrases[st.k];
+    if (st?.part === 'before' && p?.before?.kind === 'kashya') keepQuestion(refText, n, p.before.text, true);
+  }, [shown, data?.n]); // eslint-disable-line react-hooks/exhaustive-deps
   const back = () => { if (shown > 1) setShown((v) => v - 1); else if (n > 1) setN((v) => v - 1); };
 
   const renderStep = (st: Step, idx: number) => {
@@ -364,6 +376,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
     const key = cardKey;
     const before = thread.filter((x) => x.a && !x.bad).map((x) => ({ q: x.q, a: x.a as string }));
     setThread((t) => [...t, { q, a: null }]); setMyQ(''); setAskOpen(false);
+    keepQuestion(refText, n, q);
     askInput.current?.blur();
     const put = (a: string, bad = false) => {
       if (cardNow.current !== key) return;
@@ -412,7 +425,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
           <span className="lwc-grip" aria-hidden="true">⠿</span>
           <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}{document.documentElement.dataset.lwtonename ? <small className="lw-tone">{document.documentElement.dataset.lwtonename}</small> : null}</span>
           <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} /></span>
-          <button className="lw-icon" onClick={openChart} aria-label={chartTitle}>🗺</button>
+          {lostBtn}<button className="lw-icon" onClick={openChart} aria-label={chartTitle}>🗺</button>
           {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
           <button className="lwc-stop" onClick={onClose}>Stop</button>
         </div>
@@ -436,7 +449,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
                 <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
               ) : !phrases.length || !cur ? (
                 <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
-              ) : <>{topicChip}{renderStep(cur, shown - 1)}</>}
+              ) : <>{topicChip}{lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}{shown === 1 && <QuestionBack refText={refText} n={n} />}<FlowTag refText={refText} n={n} />{renderStep(cur, shown - 1)}{lineEnd}</>}
               {ready && thread.length > 0 && (
                 <div className="lwc-thread">
                   {thread.map((x, i) => {
@@ -491,7 +504,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
       <div className="lw-head" {...grab}>
         <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}{typeof document !== 'undefined' && document.documentElement.dataset.lwtonename ? <small className="lw-tone">{document.documentElement.dataset.lwtonename}</small> : null}</span>
         <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} /></span>
-        <button className="lw-icon" onClick={openChart} aria-label={chartTitle}>🗺</button>
+        {lostBtn}<button className="lw-icon" onClick={openChart} aria-label={chartTitle}>🗺</button>
         {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
         <button className="lw-icon" onClick={onClose} aria-label="Close">✕</button>
       </div>
@@ -505,7 +518,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
           <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
         ) : !phrases.length ? (
           <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
-        ) : <>{topicChip}{steps.slice(0, shown).map((st, idx) => renderStep(st, idx))}</>}
+        ) : <>{topicChip}{lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}<QuestionBack refText={refText} n={n} /><FlowTag refText={refText} n={n} />{steps.slice(0, shown).map((st, idx) => renderStep(st, idx))}{lineEnd}</>}
         {!done && phrases.length > 0 && <div className="ai-note left">Explanations written by AI · AI makes mistakes · ask your rav</div>}
       </div>
       {!done && (

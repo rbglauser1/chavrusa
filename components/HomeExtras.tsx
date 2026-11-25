@@ -6,6 +6,7 @@ import type { Settings } from '@/lib/config';
 import Progress from './Progress';
 import LearningTime from './LearningTime';
 import { watchVoice } from '@/lib/voiceClip';
+import { markLine, shakyList, type Shaky } from '@/lib/learnMarks';
 
 type Recap = { sessionId: string; title: string; when: string; points: string[]; questions: { q: string; a: string }[] };
 
@@ -30,7 +31,26 @@ function RecapCard({ r, label }: { r: Recap; label: string }) {
   );
 }
 
-function Chazara() {
+// Nov 25: lines he marked Shaky on the Learn with me cards come back here, newest first, until he marks them Got it.
+function ShakyLines({ onOpen }: { onOpen: (ref: string) => void }) {
+  const [list, setList] = useState<Shaky[]>([]);
+  useEffect(() => setList(shakyList()), []);
+  if (!list.length) return null;
+  return (
+    <div className="hx-recap hx-shaky">
+      <div className="hx-sub">Shaky lines · {list.length}</div>
+      {list.slice(0, 8).map((x) => (
+        <div key={`${x.ref}:${x.line}`} className="hx-shaky-row">
+          <button className="linklike" onClick={() => onOpen(x.ref)}>{x.ref}, line {x.line}</button>
+          {x.text && <span className="hx-shaky-he" dir="rtl">{x.text.split(' ').slice(0, 10).join(' ')}…</span>}
+          <button className="hx-shaky-ok" onClick={() => { markLine(x.ref, x.line, 'got'); setList(shakyList()); }}>✓ Got it now</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Chazara({ onOpen }: { onOpen: (ref: string) => void }) {
   const [data, setData] = useState<{ last: Recap | null; older: Recap | null } | null>(null);
   const [open, setOpen] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -48,6 +68,7 @@ function Chazara() {
       <button className="hx-head" onClick={() => setOpen((o) => !o)}><span>Chazara</span><span className="muted">{open ? 'Hide' : 'Review what you learned'}</span></button>
       {open && data && (data.last || data.older) && <div className="ai-note left">Recap written by AI · AI makes mistakes</div>}
       {open && !data && <div className="muted hx-wait"><span className="wait-dots"><span /><span /><span /></span><Thinking /></div>}
+      {open && <ShakyLines onOpen={onOpen} />}
       {open && data && !data.last && !data.older && <div className="muted hx-wait">Nothing to review yet. Learn a little, and it will be here.</div>}
       {open && data?.last && (
         <>
@@ -70,7 +91,7 @@ export default function HomeExtras({ settings, onOpen, onSettings }: { settings:
           <b>Notebook</b><span className="muted">All your notes, by sefer and topic</span>
         </button>
       )}
-      {settings.chazara && <Chazara />}
+      {settings.chazara && <Chazara onOpen={onOpen} />}
       {settings.progress && <Progress settings={settings} onOpen={onOpen} onSettings={onSettings} />}
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MODELS, costUsd, styleForChat } from '@/lib/config';
-import { approvedList, getSettings, logCost } from '@/lib/db';
+import { approvedList, getSettings, listSavedMemories, logCost } from '@/lib/db';
 import { getText, endOfPrevious, getLinks } from '@/lib/sefaria';
 import { prepareLamdan } from '@/lib/prefetch';
 import { stripNikud } from '@/lib/hebrew';
@@ -34,6 +34,31 @@ Answer him in about 30 to 50 words (2 or 3 short sentences), like a chavrusa acr
 // Nov 21: on a card (Learn with me as Cards) he asks his own question about what is on the card; the chavrusa answers it.
 const ASK = `You are a warm, sharp chavrusa learning a sefer with the learner one small card at a time. The card he is looking at now is shown below: a few words of the line marked >>> <<<, their translation, and the short explanation you gave him. He asks you a question about it.
 Answer exactly what he asked, clearly and to the point, like a chavrusa across the table: usually 40 to 90 words; go longer only if he asks for depth (Rashi, Tosafos, the sevara) or the question truly needs it. If his question rests on a misreading, gently set it straight. If it reaches beyond this line, answer briefly and bring it back to the text in front of him. If you are not sure, say so plainly; never invent a source or a quote. If earlier questions on this card are shown, this is a follow-up: build on what you already said, don't repeat it. No headings, no lists, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+
+// Nov 25: "How I learn": his standing rules (Settings → How I learn, the same list the chat and the voice follow),
+// for every reply made just for him here. Kept explanations (made once for everyone) don't take them.
+async function rulesBlock(): Promise<string> {
+  const list = await listSavedMemories().catch(() => []);
+  const rules = list.filter((x) => x.kind === 'instruction').map((x) => x.content.trim()).filter(Boolean).slice(0, 20);
+  return rules.length ? `\n\n# How he learns (his own standing rules: follow them)\n${rules.map((r) => `- ${r}`).join('\n')}` : '';
+}
+
+// Nov 25: new ways to learn together (the doc "new ways to learn together").
+// Teach it back: he says the line over in his own words; the chavrusa tells him what he got, what he missed, and where
+// he is fuzzy.
+const SAYOVER = `You are a warm, sharp chavrusa. The learner just learned the line marked >>> <<< (what was on his cards is shown) and now says it over in his own words, to check himself. Saying it over is how learning sticks: take it seriously.
+Answer in three short parts, each starting on its own line with its label exactly:
+Got it: what he said correctly (be specific; never false praise; if nothing, say so kindly).
+Missed: what he left out that matters (the step, the reason, the word that carries it). If nothing important, say "Nothing important."
+Fuzzy: where his wording is vague or a little off, and the precise way to say it. If nothing, say "Nothing."
+Then one last line starting "In one line:" with the line said over correctly in a single sentence.
+At most 120 words in all. No markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+// What would you answer?: the Gemara asks a kashya; he answers first; then the Gemara's own answer and how close he came.
+const TRYANSWER = `You are a warm, sharp chavrusa. The Gemara just asked a question or kashya (given below, with the line), and before reading on, the learner tried to answer it himself. The Gemara's own answer is given below too.
+Tell him, in about 50 to 90 words: first how close he came (the same answer, a real answer the Gemara doesn't use, part of it, or not it), honestly and warmly; then the Gemara's answer plainly in a sentence or two; then, if his answer was different but reasonable, one sentence on why the Gemara might not say it (or that a meforesh does, only if you are sure). If he said he doesn't know, just give the answer kindly. No markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+// Prepare, then compare: he reads the line himself first; then his reading is set against Rashi's real words.
+const COMPARE = `You are a warm, sharp chavrusa. The learner worked out the line marked >>> <<< by himself first, and wrote how he reads it. Now compare his reading with Rashi on this line (Rashi's real text is given below, with the other meforshim; use Tosafos only if Rashi says nothing here, and say so).
+In about 70 to 120 words: where he reads it like Rashi (name the words of Rashi that match, in Hebrew letters); where Rashi reads it differently, and what in the words makes Rashi read it his way; and anything Rashi adds that he didn't think of. If his reading is a fair pshat that Rashi doesn't take, say so honestly. Only what Rashi's given text says; never invent. No markdown.`;
 
 const lineText =(he: string[], en: string[], n: number) => {
   const clip = (t: string, m: number) => (t.length > m ? `${t.slice(0, m)}…` : t);
@@ -84,6 +109,9 @@ export async function POST(req: NextRequest) {
     if (typeof b.ask === 'string') return askOnCard(b, m);
     if (b.say === true) return sayInMyWords(b, m);
     if (typeof b.expand === 'string') return expandInyan(b, m);
+    if (typeof b.sayover === 'string') return mine(b, m, 'sayover');
+    if (typeof b.tryanswer === 'string') return mine(b, m, 'tryanswer');
+    if (typeof b.compare === 'string') return mine(b, m, 'compare');
     // Nov 19: "Show answer": he didn't answer and asks to be told; the chavrusa gives the answer plainly.
     const reveal = b.reveal === true;
     const answer = reveal ? '(He didn’t answer. He asks you to tell him the answer: give it plainly and briefly, then one line on why it matters here.)' : String(b.answer ?? '').trim().slice(0, 2000);
@@ -100,7 +128,7 @@ export async function POST(req: NextRequest) {
     const t = await toneNow();
     const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your replies')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
     const r = await run({
-      lang: true, model: model.id, system: `${REPLY}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}`,
+      lang: true, model: model.id, system: `${REPLY}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}${await rulesBlock()}`,
       history: [{ role: 'user', content: `${s.ref}, line ${n}${await endOfPrevious(m[1], n, approved)}\n\n${lineText(s.he, s.en, n)}\n\n---\nYou asked: ${String(b.question ?? '').slice(0, 500)}\nHe answered: ${answer}` }],
       tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 500,
     });
@@ -130,7 +158,7 @@ async function askOnCard(b: { ask?: unknown; card?: unknown; thread?: unknown },
     .map((x: { q?: unknown; a?: unknown }) => `He asked: ${String(x?.q ?? '').slice(0, 800)}\nYou answered: ${String(x?.a ?? '').slice(0, 1500)}`)
     .join('\n\n');
   const r = await run({
-    lang: true, model: model.id, system: `${ASK}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}`,
+    lang: true, model: model.id, system: `${ASK}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}${await rulesBlock()}`,
     history: [{ role: 'user', content: `${s.ref}, line ${n}${await endOfPrevious(m[1], n, approved)}\n\n${lineText(s.he, s.en, n)}\n\n---\nThe card in front of him:\n${card || '(this line)'}${earlier ? `\n\n---\nEarlier on this card:\n${earlier}` : ''}\n\n---\nHe asks: ${q}` }],
     tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 800,
   });
@@ -138,6 +166,41 @@ async function askOnCard(b: { ask?: unknown; card?: unknown; thread?: unknown },
   const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, ''));
   if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
   return NextResponse.json({ text: text.slice(0, 3000) });
+}
+
+// Nov 25: his own work, answered just for him (not kept): his say-over, his answer to the Gemara's question, his reading
+// set against Rashi.
+async function mine(b: Record<string, unknown>, m: RegExpMatchArray | null, what: 'sayover' | 'tryanswer' | 'compare') {
+  const his = String(b[what] ?? '').trim().slice(0, 2500);
+  if (!m || !his) return NextResponse.json({ error: 'Write something first.' }, { status: 400 });
+  await needCredit();
+  const n = Number(m[2]);
+  const approved = await approvedList();
+  const s = await getText(m[1], approved);
+  if (!s.verdict.allowed || !s.he.length) return NextResponse.json({ error: 'This text is not open to the AI.' }, { status: 400 });
+  const settings = await getSettings();
+  const model = MODELS[settings.provider][settings.tier];
+  const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
+  const t = await toneNow();
+  const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your replies')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
+  let extra = '';
+  if (what === 'sayover') extra = `What was on his cards for this line:\n${String(b.card ?? '').slice(0, 4000) || '(the line)'}\n\n---\nHe says it over:\n${his}`;
+  if (what === 'tryanswer') extra = `The Gemara asks (line ${Math.round(Number(b.qline) || n)}): ${String(b.q ?? '').slice(0, 600)}\nThe Gemara's own answer${b.aline ? ` (line ${Math.round(Number(b.aline))})` : ''}: ${String(b.a ?? '').slice(0, 800) || '(see the lines that follow)'}\n\n---\nHis answer: ${his}`;
+  if (what === 'compare') {
+    const lam = await prepareLamdan(m[1], [n], approved, 7000).catch(() => null);
+    extra = `${lam && !/^\(No commentaries/.test(lam) ? `The meforshim on this line:\n${lam.replace(/\n\(Also on these lines[\s\S]*$/, '')}` : '(Sefaria brings no Rashi on this line.)'}\n\n---\nHow he reads the line:\n${his}`;
+  }
+  const after = what === 'tryanswer' ? Math.max(n, Math.round(Number(b.aline) || n)) : n;
+  const shown = what === 'tryanswer' ? lineText(s.he, s.en, after) : lineText(s.he, s.en, n);
+  const r = await run({
+    lang: true, model: model.id, system: `${what === 'sayover' ? SAYOVER : what === 'tryanswer' ? TRYANSWER : COMPARE}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}${await rulesBlock()}`,
+    history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${shown}\n\n---\n${extra}` }],
+    tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 700,
+  });
+  await logCost({ sessionId: null, kind: `guide-${what}`, provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+  const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, ''));
+  if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
+  return NextResponse.json({ text: text.slice(0, 2500) });
 }
 
 // Nov 23: "✦ In my words?" at the end of a line (or of a sentence, in Sentence by sentence): what it says and does, in
@@ -186,6 +249,8 @@ const EXPANDS: Record<string, { label: string; ask: string; cats: string[] }> = 
   chakira: { label: 'A chakira', cats: ['Commentary', 'Talmud', 'Halakhah'], ask: `Frame the chakira under it: the two ways to understand the din (in the gavra or the cheftza? one din or tzvei dinim? the cause or the definition? …), each side in a sentence, what in the text or the meforshim given leans to each, and the נפקא מינה between them. Only a real chakira that this piece supports; never force one.` },
   halacha: { label: 'Halacha', cats: ['Halakhah'], ask: `Show how it lands in halacha, from the codes given (the Rambam, the Tur, the Shulchan Aruch, the Mishnah Berurah): what each rules on this, briefly, naming each with its place, and where the halacha differs from or adds to the simple reading of the Gemara. If none of the codes given speaks to this piece, say so in a sentence and say what the halacha would turn on. End with: for practice, ask your rav.` },
   meforshim: { label: 'Meforshim', cats: ['Commentary'], ask: `Give what the meforshim given say on it: Rashi, Tosafos and the other Rishonim (and Acharonim if given), each in its gist (a sentence or two), naming each, and where they differ, what the difference turns on. Only what the given texts say.` },
+  // Nov 25: Rashi vs. Tosafos, side by side (for Iyun): what each holds, what bothers Tosafos, what it turns on.
+  rashitos: { label: 'Rashi vs Tosafos', cats: ['Commentary'], ask: `Set Rashi and Tosafos side by side on it, from their real text given. Write exactly these four lines, each starting with its label: "Rashi:" what Rashi holds or how he reads it, in a sentence or two. "Tosafos:" what Tosafos holds (name the דיבור המתחיל), in a sentence or two. "What bothers Tosafos:" the difficulty that pushes Tosafos away from Rashi (or, if Tosafos agrees, what Tosafos adds). "It turns on:" the point the difference turns on, and a נפקא מינה if there is one. If Rashi or Tosafos says nothing on this piece, say so on that line plainly; never invent.` },
   widen: { label: 'Widen it', cats: ['Talmud', 'Midrash', 'Tanakh', 'Jewish Thought', 'Musar', 'Chasidut'], ask: `Widen the inyan: from the linked sources given (the same sugya elsewhere in Shas, a Midrash, a pasuk, a sefer of mussar or machshava), bring the two or three that shed the most light on this piece, each named, each in a sentence or two on how it opens the inyan up.` },
 };
 const EXPAND_RULES = `You are a warm, sharp chavrusa going deeper with the learner on one line (or one sentence of it, if given) that you just explained to him in plain words.

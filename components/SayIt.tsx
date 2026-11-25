@@ -9,8 +9,8 @@ import SugyaFlow from './SugyaFlow';
 type QA = { q: string; a: string | null; bad?: boolean };
 // Nov 23: ✦ Go deeper, under the plain explanation: a kashya, a chakira, the halacha, the meforshim, or the wider inyan,
 // each built from what Sefaria brings on this line (its meforshim and what it links to), made once and kept.
-const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['widen', 'Widen it']];
-type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean };
+const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['rashitos', 'Rashi vs Tosafos'], ['compare', 'My reading vs Rashi'], ['widen', 'Widen it']]; // Nov 25: Rashi vs Tosafos side by side; Prepare, then compare
+type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean; draft?: string; wait?: boolean };
 
 export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string; piece?: string; si?: number; noChart?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -24,10 +24,18 @@ export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string
   const [exOrder, setExOrder] = useState<string[]>([]);
   const deeper = (k: string) => {
     if (ex[k]) { setExOrder((o) => (o.includes(k) ? o.filter((x) => x !== k) : [...o, k])); return; }
+    if (k === 'compare') { setEx((e) => ({ ...e, compare: { draft: '' } })); setExOrder((o) => [...o, k]); return; } // he writes his reading first
     setEx((e) => ({ ...e, [k]: {} })); setExOrder((o) => [...o, k]);
     post({ expand: k, piece: piece ?? '', si: si ?? 0 })
       .then((d) => setEx((e) => ({ ...e, [k]: d.text ? { text: d.text, sources: d.sources ?? [] } : { err: d.error || 'It couldn’t go deeper just now.' } })))
       .catch(() => setEx((e) => ({ ...e, [k]: { err: 'It couldn’t go deeper just now.' } })));
+  };
+  const compareNow = () => {
+    const mine = ex.compare?.draft?.trim(); if (!mine) return;
+    setEx((e) => ({ ...e, compare: { ...e.compare, wait: true } }));
+    post({ compare: mine })
+      .then((d) => setEx((e) => ({ ...e, compare: d.text ? { text: d.text, draft: mine } : { err: d.error || 'It couldn’t compare just now.', draft: mine } })))
+      .catch(() => setEx((e) => ({ ...e, compare: { err: 'It couldn’t compare just now.', draft: mine } })));
   };
   const post = (body: object) => fetch('/api/guide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: lineRef, ...body }) }).then((r) => r.json());
   const go = () => {
@@ -71,6 +79,15 @@ export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string
           )}
           {exOrder.map((k) => {
             const e = ex[k] ?? {};
+            if (k === 'compare' && !e.text && !e.err) return (
+              <span key={k} className="sayit-ex">
+                <span className="sayit-ex-label">My reading vs Rashi</span>
+                <form className="sayit-ask sayit-mine" onSubmit={(ev) => { ev.preventDefault(); compareNow(); }}>
+                  <textarea value={e.draft ?? ''} onChange={(ev) => setEx((x) => ({ ...x, compare: { ...x.compare, draft: ev.target.value } }))} placeholder="How do you read this line? Work it out yourself, then compare with Rashi." rows={3} dir="auto" disabled={e.wait} />
+                  <button type="submit" disabled={!e.draft?.trim() || e.wait}>{e.wait ? '…' : 'Compare'}</button>
+                </form>
+              </span>
+            );
             const h = !!e.text && isHebText(e.text);
             // Sharp kashya: the kashya first; its answer waits for a tap, so he can try first.
             const cut = k === 'challenge' && e.text ? e.text.search(/\n?\s*ANSWER:/i) : -1;
@@ -88,7 +105,9 @@ export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string
             return (
               <span key={k} className="sayit-ex">
                 <span className="sayit-ex-label">{DEEPER.find((d) => d[0] === k)?.[1]}</span>
-                <span className={`sayit-ex-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{e.text ?? e.err ?? <span className="wait-dots"><span /><span /><span /></span>}</span>
+                <span className={`sayit-ex-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{e.text
+                  ? (k === 'rashitos' ? e.text.split('\n').filter((l) => l.trim()).map((l, i) => { const mm = l.match(/^([^:]{2,30}):\s*(.*)$/); return <span key={i} className="sayit-rt">{mm ? <><b>{mm[1]}</b>{mm[2]}</> : l}</span>; }) : e.text)
+                  : e.err ?? <span className="wait-dots"><span /><span /><span /></span>}</span>
                 {!!e.sources?.length && <span className="sayit-ex-src">From: {e.sources.join(' · ')}</span>}
               </span>
             );

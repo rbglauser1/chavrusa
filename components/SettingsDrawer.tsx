@@ -70,12 +70,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
     await fetch(`/api/memory?id=${id}`, { method: 'DELETE' });
     setMemories((m) => (m ?? []).filter((x) => x.id !== id));
   }
-  async function addMem() {
-    if (!newMem.trim()) return;
-    const res = await fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'instruction', content: newMem.trim() }) });
+  async function addMem(text?: string) {
+    const content = (text ?? newMem).trim();
+    if (!content) return;
+    const res = await fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'instruction', content }) });
     const m = await res.json();
     if (m.id) setMemories((list) => [...(list ?? []), m]);
-    setNewMem('');
+    if (text === undefined) setNewMem('');
   }
 
   return (
@@ -836,7 +837,13 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             <Credits on={!!s.billing} onToggle={(on) => onChange(on ? { billing: true, billingSince: s.billingSince ?? new Date().toISOString() } : { billing: false })} />
           </Group>
 
-          <Group id="memory" title="What your chavrusa remembers" hint={memories ? `${memories.length} saved` : undefined}>
+          <Group id="memory" title="How I learn (your rules)" hint={memories ? `${memories.length} saved` : undefined}>
+            <div className="muted" style={{ fontSize: 13, margin: '0 0 10px' }}>Your learning rules. The chavrusa follows them in the chat, on a call, and in its answers on the cards (your questions, Say it over, What would you answer?). Add your own, or tap one to add it. It never marks anything as learned without asking you.</div>
+            <div className="hil-chips">
+              {["Let me translate before you help", "Explain unfamiliar Aramaic words", "Ask me to say it over after each step", "Keep answers short", "Don't translate Rashi", "Give me a hint before the answer"]
+                .filter((r) => !memories?.some((m) => m.content.trim().toLowerCase() === r.toLowerCase()))
+                .map((r) => <button key={r} className="hil-chip" onClick={() => void addMem(r)}>+ {r}</button>)}
+            </div>
             {memories === null && <div className="muted">Loading…</div>}
             {memories?.length === 0 && <div className="muted" style={{ fontSize: 14 }}>Nothing yet. Tell your chavrusa how you like to learn and it will remember.</div>}
             {memories?.map((m) => (
@@ -847,7 +854,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             ))}
             <div className="field" style={{ marginTop: 10, display: 'flex', gap: 8 }}>
               <input type="text" placeholder="Add an instruction, e.g. Don't translate Rashi" value={newMem} onChange={(e) => setNewMem(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addMem()} />
-              <button className="btn" onClick={addMem}>Add</button>
+              <button className="btn" onClick={() => void addMem()}>Add</button>
             </div>
           </Group>
 

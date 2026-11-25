@@ -3547,3 +3547,47 @@ body.lw-cards-open :is(.daf-dock, .st-full-ctl, .ai-hub-btn, .st-study-footer) {
 /* Nov 25: an English font chosen in its italic (Comic Neue Italic, Shantell Sans Italic). The Hebrew stays upright. */
 html[data-enital="on"] body { font-style: italic; }
 html[data-enital="on"] :is([dir="rtl"], .he, .rashi, .min-he, .he-note, .comm-he, input, textarea, select) { font-style: normal; }
+
+/* Nov 25: new ways to learn together (components/LearnTogether.tsx) */
+.lw-icon.lw-lost { width: auto; padding: 0 9px; font: 600 12px var(--f-ui); border-radius: 999px; }
+.lw-icon.lw-lost[aria-expanded="true"] { background: var(--accent); color: #fff; }
+.lt-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; font-family: var(--f-ui); }
+.lt-tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font: 600 12px var(--f-ui); background: color-mix(in srgb, var(--ink) 7%, transparent); color: color-mix(in srgb, var(--ink) 75%, transparent); }
+.lt-tag.k-Question, .lt-tag.k-Rejection { background: color-mix(in srgb, #c0453a 12%, transparent); color: #a33a30; }
+.lt-tag.k-Answer, .lt-tag.k-Proof, .lt-tag.k-Conclusion, .lt-tag.k-Ruling { background: color-mix(in srgb, #2f8a63 12%, transparent); color: #24704f; }
+.lt-to { border: 0; background: transparent; padding: 2px 4px; font: 600 12px var(--f-ui); color: var(--accent); }
+.lt-back { flex-basis: 100%; padding: 6px 10px; border-radius: 10px; font-size: 13px; background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.lt-back b { margin-right: 4px; }
+.lt-lost { position: relative; margin: 0 0 12px; padding: 10px 34px 4px 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); background: color-mix(in srgb, var(--accent) 7%, transparent); font-family: var(--f-ui); font-size: 14px; line-height: 1.45; }
+.lt-lost p { margin: 0 0 8px; }
+.lt-lost b { display: block; font: 700 11px var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+.lt-lost-x { position: absolute; top: 6px; right: 6px; border: 0; background: transparent; color: var(--soft); font-size: 14px; padding: 4px; }
+.lt-qback { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; border: 1px dashed color-mix(in srgb, #2f8a63 50%, var(--rule)); background: color-mix(in srgb, #2f8a63 6%, transparent); font-family: var(--f-ui); font-size: 14px; }
+.lt-qback-label { font: 700 11px var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: #24704f; }
+.lt-qback-q { font-style: italic; }
+.lt-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.lt-row button, .lt-pill { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #fff; font: 600 13px var(--f-ui); }
+.lt-row button.ghost, .lt-pill { background: transparent; color: var(--accent); }
+.lt-row button:disabled { opacity: .45; }
+.lt-end { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--rule); font-family: var(--f-ui); }
+.lt-pill { align-self: flex-start; }
+.lt-box { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--ink) 3%, transparent); font-size: 14px; }
+.lt-box-label { font: 700 11px var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+.lt-box-q { font-weight: 600; }
+.lt-form { display: flex; flex-direction: column; gap: 6px; }
+.lt-form textarea, .sayit-mine textarea { width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--rule); background: var(--paper, transparent); color: var(--ink); font: 16px/1.4 var(--f-ui); resize: vertical; }
+.lt-mine { padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, transparent); font-style: italic; white-space: pre-wrap; }
+.lt-reply { display: block; white-space: pre-wrap; line-height: 1.5; font-size: var(--ai-size, 15px); }
+.lt-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lt-marks button { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--soft); font: 600 13px var(--f-ui); }
+.lt-marks button.on.got { border-color: #2f8a63; background: color-mix(in srgb, #2f8a63 14%, transparent); color: #24704f; }
+.lt-marks button.on.shaky { border-color: #b7791f; background: color-mix(in srgb, #b7791f 14%, transparent); color: #8a5a12; }
+.lt-marks small { font-size: 12px; color: var(--soft); }
+.sayit-mine { flex-direction: column; align-items: stretch; }
+.sayit-rt { display: block; margin-bottom: 6px; }
+.sayit-rt b { display: block; font: 700 11px var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+.hil-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.hil-chip { padding: 5px 10px; border-radius: 999px; border: 1px dashed var(--rule); background: transparent; color: var(--accent); font: 600 12px var(--f-ui); }
+.hx-shaky-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 6px 0; border-top: 1px solid var(--rule); }
+.hx-shaky-he { flex-basis: 100%; font-family: var(--f-he); font-size: 15px; color: var(--soft); }
+.hx-shaky-ok { margin-left: auto; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; font: 600 12px var(--f-ui); color: #24704f; }
