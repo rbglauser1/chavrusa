@@ -6,7 +6,7 @@ import type { Settings } from '@/lib/config';
 import Progress from './Progress';
 import LearningTime from './LearningTime';
 import { watchVoice } from '@/lib/voiceClip';
-import { markLine, shakyList, type Shaky } from '@/lib/learnMarks';
+import { forgetWord, markLine, myWords, shakyList, wordResult, wordsToCheck, type MyWord, type Shaky } from '@/lib/learnMarks';
 
 type Recap = { sessionId: string; title: string; when: string; points: string[]; questions: { q: string; a: string }[] };
 
@@ -81,6 +81,45 @@ function Chazara({ onOpen }: { onOpen: (ref: string) => void }) {
   );
 }
 
+// Nov 25: My Aramaic words: the words he looked up, kept as his own glossary, with a quick check of a few from a day or
+// more ago (show the word, think, tap to see the meaning, then say whether he knew it).
+function MyWords() {
+  const [open, setOpen] = useState(false);
+  const [all, setAll] = useState<MyWord[]>([]);
+  const [check, setCheck] = useState<MyWord[]>([]);
+  const [i, setI] = useState(0);
+  const [shown, setShown] = useState(false);
+  useEffect(() => { setAll(myWords()); setCheck(wordsToCheck()); }, [open]);
+  if (!all.length) return null;
+  const cur = check[i];
+  const answer = (knew: boolean) => { if (cur) wordResult(cur.head, knew); setShown(false); setI((k) => k + 1); };
+  return (
+    <div className="hx-card">
+      <button className="hx-head" onClick={() => setOpen((o) => !o)}><span>My Aramaic words</span><span className="muted">{open ? 'Hide' : `${all.length} word${all.length === 1 ? '' : 's'}${check.length ? ` · ${check.length} to check` : ''}`}</span></button>
+      {open && cur && (
+        <div className="hx-recap mw-check">
+          <div className="hx-sub">Quick check · {i + 1} of {check.length}</div>
+          <div className="mw-word he" dir="rtl">{cur.head}</div>
+          {shown ? (
+            <>
+              <div className="mw-gloss">{cur.gloss}</div>
+              <div className="mw-row"><button onClick={() => answer(true)}>✓ I knew it</button><button className="ghost" onClick={() => answer(false)}>Not yet</button></div>
+            </>
+          ) : <button className="btn ghost" onClick={() => setShown(true)}>Show the meaning</button>}
+        </div>
+      )}
+      {open && !cur && check.length > 0 && <div className="muted hx-wait">Done for today. Well done.</div>}
+      {open && (
+        <div className="mw-list">
+          {all.slice(0, 40).map((x) => (
+            <div key={x.head} className="mw-item"><span className="he" dir="rtl">{x.head}</span><span>{x.gloss}</span><button aria-label="Remove" onClick={() => { forgetWord(x.head); setAll(myWords()); }}>×</button></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HomeExtras({ settings, onOpen, onSettings }: { settings: Settings; onOpen: (ref: string) => void; onSettings: (patch: Partial<Settings>) => void }) {
   const notes = settings.notes !== false;
   return (
@@ -92,6 +131,7 @@ export default function HomeExtras({ settings, onOpen, onSettings }: { settings:
         </button>
       )}
       {settings.chazara && <Chazara onOpen={onOpen} />}
+      <MyWords />
       {settings.progress && <Progress settings={settings} onOpen={onOpen} onSettings={onSettings} />}
     </div>
   );

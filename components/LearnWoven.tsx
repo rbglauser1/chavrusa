@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import { useBackLayer } from '@/lib/back';
 import { isHebText } from './AiNote';
 import SugyaChart, { chartKept, loadChart, topicStartOf } from './SugyaChart';
-import { FlowTag, LineEnd, LostBox, QuestionBack, keepQuestion } from './LearnTogether';
+import { FlowTag, LineEnd, LostBox, OneSentence, Preview, QuestionBack, keepQuestion } from './LearnTogether';
 
 // Nov 21: once he has opened the sugya chart, it stays "on" for the session: the chart of each new amud is drawn ahead
 // of time, and when a new topic begins Learn with me says so (with the chart one tap away).
@@ -65,20 +65,29 @@ function Deeper({ refText, n, k, ready }: { refText: string; n: number; k: numbe
   };
   const he = !!text && isHebText(text);
   const heS = !!simple && simple !== 'wait' && isHebText(simple);
+  // Nov 25: depth on the fly: Simple · Pshat · Iyun for just this phrase, without changing the settings. Pshat is the
+  // card as it is; Iyun is Go deeper; Simple says it in a few plain words.
+  const mode = simple != null ? 'simple' : open ? 'iyun' : 'pshat';
+  const pick = (m: 'simple' | 'pshat' | 'iyun') => {
+    if (m === 'pshat') { setOpen(false); setSimple(null); return; }
+    if (m === 'iyun') { setSimple(null); if (!open) go(); return; }
+    setOpen(false); simpler();
+  };
   return (
     <>
-      <button className="lw-deeper" onClick={go}>{open ? 'Less ▴' : 'Go deeper ▾'}</button>
+      <span className="lw-depth" role="radiogroup" aria-label="How deep">
+        {(['simple', 'pshat', 'iyun'] as const).map((m) => (
+          <button key={m} type="button" role="radio" aria-checked={mode === m} className={mode === m ? 'on' : ''} onClick={() => pick(m)}>{m === 'simple' ? 'Simple' : m === 'pshat' ? 'Pshat' : 'Iyun ▾'}</button>
+        ))}
+      </span>
       {open && <div className={`lw-deep ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>{text ?? (err ? 'It couldn’t be written just now. Tap again.' : <span className="wait-dots"><span /><span /><span /></span>)}</div>}
-      {open && text && (
-        simple == null ? (
-          <button className="lw-simpler" onClick={simpler}>💡 Simpler{simpleErr ? ' · try again' : ''}</button>
-        ) : (
-          <div className={`lw-simple ${heS ? 'he-note' : ''}`} dir={heS ? 'rtl' : 'ltr'}>
-            <span className="lw-simple-label">💡 In plain words</span>
-            {simple === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : simple}
-          </div>
-        )
+      {simple != null && (
+        <div className={`lw-simple ${heS ? 'he-note' : ''}`} dir={heS ? 'rtl' : 'ltr'}>
+          <span className="lw-simple-label">💡 In plain words</span>
+          {simple === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : simple}
+        </div>
       )}
+      {simpleErr && simple == null && <button className="lw-simpler" onClick={simpler}>💡 Simpler · try again</button>}
     </>
   );
 }
@@ -218,7 +227,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   // Nov 25: the whole line as he had it on the cards (for Say it over), and its Hebrew (for a shaky line in Chazara).
   const lineCard = phrases.map((p) => [p.he, p.en, p.note].filter(Boolean).join('\n')).join('\n\n');
   const lineHe = phrases.map((p) => p.he).join(' ');
-  const lineEnd = !done && atEnd && steps[steps.length - 1]?.part === 'text' ? <LineEnd refText={refText} n={n} card={lineCard} text={lineHe} /> : null;
+  const lineEnd = !done && atEnd && steps[steps.length - 1]?.part === 'text' ? <LineEnd refText={refText} n={n} card={lineCard} text={lineHe} total={total} /> : null;
   const lostBtn = <button className="lw-icon lw-lost" onClick={() => setLost((v) => !v)} aria-label="I'm lost" aria-expanded={lost}>Lost?</button>;
   useEffect(() => { // a kashya he is told to hold stays open until the Gemara answers it (Your question comes back)
     const st = steps[shown - 1]; const p = st && phrases[st.k];
@@ -443,13 +452,14 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
               {done ? (
                 <div className="lw-done">
                   <p>Well learned! That’s the end of this {/^Mishnah /.test(refText) ? 'perek' : 'section'}.</p>
+                  <OneSentence refText={refText} total={total} />
                   {onNext && <button className="lw-next" onClick={onNext}>On to the next ›</button>}
                 </div>
               ) : err ? (
                 <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
               ) : !phrases.length || !cur ? (
                 <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
-              ) : <>{topicChip}{lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}{shown === 1 && <QuestionBack refText={refText} n={n} />}<FlowTag refText={refText} n={n} />{renderStep(cur, shown - 1)}{lineEnd}</>}
+              ) : <>{n === 1 && shown === 1 && <Preview refText={refText} />}{topicChip}{lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}{shown === 1 && <QuestionBack refText={refText} n={n} />}<FlowTag refText={refText} n={n} />{renderStep(cur, shown - 1)}{lineEnd}</>}
               {ready && thread.length > 0 && (
                 <div className="lwc-thread">
                   {thread.map((x, i) => {
@@ -512,13 +522,14 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
         {done ? (
           <div className="lw-done">
             <p>Well learned! That’s the end of this {/^Mishnah /.test(refText) ? 'perek' : 'section'}.</p>
+                  <OneSentence refText={refText} total={total} />
             {onNext && <button className="lw-next" onClick={onNext}>On to the next ›</button>}
           </div>
         ) : err ? (
           <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
         ) : !phrases.length ? (
           <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
-        ) : <>{topicChip}{lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}<QuestionBack refText={refText} n={n} /><FlowTag refText={refText} n={n} />{steps.slice(0, shown).map((st, idx) => renderStep(st, idx))}{lineEnd}</>}
+        ) : <>{n === 1 && <Preview refText={refText} />}{topicChip}{lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}<QuestionBack refText={refText} n={n} /><FlowTag refText={refText} n={n} />{steps.slice(0, shown).map((st, idx) => renderStep(st, idx))}{lineEnd}</>}
         {!done && phrases.length > 0 && <div className="ai-note left">Explanations written by AI · AI makes mistakes · ask your rav</div>}
       </div>
       {!done && (

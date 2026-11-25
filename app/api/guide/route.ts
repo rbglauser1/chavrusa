@@ -33,7 +33,7 @@ Answer him in about 30 to 50 words (2 or 3 short sentences), like a chavrusa acr
 
 // Nov 21: on a card (Learn with me as Cards) he asks his own question about what is on the card; the chavrusa answers it.
 const ASK = `You are a warm, sharp chavrusa learning a sefer with the learner one small card at a time. The card he is looking at now is shown below: a few words of the line marked >>> <<<, their translation, and the short explanation you gave him. He asks you a question about it.
-Answer exactly what he asked, clearly and to the point, like a chavrusa across the table: usually 40 to 90 words; go longer only if he asks for depth (Rashi, Tosafos, the sevara) or the question truly needs it. If his question rests on a misreading, gently set it straight. If it reaches beyond this line, answer briefly and bring it back to the text in front of him. If you are not sure, say so plainly; never invent a source or a quote. If earlier questions on this card are shown, this is a follow-up: build on what you already said, don't repeat it. No headings, no lists, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+Answer exactly what he asked, clearly and to the point, like a chavrusa across the table: usually 40 to 90 words; go longer only if he asks for depth (Rashi, Tosafos, the sevara) or the question truly needs it. If his question rests on a misreading, gently set it straight. If it reaches beyond this line, answer briefly and bring it back to the text in front of him. If you are not sure, say so plainly; never invent a source or a quote. Say what's what: when you quote the text or a meforesh, name it; when an idea is your own and not from a source given, say so plainly ("my own sevara", "I'd suggest"); if you can't support something, say you aren't sure rather than guess. If earlier questions on this card are shown, this is a follow-up: build on what you already said, don't repeat it. No headings, no lists, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
 
 // Nov 25: "How I learn": his standing rules (Settings → How I learn, the same list the chat and the voice follow),
 // for every reply made just for him here. Kept explanations (made once for everyone) don't take them.
@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
     if (typeof b.ask === 'string') return askOnCard(b, m);
     if (b.say === true) return sayInMyWords(b, m);
     if (typeof b.expand === 'string') return expandInyan(b, m);
+    if (typeof b.work === 'string') return sugyaWork(b, m);
     if (typeof b.sayover === 'string') return mine(b, m, 'sayover');
     if (typeof b.tryanswer === 'string') return mine(b, m, 'tryanswer');
     if (typeof b.compare === 'string') return mine(b, m, 'compare');
@@ -166,6 +167,67 @@ async function askOnCard(b: { ask?: unknown; card?: unknown; thread?: unknown },
   const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, ''));
   if (!text) return NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
   return NextResponse.json({ text: text.slice(0, 3000) });
+}
+
+// Nov 25 (2): Choose a side, Put it to work, One sentence per amud.
+const SIDES = `You are a sharp chavrusa. Below is a sugya (the lines given, from its first line to its last). Find the two positions in it that a learner could argue: a machlokes, or a question against an answer, or two ways the Gemara considers. Return JSON only:
+{"a": {"who": "who holds it (a name, or 'The questioner')", "holds": "the position in one plain sentence"}, "b": {"who": "...", "holds": "..."}, "about": "what they argue about, in a few words"}
+If the sugya truly has no two positions to argue, return {"a": null}. For names and terms, yeshivish spelling; Hebrew words in Hebrew letters.`;
+const DEBATE = `You are a sharp chavrusa in a friendly debate with the learner over the sugya below. He took one side; you argue the OTHER side, from the text and the standard meforshim, the way a real chavrusa bangs on the table. Each turn: answer his last argument head on (concede a point only if it is truly right), then press your side with one sharp argument or a question he must answer. 50 to 100 words. Never invent a source. When one side has clearly won, or he asks, say so plainly. No markdown. Hebrew and Aramaic words in Hebrew letters.`;
+const SETTLE = `You are a sharp chavrusa. The learner just debated the two positions below. Now show him how the Gemara itself settles it (or leaves it), from the lines given: which side stands, by what argument or proof, and in which line; and one sentence on what each side of the debate got right. 70 to 120 words. No markdown. Hebrew and Aramaic words in Hebrew letters.`;
+const CASES = `You are a sharp chavrusa. The sugya below just ended. Make three everyday cases (things from life today: a shoelace, a boat tied to a dock, a phone left charging, a bag on a hook) that test the line the sugya drew. Each case falls clearly on one side once the sugya is understood. Return JSON only:
+{"rule": "the line the sugya drew, in one plain sentence", "cases": [{"case": "the case in one or two sentences", "options": ["the first way it could go", "the second way"], "answer": 0, "why": "one or two sentences: why, from the sugya"}]}
+Only what the sugya supports; for a real halachic question in practice, the why ends with "for practice, ask your rav". Hebrew words in Hebrew letters.`;
+const SENTENCE = `You are a sharp chavrusa. The learner finished this amud and wrote the whole sugya in ONE sentence. Help him sharpen it: say in one short line what his sentence gets right, in one short line what it misses or blurs (if anything), then give the sharpened sentence on its own line starting "Sharper:" (one sentence, at most 35 words, in his words where possible). No markdown.`;
+
+async function sugyaLines(base: string, from: number, to: number) {
+  const approved = await approvedList();
+  const s = await getText(base, approved);
+  if (!s.verdict.allowed || !s.he.length) return null;
+  const a = Math.max(1, from), z = Math.min(s.he.length, Math.max(a, to));
+  const body = s.he.slice(a - 1, z).map((h, i) => `[${a + i}] ${stripNikud(h).slice(0, 900)}${s.en[a - 1 + i] ? `\n    ${s.en[a - 1 + i].replace(/<[^>]+>/g, '').slice(0, 900)}` : ''}`).join('\n').slice(0, 18000);
+  return { s, body };
+}
+
+async function sugyaWork(b: Record<string, unknown>, m: RegExpMatchArray | null) {
+  if (!m) return NextResponse.json({ error: 'Nothing to work on.' }, { status: 400 });
+  const what = String(b.work);
+  const from = Math.round(Number(b.from) || 1), to = Math.round(Number(b.to) || Number(m[2]) || 1);
+  const t = await toneNow();
+  const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your replies')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
+  const kept = async (kind: string, system: string, maxTokens: number) => keep(kind, `${m[1]}:${from}-${to}`, async () => {
+    await needCredit();
+    const got = await sugyaLines(m[1], from, to);
+    if (!got) return { none: true } as Record<string, unknown>;
+    const model = await keptModel();
+    const r = await runKept({ lang: true, model: model.id, system: `${system}\n\n${SCOPE}`, history: [{ role: 'user', content: `${got.s.ref}, lines ${from} to ${to}\n\n${got.body}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens });
+    await logCost({ sessionId: null, kind, provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+    const d = parseAiJson(r.text, '{') as Record<string, unknown>;
+    if (!d || typeof d !== 'object') throw new Error('It did not come back.');
+    return d;
+  }, (x) => !!(x as { none?: unknown }).none);
+  try {
+    if (what === 'sides') return NextResponse.json(await kept('debate-sides1', SIDES, 600));
+    if (what === 'cases') return NextResponse.json(await kept('cases1', CASES, 1200));
+    // His own debate turn, the settling, and his one sentence: just for him, not kept.
+    await needCredit();
+    const got = await sugyaLines(m[1], from, to);
+    if (!got) return NextResponse.json({ error: 'This text is not open to the AI.' }, { status: 400 });
+    const settings = await getSettings();
+    const model = MODELS[settings.provider][settings.tier];
+    const run = settings.provider === 'openai' ? runOpenAI : runAnthropic;
+    const sides = `Side A (${String(b.aWho ?? '')}): ${String(b.aHolds ?? '')}\nSide B (${String(b.bWho ?? '')}): ${String(b.bHolds ?? '')}`;
+    const thread = (Array.isArray(b.thread) ? b.thread : []).slice(-10).map((x: { me?: unknown; you?: unknown }) => `He: ${String(x?.me ?? '').slice(0, 800)}${x?.you ? `\nYou: ${String(x.you).slice(0, 1000)}` : ''}`).join('\n\n');
+    let system = '', ask = '';
+    if (what === 'turn') { system = DEBATE; ask = `${sides}\nHe argues side ${b.side === 'b' ? 'B' : 'A'}; you argue side ${b.side === 'b' ? 'A' : 'B'}.\n\n${thread}\n\nHe now says: ${String(b.msg ?? '').slice(0, 1500)}`; }
+    else if (what === 'settle') { system = SETTLE; ask = `${sides}\n\nThe debate:\n${thread || '(short)'}`; }
+    else if (what === 'sentence') { system = SENTENCE; ask = `His one sentence for the amud: ${String(b.msg ?? '').slice(0, 800)}`; }
+    else return NextResponse.json({ error: 'Nothing to do.' }, { status: 400 });
+    const r = await run({ lang: true, model: model.id, system: `${system}\n\n${styleForChat(settings)}\n\n${SCOPE}${toneText}${await rulesBlock()}`, history: [{ role: 'user', content: `${got.s.ref}, lines ${from} to ${to}\n\n${got.body}\n\n---\n${ask}` }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 700 });
+    await logCost({ sessionId: null, kind: `guide-${what}`, provider: settings.provider, model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+    const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, ''));
+    return text ? NextResponse.json({ text: text.slice(0, 2500) }) : NextResponse.json({ error: 'No answer came back. Try again.' }, { status: 502 });
+  } catch (e) { return NextResponse.json({ error: (e as Error).message || 'It couldn’t do that just now.' }, { status: 502 }); }
 }
 
 // Nov 25: his own work, answered just for him (not kept): his say-over, his answer to the Gemara's question, his reading
@@ -254,7 +316,7 @@ const EXPANDS: Record<string, { label: string; ask: string; cats: string[] }> = 
   widen: { label: 'Widen it', cats: ['Talmud', 'Midrash', 'Tanakh', 'Jewish Thought', 'Musar', 'Chasidut'], ask: `Widen the inyan: from the linked sources given (the same sugya elsewhere in Shas, a Midrash, a pasuk, a sefer of mussar or machshava), bring the two or three that shed the most light on this piece, each named, each in a sentence or two on how it opens the inyan up.` },
 };
 const EXPAND_RULES = `You are a warm, sharp chavrusa going deeper with the learner on one line (or one sentence of it, if given) that you just explained to him in plain words.
-Use the sources given below; name each source you use, exactly (Rashi, Tosafos ד"ה …, the Rambam Hilchos … , the Shulchan Aruch O.C. …, Bava Kamma 30a …). Never invent a source or a quote; if a source is not given, don't attribute anything to it. 90 to 170 words. Plain prose (a short list only if it truly helps), no headings, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
+Use the sources given below; name each source you use, exactly (Rashi, Tosafos ד"ה …, the Rambam Hilchos … , the Shulchan Aruch O.C. …, Bava Kamma 30a …). Never invent a source or a quote; if a source is not given, don't attribute anything to it. Say what's what: when you quote the text or a meforesh, name it; when an idea is your own and not from a source given, say so plainly ("my own sevara", "I'd suggest"); if you can't support something, say you aren't sure rather than guess. 90 to 170 words. Plain prose (a short list only if it truly helps), no headings, no markdown. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
 
 async function expandInyan(b: { expand?: unknown; piece?: unknown; si?: unknown }, m: RegExpMatchArray | null) {
   const kindName = String(b.expand ?? '');

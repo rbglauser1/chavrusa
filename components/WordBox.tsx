@@ -5,6 +5,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { looksAbbreviated, openAbbreviation } from '@/lib/abbrev';
+import { keepWord } from '@/lib/learnMarks';
 
 type Entry = { headword: string; dictionary: string; morphology: string; senses: string[]; short: string };
 
@@ -48,7 +49,7 @@ export default function WordBox({ word, raw, lineRef, at, onClose }: { word: str
     if (isAbbr || cache.has(key)) return;
     let gone = false;
     fetch(`/api/word?w=${encodeURIComponent(word)}&ref=${encodeURIComponent(lineRef)}`).then((r) => r.json())
-      .then((d) => { const e = Array.isArray(d.entries) ? d.entries : []; cache.set(key, e); if (!gone) setEntries(e); })
+      .then((d) => { const e = Array.isArray(d.entries) ? d.entries : []; cache.set(key, e); if (e[0]) keepWord({ w: word, head: e[0].headword || word, gloss: e[0].short || e[0].senses?.[0] || '', ref: lineRef.replace(/:\d+$/, '') }); if (!gone) setEntries(e); }) // Nov 25: My Aramaic words
       .catch(() => { if (!gone) setErr(true); });
     return () => { gone = true; };
   }, [key, word, lineRef, isAbbr]);

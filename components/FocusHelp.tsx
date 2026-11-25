@@ -279,6 +279,19 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
     const t = window.setTimeout(() => document.addEventListener('click', off, true), 600);
     return () => { window.clearTimeout(t); document.removeEventListener('click', off, true); };
   }, [lit]);
+  // Nov 25: Let me explain, on return: he says over what he remembers and the chavrusa fills the gaps.
+  const [explain, setExplain] = useState<{ n: number; text: string; reply?: string | null } | null>(null);
+  const startExplain = () => {
+    const line = curRef.current ?? numbered().find((e) => e.getBoundingClientRect().bottom > 140)?.dataset.line;
+    setOffer(false); setExplain({ n: Number(line) || 1, text: '' });
+  };
+  const sendExplain = () => {
+    const x = explain; if (!x || !x.text.trim()) return;
+    setExplain({ ...x, reply: null });
+    fetch('/api/guide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: `${base}:${x.n}`, sayover: x.text.trim(), card: `(He is coming back to the sugya after a break, and says over what he remembers of it up to line ${x.n}. Check it against the lines up to here, and fill in the gaps so he can go on.)` }) })
+      .then((r) => r.json()).then((d) => setExplain((y) => (y && y.n === x.n ? { ...y, reply: d.text || d.error || 'It couldn’t answer just now.' } : y)))
+      .catch(() => setExplain((y) => (y ? { ...y, reply: 'It couldn’t answer just now.' } : y)));
+  };
   // Where was I?
   const ask = (n?: number) => {
     const line = n ?? curRef.current ?? numbered().find((e) => e.getBoundingClientRect().bottom > 140)?.dataset.line;
@@ -348,7 +361,29 @@ export default function FocusHelp({ settings, refText, total, focus, picked, tal
           <button className="five-stop" onClick={() => { setGoalCard(false); window.dispatchEvent(new Event('chavrusa-home')); }}>Stop here</button>
         </div>
       </div>}
-      {offer && !recap && <button className="fh-offer" onClick={() => ask()}>↩ Where was I?</button>}
+      {offer && !recap && !explain && (
+        <div className="fh-offer fh-offer3">
+          <button onClick={() => ask()}>↩ Remind me</button>
+          <button onClick={startExplain}>🗣 Let me explain</button>
+          <button onClick={() => setOffer(false)}>Continue</button>
+        </div>
+      )}
+      {explain && <div className="fh-recap" role="dialog" aria-label="Let me explain">
+        <div className="fh-recap-top"><b>🗣 Let me explain · up to line {explain.n}</b><button onClick={() => setExplain(null)} aria-label="Close">✕</button></div>
+        {explain.reply === undefined ? (
+          <form onSubmit={(e) => { e.preventDefault(); sendExplain(); }} className="fh-explain">
+            <textarea value={explain.text} onChange={(e) => setExplain((x) => (x ? { ...x, text: e.target.value } : x))} placeholder="Say over what you remember of the sugya so far (type, or tap the keyboard’s mic)…" rows={4} dir="auto" autoFocus />
+            <button type="submit" className="fh-recap-go" disabled={!explain.text.trim()}>Fill in the gaps</button>
+          </form>
+        ) : (
+          <>
+            <p dir="auto" className="fh-mine">{explain.text}</p>
+            <p dir="auto" className={heCls(explain.reply)} style={{ whiteSpace: 'pre-wrap' }}>{explain.reply ?? 'Thinking…'}</p>
+            {explain.reply && <button className="fh-recap-go" onClick={() => { const n = explain.n; setExplain(null); setCur(n); lineEl(n)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}>Take me to the line</button>}
+            <div className="ai-note left">Written by AI · AI makes mistakes</div>
+          </>
+        )}
+      </div>}
       {recap && <div className="fh-recap" role="dialog" aria-label="Where was I?">
         <div className="fh-recap-top"><b>↩ Where was I? · line {recap.n}</b><button onClick={() => setRecap(null)} aria-label="Close">✕</button></div>
         <p dir="auto" className={heCls(recap.text)}>{recap.text ?? (recap.err ? 'Couldn’t get it right now. Try again in a moment.' : 'Thinking…')}</p>
