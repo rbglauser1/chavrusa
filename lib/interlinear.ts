@@ -163,17 +163,23 @@ export function bySentence(pairs: Pair[]): Pair[] {
   // phrase lining-up can be a phrase off, and a sentence must be whole).
   const parts = groups.map((g) => g.map((p) => p.en.trim()).join(' '));
   const all = parts.join(' ');
-  const ends: number[] = [];
-  for (const m of all.matchAll(/[.?!]["'”’)\u0003]*(?=\s|$)/g)) ends.push((m.index ?? 0) + m[0].length);
+  // Nov 26: a sentence end far from where the Hebrew sentence ends put a line's English above its Hebrew ("…as it was
+  // taught in a baraita: The frontplate … becomes impure." | "This is the statement of Rabbi Shimon."). Now the cut goes
+  // to the nearest good place, weighing how far it is: the end of a sentence; else a colon or semicolon; else a comma;
+  // else right where the phrases line up.
+  const marks: { at: number; cost: number }[] = [];
+  for (const m of all.matchAll(/[.?!]["'”’)\u0003]*(?=\s|$)/g)) marks.push({ at: (m.index ?? 0) + m[0].length, cost: 0 });
+  for (const m of all.matchAll(/[:;]["'”’)\u0003]*(?=\s|$)/g)) marks.push({ at: (m.index ?? 0) + m[0].length, cost: 18 });
+  for (const m of all.matchAll(/[,—–]["'”’)\u0003]*(?=\s|$)/g)) marks.push({ at: (m.index ?? 0) + m[0].length, cost: 32 });
   const cuts: number[] = [];
   let at = 0, prev = 0;
   for (let i = 0; i < parts.length - 1; i++) {
     at += parts[i].length + 1;
     const want = at - 1;
-    let best = -1, bestD = Infinity;
-    for (const e of ends) { if (e <= prev || e >= all.length) continue; const d = Math.abs(e - want); if (d < bestD) { bestD = d; best = e; } }
-    const cut = best > 0 ? best : want;
-    cuts.push(cut); prev = cut;
+    let best = want, bestScore = 48; // right where the phrases line up
+    for (const e of marks) { if (e.at <= prev || e.at >= all.length) continue; const sc = Math.abs(e.at - want) + e.cost; if (sc < bestScore) { bestScore = sc; best = e.at; } }
+    if (best === want) { const sp = all.lastIndexOf(' ', want); if (sp > prev) best = sp; } // never in the middle of a word
+    cuts.push(best); prev = best;
   }
   const out: Pair[] = [];
   let from = 0;
