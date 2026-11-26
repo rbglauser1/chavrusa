@@ -421,7 +421,7 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
             </div>
             <div className="field">
               <label>Learn with me looks like</label>
-              <Seg value={s.lwView ?? 'inline'} options={[['inline', 'In the text'], ['panel', 'Panel'], ['cards', 'Cards']]} onPick={(v) => onChange({ lwView: v as 'inline' | 'panel' | 'cards' })} />
+              <Seg value={s.lwLook ?? 'inline'} options={[['inline', 'In the text'], ['panel', 'Panel'], ['cards', 'Cards']]} onPick={(v) => onChange({ lwLook: v as 'inline' | 'panel' | 'cards' })} />
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>In the text: opens right in the sefer, under the line you're on, and folds up with a ✓ when you go on to the next line. Panel: rises over the lower part of the page, the phrases one under the other. Cards: one card at a time over the page; swipe it off the screen and the next one comes up (its ✕ closes them).</div>
             </div>
             <div className="field">
