@@ -12,6 +12,7 @@ import { isExperience } from '@/lib/experiences';
 import ExperienceNav from '@/components/ExperienceNav';
 import { LaunchNav } from '@/components/LaunchHome';
 import Review from '@/components/Review';
+import Bechina from '@/components/Bechina';
 import Minimal from '@/components/Minimal';
 import SeferPanel from '@/components/SeferPanel';
 import SettingsDrawer from '@/components/SettingsDrawer';
@@ -350,6 +351,10 @@ export default function Home() {
   useBackLayer(notebook, () => setNotebook(false));
   const [sandReview, setSandReview] = useState(false);
   useBackLayer(sandReview, () => setSandReview(false));
+  // Nov 25: Bechina (a test on the Gemara, with Tosafos if he wants): from the ⋯ menu or from Review.
+  const [bechina, setBechina] = useState(false);
+  useBackLayer(bechina, () => setBechina(false));
+  useEffect(() => { const on = () => { setSandReview(false); setBechina(true); }; window.addEventListener('chavrusa-bechina', on); return () => window.removeEventListener('chavrusa-bechina', on); }, []);
   useEffect(() => { const go = () => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); refreshSessions(); setView('recent'); }; window.addEventListener('chavrusa-recent', go); return () => window.removeEventListener('chavrusa-recent', go); }); // Nov 16: ⋯ → Recent sessions
   useEffect(() => { const open=()=>setSandReview(true); window.addEventListener('sand-review',open); return()=>window.removeEventListener('sand-review',open); }, []);
   // Focus help's "Stop here" (Nov 17): back to Home; the place is kept.
@@ -972,6 +977,7 @@ export default function Home() {
     setView('learn'); setTextTick(n=>n+1);
   };
   const reviewRef=current?.ref || contInfo?.ref;
+  const bechinaPanel=bechina && reviewRef && <Bechina refText={reviewRef} onClose={()=>setBechina(false)} onGo={(r,n)=>{setBechina(false);setView('learn');void openExact(r,n);}}/>;
   const sandReviewPanel=sandReview && (reviewRef ? <Review refText={reviewRef} onClose={()=>setSandReview(false)} onGo={n=>{setSandReview(false);setView('learn');void openExact(reviewRef,n);}}/> : <div className="st-overlay"><section className="st-details" role="dialog" aria-label="Review"><h2>A little learning first.</h2><p>Open a sefer, then return here to review it.</p><button className="btn" onClick={()=>{setSandReview(false);setView('learn');openLibrary();}}>Choose a sefer</button><button className="btn ghost" onClick={()=>setSandReview(false)}>Close</button></section></div>);
 
   const experienceNav = (look === 'clay' || look === 'chatgpt') ? (<LaunchNav dockOnly={view !== 'home'} view={view} onHome={() => setView('home')} onLibrary={() => { setView('learn'); openLibrary(); setTextTick(n => n + 1); }} onNotebook={() => setNotebook(true)} onRecent={() => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); refreshSessions(); setView('recent'); }} onThemes={() => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); setView('themes'); }} onSettings={() => { setSettingsFrom(view === 'learn' ? 'learn' : 'home'); setView('settings'); }} onReview={() => setSandReview(true)}/>) : <ExperienceNav look={look} view={view}
@@ -1015,7 +1021,7 @@ export default function Home() {
           </div>
         )}
         {experienceNav}
-        {sandReviewPanel}
+        {sandReviewPanel}{bechinaPanel}
         {quickTalkCard}
       <UpdateBar busy={live.active} />
         <UpdateBar busy={live.active} />
@@ -1086,7 +1092,7 @@ export default function Home() {
   return (
     <div className={`app ${minimal ? 'is-min' : ''} ${seferHome ? 'is-sefer-home' : ''}`}>
       {experienceNav}
-        {sandReviewPanel}
+        {sandReviewPanel}{bechinaPanel}
       {quickTalkCard}
       {settings.driveMode && view === 'learn' && !driving && <button className="drive-fab" onClick={() => setDriving(true)} aria-label="Driving mode">🚗</button>}
       {driving && <DriveMode live={live} place={sources[selected]?.ref ?? ''} onExit={() => setDriving(false)} />}

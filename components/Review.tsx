@@ -32,6 +32,7 @@ export default function Review({ refText, onGo, onClose }: { refText: string; on
         {qs && (
           <>
             <div className="muted rv-hint">Written by AI · AI makes mistakes. Think of the answer, then tap to check. {shown.size}/{qs.length} checked</div>
+            <button className="rv-bechina" onClick={() => window.dispatchEvent(new Event('chavrusa-bechina'))}>📝 Take a real bechina instead: marked, with Tosafos if you want</button>
             <ol className="rv-list">
               {qs.map((x, i) => (
                 <li key={i} className={`rv-q ${shown.has(i) ? 'open' : ''}`}>
