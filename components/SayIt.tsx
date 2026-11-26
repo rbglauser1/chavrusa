@@ -5,7 +5,7 @@
 // Nov 23: "✦ In my words?" at the end of a line (or of each sentence, in Sentence by sentence): one tap, and the
 // chavrusa says what it means and what it is doing, in its own plain words (made once and kept); under it, a box to
 // ask a follow-up (and another, and another), answered right there. Settings → The AI → The ✦ and its tools, and Aa.
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isHebText } from './AiNote';
 import SugyaFlow from './SugyaFlow';
 
@@ -15,8 +15,9 @@ type QA = { q: string; a: string | null; bad?: boolean };
 const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['rashitos', 'Rashi vs Tosafos'], ['compare', 'My reading vs Rashi'], ['widen', 'Widen it']]; // Nov 25: Rashi vs Tosafos side by side; Prepare, then compare
 type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean; draft?: string; wait?: boolean };
 
-export default function SayIt({ lineRef, piece, si, noChart, pshat }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[] }) {
-  const [menu, setMenu] = useState(false); // Nov 26: the ✦ that opens the choices
+export default function SayIt({ lineRef, piece, si, noChart, pshat, shown }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean }) {
+  const [menu, setMenu] = useState(!!shown); // Nov 26: shown already when Aa → ✦ choices is Always shown
+  useEffect(() => setMenu(!!shown), [shown]); // Nov 26: the ✦ that opens the choices
   const [showPshat, setShowPshat] = useState(false);
   const [open, setOpen] = useState(false);
   const [chart, setChart] = useState(false); // Nov 25: ✦ Sugya chart, beside In my words

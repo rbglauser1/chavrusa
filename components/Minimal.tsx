@@ -118,8 +118,8 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} marks={marks} /> : showHe(line)}
             </button>
-            {pairs && sayHere && <div className="min-sayit"><SayIt lineRef={`${src.ref}:${n}`} /></div>}
-            {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{sayHere && <SayIt lineRef={`${src.ref}:${n}`} />}</p>}
+            {pairs && sayHere && <div className="min-sayit"><SayIt shown={settings.sayMenu === 'open'} lineRef={`${src.ref}:${n}`} /></div>}
+            {!pairs && showEn && en && (englishAll || on) && <p className="min-en">{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{sayHere && <SayIt shown={settings.sayMenu === 'open'} lineRef={`${src.ref}:${n}`} />}</p>}
             {c && (
               <div className="min-comm">
                 <span className="min-comm-title">{c.title === 'Tosafot' ? 'Tosafos' : c.title}</span>
