@@ -24,7 +24,7 @@ export async function keep<T>(kind: string, key: string, make: () => Promise<T>,
   const path = pathOf(sonnet ? `${kinded}-${pick}` : kinded, key);
   const had = await readJson<{ v: T }>(path);
   // English chosen, but the kept copy came out in Hebrew (Nov 15: Tanya, a text with no English): made again, once.
-  const checkLang = lang === 'en' && !/^(translate|targum|word|literal|interlinear|pieces)/.test(kind);
+  const checkLang = lang === 'en' && !/^(translate|targum|word|literal|interlinear|pieces|bechina-he)/.test(kind);
   // (redone 2, Nov 15: copies made while a text's "English" was really Persian get one more try now that it's fixed.)
   if (had && had.v !== undefined && !(checkLang && mostlyHebrew(had.v) && (had as { redone?: unknown }).redone !== 2)) return had.v;
   let v = await make();

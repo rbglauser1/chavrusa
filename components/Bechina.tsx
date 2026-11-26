@@ -10,7 +10,7 @@ import { nextSection, prevSection } from '@/lib/refs';
 type BQ = { type: 'mc' | 'open'; on: 'gemara' | 'tosafos'; ref: string; line: number; dh?: string; q: string; options?: string[]; answer: number | string; why: string };
 type Mark = { pts: number; his?: string | number; note?: string };
 type Span = 'amud' | 'daf' | 'two' | 'five';
-type Opts = { span: Span; tosafos: 'none' | 'some' | 'focus'; format: 'mc' | 'open' | 'mix'; count: number; level: 'basic' | 'standard' | 'iyun' };
+type Opts = { span: Span; tosafos: 'none' | 'some' | 'focus'; format: 'mc' | 'open' | 'mix'; count: number; level: 'basic' | 'standard' | 'iyun'; lang: 'en' | 'he' };
 const OPT_KEY = 'chavrusa-bechina-opts', HIST_KEY = 'chavrusa-bechinos';
 
 const shortRef = (r: string) => r.replace(/^.* (\d+[ab])$/, '$1');
@@ -29,7 +29,7 @@ function amudim(base: string, span: Span): string[] {
 export default function Bechina({ refText, onGo, onClose }: { refText: string; onGo: (ref: string, line: number) => void; onClose: () => void }) {
   const base = refText.replace(/:\d+(-\d+)?$/, '');
   const talmud = /\d+[ab]$/.test(base);
-  const [o, setO] = useState<Opts>({ span: 'amud', tosafos: 'none', format: 'mix', count: 10, level: 'standard' });
+  const [o, setO] = useState<Opts>({ span: 'amud', tosafos: 'none', format: 'mix', count: 10, level: 'standard', lang: 'en' });
   useEffect(() => { try { const s = JSON.parse(localStorage.getItem(OPT_KEY) || 'null'); if (s) setO((x) => ({ ...x, ...s })); } catch { /* optional */ } }, []);
   const [stage, setStage] = useState<'setup' | 'wait' | 'quiz' | 'done'>('setup');
   const [err, setErr] = useState('');
@@ -48,7 +48,7 @@ export default function Bechina({ refText, onGo, onClose }: { refText: string; o
 
   const start = (which = set) => {
     setStage('wait'); setErr(''); setMarks({}); setI(0); setDraft(''); setSaved(false); setSet(which);
-    fetch('/api/bechina', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs, tosafos: talmud ? o.tosafos : 'none', format: o.format, count: o.count, level: o.level, set: which }) })
+    fetch('/api/bechina', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs, tosafos: talmud ? o.tosafos : 'none', format: o.format, count: o.count, level: o.level, set: which, lang: o.lang }) })
       .then((r) => r.json()).then((d) => {
         if (d.questions?.length) { setQs(d.questions); setStage('quiz'); } else { setErr(d.error || 'The bechina couldn’t be made just now.'); setStage('setup'); }
       }).catch(() => { setErr('The bechina couldn’t be made just now.'); setStage('setup'); });
@@ -61,7 +61,7 @@ export default function Bechina({ refText, onGo, onClose }: { refText: string; o
     if (!dontKnow && !his) return;
     if (dontKnow) { setMarks((m) => ({ ...m, [i]: { pts: 0, his: '—', note: '' } })); return; }
     setGrading(true);
-    fetch('/api/bechina', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: { q: q.q, answer: q.answer, his, ref: q.ref, line: q.line, dh: q.dh } }) })
+    fetch('/api/bechina', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: { q: q.q, answer: q.answer, his, ref: q.ref, line: q.line, dh: q.dh, he: o.lang === 'he' } }) })
       .then((r) => r.json()).then((d) => setMarks((m) => ({ ...m, [i]: { pts: typeof d.score === 'number' ? d.score : 0, his, note: d.note || d.error || '' } })))
       .catch(() => setMarks((m) => ({ ...m, [i]: { pts: 0, his, note: 'It couldn’t be marked just now.' } })))
       .finally(() => setGrading(false));
@@ -102,6 +102,7 @@ export default function Bechina({ refText, onGo, onClose }: { refText: string; o
             {talmud && <><label>Tosafos</label><Seg value={o.tosafos} on={(v) => set1('tosafos', v)} list={[['none', 'Gemara only'], ['some', 'Some Tosafos'], ['focus', 'Mostly Tosafos']]} /></>}
             <label>Questions</label><Seg value={o.format} on={(v) => set1('format', v)} list={[['mc', 'Multiple choice'], ['open', 'Written'], ['mix', 'Both']]} />
             <label>How many</label><Seg value={o.count} on={(v) => set1('count', v)} list={[[5, '5'], [10, '10'], [15, '15'], [20, '20']]} />
+            <label>Language</label><Seg value={o.lang} on={(v) => set1('lang', v)} list={[['en', 'English'], ['he', 'עברית']]} />
             <label>Level</label><Seg value={o.level} on={(v) => set1('level', v)} list={[['basic', 'Basic'], ['standard', 'Standard'], ['iyun', 'Iyun']]} />
             <p className="muted bx-small">{label}{talmud && o.tosafos !== 'none' ? ', with Tosafos' : ''}. Written answers are marked by the AI; you can answer by typing or with the keyboard’s mic.</p>
             {err && <p className="bx-err">{err}</p>}
@@ -126,7 +127,7 @@ export default function Bechina({ refText, onGo, onClose }: { refText: string; o
               </div>
             ) : !mark ? (
               <form className="bx-open" onSubmit={(e) => { e.preventDefault(); sendOpen(); }}>
-                <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={4} dir="auto" placeholder="Your answer…" disabled={grading} />
+                <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={4} dir="auto" placeholder={o.lang === 'he' ? 'התשובה שלך… (or in English)' : 'Your answer…'} disabled={grading} />
                 <span className="bx-row">
                   <button type="submit" disabled={!draft.trim() || grading}>{grading ? 'Marking…' : 'Submit'}</button>
                   <button type="button" className="ghost" disabled={grading} onClick={() => sendOpen(true)}>I don’t know</button>
@@ -136,9 +137,9 @@ export default function Bechina({ refText, onGo, onClose }: { refText: string; o
             {mark && (
               <div className={`bx-verdict p${mark.pts}`}>
                 <b>{mark.pts === 2 ? 'Right' : mark.pts === 1 ? 'Partly' : q.type === 'mc' ? 'Not this one' : 'Not yet'}</b>
-                {mark.note && <span>{mark.note}</span>}
-                {q.type === 'open' && <span className="bx-model"><i>A full answer:</i> {String(q.answer)}</span>}
-                {q.why && <span className="bx-why">{q.why}</span>}
+                {mark.note && <span dir="auto">{mark.note}</span>}
+                {q.type === 'open' && <span className="bx-model" dir="auto"><i>A full answer:</i> {String(q.answer)}</span>}
+                {q.why && <span className="bx-why" dir="auto">{q.why}</span>}
                 <span className="bx-row">
                   <button type="button" onClick={next}>{i + 1 < qs.length ? 'Next question' : 'See my score'}</button>
                   <button type="button" className="ghost" onClick={() => { onGo(q.ref, q.line); onClose(); }}>Look inside</button>

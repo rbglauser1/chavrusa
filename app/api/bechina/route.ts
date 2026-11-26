@@ -42,6 +42,10 @@ Only what the text given says; never invent a source or an opinion. Never ask ab
 Plain clear English; learning terms and quoted words in Hebrew letters (קל וחומר, גזירה שוה, the words of the Gemara); names in English (Rashi, Rav Yosef, Abaye).
 Reply with JSON only: [{...}, ...]`;
 
+// Nov 25: a bechina in Hebrew: everything he reads (questions, answers, explanations, the marking) in לשון הקודש.
+const HEB = `\n\nLANGUAGE: write the whole bechina in Hebrew (the clear yeshiva Hebrew of a written bechina, with Aramaic quotes of the Gemara as they are): every "q", every option, every "answer" and every "why". Names as in the Gemara (רב יוסף, אביי, רש"י, תוספות). Keep the JSON keys and the "type"/"on"/"ref" values in English exactly as described.`;
+const HEB_GRADE = `\n\nLANGUAGE: write the "note" in Hebrew (clear yeshiva Hebrew). He may have answered in Hebrew or English: mark either the same.`;
+
 const GRADE = `You are a fair, warm rosh yeshiva marking one written answer on a bechina. Given: the question, the model answer (what a good answer must contain), the text it is on, and his answer.
 Mark it: 2 = right (the main point is there, even in other words or briefer), 1 = partly (part of it, or right idea but a real piece missing or a bit off), 0 = not yet (wrong, or missing the point).
 Reply with JSON only: {"score": 0|1|2, "note": "1 to 2 sentences to him: what he got, and what was missing or off (if anything), specific to his answer"}.
@@ -69,7 +73,7 @@ async function material(refs: string[], tos: boolean, budget: number) {
   return parts.filter(Boolean).join('\n\n');
 }
 
-async function make(b: { refs: string[]; tosafos: string; format: string; count: number; level: string; set: number }) {
+async function make(b: { refs: string[]; tosafos: string; format: string; count: number; level: string; set: number; he: boolean }) {
   await needCredit();
   const tos = b.tosafos !== 'none';
   const body = await material(b.refs, tos, 70000);
@@ -81,8 +85,8 @@ async function make(b: { refs: string[]; tosafos: string; format: string; count:
     .replace('FORMAT', b.format === 'mc' ? 'all "mc".' : b.format === 'open' ? 'all "open".' : 'about half "mc" and half "open", mixed.');
   const model = await keptModel();
   const r = await runKept({
-    lang: true, model: model.id, system: `${system}${b.set > 1 ? `\n\nThis is set ${b.set}: ask about different points than an earlier set would (vary which steps and which Tosafos you ask on).` : ''}\n\n${SCOPE}`,
-    history: [{ role: 'user', content: body }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 6000,
+    lang: !b.he, model: model.id, system: `${system}${b.he ? HEB : ''}${b.set > 1 ? `\n\nThis is set ${b.set}: ask about different points than an earlier set would (vary which steps and which Tosafos you ask on).` : ''}\n\n${SCOPE}`,
+    history: [{ role: 'user', content: body }], tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: b.he ? 10000 : 6000,
   });
   await logCost({ sessionId: null, kind: 'bechina', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
   const arr = parseAiJson(r.text, '[');
@@ -105,7 +109,7 @@ export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => ({}));
   try {
     if (b.grade) {
-      const g = b.grade as { q?: string; answer?: string; his?: string; ref?: string; line?: number; dh?: string };
+      const g = b.grade as { q?: string; answer?: string; his?: string; ref?: string; line?: number; dh?: string; he?: boolean };
       const his = String(g.his ?? '').trim().slice(0, 2000);
       if (!his) return NextResponse.json({ error: 'Write an answer first.' }, { status: 400 });
       await needCredit();
@@ -116,7 +120,7 @@ export async function POST(req: NextRequest) {
       const n = Math.round(Number(g.line) || 1);
       const near = s?.he.length ? s.he.map((h, i) => (Math.abs(i + 1 - n) <= 2 ? `[${i + 1}] ${clip(stripNikud(h), 500)}${s.en[i] ? `\n    ${clip(plain(s.en[i]), 600)}` : ''}` : '')).filter(Boolean).join('\n') : '';
       const r = await run({
-        lang: true, model: model.id, system: `${GRADE}\n\n${SCOPE}`,
+        lang: !g.he, model: model.id, system: `${GRADE}${g.he ? HEB_GRADE : ''}\n\n${SCOPE}`,
         history: [{ role: 'user', content: `${g.ref ?? ''}${g.dh ? `, Tosafos ד"ה ${g.dh}` : ''}\n${near}\n\nQuestion: ${String(g.q ?? '').slice(0, 600)}\nModel answer: ${String(g.answer ?? '').slice(0, 900)}\n\nHis answer: ${his}` }],
         tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 400,
       });
@@ -130,10 +134,10 @@ export async function POST(req: NextRequest) {
     const opts = {
       refs, tosafos: ['none', 'some', 'focus'].includes(b.tosafos) ? b.tosafos : 'none', format: ['mc', 'open', 'mix'].includes(b.format) ? b.format : 'mix',
       count: [5, 10, 15, 20].includes(Number(b.count)) ? Number(b.count) : 10, level: ['basic', 'standard', 'iyun'].includes(b.level) ? b.level : 'standard',
-      set: Math.min(20, Math.max(1, Math.round(Number(b.set) || 1))),
+      set: Math.min(20, Math.max(1, Math.round(Number(b.set) || 1))), he: b.lang === 'he',
     };
     const key = `${refs.join('|')}:${opts.tosafos}:${opts.format}:${opts.count}:${opts.level}:${opts.set}`;
-    const out = await keep('bechina1', key, () => make(opts), (x) => !x.questions.length);
+    const out = await keep(opts.he ? 'bechina-he1' : 'bechina1', key, () => make(opts), (x) => !x.questions.length);
     if (!out.questions.length) return NextResponse.json({ error: 'This text is not open to the AI.' }, { status: 400 });
     return NextResponse.json(out);
   } catch (e) { return NextResponse.json({ error: (e as Error).message || 'The bechina couldn’t be made just now.' }, { status: 502 }); }
