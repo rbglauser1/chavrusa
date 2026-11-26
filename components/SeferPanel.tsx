@@ -729,7 +729,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     if (!dbl || !el) return;
     const on = (e: MouseEvent) => {
       const t = e.target as Element;
-      if (!t.closest('.line-x, .lchat, .wig, .comm-line, .comm-outline, .review, .lx-box')) return;
+      if (!t.closest('.line-x, .lchat, .wig, .comm-line, .comm-outline, .review, .lx-box, .sayit, .pshat-inline, .ai-notes, .flow-tags')) return; // Nov 26: and the ✦ boxes at the end of a line
       if (t.closest('button, a, input, textarea, select, [contenteditable]')) return;
       const now = Date.now();
       if (now - boxTap.current < 320) { boxTap.current = 0; onDoubleTap?.(); } else boxTap.current = now;
