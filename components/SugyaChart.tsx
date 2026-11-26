@@ -4,6 +4,8 @@
 // on: the topics as a strip on top, then each topic as a track of its steps, the give and take indented (a question,
 // and under it its answer or rejection), colored by kind. What we've learned is solid, the step we're on is lit with
 // "You are here", what's ahead is faint. Tap a step to learn from there.
+// Nov 26 (the road): the topics are stops on a road, one under the other: the ones learned ✓, the one we're on ringed,
+// the ones ahead plain. Only the topic we're on shows its steps; the others open on a tap. In the look's own colors.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSwipeDown } from '@/lib/swipeDown';
@@ -62,6 +64,8 @@ export default function SugyaChart({ refText, title, here, total, onGo, onClose 
   const atStep = all.reduce<ChartStep | null>((k, s) => (s.line <= here ? s : k), null);
   const atTopic = data ? data.topics.reduce((k, t, i) => (topicStartOf(t) <= here ? i : k), 0) : 0;
   const hereEl = useRef<HTMLLIElement | null>(null);
+  const [openT, setOpenT] = useState<Set<number>>(new Set());
+  const flipT = (i: number) => setOpenT((o) => { const x = new Set(o); if (x.has(i)) x.delete(i); else x.add(i); return x; });
   const topicEls = useRef<(HTMLElement | null)[]>([]);
   useEffect(() => { // open on the step we're on
     if (!data) return;
@@ -85,7 +89,7 @@ export default function SugyaChart({ refText, title, here, total, onGo, onClose 
                 {data.topics.map((t, i) => (
                   <button key={i} role="listitem" className={`sch-seg ${i < atTopic ? 'done' : i === atTopic ? 'here' : ''}`}
                     onClick={() => topicEls.current[i]?.scrollIntoView({ block: 'start', behavior: 'smooth' })}>
-                    <b>{i + 1}</b><span>{t.title || `Part ${i + 1}`}</span>
+                    <b>{i < atTopic ? '✓' : i + 1}</b><span>{t.title || `Part ${i + 1}`}</span>
                   </button>
                 ))}
               </div>
@@ -96,20 +100,23 @@ export default function SugyaChart({ refText, title, here, total, onGo, onClose 
                 <span className="sch-big-text">{data.overview.replace(/^[-•*]\s*/gm, '').replace(/\n+/g, ' ')}</span>
               </button>
             )}
+            {data.topics.length > 1 && <div className="sch-road-sum">The road · {data.topics.length} topics · you’re on {atTopic + 1}</div>}
             <div className="sch-key" aria-hidden="true"><span className="ask">? asks</span><span className="ans">✓ answers</span><span>• says</span><span className="me">● you</span></div>
             {data.topics.map((t, ti) => {
               const state = ti < atTopic ? 'done' : ti === atTopic ? 'here' : 'ahead';
+              const showSteps = !t.title || data.topics.length < 2 || ti === atTopic || openT.has(ti);
               return (
-                <section key={ti} ref={(el) => { topicEls.current[ti] = el; }} className={`sch-topic ${state}`}>
+                <section key={ti} ref={(el) => { topicEls.current[ti] = el; }} className={`sch-topic ${state}${t.title ? '' : ' untitled'}`}>
                   {t.title && (
                     <button className="sch-topic-head" onClick={() => onGo(topicStartOf(t))}>
-                      <span className="sch-topic-n">{ti + 1}</span>
+                      <span className="sch-topic-n" aria-hidden="true">{state === 'done' ? '✓' : ti + 1}</span>
                       <span className="sch-topic-title">{t.title}</span>
                       <span className="sch-line">line {topicStartOf(t)}</span>
                     </button>
                   )}
                   {t.intro && state === 'here' && <p className="sch-intro">{t.intro.replace(/^[-•*]\s*/gm, '').replace(/\n+/g, ' ')}</p>}
-                  <ol className="sch-track">
+                  {!showSteps && t.steps.length > 0 && <button className="sch-more" onClick={() => flipT(ti)}>{t.steps.length} step{t.steps.length === 1 ? '' : 's'} ▾</button>}
+                  {showSteps && <ol className="sch-track">
                     {t.steps.map((s, i) => {
                       const prev = t.steps[i - 1];
                       const inside = !!prev && INSIDE.has(s.kind) && (prev.kind === 'Question' || INSIDE.has(prev.kind));
@@ -128,8 +135,9 @@ export default function SugyaChart({ refText, title, here, total, onGo, onClose 
                         </li>
                       );
                     })}
-                  </ol>
-                  {t.takeaway && <p className="sch-take"><span className="sch-label">Where it ends up</span>{t.takeaway}</p>}
+                  </ol>}
+                  {showSteps && ti !== atTopic && openT.has(ti) && <button className="sch-more" onClick={() => flipT(ti)}>Fold the steps ▴</button>}
+                  {t.takeaway && showSteps && <p className="sch-take"><span className="sch-label">Where it ends up</span>{t.takeaway}</p>}
                 </section>
               );
             })}
