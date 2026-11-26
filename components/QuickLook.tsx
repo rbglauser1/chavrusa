@@ -59,8 +59,8 @@ export default function QuickLook({ settings: s, onSet, onAll, onClose }: { sett
         </>
       )}
       <Row label="Meforshim (Rashi, Tosafos…)" value={s.autoComms ? 'all' : 'tap'} options={[['tap', 'When I tap a line'], ['all', 'Under every line']]} onPick={(v) => onSet({ autoComms: v === 'all' })} />
-      <Row label="✦ AI buttons on the lines (Step, Pshat, In my words)" value={s.lineAi ?? 'all'} options={[['all', 'Every line'], ['tap', 'Line I tap'], ['off', 'Off']]} onPick={(v) => onSet({ lineAi: v as 'all' | 'tap' | 'off' })} />
-      {(s.lineAi ?? 'all') !== 'off' && <Row label="✦ In my words? (end of each line)" value={s.sayIt === false ? 'off' : 'on'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ sayIt: v === 'on' })} />}
+      <Row label="✦ AI buttons on the lines (Step and the ✦ menu)" value={s.lineAi ?? 'all'} options={[['all', 'Every line'], ['tap', 'Line I tap'], ['off', 'Off']]} onPick={(v) => onSet({ lineAi: v as 'all' | 'tap' | 'off' })} />
+      {(s.lineAi ?? 'all') !== 'off' && <Row label="✦ button at the end of each line (In my words, Pshat, chart, Go deeper)" value={s.sayIt === false ? 'off' : 'on'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ sayIt: v === 'on' })} />}
       <Row label="Color the give and take ✦ AI" value={s.flowColors ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ flowColors: v === 'on' })} />
       <Row label="Nikud" value={s.nikud ? 'on' : 'off'} options={[['on', 'On'], ['off', 'Off']]} onPick={(v) => onSet({ nikud: v === 'on' })} />
       <Size label="Hebrew size" value={s.heSize} min={16} max={52} onSet={(v) => onSet({ heSize: v })} sample="אבג" he />

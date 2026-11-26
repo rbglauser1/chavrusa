@@ -1058,7 +1058,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} marks={marks}
-                        after={sayHere || pshIn ? (k) => (<>{pshIn && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} noChart={k !== pairs.length - 1} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} /> : null)}</>) : undefined} />
+                        after={sayHere || pshIn ? (k) => (<>{pshIn && !sayHere && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt lineRef={partRef(i)} piece={pairs[k].he} si={k + 1} noChart={k !== pairs.length - 1} pshat={pshIn && k === pairs.length - 1 ? pshTexts : undefined} /> : k === pairs.length - 1 ? <SayIt lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} /> : null)}</>) : undefined} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
@@ -1245,7 +1245,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       if ((e.target as HTMLElement).closest('button')) return;
                       if (window.getSelection()?.toString()) return; // words being selected for a color mark
                       if (dbl) tap(() => toggleLine(i)); else toggleLine(i); }}>
-                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && <PshatInline texts={pshTexts} />}{sayHere && <SayIt lineRef={partRef(i)} />}</> : aiText[key] ? (
+                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && !sayHere && <PshatInline texts={pshTexts} />}{sayHere && <SayIt lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} />}</> : aiText[key] ? (
                         <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (
                         <span className="tr-ai"><small>No approved translation</small>

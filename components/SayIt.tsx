@@ -1,4 +1,7 @@
 'use client';
+// Nov 26: one ✦ button at the end of the line opens all the choices: In my words (first), Pshat, Sugya chart, and the
+// Go deeper ones (Kashya, Sharp kashya, Chakira, Halacha, Meforshim, Rashi vs Tosafos, My reading vs Rashi, Widen it).
+// Each choice opens its own box under the line; the follow-up box answers on whatever is open.
 // Nov 23: "✦ In my words?" at the end of a line (or of each sentence, in Sentence by sentence): one tap, and the
 // chavrusa says what it means and what it is doing, in its own plain words (made once and kept); under it, a box to
 // ask a follow-up (and another, and another), answered right there. Settings → The AI → The ✦ and its tools, and Aa.
@@ -12,7 +15,9 @@ type QA = { q: string; a: string | null; bad?: boolean };
 const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['rashitos', 'Rashi vs Tosafos'], ['compare', 'My reading vs Rashi'], ['widen', 'Widen it']]; // Nov 25: Rashi vs Tosafos side by side; Prepare, then compare
 type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean; draft?: string; wait?: boolean };
 
-export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string; piece?: string; si?: number; noChart?: boolean }) {
+export default function SayIt({ lineRef, piece, si, noChart, pshat }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[] }) {
+  const [menu, setMenu] = useState(false); // Nov 26: the ✦ that opens the choices
+  const [showPshat, setShowPshat] = useState(false);
   const [open, setOpen] = useState(false);
   const [chart, setChart] = useState(false); // Nov 25: ✦ Sugya chart, beside In my words
   const [text, setText] = useState<string | null>(null);
@@ -46,37 +51,50 @@ export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string
       .then((d) => (d.text ? setText(d.text) : setErr(d.error || 'It couldn’t explain just now.')))
       .catch(() => setErr('It couldn’t explain just now.'));
   };
+  const anyText = (open && !!text) || exOrder.some((k) => !!ex[k]?.text);
   const ask = () => {
-    const qq = q.trim(); if (!qq || !text) return;
+    const qq = q.trim(); if (!qq || !anyText) return;
     const before = thread.filter((x) => x.a && !x.bad).map((x) => ({ q: x.q, a: x.a as string }));
     setThread((t) => [...t, { q: qq, a: null }]); setQ('');
     const put = (a: string, bad = false) => setThread((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, a, bad } : x)));
     const more = exOrder.map((k) => (ex[k]?.text ? `\n${DEEPER.find((d) => d[0] === k)?.[1]}: ${ex[k]!.text}` : '')).join('');
-    post({ ask: qq, card: `${piece ? `The sentence: ${piece}\n` : ''}What you told him about it: ${text}${more}`, thread: before })
+    post({ ask: qq, card: `${piece ? `The sentence: ${piece}\n` : ''}${text ? `What you told him about it: ${text}` : ''}${more}`, thread: before })
       .then((d) => (d.text ? put(d.text) : put(d.error || 'It couldn’t answer just now.', true)))
       .catch(() => put('It couldn’t answer just now.', true));
   };
   const he = !!text && isHebText(text);
   return (
     <span className="sayit" onClick={(e) => e.stopPropagation()}>
-      <button type="button" className={`sayit-btn ${open ? 'on' : ''}`} onClick={go} aria-expanded={open}>✦ {open ? 'Close' : 'In my words?'}</button>
-      {!noChart && <button type="button" className={`sayit-btn ${chart ? 'on' : ''}`} onClick={() => setChart((v) => !v)} aria-expanded={chart}>✦ {chart ? 'Close chart' : 'Sugya chart'}</button>}
+      <button type="button" className={`sayit-btn sayit-main ${menu ? 'on' : ''}`} onClick={() => setMenu((v) => !v)} aria-expanded={menu} aria-label="AI help on this line">✦{menu ? ' ▴' : ' ▾'}</button>
+      {menu && (
+        <span className="sayit-menu">
+          <button type="button" className={open ? 'on' : ''} onClick={go}>In my words</button>
+          {!!pshat?.length && <button type="button" className={showPshat ? 'on' : ''} onClick={() => setShowPshat((v) => !v)}>Pshat</button>}
+          {!noChart && <button type="button" className={chart ? 'on' : ''} onClick={() => setChart((v) => !v)}>Sugya chart</button>}
+          {DEEPER.map(([k, name]) => <button key={k} type="button" className={exOrder.includes(k) ? 'on' : ''} onClick={() => deeper(k)}>{name}</button>)}
+        </span>
+      )}
+      {open && (
+        <span className="sayit-box" role="region" aria-label="In my words">
+          <span className="sayit-ex-label">In my words</span>
+          <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>
+            {text ?? (err || <span className="wait-dots"><span /><span /><span /></span>)}
+          </span>
+        </span>
+      )}
+      {showPshat && !!pshat?.length && (
+        <span className="sayit-box" role="region" aria-label="Pshat">
+          <span className="sayit-ex-label">Pshat</span>
+          {pshat.map((t, k) => { const h = isHebText(t); return <span key={k} className={`pshat ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{t}</span>; })}
+        </span>
+      )}
       {chart && (
         <span className="sayit-box" role="region" aria-label="Sugya chart">
           <SugyaFlow lineRef={lineRef} />
         </span>
       )}
-      {open && (
-        <span className="sayit-box" role="region" aria-label="In my words">
-          <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>
-            {text ?? (err || <span className="wait-dots"><span /><span /><span /></span>)}
-          </span>
-          {text && (
-            <span className="sayit-deeper">
-              <span className="sayit-deeper-label">✦ Go deeper</span>
-              {DEEPER.map(([k, name]) => <button key={k} type="button" className={exOrder.includes(k) ? 'on' : ''} onClick={() => deeper(k)}>{name}</button>)}
-            </span>
-          )}
+      {(exOrder.length > 0 || thread.length > 0 || anyText) && (
+        <span className="sayit-box sayit-more" role="region" aria-label="Go deeper">
           {exOrder.map((k) => {
             const e = ex[k] ?? {};
             if (k === 'compare' && !e.text && !e.err) return (
@@ -121,7 +139,7 @@ export default function SayIt({ lineRef, piece, si, noChart }: { lineRef: string
               </span>
             );
           })}
-          {text && (
+          {anyText && (
             <form className="sayit-ask" onSubmit={(e) => { e.preventDefault(); ask(); }}>
               <input ref={inp} value={q} onChange={(e) => setQ(e.target.value)} placeholder={thread.length ? 'Ask another…' : 'Ask a follow-up…'} enterKeyHint="send" dir="auto" />
               <button type="submit" disabled={!q.trim()}>Ask</button>
