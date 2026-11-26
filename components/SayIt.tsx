@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { isHebText } from './AiNote';
 import SugyaFlow from './SugyaFlow';
+import { useKept, wasKept } from '@/lib/uiKeep';
 
 type QA = { q: string; a: string | null; bad?: boolean };
 // Nov 23: ✦ Go deeper, under the plain explanation: a kashya, a chakira, the halacha, the meforshim, or the wider inyan,
@@ -18,20 +19,22 @@ type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean; dr
 export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, wholeToo }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean; wholeToo?: boolean }) {
   // Nov 26: in Sentence by sentence, the last sentence also offers the whole line's In my words: the same one made
   // (and kept) when the English is shown alone, so switching views shows what was already made.
-  const [whole, setWhole] = useState<string | null | 'wait' | 'err'>(null);
-  const [wholeOpen, setWholeOpen] = useState(false);
-  const [menu, setMenu] = useState(!!shown); // Nov 26: shown already when Aa → ✦ choices is Always shown
-  useEffect(() => setMenu(!!shown), [shown]); // Nov 26: the ✦ that opens the choices
-  const [showPshat, setShowPshat] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [chart, setChart] = useState(false); // Nov 25: ✦ Sugya chart, beside In my words
-  const [text, setText] = useState<string | null>(null);
+  const K = `say:${lineRef}:${si ?? 0}`; // Nov 26: what's open here, and what came back, stays when he goes to Settings and back
+  const [whole, setWhole] = useKept<string | null | 'wait' | 'err'>(`${K}:whole`, null);
+  const [wholeOpen, setWholeOpen] = useKept(`${K}:wholeOpen`, false);
+  const [menu, setMenu] = useKept(`${K}:menu`, !!shown); // Nov 26: shown already when Aa → ✦ choices is Always shown
+  const shownBefore = useRef(shown);
+  useEffect(() => { if (shownBefore.current !== shown) { shownBefore.current = shown; setMenu(!!shown); } else if (!wasKept(`${K}:menu`) && shown) setMenu(true); }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps // Nov 26: the ✦ that opens the choices
+  const [showPshat, setShowPshat] = useKept(`${K}:showPshat`, false);
+  const [open, setOpen] = useKept(`${K}:open`, false);
+  const [chart, setChart] = useKept(`${K}:chart`, false); // Nov 25: ✦ Sugya chart, beside In my words
+  const [text, setText] = useKept<string | null>(`${K}:text`, null);
   const [err, setErr] = useState('');
-  const [thread, setThread] = useState<QA[]>([]);
+  const [thread, setThread] = useKept<QA[]>(`${K}:thread`, []);
   const [q, setQ] = useState('');
   const inp = useRef<HTMLInputElement | null>(null);
-  const [ex, setEx] = useState<Record<string, Ex>>({});
-  const [exOrder, setExOrder] = useState<string[]>([]);
+  const [ex, setEx] = useKept<Record<string, Ex>>(`${K}:ex`, {});
+  const [exOrder, setExOrder] = useKept<string[]>(`${K}:exOrder`, []);
   const deeper = (k: string) => {
     if (ex[k]) { setExOrder((o) => (o.includes(k) ? o.filter((x) => x !== k) : [...o, k])); return; }
     if (k === 'compare') { setEx((e) => ({ ...e, compare: { draft: '' } })); setExOrder((o) => [...o, k]); return; } // he writes his reading first
@@ -57,6 +60,21 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
       .catch(() => setErr('It couldn’t explain just now.'));
   };
   const anyText = (open && !!text) || exOrder.some((k) => !!ex[k]?.text);
+  // Nov 26: coming back (from Settings, or a redraw): anything that was still on its way when he left is asked for again
+  // (it was kept on the server, so it comes right back).
+  useEffect(() => {
+    if (open && !text) post({ say: true, piece: piece ?? '', si: si ?? 0 }).then((d) => (d.text ? setText(d.text) : setErr(d.error || 'It couldn’t explain just now.'))).catch(() => setErr('It couldn’t explain just now.'));
+    if (wholeOpen && (whole === 'wait' || whole === null)) { setWhole('wait'); post({ say: true, piece: '', si: 0 }).then((d) => setWhole(d.text || 'err')).catch(() => setWhole('err')); }
+    exOrder.forEach((k) => {
+      const e = ex[k];
+      if (!e || e.text || e.err || k === 'compare') return;
+      post({ expand: k, piece: piece ?? '', si: si ?? 0 })
+        .then((d) => setEx((x) => ({ ...x, [k]: d.text ? { text: d.text, sources: d.sources ?? [] } : { err: d.error || 'It couldn’t go deeper just now.' } })))
+        .catch(() => setEx((x) => ({ ...x, [k]: { err: 'It couldn’t go deeper just now.' } })));
+    });
+    if (ex.compare?.wait) setEx((x) => ({ ...x, compare: { ...x.compare, wait: false } }));
+    if (thread.some((x) => x.a === null)) setThread((t) => t.map((x) => (x.a === null ? { ...x, a: 'This was cut off when you left. Ask it again.', bad: true } : x)));
+  }, [K]); // eslint-disable-line react-hooks/exhaustive-deps
   const goWhole = () => {
     setWholeOpen((v) => !v);
     if (whole && whole !== 'err') return;

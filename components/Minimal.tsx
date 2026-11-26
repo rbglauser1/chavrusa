@@ -113,7 +113,7 @@ function TextView({ src, settings, pointAt, dimOthers, englishAll, inlineComm }:
         const tags = fl && !marks ? flowTags(fl) : [];
         return (
           <div key={i} data-n={n} className={`min-line ${on ? 'on' : ''} ${dimOthers && !on ? 'dim' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`}>
-            {aiHere && <AiNotes kind="move" texts={outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} />}
+            {aiHere && <AiNotes kind="move" texts={outline.byLine[n] ?? []} tap={settings.stepsMode === 'tap'} keepKey={`${src.ref}:${n}`} />}
             {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
             <button className={`min-he ${comm ? 'rashi' : ''}`} dir="rtl" onClick={() => pointAt(src, n)} aria-label={`Learn from line ${n}`}>
               {pairs ? <Interlinear pairs={pairs} heClass={comm ? 'rashi' : ''} show={showHe} marks={marks} /> : showHe(line)}

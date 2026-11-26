@@ -2,7 +2,8 @@
 // Nov 17: what the AI adds to the page (Steps before a move, Pshat after it). "Always": the note shows. "Tap to show":
 // a small, quiet ✦ marker in its place; a tap opens the note, a tap on the note folds it back.
 // When the AI writes in Hebrew the note reads right to left.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useKept } from '@/lib/uiKeep';
 
 export const isHebText = (t: string) => (t.match(/[א-ת]/g)?.length ?? 0) > (t.match(/[A-Za-z]/g)?.length ?? 0);
 
@@ -24,9 +25,11 @@ export function AiNote({ kind, text, tap }: { kind: 'move' | 'pshat'; text: stri
 
 // Nov 23: several notes of one kind on a line (two Steps beginning on the same line) were a row of chips, "Step Step":
 // now one chip, "2 Steps", and one tap opens them all (a tap on any folds them back).
-export function AiNotes({ kind, texts, tap }: { kind: 'move' | 'pshat'; texts: string[]; tap: boolean }) {
-  const [open, setOpen] = useState(!tap);
-  useEffect(() => { setOpen(!tap); }, [tap]);
+export function AiNotes({ kind, texts, tap, keepKey }: { kind: 'move' | 'pshat'; texts: string[]; tap: boolean; keepKey?: string }) {
+  // Nov 26: a Step or Pshat he tapped open stays open when he goes to Settings and back (keepKey: the line).
+  const [open, setOpen] = useKept(keepKey ? `note:${kind}:${keepKey}:${tap ? 't' : 'a'}` : null, !tap);
+  const tapBefore = useRef(tap);
+  useEffect(() => { if (tapBefore.current !== tap) { tapBefore.current = tap; setOpen(!tap); } }, [tap]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!texts.length) return null;
   const name = kind === 'move' ? 'Step' : 'Pshat';
   if (!open) {

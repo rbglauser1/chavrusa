@@ -159,13 +159,21 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   useEffect(() => {
     setOpen(new Set()); setComm({}); setXOpen(new Set()); setCOpen(new Set()); setHOpen(new Set()); setEOpen(new Set()); setHeartOpen(new Set()); setWordOn(null); setSOpen(new Set()); setIOpen(new Set()); setBOpen(null); setTopOpen(null);
     const want = pickAfter.current;
-    if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(null);
+    // Nov 26: coming back from Settings (or a redraw): the line he had tapped, and the lines he had opened, stay so.
+    let back: { p?: number | null; o?: number[] } | null = null;
+    if (src?.ref) try { back = JSON.parse(sessionStorage.getItem(`chavrusa-lineopen:${src.ref}`) ?? 'null'); } catch { /* optional */ }
+    if (want && src && want.ref === src.ref) { pickAfter.current = null; setPicked(want.i); } else setPicked(back?.p ?? null);
+    if (back?.o?.length) setOpen(new Set(back.o));
     // Coming back to a text: the AI boxes you had open on it (Explain, Chat, Ideas) open again (Nov 13).
     if (src?.ref) try {
       const v = JSON.parse(localStorage.getItem(`chavrusa-aiopen:${src.ref}`) ?? 'null');
       if (v) { setXOpen(new Set(v.x ?? [])); setCOpen(new Set(v.c ?? [])); setIOpen(new Set(v.i ?? [])); }
     } catch { /* optional */ }
   }, [selected, src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { // Nov 26: remember them for this tab
+    if (!src?.ref) return;
+    try { sessionStorage.setItem(`chavrusa-lineopen:${src.ref}`, JSON.stringify({ p: picked, o: [...open] })); } catch { /* optional */ }
+  }, [picked, open]); // eslint-disable-line react-hooks/exhaustive-deps
   // Scroll to the line the learner is on (and highlight it).
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const amudTop = useRef<HTMLDivElement | null>(null); // where the amud's AI boxes open (map, review, listen)
@@ -1046,7 +1054,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
               return (
                 <div key={i} style={{ display: 'contents' }}>
                 {mishnahHead(src.ref, i + 1)}
-                {aiHere && <AiNotes kind="move" texts={outline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} />}
+                {aiHere && <AiNotes kind="move" texts={outline.byLine[i + 1] ?? []} tap={settings.stepsMode === 'tap'} keepKey={`${src.ref}:${i + 1}`} />}
                 {tags.length > 0 && <div className="flow-tags">{tags.map((t, k) => <span key={k} className={`flow-tag t-${t.tone}`}>{t.text}</span>)}</div>}
                 <div data-line={i + 1} className={`line ${open.has(i) ? 'open' : ''} ${src.focus === i + 1 ? 'focus' : ''} ${fl && !marks ? `flow flow-${fl.tone}` : ''}`} onClick={(e) => {
                   // In a line that is already open, a tap on a Hebrew word shows its meaning (Settings → Extras).
@@ -1257,7 +1265,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   )}
                   {tgBox(tg, i)}
                 </div>
-                {!pshIn && aiHere && <AiNotes kind="pshat" texts={pshTexts} tap={settings.pshatMode === 'tap'} />}
+                {!pshIn && aiHere && <AiNotes kind="pshat" texts={pshTexts} tap={settings.pshatMode === 'tap'} keepKey={`${src.ref}:${i + 1}`} />}
                 </div>
               );
             })}
