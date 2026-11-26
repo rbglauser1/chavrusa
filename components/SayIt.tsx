@@ -15,7 +15,11 @@ type QA = { q: string; a: string | null; bad?: boolean };
 const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['rashitos', 'Rashi vs Tosafos'], ['compare', 'My reading vs Rashi'], ['widen', 'Widen it']]; // Nov 25: Rashi vs Tosafos side by side; Prepare, then compare
 type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean; draft?: string; wait?: boolean };
 
-export default function SayIt({ lineRef, piece, si, noChart, pshat, shown }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean }) {
+export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, wholeToo }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean; wholeToo?: boolean }) {
+  // Nov 26: in Sentence by sentence, the last sentence also offers the whole line's In my words: the same one made
+  // (and kept) when the English is shown alone, so switching views shows what was already made.
+  const [whole, setWhole] = useState<string | null | 'wait' | 'err'>(null);
+  const [wholeOpen, setWholeOpen] = useState(false);
   const [menu, setMenu] = useState(!!shown); // Nov 26: shown already when Aa → ✦ choices is Always shown
   useEffect(() => setMenu(!!shown), [shown]); // Nov 26: the ✦ that opens the choices
   const [showPshat, setShowPshat] = useState(false);
@@ -53,6 +57,12 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown }: { l
       .catch(() => setErr('It couldn’t explain just now.'));
   };
   const anyText = (open && !!text) || exOrder.some((k) => !!ex[k]?.text);
+  const goWhole = () => {
+    setWholeOpen((v) => !v);
+    if (whole && whole !== 'err') return;
+    setWhole('wait');
+    post({ say: true, piece: '', si: 0 }).then((d) => setWhole(d.text || 'err')).catch(() => setWhole('err'));
+  };
   const ask = () => {
     const qq = q.trim(); if (!qq || !anyText) return;
     const before = thread.filter((x) => x.a && !x.bad).map((x) => ({ q: x.q, a: x.a as string }));
@@ -70,6 +80,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown }: { l
       {menu && (
         <span className="sayit-menu">
           <button type="button" className={open ? 'on' : ''} onClick={go}>In my words</button>
+          {wholeToo && <button type="button" className={wholeOpen ? 'on' : ''} onClick={goWhole}>Whole line in my words</button>}
           {!!pshat?.length && <button type="button" className={showPshat ? 'on' : ''} onClick={() => setShowPshat((v) => !v)}>Pshat</button>}
           {!noChart && <button type="button" className={chart ? 'on' : ''} onClick={() => setChart((v) => !v)}>Sugya chart</button>}
           {DEEPER.map(([k, name]) => <button key={k} type="button" className={exOrder.includes(k) ? 'on' : ''} onClick={() => deeper(k)}>{name}</button>)}
@@ -81,6 +92,12 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown }: { l
           <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>
             {text ?? (err || <span className="wait-dots"><span /><span /><span /></span>)}
           </span>
+        </span>
+      )}
+      {wholeOpen && whole && (
+        <span className="sayit-box" role="region" aria-label="The whole line in my words">
+          <span className="sayit-ex-label">The whole line in my words</span>
+          {(() => { const h = typeof whole === 'string' && whole !== 'wait' && whole !== 'err' && isHebText(whole); return <span className={`sayit-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{whole === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : whole === 'err' ? 'It couldn’t explain just now.' : whole}</span>; })()}
         </span>
       )}
       {showPshat && !!pshat?.length && (
