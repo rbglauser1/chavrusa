@@ -7,7 +7,8 @@
 // ask a follow-up (and another, and another), answered right there. Settings → The AI → The ✦ and its tools, and Aa.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { isHebText } from './AiNote';
-import SugyaFlow from './SugyaFlow';
+import SugyaChart from './SugyaChart';
+import { useBackLayer } from '@/lib/back';
 import { useKept, wasKept } from '@/lib/uiKeep';
 import { SAY_GROUPS, SAY_ITEMS, lastUsed, noteUse, useSayPrefs, type SayGroup } from '@/lib/sayPrefs';
 
@@ -65,6 +66,16 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
   const [open, setOpen] = useKept(`${K}:open`, false);
   const [askOpen, setAskOpen] = useKept(`${K}:ask`, false); // Nov 26: ✦ Ask: his own question on the line, in his own words
   const [chart, setChart] = useKept(`${K}:chart`, false); // Nov 25: ✦ Sugya chart, beside In my words
+  // Nov 27: the Sugya chart always comes up from the bottom (the road, design F), as in Learn with me, on the line he's on.
+  useBackLayer(chart, () => setChart(false));
+  const lm = lineRef.match(/^(.*):(\d+)(?:-\d+)?$/);
+  const chartRef = lm ? lm[1] : lineRef, chartHere = lm ? Number(lm[2]) : 1;
+  const chartTotal = useRef(chartHere);
+  const linesOnPage = () => { const n = Array.from(document.querySelectorAll<HTMLElement>('.sefer-flow [data-line]')).filter((e) => /^\d+$/.test(e.dataset.line ?? '')).length; return Math.max(n, chartHere); };
+  const goChartLine = (l: number) => {
+    setChart(false);
+    window.setTimeout(() => document.querySelector(`.sefer-flow [data-line="${l}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
+  };
   const [text, setText] = useKept<string | null>(`${K}:text`, null);
   const [err, setErr] = useState('');
   const [thread, setThread] = useKept<QA[]>(`${K}:thread`, []);
@@ -146,7 +157,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
       core('simple', simpleOpen, goSimple),
       core('words', open, go),
       ...(pshat?.length ? [core('pshat', showPshat, () => setShowPshat((v) => !v))] : []),
-      core('chart', chart, () => setChart((v) => !v)),
+      core('chart', chart, () => { chartTotal.current = linesOnPage(); setChart((v) => !v); }),
       ...(bp ? [core('bigpic', bpOpen, () => setBpOpen((v) => !v))] : []),
       ...DEEPER.filter(([k]) => k !== 'challenge' && k !== 'rashitos').map(([k]) => core(k, exOrder.includes(k), () => deeper(k))),
       core('ask', askOpen, () => { setAskOpen((v) => !v); window.setTimeout(() => inp.current?.focus(), 60); }),
@@ -199,12 +210,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
           {pshat.map((t, k) => { const h = isHebText(t); return <span key={k} className={`pshat ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{t}</span>; })}
         </span>
       )}
-      {chart && (
-        <span className="sayit-box" role="region" aria-label="Sugya chart">
-          <SugyaFlow lineRef={lineRef} />
-          {(() => { const mp = acts?.().page.find((x) => MAPRE.test(x.label)); return mp ? <button type="button" className="sayit-inner" onClick={mp.run}>🗺 The whole sugya map</button> : null; })()}
-        </span>
-      )}
+      {chart && <SugyaChart refText={chartRef} title={/\d+[ab]$/.test(chartRef) ? 'Sugya chart' : /^Mishnah |^[A-Z][A-Za-z' ]+ \d+$/.test(chartRef) ? 'Perek chart' : 'Chart'} here={chartHere} total={chartTotal.current} onGo={goChartLine} onClose={() => setChart(false)} />}
       {bp && bpOpen && <span className="sayit-box" role="region" aria-label="Big picture">{bp()}</span>}
       {(exOrder.length > 0 || anyText || askOpen) && (
         <span className="sayit-box sayit-more" role="region" aria-label="Go deeper">
