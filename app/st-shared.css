@@ -308,6 +308,11 @@
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { position:sticky !important; top:calc(100dvh - var(--full-mid) - 24px) !important; bottom:calc(var(--full-mid) - 24px) !important; left:auto !important; right:auto !important; width:fit-content; height:48px; }
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-full-ctl { margin:0 74px -48px auto; }
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-btn { width:48px; margin:0 16px -48px auto; }
+  /* Nov 27: the ✦ sheet too. Opened in full screen it was drawn "pinned to the screen", which the iPhone doesn't draw
+     here: the sheet never showed and the buttons seemed to vanish. Now its dimmed backdrop is held over the screen the
+     same sticky way, and the sheet sits inside it. */
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-scrim { position:sticky !important; top:0; bottom:0; height:100dvh; margin-top:-100dvh; inset:auto; }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] body .ai-hub-scrim .ai-hub { position:absolute; bottom:calc(var(--full-mid, 40px) + 40px); }
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .daf-dock { position:sticky; z-index:60; top:calc(100dvh - var(--full-mid) - 17px); bottom:calc(var(--full-mid) - 17px); width:fit-content; height:34px; margin:0 0 -34px 16px; }
   :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .daf-dock .daf-bar { position:static !important; transform:none !important; }
 }
