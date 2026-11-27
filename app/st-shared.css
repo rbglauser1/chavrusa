@@ -363,3 +363,19 @@ body:has(.launch-home) .five-pill { display:none; }
 @media (max-width:1049px) and (display-mode: standalone) {
   :is([data-look='clay'],[data-look='chatgpt']) .st-study-header { padding-top:calc(18px + env(safe-area-inset-top)) !important; }
 }
+
+/* Nov 27: the bottom row moved over to the right (the old ✦ corner button is gone), a little smaller, and the mic in the
+   Learn with me blue instead of black. The title sits a little to the right, centred on the screen. */
+:is([data-look='clay'],[data-look='chatgpt']) .st-study-header>div:not(.st-tools-menu) { padding-left:36px; }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .st-mic:not(.st-live) { --mb:#2F5F9E; background:var(--mb); color:#fff; border-color:var(--mb); }
+:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.st-study-footer, .st-full-ctl) .st-mic:not(.st-live) { --mb:#7fa6dc; color:#0f1622; }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.st-study-footer, .st-full-ctl) .ascroll-btn { width:42px; height:42px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-full-ctl { right:16px; }
+:is([data-look='clay'],[data-look='chatgpt']) .st-full-ctl .st-mic { width:42px; height:42px; }
+@media (max-width:1049px) {
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study-footer { padding-right:16px; }
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-study-footer .st-mic { right:16px; bottom:calc(var(--row-mid) - 21px); width:42px; height:42px; }
+  :is([data-look='clay'],[data-look='chatgpt']) .st-study:not(.st-discussing) .st-study-footer .ascroll { right:66px; bottom:calc(var(--row-mid) - 21px); }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-full-ctl { margin:0 16px -42px auto; height:42px; top:calc(100dvh - var(--full-mid) - 21px) !important; bottom:calc(var(--full-mid) - 21px) !important; }
+  :is([data-look='clay'],[data-look='chatgpt'])[data-st-full] .st-full-ctl .st-mic { width:42px; height:42px; }
+}
