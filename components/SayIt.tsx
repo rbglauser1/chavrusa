@@ -148,7 +148,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
           <SugyaFlow lineRef={lineRef} />
         </span>
       )}
-      {(exOrder.length > 0 || thread.length > 0 || anyText || askOpen) && (
+      {(exOrder.length > 0 || anyText || askOpen) && (
         <span className="sayit-box sayit-more" role="region" aria-label="Go deeper">
           {exOrder.map((k) => {
             const e = ex[k] ?? {};
@@ -185,7 +185,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
               </span>
             );
           })}
-          {thread.map((x, i) => {
+          {(askOpen || anyText) && thread.map((x, i) => { // Nov 26: tapping Ask again folds the questions away (kept for next time)
             const h = !!x.a && isHebText(x.a);
             return (
               <span key={i} className="sayit-qa">
