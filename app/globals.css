@@ -3778,3 +3778,12 @@ html[data-heheavy='on'] :is(.he, .il-he, .min-he, .tg-he, .mg-text, .mg-onk, .lw
 .sayit-seg { margin: 2px 0 8px; }
 .bp-box { display: block; }
 .bp-box-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* Nov 27: Learn with me as a Bubble (design B): a speech bubble under the line, pointing up at it, one step at a time */
+.lw-bub { position: relative; margin: 14px 0 18px; padding: 10px 14px 12px; border-radius: 16px; background: var(--surface, #fff); color: var(--ink); border: 1px solid var(--rule); box-shadow: 0 16px 34px -18px rgba(20, 30, 50, .45); font-family: var(--f-ui); }
+.lw-bub-tip { position: absolute; top: -8px; left: 34px; width: 15px; height: 15px; background: var(--surface, #fff); border-left: 1px solid var(--rule); border-top: 1px solid var(--rule); transform: rotate(45deg); }
+.lw-bub-head { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.lw-bub-where { flex: 1; font: 700 11.5px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.lw-bub-body { font-size: var(--ai-size, 15px); line-height: 1.5; }
+.lw-bub-foot { display: flex; gap: 8px; margin-top: 10px; }
+.lw-bub-foot .lw-next { flex: 1; }

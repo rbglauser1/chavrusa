@@ -581,6 +581,44 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
 
   const nextText = atEnd ? (n < total ? 'Next line ›' : onNext ? (/^Mishnah |^[A-Z][a-z]+ \d+$/.test(refText) && !/\d+[ab]$/.test(refText) ? 'Next perek ›' : 'Next amud ›') : 'Finish ›') : steps[shown - 1]?.part === 'before' ? 'Show the text ›' : 'Next ›';
 
+  // Nov 27: Bubble (design B): a speech bubble right under the line, pointing up at it, one step at a time, with ‹ and
+  // Next; it moves down the page with the line he is on.
+  if (inline && view === 'bubble' && (host || !noHost)) {
+    if (!host) return chart;
+    const bcur = steps[shown - 1];
+    return <>{createPortal(
+      <div className="lw-bub" role="region" aria-label="Learn with me">
+        <span className="lw-bub-tip" aria-hidden="true" />
+        <div className="lw-bub-head">
+          <span className="lw-bub-where">{done ? 'Done' : `Line ${n}${steps.length > 1 ? ` · ${shown} of ${steps.length}` : ''}`}</span>
+          {lostBtn}<button className="lw-icon" onClick={openChart} aria-label={chartTitle}>🗺</button>
+          {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
+          <button className="lw-icon" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+        <div className="lw-bub-body">
+          {done ? (
+            <div className="lw-done">
+              <p>Well learned! That’s the end of this {/^Mishnah /.test(refText) ? 'perek' : 'section'}.</p>
+              <OneSentence refText={refText} total={total} />
+              {onNext && <button className="lw-next" onClick={onNext}>On to the next ›</button>}
+            </div>
+          ) : err ? (
+            <div className="muted">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
+          ) : !phrases.length || !bcur ? (
+            <div className="muted"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
+          ) : <>{n === 1 && shown === 1 && <Preview refText={refText} />}{lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}{shown === 1 && <QuestionBack refText={refText} n={n} />}<FlowTag refText={refText} n={n} />{renderStep(bcur, shown - 1)}{lineEnd}</>}
+        </div>
+        {!done && (
+          <div className="lw-bub-foot">
+            <button className="lw-back" onClick={back} disabled={n === 1 && shown <= 1} aria-label="Back">‹</button>
+            <button className="lw-next" onClick={next} disabled={!phrases.length}>{nextText}</button>
+          </div>
+        )}
+      </div>,
+      host,
+    )}{chart}</>;
+  }
+
   if (inline && (host || !noHost)) {
     if (!host) return chart;
     return <>{createPortal(
