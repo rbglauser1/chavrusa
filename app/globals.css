@@ -3773,3 +3773,8 @@ html[data-heheavy='on'] :is(.he, .il-he, .min-he, .tg-he, .mg-text, .mg-onk, .lw
 /* Nov 27: the terracotta ✦'s choices, now in the line's ✦ */
 .sayit-menu .sayit-act { border-style: dashed; }
 .sayit-menu-sub { flex-basis: 100%; margin: 4px 0 -2px; font: 700 11px var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--soft); }
+/* Nov 27: folded-in choices inside the ✦ boxes */
+.sayit-inner { display: inline-block; margin-top: 8px; padding: 5px 12px; border-radius: 999px; border: 1px dashed var(--rule); background: transparent; color: var(--ink); font: 600 13px var(--f-ui); }
+.sayit-seg { margin: 2px 0 8px; }
+.bp-box { display: block; }
+.bp-box-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }

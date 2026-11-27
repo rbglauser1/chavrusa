@@ -1,7 +1,7 @@
 'use client';
 // Nov 17: "Big picture" under a line: one tap and the voice tells you where this line stands in the sugya, in about
 // half a minute, then stops. A second tap while it speaks stops it. Written and recorded once per line, then free.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isHebText } from './AiNote';
 import { watchVoice } from '@/lib/voiceClip';
 
@@ -16,7 +16,7 @@ const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAA
 // given by the live voice itself, not played over it.
 const bigText = (lineRef: string): Promise<string> => fetch(`/api/bigpicture?ref=${encodeURIComponent(lineRef)}`).then((r) => r.json()).then((d) => String(d.text ?? '')).catch(() => '');
 
-export function BigPictureBtn({ lineRef, onTalk, liveOn }: { lineRef: string; onTalk?: (text: string) => void; liveOn?: boolean }) {
+export function BigPictureBtn({ lineRef, onTalk, liveOn, label = 'Big picture' }: { lineRef: string; onTalk?: (text: string) => void; liveOn?: boolean; label?: string }) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'done' | 'failed'>('idle');
   const talk = async () => {
     if (!onTalk) return;
@@ -50,7 +50,7 @@ export function BigPictureBtn({ lineRef, onTalk, liveOn }: { lineRef: string; on
   return (
     <>
       <button className={`comm-btn ai bp-btn ${state === 'playing' ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); void go(); }} aria-label={state === 'playing' ? 'Stop the big picture' : liveOn && onTalk ? 'Your chavrusa gives the big picture of this line' : 'Hear the big picture of this line'}>
-        <span className="ai-star">{state === 'loading' ? '…' : state === 'playing' ? '■' : liveOn && onTalk ? '🎙' : '🔊'}</span> {state === 'failed' ? 'Couldn’t play' : state === 'playing' ? 'Stop' : 'Big picture'}
+        <span className="ai-star">{state === 'loading' ? '…' : state === 'playing' ? '■' : liveOn && onTalk ? '🎙' : '🔊'}</span> {state === 'failed' ? 'Couldn’t play' : state === 'playing' ? 'Stop' : label}
       </button>
       {onTalk && !liveOn && (state === 'playing' || state === 'done') && (
         <button className="comm-btn ai bp-talk" onClick={(e) => { e.stopPropagation(); void talk(); }}><span className="ai-star">🎙</span> Talk about it</button>
@@ -85,5 +85,28 @@ export function BigPictureTextBtn({ lineRef, onTalk }: { lineRef: string; onTalk
         </div>
       )}
     </>
+  );
+}
+
+// Nov 27: one Big picture, in the line's ✦: the note to read, with 🔊 Hear it and 🎙 Talk about it inside (the two
+// separate Big picture buttons under the line are gone).
+export function BigPictureBox({ lineRef, onTalk, liveOn }: { lineRef: string; onTalk?: (text: string) => void; liveOn?: boolean }) {
+  const [text, setText] = useState('');
+  const [state, setState] = useState<'loading' | 'idle' | 'failed'>('loading');
+  useEffect(() => {
+    let gone = false; setState('loading');
+    bigText(lineRef).then((t) => { if (gone) return; if (t) { setText(t); setState('idle'); } else setState('failed'); });
+    return () => { gone = true; };
+  }, [lineRef]);
+  const he = isHebText(text);
+  return (
+    <span className="bp-box">
+      <span className="sayit-ex-label">Big picture</span>
+      <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>{state === 'loading' ? <span className="wait-dots"><span /><span /><span /></span> : state === 'failed' ? 'It couldn’t be written just now.' : text}</span>
+      <span className="bp-box-row">
+        <BigPictureBtn lineRef={lineRef} onTalk={onTalk} liveOn={liveOn} label="Hear it" />
+        {onTalk && !liveOn && text && <button className="comm-btn ai bp-talk" onClick={(e) => { e.stopPropagation(); onTalk(text); }}><span className="ai-star">🎙</span> Talk about it</button>}
+      </span>
+    </span>
   );
 }

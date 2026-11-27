@@ -5,12 +5,13 @@
 // Nov 23: "✦ In my words?" at the end of a line (or of each sentence, in Sentence by sentence): one tap, and the
 // chavrusa says what it means and what it is doing, in its own plain words (made once and kept); under it, a box to
 // ask a follow-up (and another, and another), answered right there. Settings → The AI → The ✦ and its tools, and Aa.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { isHebText } from './AiNote';
 import SugyaFlow from './SugyaFlow';
 import { useKept, wasKept } from '@/lib/uiKeep';
 
 type QA = { q: string; a: string | null; bad?: boolean };
+const MAPRE = /Sugya map|Perek map/;
 // Nov 23: ✦ Go deeper, under the plain explanation: a kashya, a chakira, the halacha, the meforshim, or the wider inyan,
 // each built from what Sefaria brings on this line (its meforshim and what it links to), made once and kept.
 const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['rashitos', 'Rashi vs Tosafos'], ['compare', 'My reading vs Rashi'], ['widen', 'Widen it']]; // Nov 25: Rashi vs Tosafos side by side; Prepare, then compare
@@ -20,7 +21,11 @@ type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean; dr
 // here, Where it goes, By heart, Where was I?, Sit with me) and for the page (Sugya map, Ask about the whole page,
 // Review, Listen, Source sheet, your own buttons). Given by the reader (SeferPanel), only on the line's last ✦.
 export type MoreActs = { line: { label: string; run: () => void }[]; page: { label: string; run: () => void }[] };
-export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, wholeToo, more: acts }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean; wholeToo?: boolean; more?: () => MoreActs }) {
+export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more: acts, bp }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean; wholeToo?: boolean; more?: () => MoreActs; bp?: () => ReactNode }) {
+  // Nov 27: every choice on every ✦, and the repeats folded together: Whole line is inside In my words; Sharp kashya
+  // inside Kashya; Rashi vs Tosafos inside Meforshim; the Sugya map inside the Sugya chart; one Big picture (read,
+  // hear, talk) instead of two buttons under the line.
+  const [bpOpen, setBpOpen] = useKept(`say:${lineRef}:${si ?? 0}:bp`, false);
   // Nov 26: in Sentence by sentence, the last sentence also offers the whole line's In my words: the same one made
   // (and kept) when the English is shown alone, so switching views shows what was already made.
   const K = `say:${lineRef}:${si ?? 0}`; // Nov 26: what's open here, and what came back, stays when he goes to Settings and back
@@ -115,18 +120,18 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
           <button type="button" className={simpleOpen ? 'on' : ''} onClick={goSimple}>Simple</button>
           <button type="button" className={open ? 'on' : ''} onClick={go}>In my words</button>
           <button type="button" className={askOpen ? 'on' : ''} onClick={() => { setAskOpen((v) => !v); window.setTimeout(() => inp.current?.focus(), 60); }}>Ask</button>
-          {wholeToo && <button type="button" className={wholeOpen ? 'on' : ''} onClick={goWhole}>Whole line in my words</button>}
           {!!pshat?.length && <button type="button" className={showPshat ? 'on' : ''} onClick={() => setShowPshat((v) => !v)}>Pshat</button>}
-          {!noChart && <button type="button" className={chart ? 'on' : ''} onClick={() => setChart((v) => !v)}>Sugya chart</button>}
-          {DEEPER.map(([k, name]) => <button key={k} type="button" className={exOrder.includes(k) ? 'on' : ''} onClick={() => deeper(k)}>{name}</button>)}
+          <button type="button" className={chart ? 'on' : ''} onClick={() => setChart((v) => !v)}>Sugya chart</button>
+          {bp && <button type="button" className={bpOpen ? 'on' : ''} onClick={() => setBpOpen((v) => !v)}>Big picture</button>}
+          {DEEPER.filter(([k]) => k !== 'challenge' && k !== 'rashitos').map(([k, name]) => <button key={k} type="button" className={exOrder.includes(k) ? 'on' : ''} onClick={() => deeper(k)}>{name}</button>)}
           {(() => {
             const m = acts?.(); if (!m) return null;
             const clean = (l: string) => l.replace(/^✦\s*/, '').replace(/\s*\((I’ll lead|you lead)\)$/, '');
             return (
               <>
                 {m.line.map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
-                {m.page.length > 0 && <span className="sayit-menu-sub">This page</span>}
-                {m.page.map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
+                {m.page.some((x) => !MAPRE.test(x.label)) && <span className="sayit-menu-sub">This page</span>}
+                {m.page.filter((x) => !MAPRE.test(x.label)).map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
               </>
             );
           })()}
@@ -135,21 +140,21 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
       {open && (
         <span className="sayit-box" role="region" aria-label="In my words">
           <span className="sayit-ex-label">In my words</span>
-          <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>
-            {text ?? (err || <span className="wait-dots"><span /><span /><span /></span>)}
-          </span>
+          {wholeToo && (
+            <span className="sf-seg sayit-seg" role="radiogroup" aria-label="Explain">
+              <button type="button" role="radio" aria-checked={!wholeOpen} className={!wholeOpen ? 'on' : ''} onClick={() => { if (wholeOpen) setWholeOpen(false); }}>This sentence</button>
+              <button type="button" role="radio" aria-checked={wholeOpen} className={wholeOpen ? 'on' : ''} onClick={() => { if (!wholeOpen) goWhole(); }}>Whole line</button>
+            </span>
+          )}
+          {wholeToo && wholeOpen
+            ? (() => { const h = typeof whole === 'string' && whole !== 'wait' && whole !== 'err' && isHebText(whole); return <span className={`sayit-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{!whole || whole === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : whole === 'err' ? 'It couldn’t explain just now.' : whole}</span>; })()
+            : <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>{text ?? (err || <span className="wait-dots"><span /><span /><span /></span>)}</span>}
         </span>
       )}
       {simpleOpen && simple && (
         <span className="sayit-box" role="region" aria-label="Simple">
           <span className="sayit-ex-label">Simple</span>
           {(() => { const h = simple !== 'wait' && simple !== 'err' && isHebText(simple); return <span className={`sayit-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{simple === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : simple === 'err' ? 'It couldn’t explain just now.' : simple}</span>; })()}
-        </span>
-      )}
-      {wholeOpen && whole && (
-        <span className="sayit-box" role="region" aria-label="The whole line in my words">
-          <span className="sayit-ex-label">The whole line in my words</span>
-          {(() => { const h = typeof whole === 'string' && whole !== 'wait' && whole !== 'err' && isHebText(whole); return <span className={`sayit-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{whole === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : whole === 'err' ? 'It couldn’t explain just now.' : whole}</span>; })()}
         </span>
       )}
       {showPshat && !!pshat?.length && (
@@ -161,8 +166,10 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
       {chart && (
         <span className="sayit-box" role="region" aria-label="Sugya chart">
           <SugyaFlow lineRef={lineRef} />
+          {(() => { const mp = acts?.().page.find((x) => MAPRE.test(x.label)); return mp ? <button type="button" className="sayit-inner" onClick={mp.run}>🗺 The whole sugya map</button> : null; })()}
         </span>
       )}
+      {bp && bpOpen && <span className="sayit-box" role="region" aria-label="Big picture">{bp()}</span>}
       {(exOrder.length > 0 || anyText || askOpen) && (
         <span className="sayit-box sayit-more" role="region" aria-label="Go deeper">
           {exOrder.map((k) => {
@@ -197,6 +204,8 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
                   ? (k === 'rashitos' ? e.text.split('\n').filter((l) => l.trim()).map((l, i) => { const mm = l.match(/^([^:]{2,30}):\s*(.*)$/); return <span key={i} className="sayit-rt">{mm ? <><b>{mm[1]}</b>{mm[2]}</> : l}</span>; }) : e.text)
                   : e.err ?? <span className="wait-dots"><span /><span /><span /></span>}</span>
                 {!!e.sources?.length && <span className="sayit-ex-src">From: {e.sources.join(' · ')}</span>}
+                {k === 'kashya' && !exOrder.includes('challenge') && <button type="button" className="sayit-inner" onClick={() => deeper('challenge')}>＋ A sharp kashya of its own</button>}
+                {k === 'meforshim' && !exOrder.includes('rashitos') && <button type="button" className="sayit-inner" onClick={() => deeper('rashitos')}>＋ Rashi and Tosafos side by side</button>}
               </span>
             );
           })}

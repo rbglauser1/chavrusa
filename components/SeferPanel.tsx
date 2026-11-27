@@ -37,7 +37,7 @@ import { AiNotes, PshatInline, isHebText } from './AiNote';
 import { useFlow, flowTags, MARK } from './useFlow';
 import SayIt from './SayIt';
 import { getOfflineText, putText } from '@/lib/offlineStore';
-import { BigPictureBtn, BigPictureTextBtn } from './BigPicture';
+import { BigPictureBox } from './BigPicture';
 import FocusHelp from './FocusHelp';
 import { setVoiceGuide } from '@/lib/voiceGuide';
 
@@ -926,6 +926,9 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   });
   // Nov 27: for the ✦ at the end of line i: the terracotta ✦'s line choices (but Ask, which the line's ✦ has) and the
   // page's.
+  const lineBp = (i: number) => (aiX && (settings.bigPicture !== false || settings.bigPictureText !== false) && src
+    ? () => <BigPictureBox lineRef={`${src.ref}:${i + 1}`} liveOn={!!talk?.on} onTalk={onTalkAbout && talk ? (t) => onTalkAbout(src, i + 1, t) : undefined} />
+    : undefined);
   const lineActs = (i: number) => () => ({ line: hubMain(i).filter((x) => !/Ask about this line/.test(x.label)), page: hubMore(i) });
   const hub = hubOn && src && !showLib && (aiX || hubAmud.length > 0)
     ? <>
@@ -1146,7 +1149,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} marks={marks}
-                        after={sayHere || pshIn ? (k) => (<>{pshIn && !sayHere && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} piece={pairs.length > 1 ? pairs[k].he : undefined} si={pairs.length > 1 ? k + 1 : undefined} noChart={k !== pairs.length - 1} wholeToo={pairs.length > 1 && k === pairs.length - 1} pshat={pshIn && k === pairs.length - 1 ? pshTexts : undefined} more={k === pairs.length - 1 ? lineActs(i) : undefined} /> : k === pairs.length - 1 ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} more={lineActs(i)} /> : null)}</>) : undefined} />
+                        after={sayHere || pshIn ? (k) => (<>{pshIn && !sayHere && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} piece={pairs.length > 1 ? pairs[k].he : undefined} si={pairs.length > 1 ? k + 1 : undefined} wholeToo={pairs.length > 1} pshat={pshIn ? pshTexts : undefined} more={lineActs(i)} bp={lineBp(i)} /> : k === pairs.length - 1 ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} more={lineActs(i)} bp={lineBp(i)} /> : null)}</>) : undefined} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
@@ -1182,8 +1185,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                         {quick.map((x) => (
                           <button key={x.title} className={`comm-btn ${comm[`${i}:${nice(x.title)}`] ? 'on' : ''}`} onClick={() => openLinked(i, x)}>{nice(x.title)}</button>
                         ))}
-                        {aiX && settings.bigPicture !== false && <BigPictureBtn lineRef={`${src.ref}:${i + 1}`} liveOn={!!talk?.on} onTalk={onTalkAbout && talk ? (t) => onTalkAbout(src, i + 1, t) : undefined} />}
-                        {aiX && settings.bigPictureText !== false && <BigPictureTextBtn lineRef={`${src.ref}:${i + 1}`} onTalk={onTalkAbout && talk ? (t) => onTalkAbout(src, i + 1, t) : undefined} />}
+                        {/* Nov 27: Big picture is in the line's ✦ now (one button: read, hear, talk). */}
                         {aiX && !hubOn && settings.explainLine !== false && (
                           <button className={`comm-btn ai ${xOpen.has(i) ? 'on' : ''}`} onClick={() => flipIn(setXOpen, i)}><span className="ai-star">✦</span> Explain</button>
                         )}
@@ -1333,7 +1335,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       if ((e.target as HTMLElement).closest('button')) return;
                       if (window.getSelection()?.toString()) return; // words being selected for a color mark
                       if (dbl) tap(() => toggleLine(i)); else toggleLine(i); }}>
-                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && !sayHere && <PshatInline texts={pshTexts} />}{sayHere && <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} more={lineActs(i)} />}</> : aiText[key] ? (
+                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && !sayHere && <PshatInline texts={pshTexts} />}{sayHere && <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} more={lineActs(i)} bp={lineBp(i)} />}</> : aiText[key] ? (
                         <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (
                         <span className="tr-ai"><small>No approved translation</small>
