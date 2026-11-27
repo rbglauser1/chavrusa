@@ -125,10 +125,10 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
     if (ex.compare?.wait) setEx((x) => ({ ...x, compare: { ...x.compare, wait: false } }));
     if (thread.some((x) => x.a === null)) setThread((t) => t.map((x) => (x.a === null ? { ...x, a: 'This was cut off when you left. Ask it again.', bad: true } : x)));
   }, [K]); // eslint-disable-line react-hooks/exhaustive-deps
-  const simpleFrom = useRef<{ x: number; y: number } | null>(null); // Nov 27: the card pops out of the button tapped
+  const simpleFrom = useRef<{ left: number; top: number; right: number; bottom: number } | null>(null); // Nov 27: the bubble grows out of the button tapped
   useBackLayer(simpleOpen, () => setSimpleOpen(false));
   const goSimple = (ev?: { currentTarget: HTMLElement }) => {
-    if (ev) { const r = ev.currentTarget.getBoundingClientRect(); simpleFrom.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+    if (ev) { const r = ev.currentTarget.getBoundingClientRect(); simpleFrom.current = { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; }
     setSimpleOpen((v) => !v);
     if (simple && simple !== 'err' && simple !== 'wait') return;
     setSimple('wait');

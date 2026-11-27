@@ -3919,3 +3919,18 @@ body.lw-mini-open :is(.daf-dock, .st-full-ctl, .st-study-footer) { visibility: h
 @keyframes smp-flicker { 0%, 100% { opacity: 1; } 20% { opacity: .35; } 35% { opacity: .9; } 55% { opacity: .5; } }
 @keyframes smp-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 205, 80, 0); } 50% { box-shadow: 0 0 28px 4px rgba(255, 205, 80, .45); } }
 @media (prefers-reduced-motion: reduce) { .smp, .smp-back, .smp-text > span, .smp-bulb { animation: none !important; opacity: 1; } }
+
+/* Nov 27 (later): Simple is a bubble at the button itself, not a card in the middle */
+.smp-back { background: rgba(18, 24, 36, .12); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.smp { transform: none; overflow: visible; display: flex; flex-direction: column; padding: 18px 18px 12px; border-radius: 22px; text-align: start; animation: smp-grow .32s cubic-bezier(.2, 1.3, .4, 1) both; }
+.smp > * { flex-shrink: 0; }
+.smp .smp-text { flex-shrink: 1; overflow: auto; min-height: 0; margin: 8px 0 14px; font-size: 18px; }
+.smp.going { animation: smp-shrink .17s ease-in both; }
+.smp::before { content: ''; position: absolute; left: calc(var(--tip) - 9px); top: -8px; width: 18px; height: 18px; background: inherit; border-radius: 4px 0 0 0; transform: rotate(45deg); box-shadow: -1px -1px 0 rgba(255, 214, 102, .35); }
+.smp.up::before { top: auto; bottom: -8px; border-radius: 0 0 4px 0; box-shadow: 1px 1px 0 rgba(255, 214, 102, .35); }
+.smp-head { display: flex; align-items: center; gap: 10px; }
+.smp .smp-bulb { width: 40px; height: 40px; margin: 0; font-size: 22px; flex: 0 0 40px; }
+.smp .smp-kicker { flex: 1; }
+.smp .smp-got { min-height: 44px; border-radius: 14px; font-size: 15px; }
+@keyframes smp-grow { from { opacity: 0; transform: scale(.12); } to { opacity: 1; transform: scale(1); } }
+@keyframes smp-shrink { to { opacity: 0; transform: scale(.12); } }
