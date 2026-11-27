@@ -3934,3 +3934,8 @@ body.lw-mini-open :is(.daf-dock, .st-full-ctl, .st-study-footer) { visibility: h
 .smp .smp-got { min-height: 44px; border-radius: 14px; font-size: 15px; }
 @keyframes smp-grow { from { opacity: 0; transform: scale(.12); } to { opacity: 1; transform: scale(1); } }
 @keyframes smp-shrink { to { opacity: 0; transform: scale(.12); } }
+/* Nov 27: Simple bubble steady under the finger */
+.smp-back { touch-action: none; -webkit-tap-highlight-color: transparent; }
+.smp { -webkit-user-select: text; user-select: text; -webkit-tap-highlight-color: transparent; }
+.smp .smp-text { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.smp .smp-text > span { animation-fill-mode: both; }

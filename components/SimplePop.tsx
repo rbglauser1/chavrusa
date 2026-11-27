@@ -1,10 +1,10 @@
 'use client';
 // Nov 27: ✦ Simple has its own way of showing: a bubble that grows out of the Simple button, right where it is (its top
 // at the button, its point on the button; above it instead only when there's no room below). A lit bulb (it flickers
-// while the light is coming on), the plain explanation a sentence at a time, and Got it. Tap anywhere around it, swipe
-// it away, or go Back, and it shrinks back into the button. (First made as a card in the middle of the screen; he wanted
+// while the light is coming on), the plain explanation a sentence at a time, and Got it. Tap anywhere around it or go
+// Back, and it shrinks back into the button. (First made as a card in the middle of the screen; he wanted
 // it at the button.)
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { isHebText } from './AiNote';
 
@@ -14,10 +14,16 @@ export default function SimplePop({ text, line, from, onClose, onRetry }: {
   const [going, setGoing] = useState(false);
   const close = () => { if (going) return; setGoing(true); window.setTimeout(onClose, 170); };
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); });
-  const sw = useRef<{ y: number; x: number } | null>(null);
-  const [drag, setDrag] = useState(0);
+  // Nov 27: steady under the finger: the place is worked out once, when it opens (the iPhone's bars coming and going no
+  // longer move it), there's no swipe-to-close (it fought with scrolling the words), and the page behind doesn't scroll.
+  const [box] = useState(() => (typeof window === 'undefined' ? { vw: 390, vh: 800 } : { vw: window.innerWidth, vh: window.innerHeight }));
+  useEffect(() => {
+    const stop = (e: TouchEvent) => { if (!(e.target as HTMLElement | null)?.closest?.('.smp-text')) e.preventDefault(); };
+    document.addEventListener('touchmove', stop, { passive: false });
+    return () => document.removeEventListener('touchmove', stop);
+  }, []);
   if (typeof document === 'undefined') return null;
-  const vw = window.innerWidth, vh = window.innerHeight;
+  const { vw, vh } = box;
   const w = Math.min(vw - 20, 380);
   const bx = from ? (from.left + from.right) / 2 : vw / 2;
   const left = Math.min(Math.max(10, bx - 44), vw - w - 10);
@@ -33,11 +39,8 @@ export default function SimplePop({ text, line, from, onClose, onRetry }: {
     <div className={`smp-back${going ? ' going' : ''}`} onClick={close} role="presentation">
       <div
         className={`smp${up ? ' up' : ''}${going ? ' going' : ''}`} role="dialog" aria-label="In simple words"
-        style={{ ...pos, width: `${w}px`, transformOrigin: `${tipX}px ${up ? '100%' : '0'}`, ['--tip' as string]: `${tipX}px`, ...(drag ? { transform: `translateY(${drag}px)`, opacity: Math.max(0.3, 1 - Math.abs(drag) / 260), transition: 'none', animation: 'none' } : {}) }}
+        style={{ ...pos, width: `${w}px`, transformOrigin: `${tipX}px ${up ? '100%' : '0'}`, ['--tip' as string]: `${tipX}px` }}
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => { sw.current = { y: e.touches[0].clientY, x: e.touches[0].clientX }; }}
-        onTouchMove={(e) => { const s = sw.current; if (!s) return; const d = e.touches[0].clientY - s.y; if (Math.abs(d) > 8 && Math.abs(d) > Math.abs(e.touches[0].clientX - s.x)) setDrag(d); }}
-        onTouchEnd={() => { const d = drag; sw.current = null; setDrag(0); if (Math.abs(d) > 90) close(); }}
       >
         <div className="smp-head">
           <div className={`smp-bulb${ready ? ' lit' : text === 'err' ? '' : ' warming'}`} aria-hidden="true"><span>💡</span></div>
