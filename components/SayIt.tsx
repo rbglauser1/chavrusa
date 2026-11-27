@@ -11,6 +11,26 @@ import SugyaFlow from './SugyaFlow';
 import { useKept, wasKept } from '@/lib/uiKeep';
 
 type QA = { q: string; a: string | null; bad?: boolean };
+// Nov 27: a choice that opens a box elsewhere on the line (Where it goes, By heart…): the box is brought to the place he
+// tapped, so it opens right there and he doesn't scroll for it.
+function runHere(ev: { currentTarget: HTMLElement }, run: () => void) {
+  const btn = ev.currentTarget, line = btn.closest<HTMLElement>('[data-line]');
+  const y0 = btn.getBoundingClientRect().bottom;
+  const before = new Set<Element>(line ? Array.from(line.querySelectorAll('*')) : []);
+  run();
+  if (!line) return;
+  const scroller = (el: HTMLElement | null): HTMLElement => {
+    for (let p = el?.parentElement; p; p = p.parentElement) { const o = getComputedStyle(p).overflowY; if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight) return p; }
+    return (document.scrollingElement as HTMLElement) ?? document.documentElement;
+  };
+  const bring = () => {
+    const fresh = Array.from(line.querySelectorAll<HTMLElement>('*')).find((e) => !before.has(e) && (!e.parentElement || before.has(e.parentElement)) && e.getBoundingClientRect().height > 20);
+    if (!fresh) return;
+    const d = fresh.getBoundingClientRect().top - (y0 + 8);
+    if (Math.abs(d) > 12) scroller(line).scrollBy({ top: d, behavior: 'smooth' });
+  };
+  window.setTimeout(bring, 220); window.setTimeout(bring, 650);
+}
 const MAPRE = /Sugya map|Perek map/;
 // Nov 23: ✦ Go deeper, under the plain explanation: a kashya, a chakira, the halacha, the meforshim, or the wider inyan,
 // each built from what Sefaria brings on this line (its meforshim and what it links to), made once and kept.
@@ -129,7 +149,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
             const clean = (l: string) => l.replace(/^✦\s*/, '').replace(/\s*\((I’ll lead|you lead)\)$/, '');
             return (
               <>
-                {m.line.map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
+                {m.line.map((x) => <button key={x.label} type="button" className="sayit-act" onClick={(ev) => (/Learn with me/.test(x.label) ? x.run() : runHere(ev, x.run))}>{clean(x.label)}</button>)}
                 {m.page.some((x) => !MAPRE.test(x.label)) && <span className="sayit-menu-sub">This page</span>}
                 {m.page.filter((x) => !MAPRE.test(x.label)).map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
               </>

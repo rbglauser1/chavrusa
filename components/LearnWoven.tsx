@@ -140,8 +140,8 @@ function Road({ refText, n, onOpen }: { refText: string; n: number; onOpen: () =
   );
 }
 
-export default function LearnWoven({ refText, total, start, lineEl, onNext, onVoice, onClose }: {
-  refText: string; total: number; start: number;
+export default function LearnWoven({ refText, total, start, lineEl, onNext, onVoice, onClose, still }: {
+  refText: string; total: number; start: number; still?: boolean;
   lineEl: (n: number) => HTMLElement | null;
   onNext?: () => void; onVoice?: () => void; onClose: () => void;
 }) {
@@ -255,11 +255,14 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
   const chart = chartOpen ? <SugyaChart refText={refText} title={chartTitle} here={Math.min(n, total)} total={total} onGo={goLine} onClose={() => setChartOpen(false)} /> : null;
 
   // The line he is on, lit in the sefer and brought up into the space above the panel.
+  // Nov 27: opened from the line's ✦, the page doesn't move for the first line: he is already looking at it.
+  const stayFirst = useRef(!!still);
   useEffect(() => {
     if (done) return;
     const el = lineEl(n);
     if (!el) return;
     el.classList.add('lwm-on');
+    if (stayFirst.current) { stayFirst.current = false; return () => el.classList.remove('lwm-on'); }
     const t = window.setTimeout(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
     return () => { window.clearTimeout(t); el.classList.remove('lwm-on'); };
   }, [n]); // eslint-disable-line react-hooks/exhaustive-deps

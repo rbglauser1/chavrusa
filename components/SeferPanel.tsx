@@ -839,7 +839,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     return els.length ? 0 : null;
   };
   // After the ✦ opens a box under a line, bring that box into view (a line can be long: it scrolls to the new box).
+  // Nov 27: a choice made from the line's ✦ opens right there: the page isn't scrolled to the line's start (the ✦ brings
+  // the new box to where he tapped instead), and Learn with me doesn't move the page for its first line.
+  const fromStar = useRef(false);
+  const lwmStill = useRef(false);
   const showLine = (i: number) => {
+    if (fromStar.current) return;
     const ln = () => bodyRef.current?.querySelector(`[data-line="${i + 1}"]`);
     const before = new Set(ln()?.querySelectorAll('.line-x') ?? []);
     window.setTimeout(() => {
@@ -929,13 +934,17 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   const lineBp = (i: number) => (aiX && (settings.bigPicture !== false || settings.bigPictureText !== false) && src
     ? () => <BigPictureBox lineRef={`${src.ref}:${i + 1}`} liveOn={!!talk?.on} onTalk={onTalkAbout && talk ? (t) => onTalkAbout(src, i + 1, t) : undefined} />
     : undefined);
-  const lineActs = (i: number) => () => ({ line: hubMain(i).filter((x) => !/Ask about this line/.test(x.label)), page: hubMore(i) });
+  const starWrap = (x: HubAction): HubAction => ({ label: x.label, run: () => {
+    fromStar.current = true; if (/Learn with me/.test(x.label)) lwmStill.current = true;
+    x.run(); window.setTimeout(() => { fromStar.current = false; }, 500);
+  } });
+  const lineActs = (i: number) => () => ({ line: hubMain(i).filter((x) => !/Ask about this line/.test(x.label)).map(starWrap), page: hubMore(i).map(starWrap) });
   const hub = hubOn && src && !showLib && (aiX || hubAmud.length > 0)
     ? <>
         {/* Nov 27: the floating terracotta ✦ is gone: its choices are in the ✦ at the end of each line (lineActs). */}
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
         {embedded && src && !isComm && !showLib && wholeSec && <FocusHelp settings={settings} refText={src.ref} total={src.he.length} focus={src.focus} picked={picked} talkOn={!!talk?.on} />}
-        {lwmAt != null && <LearnWoven refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => { lwmCarry.current = true; void turn(nextRef); } : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
+        {lwmAt != null && <LearnWoven still={lwmStill.current} refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => { lwmCarry.current = true; void turn(nextRef); } : undefined} onVoice={voiceLead} onClose={() => { lwmStill.current = false; setLwmAt(null); }} />}
       </>
     : null;
   return (
