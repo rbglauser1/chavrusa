@@ -136,7 +136,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
       .catch(() => put('It couldn’t answer just now.', true));
   };
   const he = !!text && isHebText(text);
-  // Nov 27: every button under its heading (Understand, Challenge, Sources, Practice, This page), each heading in the
+  // Nov 27: every button under its heading (Understand, Challenge, Sources, Practice), each heading in the
   // order last used; icons; hidden ones left out altogether (Settings → The AI → The ✦ and its tools → ✦ buttons).
   type It = { id: string; icon: string; label: string; group: SayGroup; on?: boolean; act?: boolean; run: (ev: { currentTarget: HTMLElement }) => void };
   const cat = (id: string) => SAY_ITEMS.find((x) => x.id === id);
@@ -154,8 +154,8 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
     const m = acts?.();
     if (m) {
       const split = (l: string) => { const mm = l.match(/^([^A-Za-z\s]+)\s+(.+)$/); const name = (mm ? mm[2] : l).replace(/\s*\((I’ll lead|you lead)\)$/, ''); return { icon: mm ? mm[1] : '✦', name }; };
-      for (const x of m.line) { const { icon, name } = split(x.label), id = `l:${name}`, c = cat(id); items.push({ id, icon: c?.icon ?? icon, label: name, group: 'Practice', act: true, run: (ev) => (/Learn with me/.test(x.label) ? x.run() : runHere(ev, x.run)) }); }
-      for (const x of m.page.filter((y) => !MAPRE.test(y.label))) { const { icon, name } = split(x.label), id = `p:${name}`, c = cat(id); items.push({ id, icon: c?.icon ?? icon, label: name, group: 'This page', act: true, run: () => x.run() }); }
+      for (const x of m.line) { const { icon, name } = split(x.label), id = `l:${name}`, c = cat(id); items.push({ id, icon: c?.icon ?? icon, label: name, group: c?.group ?? 'Practice', run: (ev) => (/Learn with me/.test(x.label) ? x.run() : runHere(ev, x.run)) }); }
+      for (const x of m.page.filter((y) => !MAPRE.test(y.label))) { const { icon, name } = split(x.label), id = `p:${name}`, c = cat(id); items.push({ id, icon: c?.icon ?? icon, label: name, group: c?.group ?? 'Practice', run: () => x.run() }); }
     }
     const shownItems = items.filter((x) => !prefs.hide.includes(x.id));
     const used = usedAt.current;

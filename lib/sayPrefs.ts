@@ -5,7 +5,7 @@
 // and its tools → ✦ buttons).
 import { useEffect, useState } from 'react';
 
-export const SAY_GROUPS = ['Understand', 'Challenge', 'Sources', 'Practice', 'This page'] as const;
+export const SAY_GROUPS = ['Understand', 'Challenge', 'Sources', 'Practice'] as const; // Nov 27: This page folded into the four
 export type SayGroup = (typeof SAY_GROUPS)[number];
 export type SayItem = { id: string; icon: string; label: string; group: SayGroup };
 // The fixed catalog (what Settings lists). The menu also shows your own buttons, which can be hidden from the menu too.
@@ -22,15 +22,15 @@ export const SAY_ITEMS: SayItem[] = [
   { id: 'halacha', icon: '📜', label: 'Halacha', group: 'Sources' },
   { id: 'widen', icon: '🌐', label: 'Widen it', group: 'Sources' },
   { id: 'ask', icon: '💬', label: 'Ask', group: 'Practice' },
-  { id: 'l:Learn with me', icon: '👥', label: 'Learn with me', group: 'Practice' },
-  { id: 'l:Where it goes', icon: '⇄', label: 'Where it goes', group: 'Practice' },
+  { id: 'l:Learn with me', icon: '👥', label: 'Learn with me', group: 'Understand' },
+  { id: 'l:Where it goes', icon: '⇄', label: 'Where it goes', group: 'Sources' },
   { id: 'l:By heart', icon: '🧠', label: 'By heart', group: 'Practice' },
-  { id: 'l:Where was I?', icon: '↩', label: 'Where was I?', group: 'Practice' },
+  { id: 'l:Where was I?', icon: '↩', label: 'Where was I?', group: 'Understand' },
   { id: 'l:Sit with me while I learn', icon: '🎙', label: 'Sit with me while I learn', group: 'Practice' },
-  { id: 'p:Ask about the whole page', icon: '💬', label: 'Ask about the whole page', group: 'This page' },
-  { id: 'p:Review this passage', icon: '✓', label: 'Review this passage', group: 'This page' },
-  { id: 'p:Listen to this page', icon: '🎧', label: 'Listen to this page', group: 'This page' },
-  { id: 'p:Source sheet', icon: '📄', label: 'Source sheet', group: 'This page' },
+  { id: 'p:Ask about the whole page', icon: '💬', label: 'Ask about the whole page', group: 'Practice' },
+  { id: 'p:Review this passage', icon: '✓', label: 'Review this passage', group: 'Practice' },
+  { id: 'p:Listen to this page', icon: '🎧', label: 'Listen to this page', group: 'Practice' },
+  { id: 'p:Source sheet', icon: '📄', label: 'Source sheet', group: 'Sources' },
 ];
 
 let prefs: { hide: string[] } = { hide: [] };
