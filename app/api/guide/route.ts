@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     const ref = String(b.ref ?? '');
     const m = ref.match(/^(.*?):(\d+)$/);
     if (typeof b.ask === 'string') return askOnCard(b, m);
-    if (b.say === true) return sayInMyWords(b, m);
+    if (b.say === true || b.simple === true) return sayInMyWords(b, m);
     if (typeof b.expand === 'string') return expandInyan(b, m);
     if (typeof b.work === 'string') return sugyaWork(b, m);
     if (typeof b.sayover === 'string') return mine(b, m, 'sayover');
@@ -271,13 +271,19 @@ async function mine(b: Record<string, unknown>, m: RegExpMatchArray | null, what
 const SAY = `You are a warm, sharp chavrusa. The learner just read the line marked >>> <<< (or, if one sentence of it is given, just that sentence) and tapped "In my words?": say what it means and what it is doing here, in your own plain words, the way you'd put it to him across the table.
 2 to 4 short sentences, at most 70 words. Not a word-for-word translation: the meaning and its point in the flow (what is being asked, answered, proven, or why it matters). Don't repeat the English he already has. No headings, no lists, no markdown, no questions to him. For learning terms and quoted words, write the Hebrew or Aramaic in Hebrew letters.`;
 
-async function sayInMyWords(b: { piece?: unknown; si?: unknown }, m: RegExpMatchArray | null) {
+// Nov 26: ✦ Simple: the most basic, rudimentary explanation of the move, for someone just starting, set in the larger
+// picture of the sugya (the whole amud is given so it can say where this step stands). Made once per line and kept.
+const SIMPLE = `You are a patient chavrusa teaching someone at the very start. The learner tapped "Simple" on the line marked >>> <<< (or, if one sentence of it is given, just that sentence). Explain the move at the most basic, rudimentary level, as you would to a beginner, AND in light of the larger picture: the whole amud is given below, so say where this step stands in it.
+Write 3 to 5 very short, plain sentences, at most 90 words: first the big picture in one sentence (what the sugya is trying to figure out); then what this line does in that (asks, answers, proves, pushes back, concludes), in the simplest words; then why it matters for where the sugya is going. Everyday words; explain any learning term in a few words the first time; one simple example if it helps. No headings, no lists, no markdown, no questions to him. Quoted words of the text in Hebrew letters.`;
+
+async function sayInMyWords(b: { piece?: unknown; si?: unknown; simple?: unknown }, m: RegExpMatchArray | null) {
   if (!m) return NextResponse.json({ error: 'Nothing to explain.' }, { status: 400 });
   const n = Number(m[2]);
   const piece = String(b.piece ?? '').trim().slice(0, 1500);
   const si = Math.max(0, Math.round(Number(b.si) || 0));
   const t = await toneNow();
-  const kind = `say1-${t.custom ? t.tag : t.awake ? 'awake' : 'calm'}`;
+  const simple = b.simple === true;
+  const kind = `${simple ? 'simple1' : 'say1'}-${t.custom ? t.tag : t.awake ? 'awake' : 'calm'}`;
   try {
     const out = await keep(kind, `${m[1]}:${n}:${si}`, async () => {
       await needCredit();
@@ -287,11 +293,11 @@ async function sayInMyWords(b: { piece?: unknown; si?: unknown }, m: RegExpMatch
       const model = await keptModel();
       const toneText = t.custom ? `\n\n${customBlock(t.custom, 'your explanation')}` : t.awake ? `\n\n${AWAKE_REPLY}` : '';
       const r = await runKept({
-        lang: true, model: model.id, system: `${SAY}\n\n${SCOPE}${toneText}`,
-        history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lineText(s.he, s.en, n)}${piece ? `\n\n---\nJust this sentence of line ${n}:\n${stripNikud(piece)}` : ''}` }],
-        tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: 500,
+        lang: true, model: model.id, system: `${simple ? SIMPLE : SAY}\n\n${SCOPE}${toneText}`,
+        history: [{ role: 'user', content: `${s.ref}, line ${n}\n\n${lineText(s.he, s.en, n)}${piece ? `\n\n---\nJust this sentence of line ${n}:\n${stripNikud(piece)}` : ''}${simple ? `\n\n---\nThe whole amud, for the larger picture (English):\n${s.en.map((e, i) => `[${i + 1}]${i + 1 === n ? ' >>>' : ''} ${e.replace(/<[^>]+>/g, '').slice(0, 400)}`).join('\n').slice(0, 14000)}` : ''}` }],
+        tools: [], execute: async () => '', effort: model.effort, thinking: 'disabled', maxSteps: 1, maxTokens: simple ? 600 : 500,
       });
-      await logCost({ sessionId: null, kind: 'say', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
+      await logCost({ sessionId: null, kind: simple ? 'simple' : 'say', provider: model.id.startsWith('gpt') ? 'openai' : 'anthropic', model: model.id, inputTokens: r.inputTokens, outputTokens: r.outputTokens, costUsd: costUsd(model, r.inputTokens, r.outputTokens) }).catch(() => {});
       const text = unlabel(r.text.replace(/^#+\s*/gm, '').replace(/\*\*|__/g, '')).slice(0, 1500);
       if (text.length < 20) throw new Error('It did not come back.');
       return { text };

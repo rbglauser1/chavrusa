@@ -22,6 +22,9 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
   const K = `say:${lineRef}:${si ?? 0}`; // Nov 26: what's open here, and what came back, stays when he goes to Settings and back
   const [whole, setWhole] = useKept<string | null | 'wait' | 'err'>(`${K}:whole`, null);
   const [wholeOpen, setWholeOpen] = useKept(`${K}:wholeOpen`, false);
+  // Nov 26: ✦ Simple: the move at its most basic, in the larger picture of the sugya (made once and kept).
+  const [simple, setSimple] = useKept<string | null | 'wait' | 'err'>(`${K}:simple`, null);
+  const [simpleOpen, setSimpleOpen] = useKept(`${K}:simpleOpen`, false);
   const [menu, setMenu] = useKept(`${K}:menu`, !!shown); // Nov 26: shown already when Aa → ✦ choices is Always shown
   const shownBefore = useRef(shown);
   useEffect(() => { if (shownBefore.current !== shown) { shownBefore.current = shown; setMenu(!!shown); } else if (!wasKept(`${K}:menu`) && shown) setMenu(true); }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps // Nov 26: the ✦ that opens the choices
@@ -60,11 +63,12 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
       .then((d) => (d.text ? setText(d.text) : setErr(d.error || 'It couldn’t explain just now.')))
       .catch(() => setErr('It couldn’t explain just now.'));
   };
-  const anyText = (open && !!text) || exOrder.some((k) => !!ex[k]?.text);
+  const anyText = (open && !!text) || (simpleOpen && !!simple && simple !== 'wait' && simple !== 'err') || exOrder.some((k) => !!ex[k]?.text);
   // Nov 26: coming back (from Settings, or a redraw): anything that was still on its way when he left is asked for again
   // (it was kept on the server, so it comes right back).
   useEffect(() => {
     if (open && !text) post({ say: true, piece: piece ?? '', si: si ?? 0 }).then((d) => (d.text ? setText(d.text) : setErr(d.error || 'It couldn’t explain just now.'))).catch(() => setErr('It couldn’t explain just now.'));
+    if (simpleOpen && (simple === 'wait' || simple === null)) { setSimple('wait'); post({ simple: true, piece: piece ?? '', si: si ?? 0 }).then((d) => setSimple(d.text || 'err')).catch(() => setSimple('err')); }
     if (wholeOpen && (whole === 'wait' || whole === null)) { setWhole('wait'); post({ say: true, piece: '', si: 0 }).then((d) => setWhole(d.text || 'err')).catch(() => setWhole('err')); }
     exOrder.forEach((k) => {
       const e = ex[k];
@@ -76,6 +80,12 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
     if (ex.compare?.wait) setEx((x) => ({ ...x, compare: { ...x.compare, wait: false } }));
     if (thread.some((x) => x.a === null)) setThread((t) => t.map((x) => (x.a === null ? { ...x, a: 'This was cut off when you left. Ask it again.', bad: true } : x)));
   }, [K]); // eslint-disable-line react-hooks/exhaustive-deps
+  const goSimple = () => {
+    setSimpleOpen((v) => !v);
+    if (simple && simple !== 'err' && simple !== 'wait') return;
+    setSimple('wait');
+    post({ simple: true, piece: piece ?? '', si: si ?? 0 }).then((d) => setSimple(d.text || 'err')).catch(() => setSimple('err'));
+  };
   const goWhole = () => {
     setWholeOpen((v) => !v);
     if (whole && whole !== 'err') return;
@@ -88,7 +98,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
     setThread((t) => [...t, { q: qq, a: null }]); setQ('');
     const put = (a: string, bad = false) => setThread((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, a, bad } : x)));
     const more = exOrder.map((k) => (ex[k]?.text ? `\n${DEEPER.find((d) => d[0] === k)?.[1]}: ${ex[k]!.text}` : '')).join('');
-    post({ ask: qq, card: `${piece ? `The sentence: ${piece}\n` : ''}${text && open ? `What you told him about it: ${text}` : ''}${more}` || '(He asks about this line.)', thread: before })
+    post({ ask: qq, card: `${piece ? `The sentence: ${piece}\n` : ''}${simpleOpen && simple && simple !== 'wait' && simple !== 'err' ? `In simple words you told him: ${simple}\n` : ''}${text && open ? `What you told him about it: ${text}` : ''}${more}` || '(He asks about this line.)', thread: before })
       .then((d) => (d.text ? put(d.text) : put(d.error || 'It couldn’t answer just now.', true)))
       .catch(() => put('It couldn’t answer just now.', true));
   };
@@ -98,6 +108,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
       <button type="button" className={`sayit-btn sayit-main ${menu ? 'on' : ''}`} onClick={() => setMenu((v) => !v)} aria-expanded={menu} aria-label="AI help on this line">✦{menu ? ' ▴' : ' ▾'}</button>
       {menu && (
         <span className="sayit-menu">
+          <button type="button" className={simpleOpen ? 'on' : ''} onClick={goSimple}>Simple</button>
           <button type="button" className={open ? 'on' : ''} onClick={go}>In my words</button>
           <button type="button" className={askOpen ? 'on' : ''} onClick={() => { setAskOpen((v) => !v); window.setTimeout(() => inp.current?.focus(), 60); }}>Ask</button>
           {wholeToo && <button type="button" className={wholeOpen ? 'on' : ''} onClick={goWhole}>Whole line in my words</button>}
@@ -112,6 +123,12 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
           <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>
             {text ?? (err || <span className="wait-dots"><span /><span /><span /></span>)}
           </span>
+        </span>
+      )}
+      {simpleOpen && simple && (
+        <span className="sayit-box" role="region" aria-label="Simple">
+          <span className="sayit-ex-label">Simple</span>
+          {(() => { const h = simple !== 'wait' && simple !== 'err' && isHebText(simple); return <span className={`sayit-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{simple === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : simple === 'err' ? 'It couldn’t explain just now.' : simple}</span>; })()}
         </span>
       )}
       {wholeOpen && whole && (
