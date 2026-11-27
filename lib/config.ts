@@ -359,10 +359,11 @@ export const FONTS_EN: { id: string; name: string; stack: string; italic?: boole
   { id: 'caveat', name: 'Caveat (marker)', stack: "'Caveat', 'Patrick Hand', cursive" },
   { id: 'fredoka', name: 'Fredoka (bubbly)', stack: "'Fredoka', 'Rubik', sans-serif" },
 ];
-export const FONTS_HE: { id: string; name: string; stack: string }[] = [
+export const FONTS_HE: { id: string; name: string; stack: string; heavy?: boolean }[] = [
   { id: '', name: "The look's own", stack: '' },
   { id: 'frank', name: 'Frank Ruhl (classic sefer)', stack: "'Frank Ruhl Libre', 'Times New Roman', serif" },
   { id: 'david', name: 'David', stack: "'David Libre', 'Frank Ruhl Libre', serif" },
+  { id: 'frankblack', name: 'Frank Ruhl Black (heavy, like a siddur app)', stack: "'Frank Ruhl Libre', 'Times New Roman', serif", heavy: true }, // Nov 26
   { id: 'taamey', name: 'Taamey Frank (like a siddur)', stack: "'Taamey Frank CLM', 'Frank Ruhl Libre', serif" },
   { id: 'times', name: 'Times New Roman (as Explain first showed)', stack: "'Times New Roman', Times, serif" },
   { id: 'notoserif', name: 'Noto Serif Hebrew (square, matches Source Serif)', stack: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif" },
@@ -383,6 +384,8 @@ export const FONTS_COMM: { id: string; name: string; stack: string }[] = [
 ];
 export const fontStack = (list: { id: string; stack: string }[], id?: string) => list.find((f) => f.id === id)?.stack ?? '';
 // Nov 25: an English font that is set in its italic (Comic Neue Italic, Shantell Sans Italic): the root gets data-enital.
+// Nov 26: a Hebrew font set in its heaviest weight (Frank Ruhl Black): the root gets data-heheavy.
+export const fontHeavy = (id?: string) => !!FONTS_HE.find((f) => f.id === id)?.heavy;
 export const fontItalic = (id?: string) => !!FONTS_EN.find((f) => f.id === id)?.italic;
 
 // Older saved values from the first version map onto the new looks.

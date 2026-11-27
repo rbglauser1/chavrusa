@@ -877,12 +877,12 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
 
 // Design a Live voice from a description (OpenAI creates it in your account).
 // Fonts, each shown in its own letters: the current one, and a list to choose from when tapped.
-function FontPicker({ list, sample, value, onPick, rtl }: { list: { id: string; name: string; stack: string; italic?: boolean }[]; sample: string; value: string; onPick: (id: string) => void; rtl?: boolean }) {
+function FontPicker({ list, sample, value, onPick, rtl }: { list: { id: string; name: string; stack: string; italic?: boolean; heavy?: boolean }[]; sample: string; value: string; onPick: (id: string) => void; rtl?: boolean }) {
   const [open, setOpen] = useState(false);
   const cur = list.find((f) => f.id === value) ?? list[0];
-  const row = (f: { id: string; name: string; stack: string; italic?: boolean }) => (
+  const row = (f: { id: string; name: string; stack: string; italic?: boolean; heavy?: boolean }) => (
     <>
-      <span className="fp-sample" dir={rtl ? 'rtl' : 'ltr'} style={{ fontFamily: f.stack || (rtl ? 'var(--f-he)' : 'var(--f-body)'), fontStyle: f.italic ? 'italic' : 'normal' }}>{sample}</span>
+      <span className="fp-sample" dir={rtl ? 'rtl' : 'ltr'} style={{ fontFamily: f.stack || (rtl ? 'var(--f-he)' : 'var(--f-body)'), fontStyle: f.italic ? 'italic' : 'normal', fontWeight: f.heavy ? 900 : undefined }}>{sample}</span>
       <span className="fp-name">{f.name}</span>
     </>
   );

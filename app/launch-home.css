@@ -227,9 +227,8 @@
 [data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy'],[data-paper='blue'],[data-paper='green']) .split-home .launch-eyebrow { color:var(--pe); }
 [data-look='clay']:not([data-paper='look']) .split-panel .launch-primary { background:var(--accent); color:var(--accent-ink); }
 [data-look='clay']:not([data-paper='look']) .home-talk-btn { background:var(--accent); box-shadow:none; }
-/* The AI keeps its terracotta whatever the background. */
-:is([data-look='clay'],[data-look='chatgpt']) :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent:#CC7C5E; --accent-ink:#ffffff; --accent-soft:#F5E9E3; }
-:is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x) { --accent-soft:#3a2e2a; }
+/* Nov 26: the AI no longer keeps its own terracotta: its panels take the look's own color (the rule that forced
+   terracotta on .ai-hub, .lwm-strip, .lwm-intro, .peek, .smap, .lchat, .line-x was removed). */
 /* Nov 16: on White and Cream the Continue button stays terracotta. */
 [data-look='clay']:is([data-paper='white'],[data-paper='cream'],[data-paper='creamy']) .split-panel .launch-primary { background:var(--tc-ink, #a85235); color:#fff; }
 /* Nov 16, Off-white and White: the reading screen's back arrow and ⋯ are black; the title (e.g. Yoma 3a) is terracotta. */
@@ -359,7 +358,7 @@
 :is([data-look='clay'],[data-look='chatgpt']) .sg-pagecard { border-color: var(--rule) !important; }
 
 /* Nov 17: the moving dots while the AI is thinking, in terracotta. */
-:is([data-look='clay'],[data-look='chatgpt']) :is(.dots, .wait-dots, .st-thinking) > span { background: #a85235 !important; }
+:is([data-look='clay'],[data-look='chatgpt']) :is(.dots, .wait-dots, .st-thinking) > span { background: var(--accent) !important; }
 :is([data-look='clay'],[data-look='chatgpt'])[data-paper='night'] :is(.dots, .wait-dots, .st-thinking) > span { background: #c4734f !important; }
 
 /* Nov 17: no approved translation: a small grey note and a slim one-line button. */
@@ -400,8 +399,8 @@
 
 /* Nov 17: the ✦ on the AI buttons under a line (Explain, Back and forth, Ideas, your own buttons) in terracotta,
    on the white buttons and on the dark (open) ones. */
-.ai-star { color: #CC7C5E; }
-:is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai .ai-star { color: #CC7C5E !important; }
+.ai-star { color: inherit; } /* Nov 26: the ✦ in the app's own color, not terracotta */
+:is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai .ai-star { color: inherit !important; }
 :is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai.on .ai-star { color: #E09A7E !important; }
 
 /* Nov 17: your notes under a line, set apart from the text with a touch of terracotta: the line at the side, the ✎ and

@@ -4,7 +4,7 @@ import Thinking from '@/components/Thinking';
 import { englishFor } from '@/lib/literal';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { logLine } from '@/lib/callLog';
-import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_COMM, FONTS_EN, FONTS_HE, fontStack, fontItalic, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
+import { colorOf, styleCard, allStyles, DEFAULT_SETTINGS, FONTS_COMM, FONTS_EN, FONTS_HE, fontStack, fontItalic, fontHeavy, Look, MODELS, Provider, SAVER_IDLE_SEC, Settings, styleById, Tier, TIER_LABELS } from '@/lib/config';
 import type { SessionRow, SourceData } from '@/lib/db';
 import { Formatted } from '@/components/Message';
 import { guidedPalette } from '@/lib/guided';
@@ -487,6 +487,7 @@ export default function Home() {
     const en = fontStack(FONTS_EN, f.en), he = fontStack(FONTS_HE, f.he);
     root.dataset.enfont = en ? 'chosen' : 'look';
     if (fontItalic(f.en)) root.dataset.enital = 'on'; else delete root.dataset.enital;
+    if (fontHeavy(f.he)) root.dataset.heheavy = 'on'; else delete root.dataset.heheavy;
     if (en) { root.style.setProperty('--f-body', en); root.style.setProperty('--f-ui', en); } else { root.style.removeProperty('--f-body'); root.style.removeProperty('--f-ui'); }
     if (he) root.style.setProperty('--f-he', he); else root.style.removeProperty('--f-he');
     root.dataset.hefont = he ? 'chosen' : 'look'; // a chosen Hebrew font wins over the trop font (globals.css)
