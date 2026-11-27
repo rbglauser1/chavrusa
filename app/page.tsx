@@ -34,6 +34,7 @@ import LeaveQuestion from '@/components/LeaveQuestion';
 import { isSitting, setSitting } from '@/lib/focus';
 import { HomePhotoLayer } from '@/components/HomePhoto';
 import TalkingFace from '@/components/TalkingFace';
+import { setSayPrefs } from '@/lib/sayPrefs';
 import { stopClip, useClipPlaying } from '@/lib/voiceClip';
 
 type Item =
@@ -473,6 +474,7 @@ export default function Home() {
     root.dataset.spell = settings.spelling ?? 'yeshivish';
     root.dataset.homebg = settings.homeBg ?? 'none'; // Nov 18: the Kosel behind Home
     root.dataset.lwview = settings.lwLook ?? 'inline';
+    setSayPrefs(settings.sayTop, settings.sayHide); // Nov 27: the ✦ menu's top 3 and hidden buttons
     root.dataset.lwdeep = settings.lwDeepTogether ? 'with' : 'tap';
     root.dataset.lstyle = settings.style ?? ''; // Nov 21: Learn with me in Iyun brings Rashi and Tosafos
     root.dataset.lwtone = settings.lwTone === 'custom' ? `custom:${settings.customTone ?? ''}` : settings.lwTone ?? 'awake';

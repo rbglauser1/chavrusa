@@ -16,6 +16,7 @@ import { Group, GroupList } from './SettingsGroup';
 import { HomePhotoPicker } from './HomePhoto';
 import { DrawnFacePreview, FacePhotoPicker } from './TalkingFace';
 import MyButtons from './MyButtons';
+import SayButtons from './SayButtons';
 
 interface Props {
   settings: Settings; onChange: (p: Partial<Settings>) => void; onClose: () => void; onHelp: () => void; liveActive?: boolean;
@@ -357,6 +358,10 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <label>Where the AI tools are</label>
               <Seg value={s.aiHub === false ? 'lines' : 'hub'} options={[['hub', 'In one ✦ button'], ['lines', 'Under each line']]} onPick={(v) => onChange({ aiHub: v === 'hub' })} />
               <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>In one ✦ (recommended): the floating button at the bottom right holds Learn with me, Ask about this line, Where it goes, and the page’s map, review, Listen and source sheet. Under each line: the old way, a row of buttons under every line you tap.</div>
+            </div>
+            <div className="field">
+              <label>✦ buttons: your top 3, and what to hide</label>
+              <SayButtons top={s.sayTop} hide={s.sayHide} onChange={onChange} />
             </div>
             <div className="field">
               <label>✦ AI buttons on the lines (Step, Pshat, In my words?)</label>

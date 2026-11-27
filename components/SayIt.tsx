@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { isHebText } from './AiNote';
 import SugyaFlow from './SugyaFlow';
 import { useKept, wasKept } from '@/lib/uiKeep';
+import { SAY_GROUPS, SAY_ITEMS, lastUsed, noteUse, useSayPrefs, type SayGroup } from '@/lib/sayPrefs';
 
 type QA = { q: string; a: string | null; bad?: boolean };
 // Nov 27: a choice that opens a box elsewhere on the line (Where it goes, By heart…): the box is brought to the place he
@@ -58,6 +59,10 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
   const shownBefore = useRef(shown);
   useEffect(() => { if (shownBefore.current !== shown) { shownBefore.current = shown; setMenu(!!shown); } else if (!wasKept(`${K}:menu`) && shown) setMenu(true); }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps // Nov 26: the ✦ that opens the choices
   const [showPshat, setShowPshat] = useKept(`${K}:showPshat`, false);
+  const prefs = useSayPrefs();
+  const [moreOpen, setMoreOpen] = useKept(`${K}:moreOpen`, false);
+  const usedAt = useRef<Record<string, number>>({}); // the order under each heading, read when More opens (so nothing jumps under the finger)
+  useEffect(() => { if (moreOpen) usedAt.current = lastUsed(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [open, setOpen] = useKept(`${K}:open`, false);
   const [askOpen, setAskOpen] = useKept(`${K}:ask`, false); // Nov 26: ✦ Ask: his own question on the line, in his own words
   const [chart, setChart] = useKept(`${K}:chart`, false); // Nov 25: ✦ Sugya chart, beside In my words
@@ -132,31 +137,47 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
       .catch(() => put('It couldn’t answer just now.', true));
   };
   const he = !!text && isHebText(text);
+  // Nov 27: top 3 first, then More ▾: the rest under headings, each heading in the order last used; icons; hidden ones
+  // left out altogether (Settings → The AI → The ✦ and its tools → ✦ buttons).
+  type It = { id: string; icon: string; label: string; group: SayGroup; on?: boolean; act?: boolean; run: (ev: { currentTarget: HTMLElement }) => void };
+  const cat = (id: string) => SAY_ITEMS.find((x) => x.id === id);
+  const core = (id: string, on: boolean, run: It['run'], label?: string): It => { const c = cat(id)!; return { id, icon: c.icon, label: label ?? c.label, group: c.group, on, run }; };
+  const menuBody = () => {
+    const items: It[] = [
+      core('simple', simpleOpen, goSimple),
+      core('words', open, go),
+      ...(pshat?.length ? [core('pshat', showPshat, () => setShowPshat((v) => !v))] : []),
+      core('chart', chart, () => setChart((v) => !v)),
+      ...(bp ? [core('bigpic', bpOpen, () => setBpOpen((v) => !v))] : []),
+      ...DEEPER.filter(([k]) => k !== 'challenge' && k !== 'rashitos').map(([k]) => core(k, exOrder.includes(k), () => deeper(k))),
+      core('ask', askOpen, () => { setAskOpen((v) => !v); window.setTimeout(() => inp.current?.focus(), 60); }),
+    ];
+    const m = acts?.();
+    if (m) {
+      const split = (l: string) => { const mm = l.match(/^([^A-Za-z\s]+)\s+(.+)$/); const name = (mm ? mm[2] : l).replace(/\s*\((I’ll lead|you lead)\)$/, ''); return { icon: mm ? mm[1] : '✦', name }; };
+      for (const x of m.line) { const { icon, name } = split(x.label), id = `l:${name}`, c = cat(id); items.push({ id, icon: c?.icon ?? icon, label: name, group: 'Practice', act: true, run: (ev) => (/Learn with me/.test(x.label) ? x.run() : runHere(ev, x.run)) }); }
+      for (const x of m.page.filter((y) => !MAPRE.test(y.label))) { const { icon, name } = split(x.label), id = `p:${name}`, c = cat(id); items.push({ id, icon: c?.icon ?? icon, label: name, group: 'This page', act: true, run: () => x.run() }); }
+    }
+    const shownItems = items.filter((x) => !prefs.hide.includes(x.id));
+    const top = prefs.top.map((id) => shownItems.find((x) => x.id === id)).filter((x): x is It => !!x);
+    const rest = shownItems.filter((x) => !top.includes(x));
+    const used = usedAt.current;
+    const btn = (x: It) => <button key={x.id} type="button" className={`${x.on ? 'on' : ''}${x.act ? ' sayit-act' : ''}`} onClick={(ev) => { noteUse(x.id); x.run(ev); }}><span className="sayit-ic" aria-hidden="true">{x.icon}</span>{x.label}</button>;
+    return (
+      <span className="sayit-menu">
+        {top.map(btn)}
+        {rest.length > 0 && <button type="button" className="sayit-morebtn" aria-expanded={moreOpen} onClick={() => { if (!moreOpen) usedAt.current = lastUsed(); setMoreOpen((v) => !v); }}>{moreOpen ? 'Less ▴' : `More ▾`}</button>}
+        {moreOpen && SAY_GROUPS.map((g) => {
+          const inG = rest.filter((x) => x.group === g).map((x, i) => ({ x, i })).sort((a, b) => (used[b.x.id] ?? 0) - (used[a.x.id] ?? 0) || a.i - b.i).map((y) => y.x);
+          return inG.length ? <span key={g} className="sayit-group"><span className="sayit-menu-sub">{g}</span>{inG.map(btn)}</span> : null;
+        })}
+      </span>
+    );
+  };
   return (
     <span className="sayit" onClick={(e) => e.stopPropagation()}>
       <button type="button" className={`sayit-btn sayit-main ${menu ? 'on' : ''}`} onClick={() => setMenu((v) => !v)} aria-expanded={menu} aria-label="AI help on this line">✦{menu ? ' ▴' : ' ▾'}</button>
-      {menu && (
-        <span className="sayit-menu">
-          <button type="button" className={simpleOpen ? 'on' : ''} onClick={goSimple}>Simple</button>
-          <button type="button" className={open ? 'on' : ''} onClick={go}>In my words</button>
-          <button type="button" className={askOpen ? 'on' : ''} onClick={() => { setAskOpen((v) => !v); window.setTimeout(() => inp.current?.focus(), 60); }}>Ask</button>
-          {!!pshat?.length && <button type="button" className={showPshat ? 'on' : ''} onClick={() => setShowPshat((v) => !v)}>Pshat</button>}
-          <button type="button" className={chart ? 'on' : ''} onClick={() => setChart((v) => !v)}>Sugya chart</button>
-          {bp && <button type="button" className={bpOpen ? 'on' : ''} onClick={() => setBpOpen((v) => !v)}>Big picture</button>}
-          {DEEPER.filter(([k]) => k !== 'challenge' && k !== 'rashitos').map(([k, name]) => <button key={k} type="button" className={exOrder.includes(k) ? 'on' : ''} onClick={() => deeper(k)}>{name}</button>)}
-          {(() => {
-            const m = acts?.(); if (!m) return null;
-            const clean = (l: string) => l.replace(/^✦\s*/, '').replace(/\s*\((I’ll lead|you lead)\)$/, '');
-            return (
-              <>
-                {m.line.map((x) => <button key={x.label} type="button" className="sayit-act" onClick={(ev) => (/Learn with me/.test(x.label) ? x.run() : runHere(ev, x.run))}>{clean(x.label)}</button>)}
-                {m.page.some((x) => !MAPRE.test(x.label)) && <span className="sayit-menu-sub">This page</span>}
-                {m.page.filter((x) => !MAPRE.test(x.label)).map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
-              </>
-            );
-          })()}
-        </span>
-      )}
+      {menu && menuBody()}
       {open && (
         <span className="sayit-box" role="region" aria-label="In my words">
           <span className="sayit-ex-label">In my words</span>
