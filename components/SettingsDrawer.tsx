@@ -360,8 +360,8 @@ export default function SettingsDrawer({ settings: s, onChange, onClose, onHelp,
               <div className="muted" style={{ fontSize: 12, margin: '6px 0 14px' }}>In one ✦ (recommended): the floating button at the bottom right holds Learn with me, Ask about this line, Where it goes, and the page’s map, review, Listen and source sheet. Under each line: the old way, a row of buttons under every line you tap.</div>
             </div>
             <div className="field">
-              <label>✦ buttons: your top 3, and what to hide</label>
-              <SayButtons top={s.sayTop} hide={s.sayHide} onChange={onChange} />
+              <label>✦ buttons: show or hide each one</label>
+              <SayButtons hide={s.sayHide} onChange={onChange} />
             </div>
             <div className="field">
               <label>✦ AI buttons on the lines (Step, Pshat, In my words?)</label>

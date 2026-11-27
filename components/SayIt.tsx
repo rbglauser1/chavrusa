@@ -60,9 +60,8 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
   useEffect(() => { if (shownBefore.current !== shown) { shownBefore.current = shown; setMenu(!!shown); } else if (!wasKept(`${K}:menu`) && shown) setMenu(true); }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps // Nov 26: the ✦ that opens the choices
   const [showPshat, setShowPshat] = useKept(`${K}:showPshat`, false);
   const prefs = useSayPrefs();
-  const [moreOpen, setMoreOpen] = useKept(`${K}:moreOpen`, false);
-  const usedAt = useRef<Record<string, number>>({}); // the order under each heading, read when More opens (so nothing jumps under the finger)
-  useEffect(() => { if (moreOpen) usedAt.current = lastUsed(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const usedAt = useRef<Record<string, number>>({}); // the order under each heading, read when the menu opens (so nothing jumps under the finger)
+  useEffect(() => { if (menu) usedAt.current = lastUsed(); }, [menu]);
   const [open, setOpen] = useKept(`${K}:open`, false);
   const [askOpen, setAskOpen] = useKept(`${K}:ask`, false); // Nov 26: ✦ Ask: his own question on the line, in his own words
   const [chart, setChart] = useKept(`${K}:chart`, false); // Nov 25: ✦ Sugya chart, beside In my words
@@ -137,8 +136,8 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
       .catch(() => put('It couldn’t answer just now.', true));
   };
   const he = !!text && isHebText(text);
-  // Nov 27: top 3 first, then More ▾: the rest under headings, each heading in the order last used; icons; hidden ones
-  // left out altogether (Settings → The AI → The ✦ and its tools → ✦ buttons).
+  // Nov 27: every button under its heading (Understand, Challenge, Sources, Practice, This page), each heading in the
+  // order last used; icons; hidden ones left out altogether (Settings → The AI → The ✦ and its tools → ✦ buttons).
   type It = { id: string; icon: string; label: string; group: SayGroup; on?: boolean; act?: boolean; run: (ev: { currentTarget: HTMLElement }) => void };
   const cat = (id: string) => SAY_ITEMS.find((x) => x.id === id);
   const core = (id: string, on: boolean, run: It['run'], label?: string): It => { const c = cat(id)!; return { id, icon: c.icon, label: label ?? c.label, group: c.group, on, run }; };
@@ -159,16 +158,12 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
       for (const x of m.page.filter((y) => !MAPRE.test(y.label))) { const { icon, name } = split(x.label), id = `p:${name}`, c = cat(id); items.push({ id, icon: c?.icon ?? icon, label: name, group: 'This page', act: true, run: () => x.run() }); }
     }
     const shownItems = items.filter((x) => !prefs.hide.includes(x.id));
-    const top = prefs.top.map((id) => shownItems.find((x) => x.id === id)).filter((x): x is It => !!x);
-    const rest = shownItems.filter((x) => !top.includes(x));
     const used = usedAt.current;
     const btn = (x: It) => <button key={x.id} type="button" className={`${x.on ? 'on' : ''}${x.act ? ' sayit-act' : ''}`} onClick={(ev) => { noteUse(x.id); x.run(ev); }}><span className="sayit-ic" aria-hidden="true">{x.icon}</span>{x.label}</button>;
     return (
       <span className="sayit-menu">
-        {top.map(btn)}
-        {rest.length > 0 && <button type="button" className="sayit-morebtn" aria-expanded={moreOpen} onClick={() => { if (!moreOpen) usedAt.current = lastUsed(); setMoreOpen((v) => !v); }}>{moreOpen ? 'Less ▴' : `More ▾`}</button>}
-        {moreOpen && SAY_GROUPS.map((g) => {
-          const inG = rest.filter((x) => x.group === g).map((x, i) => ({ x, i })).sort((a, b) => (used[b.x.id] ?? 0) - (used[a.x.id] ?? 0) || a.i - b.i).map((y) => y.x);
+        {SAY_GROUPS.map((g) => {
+          const inG = shownItems.filter((x) => x.group === g).map((x, i) => ({ x, i })).sort((a, b) => (used[b.x.id] ?? 0) - (used[a.x.id] ?? 0) || a.i - b.i).map((y) => y.x);
           return inG.length ? <span key={g} className="sayit-group"><span className="sayit-menu-sub">{g}</span>{inG.map(btn)}</span> : null;
         })}
       </span>
@@ -176,7 +171,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
   };
   return (
     <span className="sayit" onClick={(e) => e.stopPropagation()}>
-      <button type="button" className={`sayit-btn sayit-main ${menu ? 'on' : ''}`} onClick={() => setMenu((v) => !v)} aria-expanded={menu} aria-label="AI help on this line">✦{menu ? ' ▴' : ' ▾'}</button>
+      <button type="button" className={`sayit-btn sayit-main ${menu ? 'on' : ''}`} onClick={() => { if (!menu) usedAt.current = lastUsed(); setMenu((v) => !v); }} aria-expanded={menu} aria-label="AI help on this line">✦</button>
       {menu && menuBody()}
       {open && (
         <span className="sayit-box" role="region" aria-label="In my words">

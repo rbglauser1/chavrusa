@@ -1,7 +1,7 @@
 'use client';
-// Nov 27: the line's ✦ menu made lighter, nothing taken away: your top 3 first (picked in Settings), then More ▾ with
-// the rest under four headings (Understand, Challenge, Sources, Practice, and This page), each heading's buttons in the
-// order you last used them. Every button has its icon. Any button can be hidden altogether (Settings → The AI → The ✦
+// Nov 27: the line's ✦ menu made lighter, nothing taken away: the buttons under headings (Understand, Challenge,
+// Sources, Practice, This page), each heading's buttons in the order you last used them. (A top 3 with More ▾ was
+// tried and taken back the same day: he wants the headings only.) Every button has its icon. Any button can be hidden altogether (Settings → The AI → The ✦
 // and its tools → ✦ buttons).
 import { useEffect, useState } from 'react';
 
@@ -32,12 +32,11 @@ export const SAY_ITEMS: SayItem[] = [
   { id: 'p:Listen to this page', icon: '🎧', label: 'Listen to this page', group: 'This page' },
   { id: 'p:Source sheet', icon: '📄', label: 'Source sheet', group: 'This page' },
 ];
-export const SAY_TOP_DEFAULT = ['simple', 'words', 'ask'];
 
-let prefs: { top?: string[]; hide: string[] } = { hide: [] };
+let prefs: { hide: string[] } = { hide: [] };
 const EV = 'chavrusa-sayprefs';
-export function setSayPrefs(top: string[] | undefined, hide: string[] | undefined) {
-  const next = { top: top?.length ? top.slice(0, 3) : undefined, hide: hide ?? [] };
+export function setSayPrefs(hide: string[] | undefined) {
+  const next = { hide: hide ?? [] };
   if (JSON.stringify(next) === JSON.stringify(prefs)) return;
   prefs = next;
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(EV));
@@ -45,7 +44,7 @@ export function setSayPrefs(top: string[] | undefined, hide: string[] | undefine
 export function useSayPrefs() {
   const [, bump] = useState(0);
   useEffect(() => { const h = () => bump((x) => x + 1); window.addEventListener(EV, h); return () => window.removeEventListener(EV, h); }, []);
-  return { top: prefs.top ?? SAY_TOP_DEFAULT, hide: prefs.hide };
+  return { hide: prefs.hide };
 }
 
 // When each button was last used (this device), for the order under each heading.

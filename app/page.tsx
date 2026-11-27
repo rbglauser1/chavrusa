@@ -474,7 +474,7 @@ export default function Home() {
     root.dataset.spell = settings.spelling ?? 'yeshivish';
     root.dataset.homebg = settings.homeBg ?? 'none'; // Nov 18: the Kosel behind Home
     root.dataset.lwview = settings.lwLook ?? 'inline';
-    setSayPrefs(settings.sayTop, settings.sayHide); // Nov 27: the ✦ menu's top 3 and hidden buttons
+    setSayPrefs(settings.sayHide); // Nov 27: the ✦ menu's hidden buttons
     root.dataset.lwdeep = settings.lwDeepTogether ? 'with' : 'tap';
     root.dataset.lstyle = settings.style ?? ''; // Nov 21: Learn with me in Iyun brings Rashi and Tosafos
     root.dataset.lwtone = settings.lwTone === 'custom' ? `custom:${settings.customTone ?? ''}` : settings.lwTone ?? 'awake';

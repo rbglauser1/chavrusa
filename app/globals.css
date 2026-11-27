@@ -3881,3 +3881,9 @@ body.lw-mini-open :is(.daf-dock, .st-full-ctl, .st-study-footer) { visibility: h
 .sb-star.on { color: var(--accent); }
 .sb-eye { min-width: 72px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 12px var(--f-ui); }
 .sb-eye.on { background: var(--rule); color: var(--soft); }
+
+/* Nov 27: the ✦ at the end of the line: only the ✦, in the blue from the Learn with me designs */
+.sayit-btn.sayit-main { --sb: #2F5F9E; width: 28px; height: 24px; padding: 0; justify-content: center; font-size: 14px; color: var(--sb); border-color: color-mix(in srgb, var(--sb) 40%, transparent); background: color-mix(in srgb, var(--sb) 9%, transparent); }
+.sayit-btn.sayit-main.on { background: var(--sb); color: #fff; border-color: var(--sb); }
+[data-paper='night'] .sayit-btn.sayit-main { --sb: #7fa6dc; }
+[data-paper='night'] .sayit-btn.sayit-main.on { color: #0f1622; }
