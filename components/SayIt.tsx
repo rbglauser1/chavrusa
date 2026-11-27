@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { isHebText } from './AiNote';
 import SugyaChart from './SugyaChart';
+import SimplePop from './SimplePop';
 import { useBackLayer } from '@/lib/back';
 import { useKept, wasKept } from '@/lib/uiKeep';
 import { SAY_GROUPS, SAY_ITEMS, lastUsed, noteUse, useSayPrefs, type SayGroup } from '@/lib/sayPrefs';
@@ -107,7 +108,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
       .then((d) => (d.text ? setText(d.text) : setErr(d.error || 'It couldn’t explain just now.')))
       .catch(() => setErr('It couldn’t explain just now.'));
   };
-  const anyText = (open && !!text) || (simpleOpen && !!simple && simple !== 'wait' && simple !== 'err') || exOrder.some((k) => !!ex[k]?.text);
+  const anyText = (open && !!text) || exOrder.some((k) => !!ex[k]?.text); // Nov 27: Simple is its own pop card now
   // Nov 26: coming back (from Settings, or a redraw): anything that was still on its way when he left is asked for again
   // (it was kept on the server, so it comes right back).
   useEffect(() => {
@@ -124,7 +125,10 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
     if (ex.compare?.wait) setEx((x) => ({ ...x, compare: { ...x.compare, wait: false } }));
     if (thread.some((x) => x.a === null)) setThread((t) => t.map((x) => (x.a === null ? { ...x, a: 'This was cut off when you left. Ask it again.', bad: true } : x)));
   }, [K]); // eslint-disable-line react-hooks/exhaustive-deps
-  const goSimple = () => {
+  const simpleFrom = useRef<{ x: number; y: number } | null>(null); // Nov 27: the card pops out of the button tapped
+  useBackLayer(simpleOpen, () => setSimpleOpen(false));
+  const goSimple = (ev?: { currentTarget: HTMLElement }) => {
+    if (ev) { const r = ev.currentTarget.getBoundingClientRect(); simpleFrom.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
     setSimpleOpen((v) => !v);
     if (simple && simple !== 'err' && simple !== 'wait') return;
     setSimple('wait');
@@ -154,7 +158,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
   const core = (id: string, on: boolean, run: It['run'], label?: string): It => { const c = cat(id)!; return { id, icon: c.icon, label: label ?? c.label, group: c.group, on, run }; };
   const menuBody = () => {
     const items: It[] = [
-      core('simple', simpleOpen, goSimple),
+      core('simple', simpleOpen, (ev) => goSimple(ev)),
       core('words', open, go),
       ...(pshat?.length ? [core('pshat', showPshat, () => setShowPshat((v) => !v))] : []),
       core('chart', chart, () => { chartTotal.current = linesOnPage(); setChart((v) => !v); }),
@@ -198,12 +202,7 @@ export default function SayIt({ lineRef, piece, si, pshat, shown, wholeToo, more
             : <span className={`sayit-text ${he ? 'he-note' : ''}`} dir={he ? 'rtl' : 'ltr'}>{text ?? (err || <span className="wait-dots"><span /><span /><span /></span>)}</span>}
         </span>
       )}
-      {simpleOpen && simple && (
-        <span className="sayit-box" role="region" aria-label="Simple">
-          <span className="sayit-ex-label">Simple</span>
-          {(() => { const h = simple !== 'wait' && simple !== 'err' && isHebText(simple); return <span className={`sayit-text ${h ? 'he-note' : ''}`} dir={h ? 'rtl' : 'ltr'}>{simple === 'wait' ? <span className="wait-dots"><span /><span /><span /></span> : simple === 'err' ? 'It couldn’t explain just now.' : simple}</span>; })()}
-        </span>
-      )}
+      {simpleOpen && <SimplePop text={simple} line={(() => { const m = lineRef.match(/:(\d+)(?:-\d+)?$/); return m ? `Line ${m[1]}${si ? `, sentence ${si}` : ''}` : undefined; })()} from={simpleFrom.current} onClose={() => setSimpleOpen(false)} onRetry={() => { setSimple('wait'); post({ simple: true, piece: piece ?? '', si: si ?? 0 }).then((d) => setSimple(d.text || 'err')).catch(() => setSimple('err')); }} />}
       {showPshat && !!pshat?.length && (
         <span className="sayit-box" role="region" aria-label="Pshat">
           <span className="sayit-ex-label">Pshat</span>
