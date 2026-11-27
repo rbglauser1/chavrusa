@@ -388,11 +388,38 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Nov 18: the amud before and after are kept on the phone too, and with no internet they come from there.
   const fetchAhead = (ref: string) => (ahead.current[ref] ??= fetch(`/api/peek?ref=${encodeURIComponent(ref)}`).then((r) => r.json()).then((d) => { const sd = (d.source ?? null) as SourceData | null; if (sd?.he?.length) void putText(ref, sd).catch(() => {}); return sd; }).catch(() => getOfflineText(ref).then((x) => { if (!x) delete ahead.current[ref]; return x ?? null; }).catch(() => { delete ahead.current[ref]; return null; })));
   useEffect(() => { if (restoring.current) return; setPrevSrc(null); setPrevState('idle'); setInView('main'); }, [src?.ref]);
-  function loadPrev() {
+  function loadPrev(keep = false) {
     if (!prevRef || prevSrc || prevState !== 'idle') return;
     setPrevState('loading');
-    void fetchAhead(prevRef).then((s) => { if (s) { prevHeight.current = sc()?.scrollHeight ?? null; setPrevSrc(s); setPrevState('idle'); } else setPrevState('none'); });
+    void fetchAhead(prevRef).then((s) => {
+      if (!s) { setPrevState('none'); return; }
+      const el = sc();
+      if (keep && el) prevKeep.current = { h: el.scrollHeight, top: el.scrollTop }; else prevHeight.current = el?.scrollHeight ?? null;
+      setPrevSrc(s); setPrevState('idle');
+    });
   }
+  // Nov 26: the amud above came in by itself while he was reading: keep the page exactly where it was (the new text is
+  // added above, so the page moves down by just its height), and again whenever it grows (its notes fill in).
+  const prevKeep = useRef<{ h: number; top: number } | null>(null);
+  useEffect(() => {
+    const el = sc(), k = prevKeep.current;
+    if (!el || !prevSrc || !k) return;
+    prevKeep.current = null;
+    el.scrollTop = k.top + (el.scrollHeight - k.h);
+    lastTop.current = el.scrollTop;
+  }, [prevSrc]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const pv = prevElRef.current;
+    if (!pv || typeof ResizeObserver === 'undefined') return;
+    let h = pv.getBoundingClientRect().height;
+    const ro = new ResizeObserver(() => {
+      const el = sc(); const nh = pv.getBoundingClientRect().height; const d = nh - h; h = nh;
+      if (!el || !d) return;
+      if (pv.getBoundingClientRect().bottom <= viewTop(el) + 4) { el.scrollTop += d; lastTop.current = el.scrollTop; } // reading below it: stay put
+    });
+    ro.observe(pv);
+    return () => ro.disconnect();
+  }, [prevSrc]); // eslint-disable-line react-hooks/exhaustive-deps
   // The amud above appeared: show its END (where you were heading), not its top. The view is placed so the last
   // lines of the amud above sit just above where you were. Done again after the phone's pull-down bounce settles,
   // since the bounce would otherwise snap the page back to the top.
@@ -428,7 +455,11 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   function onBodyScroll() {
     const el = sc();
     if (!el) return;
+    const goingUp = el.scrollTop < lastTop.current - 1;
     lastTop.current = el.scrollTop;
+    // Nov 26: the same going up. Scrolling up near the top, the amud before comes in above by itself, and the page stays
+    // exactly where it was (see the ResizeObserver below); once he has scrolled up into it and stopped, it becomes the page.
+    if (goingUp && prevRef && !prevSrc && prevState === 'idle' && !isComm && !restoring.current && el.scrollTop < viewH(el) * 0.8) loadPrev(true);
     if (src && !restoring.current) kept.set(src.ref, { prev: prevSrc, next: nextSrc, top: el.scrollTop, at: Date.now() });
     const mid = viewTop(el) + viewH(el) / 2;
     const pv = prevElRef.current?.getBoundingClientRect(), nx = endRef.current?.getBoundingClientRect();
@@ -439,6 +470,19 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     // it and stopped, it becomes the amud on the page (his place kept), so the one after it comes in the same way.
     if (nextRef && !nextSrc && nextState === 'idle' && !isComm && el.scrollTop + viewH(el) >= el.scrollHeight - viewH(el) * 1.5) loadNext();
     if (promoteTimer.current) window.clearTimeout(promoteTimer.current);
+    if (prevSrc && onOpenExact && !isComm && !restoring.current && !(nextSrc && endRef.current && endRef.current.getBoundingClientRect().top <= viewTop(el) + 2)) {
+      promoteTimer.current = window.setTimeout(() => {
+        const box = sc(), pv = prevElRef.current;
+        if (!box || !pv || !prevSrc) return;
+        const top = viewTop(box);
+        if (pv.getBoundingClientRect().bottom < top + viewH(box) - 2) return; // this amud still on the screen: not yet
+        const lines: HTMLElement[] = Array.from(pv.querySelectorAll<HTMLElement>('[data-line^="p"]'));
+        const first = lines.find((e: HTMLElement) => e.getBoundingClientRect().bottom > top + 8);
+        const k = first ? Number((first.dataset.line ?? 'p1').slice(1)) : 1;
+        promoteTo.current = { ref: prevSrc.ref, line: k, off: first ? first.getBoundingClientRect().top - top : 0 };
+        void turn(prevSrc.ref);
+      }, 450);
+    }
     if (nextSrc && onOpenExact && !isComm && !restoring.current) {
       promoteTimer.current = window.setTimeout(() => {
         const box = sc(), head = endRef.current;
@@ -1015,7 +1059,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   </>
                 ) : prevState === 'loading' ? <div className="muted next-head">Bringing {prevRef}…</div>
                   : prevState === 'none' ? null
-                  : <button className="bumper" onClick={loadPrev}><span>Top of {src.ref}</span><small>↑ Pull down a little more (or tap) for {prevRef}</small></button>}
+                  : <button className="bumper" onClick={() => loadPrev()}><span>Top of {src.ref}</span><small>↑ Pull down a little more (or tap) for {prevRef}</small></button>}
               </div>
             )}
             {/* Scrolled up into the amud before: this amud gets its own heading too, so the change is clear both ways. */}
