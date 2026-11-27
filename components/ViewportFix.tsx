@@ -35,7 +35,9 @@ export function ViewportFix() {
           requestAnimationFrame(() => {
             const el = pinned(); if (!el) return;
             const r = el.getBoundingClientRect(), top = vv.offsetTop, bottom = vv.offsetTop + vv.height;
-            if (r.height && (r.bottom > bottom + 2 || r.top < top - 2)) { bad = { shift: Math.round(vv.offsetTop + vv.height - window.innerHeight), h: vv.height }; root.style.removeProperty('--vv-shift'); }
+            // Nov 26: also when it put them far ABOVE the bottom (floating in the middle of the page, as in full screen
+            // after the next amud came in): pinned buttons always sit at the bottom of what is seen.
+            if (r.height && (r.bottom > bottom + 2 || r.top < top - 2 || r.bottom < bottom - 160)) { bad = { shift: Math.round(vv.offsetTop + vv.height - window.innerHeight), h: vv.height }; root.style.removeProperty('--vv-shift'); }
           });
         }
       });
@@ -69,8 +71,11 @@ export function ViewportFix() {
       fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ diag: JSON.stringify(d) }) }).catch(() => {});
     }, 4000);
     vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit);
+    // Nov 26: a shift measured mid-change (the page grew or shrank as an amud came in or went) is checked again every
+    // couple of seconds while one is set, so a stale one can't stay.
+    const recheck = window.setInterval(() => { if (!touching && root.style.getPropertyValue('--vv-shift')) fit(); }, 2000);
     window.addEventListener('scroll', fit, { passive: true }); window.addEventListener('orientationchange', fit);
-    return () => { window.clearInterval(diagT); cancelAnimationFrame(raf); window.clearTimeout(settleT); window.clearTimeout(againT); document.removeEventListener('touchstart', tStart); document.removeEventListener('touchend', tEnd); document.removeEventListener('touchcancel', tEnd); vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); window.removeEventListener('scroll', fit); window.removeEventListener('orientationchange', fit); };
+    return () => { window.clearInterval(diagT); window.clearInterval(recheck); cancelAnimationFrame(raf); window.clearTimeout(settleT); window.clearTimeout(againT); document.removeEventListener('touchstart', tStart); document.removeEventListener('touchend', tEnd); document.removeEventListener('touchcancel', tEnd); vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); window.removeEventListener('scroll', fit); window.removeEventListener('orientationchange', fit); };
   }, []);
   return null;
 }

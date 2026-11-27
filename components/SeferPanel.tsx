@@ -664,6 +664,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
       if (box && el) box.scrollTop += el.getBoundingClientRect().top - viewTop(box) - p.off;
     };
     const ts = [40, 120, 400].map((ms) => window.setTimeout(put, ms));
+    ts.push(window.setTimeout(() => window.dispatchEvent(new Event('scroll')), 700)); // the bottom buttons re-measure (ViewportFix)
     return () => ts.forEach((t) => window.clearTimeout(t));
   }, [src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
 
