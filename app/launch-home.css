@@ -401,7 +401,7 @@
    on the white buttons and on the dark (open) ones. */
 .ai-star { color: inherit; } /* Nov 26: the ✦ in the app's own color, not terracotta */
 :is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai .ai-star { color: inherit !important; }
-:is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai.on .ai-star { color: #E09A7E !important; }
+:is([data-look='clay'],[data-look='chatgpt']) .comm-btn.ai.on .ai-star { color: inherit !important; }
 
 /* Nov 17: your notes under a line, set apart from the text with a touch of terracotta: the line at the side, the ✎ and
    the "On …" label, over a faint warm tint. */

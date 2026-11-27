@@ -27,6 +27,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
   useEffect(() => { if (shownBefore.current !== shown) { shownBefore.current = shown; setMenu(!!shown); } else if (!wasKept(`${K}:menu`) && shown) setMenu(true); }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps // Nov 26: the ✦ that opens the choices
   const [showPshat, setShowPshat] = useKept(`${K}:showPshat`, false);
   const [open, setOpen] = useKept(`${K}:open`, false);
+  const [askOpen, setAskOpen] = useKept(`${K}:ask`, false); // Nov 26: ✦ Ask: his own question on the line, in his own words
   const [chart, setChart] = useKept(`${K}:chart`, false); // Nov 25: ✦ Sugya chart, beside In my words
   const [text, setText] = useKept<string | null>(`${K}:text`, null);
   const [err, setErr] = useState('');
@@ -82,12 +83,12 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
     post({ say: true, piece: '', si: 0 }).then((d) => setWhole(d.text || 'err')).catch(() => setWhole('err'));
   };
   const ask = () => {
-    const qq = q.trim(); if (!qq || !anyText) return;
+    const qq = q.trim(); if (!qq || (!anyText && !askOpen)) return;
     const before = thread.filter((x) => x.a && !x.bad).map((x) => ({ q: x.q, a: x.a as string }));
     setThread((t) => [...t, { q: qq, a: null }]); setQ('');
     const put = (a: string, bad = false) => setThread((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, a, bad } : x)));
     const more = exOrder.map((k) => (ex[k]?.text ? `\n${DEEPER.find((d) => d[0] === k)?.[1]}: ${ex[k]!.text}` : '')).join('');
-    post({ ask: qq, card: `${piece ? `The sentence: ${piece}\n` : ''}${text ? `What you told him about it: ${text}` : ''}${more}`, thread: before })
+    post({ ask: qq, card: `${piece ? `The sentence: ${piece}\n` : ''}${text && open ? `What you told him about it: ${text}` : ''}${more}` || '(He asks about this line.)', thread: before })
       .then((d) => (d.text ? put(d.text) : put(d.error || 'It couldn’t answer just now.', true)))
       .catch(() => put('It couldn’t answer just now.', true));
   };
@@ -98,6 +99,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
       {menu && (
         <span className="sayit-menu">
           <button type="button" className={open ? 'on' : ''} onClick={go}>In my words</button>
+          <button type="button" className={askOpen ? 'on' : ''} onClick={() => { setAskOpen((v) => !v); window.setTimeout(() => inp.current?.focus(), 60); }}>Ask</button>
           {wholeToo && <button type="button" className={wholeOpen ? 'on' : ''} onClick={goWhole}>Whole line in my words</button>}
           {!!pshat?.length && <button type="button" className={showPshat ? 'on' : ''} onClick={() => setShowPshat((v) => !v)}>Pshat</button>}
           {!noChart && <button type="button" className={chart ? 'on' : ''} onClick={() => setChart((v) => !v)}>Sugya chart</button>}
@@ -129,7 +131,7 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
           <SugyaFlow lineRef={lineRef} />
         </span>
       )}
-      {(exOrder.length > 0 || thread.length > 0 || anyText) && (
+      {(exOrder.length > 0 || thread.length > 0 || anyText || askOpen) && (
         <span className="sayit-box sayit-more" role="region" aria-label="Go deeper">
           {exOrder.map((k) => {
             const e = ex[k] ?? {};
@@ -175,9 +177,10 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
               </span>
             );
           })}
-          {anyText && (
+          {askOpen && !anyText && !thread.length && <span className="sayit-ex-label">Ask</span>}
+          {(anyText || askOpen) && (
             <form className="sayit-ask" onSubmit={(e) => { e.preventDefault(); ask(); }}>
-              <input ref={inp} value={q} onChange={(e) => setQ(e.target.value)} placeholder={thread.length ? 'Ask another…' : 'Ask a follow-up…'} enterKeyHint="send" dir="auto" />
+              <input ref={inp} value={q} onChange={(e) => setQ(e.target.value)} placeholder={thread.length ? 'Ask another…' : anyText ? 'Ask a follow-up…' : 'Ask about this line, in your own words…'} enterKeyHint="send" dir="auto" />
               <button type="submit" disabled={!q.trim()}>Ask</button>
             </form>
           )}
