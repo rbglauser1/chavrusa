@@ -801,6 +801,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Quiet chat: a single tap waits a moment, so a double tap (full screen) doesn't also move your place.
   const tapRef = useRef<{ t: number; timer: number | null }>({ t: 0, timer: null });
   function tap(run: () => void) {
+    if (dblDone.current) return; // Nov 27: this tap was the second of a double tap, already handled (below)
     const r = tapRef.current!; const now = Date.now();
     if (now - r.t < 320) { if (r.timer) window.clearTimeout(r.timer); r.timer = null; r.t = 0; setWordOn(null); onDoubleTap?.(); return; }
     r.t = now; r.timer = window.setTimeout(() => { r.timer = null; run(); }, 300);
@@ -809,15 +810,24 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Nov 16: a double tap inside the boxes under a line (Full depth explanation, Back and forth, Where it goes, a
   // commentary) also goes in and out of full screen; those boxes keep single taps to themselves.
   const boxTap = useRef(0);
+  const dblDone = useRef(false);
   useEffect(() => {
     const el = bodyRef.current;
     if (!dbl || !el) return;
+    // Nov 27: everywhere on the page now (the space beside the commentary buttons, between boxes, the margins), not
+    // only inside the boxes; only the buttons, links and fields themselves keep their taps. One place decides, so the
+    // text's own tap doesn't count it a second time.
     const on = (e: MouseEvent) => {
       const t = e.target as Element;
-      if (!t.closest('.line-x, .lchat, .wig, .comm-line, .comm-outline, .review, .lx-box, .sayit, .pshat-inline, .ai-notes, .flow-tags')) return; // Nov 26: and the ✦ boxes at the end of a line
-      if (t.closest('button, a, input, textarea, select, [contenteditable]')) return;
+      if (t.closest('button, a, input, textarea, select, label, [contenteditable], [role="button"], .wordbox, .word-pop')) { boxTap.current = 0; return; }
       const now = Date.now();
-      if (now - boxTap.current < 320) { boxTap.current = 0; onDoubleTap?.(); } else boxTap.current = now;
+      if (now - boxTap.current < 320) {
+        boxTap.current = 0;
+        const r = tapRef.current; if (r?.timer) { window.clearTimeout(r.timer); r.timer = null; } if (r) r.t = 0;
+        setWordOn(null);
+        dblDone.current = true; window.setTimeout(() => { dblDone.current = false; }, 0);
+        onDoubleTap?.();
+      } else boxTap.current = now;
     };
     el.addEventListener('click', on, true);
     return () => el.removeEventListener('click', on, true);
