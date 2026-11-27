@@ -415,6 +415,8 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // Which amud / perek is in the middle of the screen right now (the one above, this one, or the one below).
   const prevElRef = useRef<HTMLDivElement | null>(null);
   const [inView, setInView] = useState<'prev' | 'main' | 'next'>('main');
+  const promoteTimer = useRef<number | null>(null);
+  const promoteTo = useRef<{ ref: string; line: number; off: number } | null>(null);
   const lastTop = useRef(0);
   // Going in or out of full screen: keep your place on the page.
   useEffect(() => {
@@ -432,6 +434,24 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     const pv = prevElRef.current?.getBoundingClientRect(), nx = endRef.current?.getBoundingClientRect();
     const where = prevSrc && pv && pv.bottom > mid ? 'prev' : nextSrc && nx && nx.top < mid ? 'next' : 'main';
     if (where !== inView) setInView(where);
+    // Nov 26: no more stopping at the end of an amud. Nearing the end (a screen and a half before it), the next amud is
+    // brought in below by itself (it was fetched quietly on opening, so it's there at once). Once he has scrolled into
+    // it and stopped, it becomes the amud on the page (his place kept), so the one after it comes in the same way.
+    if (nextRef && !nextSrc && nextState === 'idle' && !isComm && el.scrollTop + viewH(el) >= el.scrollHeight - viewH(el) * 1.5) loadNext();
+    if (promoteTimer.current) window.clearTimeout(promoteTimer.current);
+    if (nextSrc && onOpenExact && !isComm && !restoring.current) {
+      promoteTimer.current = window.setTimeout(() => {
+        const box = sc(), head = endRef.current;
+        if (!box || !head || !nextSrc) return;
+        const top = viewTop(box);
+        if (head.getBoundingClientRect().top > top + 2) return; // this amud still on the screen: not yet
+        const lines: HTMLElement[] = Array.from(head.querySelectorAll<HTMLElement>('[data-line^="n"]'));
+        const first = lines.find((e: HTMLElement) => e.getBoundingClientRect().bottom > top + 8);
+        const k = first ? Number((first.dataset.line ?? 'n1').slice(1)) : 1;
+        promoteTo.current = { ref: nextSrc.ref, line: k, off: first ? first.getBoundingClientRect().top - top : 0 };
+        void turn(nextSrc.ref);
+      }, 450);
+    }
     // Where he is reading: the first line at the top of the view, once the scrolling settles (Recent and "pick up
     // where you left off" open there).
     if (onSeen && !restoring.current) {
@@ -586,10 +606,22 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
   // A new amud opened: start at its top (unless the chavrusa put us on a later line).
   useEffect(() => {
     scrolled.current = false;
-    if (restoring.current || (src?.focus && src.focus > 1)) return;
+    if (restoring.current || (src?.focus && src.focus > 1) || promoteTo.current) return;
     const t = window.setTimeout(() => { sc()?.scrollTo({ top: 0 }); }, 30);
     return () => window.clearTimeout(t);
   }, [src?.ref]);
+  // Nov 26: the next amud just became the page: put him back on the line he was reading, at the same height.
+  useEffect(() => {
+    const p = promoteTo.current;
+    if (!p || !src || p.ref !== src.ref.replace(/:\d+(-\d+)?$/, '') && p.ref !== src.ref) return;
+    promoteTo.current = null;
+    const put = () => {
+      const box = sc(), el = bodyRef.current?.querySelector<HTMLElement>(`.sefer-flow [data-line="${p.line}"]`);
+      if (box && el) box.scrollTop += el.getBoundingClientRect().top - viewTop(box) - p.off;
+    };
+    const ts = [40, 120, 400].map((ms) => window.setTimeout(put, ms));
+    return () => ts.forEach((t) => window.clearTimeout(t));
+  }, [src?.ref]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The text keeps going: under the last line, the next amud / perek appears by itself (when you reach the end
   // or scroll down to it), and you can tap a line there to learn on from it. Free, straight from Sefaria.
