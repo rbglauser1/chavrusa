@@ -11,7 +11,7 @@ import TextCredit from './TextCredit';
 import NoteAdd from './NoteAdd';
 import { VoiceRecord, VoicePlay } from './VoiceNote';
 import MyButtonBox from './MyButtonBox';
-import AiHub, { type HubAction } from './AiHub';
+import { type HubAction } from './AiHub';
 import MapPeek from './MapPeek';
 import LearnWoven from './LearnWoven'; // Nov 18: the woven Learn with me (the older one is kept in LearnWithMe.tsx)
 import LineChat from './LineChat';
@@ -924,9 +924,12 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
     window.addEventListener('chavrusa-page-tool', on);
     return () => window.removeEventListener('chavrusa-page-tool', on);
   });
+  // Nov 27: for the ✦ at the end of line i: the terracotta ✦'s line choices (but Ask, which the line's ✦ has) and the
+  // page's.
+  const lineActs = (i: number) => () => ({ line: hubMain(i).filter((x) => !/Ask about this line/.test(x.label)), page: hubMore(i) });
   const hub = hubOn && src && !showLib && (aiX || hubAmud.length > 0)
     ? <>
-        <AiHub lineLabel={(n) => `${src.ref.replace(/:\d+(-\d+)?$/, '')}:${n + 1}`} pickLine={hubLine} main={hubMain} more={hubMore} />
+        {/* Nov 27: the floating terracotta ✦ is gone: its choices are in the ✦ at the end of each line (lineActs). */}
         {peekAt != null && <MapPeek refText={src.ref} line={peekAt} onGo={goLine} onFull={() => { setMapOpen(true); toAmud(); }} onClose={() => setPeekAt(null)} />}
         {embedded && src && !isComm && !showLib && wholeSec && <FocusHelp settings={settings} refText={src.ref} total={src.he.length} focus={src.focus} picked={picked} talkOn={!!talk?.on} />}
         {lwmAt != null && <LearnWoven refText={src.ref} total={src.he.length} start={lwmAt} lineEl={(n) => bodyRef.current?.querySelector<HTMLElement>(`[data-line="${n}"]`) ?? null} onNext={nextRef ? () => { lwmCarry.current = true; void turn(nextRef); } : undefined} onVoice={voiceLead} onClose={() => setLwmAt(null)} />}
@@ -1143,7 +1146,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                   if (dbl) { e.stopPropagation(); tap(() => toggleLine(i)); } else toggleLine(i); }}>
                   {pairs
                     ? <Interlinear pairs={pairs} heClass={rashi ? 'rashi' : ''} show={showHe} num={i + 1} marks={marks}
-                        after={sayHere || pshIn ? (k) => (<>{pshIn && !sayHere && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} piece={pairs.length > 1 ? pairs[k].he : undefined} si={pairs.length > 1 ? k + 1 : undefined} noChart={k !== pairs.length - 1} wholeToo={pairs.length > 1 && k === pairs.length - 1} pshat={pshIn && k === pairs.length - 1 ? pshTexts : undefined} /> : k === pairs.length - 1 ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} /> : null)}</>) : undefined} />
+                        after={sayHere || pshIn ? (k) => (<>{pshIn && !sayHere && k === pairs.length - 1 && <PshatInline texts={pshTexts} />}{sayHere && (settings.ilBy === 'sentence' ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} piece={pairs.length > 1 ? pairs[k].he : undefined} si={pairs.length > 1 ? k + 1 : undefined} noChart={k !== pairs.length - 1} wholeToo={pairs.length > 1 && k === pairs.length - 1} pshat={pshIn && k === pairs.length - 1 ? pshTexts : undefined} more={k === pairs.length - 1 ? lineActs(i) : undefined} /> : k === pairs.length - 1 ? <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} more={lineActs(i)} /> : null)}</>) : undefined} />
                     : <div className={`he ${rashi ? 'rashi' : ''}`}>{showHe(line)}<span className="num">{i + 1}</span></div>}
                   {isComm && ownGists?.ref === src.ref && ownGists.list[i] && <div className="gist"><span>AI summary</span> {ownGists.list[i]}</div>}
                   {settings.notes !== false && (() => {
@@ -1330,7 +1333,7 @@ export default function SeferPanel({ sources, selected, onSelect, onClose, setti
                       if ((e.target as HTMLElement).closest('button')) return;
                       if (window.getSelection()?.toString()) return; // words being selected for a color mark
                       if (dbl) tap(() => toggleLine(i)); else toggleLine(i); }}>
-                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && !sayHere && <PshatInline texts={pshTexts} />}{sayHere && <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} />}</> : aiText[key] ? (
+                      {en ? <>{src.enB?.[i] ? <BoldEn text={src.enB[i]} /> : yeshivishEnglish(en)}{pshIn && !sayHere && <PshatInline texts={pshTexts} />}{sayHere && <SayIt shown={settings.sayMenu === 'open'} lineRef={partRef(i)} pshat={pshIn ? pshTexts : undefined} more={lineActs(i)} />}</> : aiText[key] ? (
                         <><span className="label-ai">AI translation · AI makes mistakes</span><div>{aiText[key]}</div></>
                       ) : (
                         <span className="tr-ai"><small>No approved translation</small>

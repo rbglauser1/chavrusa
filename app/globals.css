@@ -3770,3 +3770,6 @@ body.lw-inline .line.lwm-on { scroll-margin-top: 12px; }
 :is(.bp-text, .sefer .move, .min .move, .sefer .pshat, .ai-dot, .amud-intro, .lwm, .lwm-strip, .lwm-intro, .peek, .fh-recap, .fh-nav, .fh-bar, .lchat-yesno) { --tc: var(--accent); --tc-ink: var(--accent); --tc-night: var(--accent); }
 /* Frank Ruhl Black: the Hebrew in its heaviest weight (Settings → Look → Fonts). */
 html[data-heheavy='on'] :is(.he, .il-he, .min-he, .tg-he, .mg-text, .mg-onk, .lwc-he, .lw-he, .hx-shaky-he, .mw-word) { font-weight: 900; }
+/* Nov 27: the terracotta ✦'s choices, now in the line's ✦ */
+.sayit-menu .sayit-act { border-style: dashed; }
+.sayit-menu-sub { flex-basis: 100%; margin: 4px 0 -2px; font: 700 11px var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--soft); }

@@ -16,7 +16,11 @@ type QA = { q: string; a: string | null; bad?: boolean };
 const DEEPER: [string, string][] = [['kashya', 'Kashya'], ['challenge', 'Sharp kashya'], ['chakira', 'Chakira'], ['halacha', 'Halacha'], ['meforshim', 'Meforshim'], ['rashitos', 'Rashi vs Tosafos'], ['compare', 'My reading vs Rashi'], ['widen', 'Widen it']]; // Nov 25: Rashi vs Tosafos side by side; Prepare, then compare
 type Ex = { text?: string; sources?: string[]; err?: string; shown?: boolean; draft?: string; wait?: boolean };
 
-export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, wholeToo }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean; wholeToo?: boolean }) {
+// Nov 27: the terracotta ✦ is gone; what it had that the line's ✦ didn't comes here: for the line (Learn with me from
+// here, Where it goes, By heart, Where was I?, Sit with me) and for the page (Sugya map, Ask about the whole page,
+// Review, Listen, Source sheet, your own buttons). Given by the reader (SeferPanel), only on the line's last ✦.
+export type MoreActs = { line: { label: string; run: () => void }[]; page: { label: string; run: () => void }[] };
+export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, wholeToo, more: acts }: { lineRef: string; piece?: string; si?: number; noChart?: boolean; pshat?: string[]; shown?: boolean; wholeToo?: boolean; more?: () => MoreActs }) {
   // Nov 26: in Sentence by sentence, the last sentence also offers the whole line's In my words: the same one made
   // (and kept) when the English is shown alone, so switching views shows what was already made.
   const K = `say:${lineRef}:${si ?? 0}`; // Nov 26: what's open here, and what came back, stays when he goes to Settings and back
@@ -115,6 +119,17 @@ export default function SayIt({ lineRef, piece, si, noChart, pshat, shown, whole
           {!!pshat?.length && <button type="button" className={showPshat ? 'on' : ''} onClick={() => setShowPshat((v) => !v)}>Pshat</button>}
           {!noChart && <button type="button" className={chart ? 'on' : ''} onClick={() => setChart((v) => !v)}>Sugya chart</button>}
           {DEEPER.map(([k, name]) => <button key={k} type="button" className={exOrder.includes(k) ? 'on' : ''} onClick={() => deeper(k)}>{name}</button>)}
+          {(() => {
+            const m = acts?.(); if (!m) return null;
+            const clean = (l: string) => l.replace(/^✦\s*/, '').replace(/\s*\((I’ll lead|you lead)\)$/, '');
+            return (
+              <>
+                {m.line.map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
+                {m.page.length > 0 && <span className="sayit-menu-sub">This page</span>}
+                {m.page.map((x) => <button key={x.label} type="button" className="sayit-act" onClick={x.run}>{clean(x.label)}</button>)}
+              </>
+            );
+          })()}
         </span>
       )}
       {open && (
