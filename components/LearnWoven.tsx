@@ -14,6 +14,8 @@ import { useBackLayer } from '@/lib/back';
 import { isHebText } from './AiNote';
 import SugyaChart, { chartKept, loadChart, topicStartOf } from './SugyaChart';
 import { FlowTag, LineEnd, LostBox, OneSentence, Preview, QuestionBack, keepQuestion } from './LearnTogether';
+import SayIt from './SayIt';
+import { lineMark, markLine } from '@/lib/learnMarks';
 
 // Nov 21: once he has opened the sugya chart, it stays "on" for the session: the chart of each new amud is drawn ahead
 // of time, and when a new topic begins Learn with me says so (with the chart one tap away).
@@ -182,7 +184,7 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
 
   // How it looks (Settings → Learn with me looks like): in the text (the default), a panel, or cards.
   const view = typeof document !== 'undefined' ? document.documentElement.dataset.lwview : undefined;
-  const inline = view !== 'panel' && view !== 'cards';
+  const inline = !['panel', 'cards', 'deck', 'split', 'mini'].includes(view ?? ''); // Nov 27: + deck, split, mini (their own)
   // In the text: a place made in the sefer right after the line he is on (after the last line once he's done), and the
   // learning shows there. If the line can't be found (the text still loading), it tries again for a moment, and if it
   // never comes, the panel is used instead.
@@ -328,6 +330,28 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
       </div>
     );
   };
+
+  // Nov 27: three more ways (designs C, E, G): a swipe Deck (each line a full-screen card; flip it, rate yourself, a recap
+  // at the end), a Split screen (the sefer on top, the guide below with tabs: Explain, Ask me, Full depth, Sources), and
+  // a Mini bar (a one-line bar at the bottom, like a music player; tap it to open all the way).
+  const deck = view === 'deck', split = view === 'split', mini = view === 'mini';
+  const [flip, setFlip] = useState(false);
+  const [rates, setRates] = useState<Record<number, 'got' | 'partly' | 'not'>>({});
+  const [tab, setTab] = useState<'explain' | 'ask' | 'deep' | 'src'>('explain');
+  const [miniOpen, setMiniOpen] = useState(false);
+  const deckSwipe = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => { setFlip(false); setTab('explain'); }, [n]);
+  useEffect(() => { if (split) setSize(0); }, [split]); // the guide takes the lower part; drag the line up for more
+  useEffect(() => {
+    const c = deck ? 'lw-deck-open' : split ? 'lw-split-open' : mini ? (miniOpen ? 'lw-mini-full' : 'lw-mini-open') : '';
+    if (!c) return;
+    document.body.classList.add(c);
+    return () => document.body.classList.remove(c);
+  }, [deck, split, mini, miniOpen]);
+  useEffect(() => { if (deck && steps.length && shown < steps.length) setShown(steps.length); }, [deck, steps.length, shown]); // a deck card is the whole line
+  const nextLine = () => { if (n >= total && onNext) { onNext(); return; } setN((v) => v + 1); };
+  const prevLine = () => { if (n > 1) setN((v) => v - 1); };
+  const rate = (r: 'got' | 'partly' | 'not') => { setRates((x) => ({ ...x, [n]: r })); markLine(refText, n, r === 'got' ? 'got' : 'shaky', lineHe); nextLine(); };
 
   // Nov 21: Cards (Settings → Learn with me looks like): one card at a time over the page; flick it off the screen
   // either way, or tap its ✕, and the next card rises up from the stack behind it.
@@ -656,19 +680,128 @@ export default function LearnWoven({ refText, total, start, lineEl, onNext, onVo
     )}{chart}</>;
   }
 
+  // C · Deck: each line a full-screen card. Front: the line, the explanation, the question. Flip: the questions to
+  // answer and Say it over; then rate it (Not yet and Partly come back in Chazara as Shaky). A recap at the end.
+  if (deck) {
+    const enLine = phrases.map((p) => p.en).filter(Boolean).join(' ');
+    const notes = phrases.filter((p) => p.note || p.before);
+    const q = phrases.find((p) => p.ask)?.ask;
+    const learned = Array.from({ length: total }, (_, i) => i + 1);
+    const onTouchStart = (e: React.TouchEvent) => { const t = e.touches[0]; deckSwipe.current = { x: t.clientX, y: t.clientY }; };
+    const onTouchEnd = (e: React.TouchEvent) => {
+      const s0 = deckSwipe.current; deckSwipe.current = null; if (!s0) return;
+      const t = e.changedTouches[0], dx2 = t.clientX - s0.x, dy2 = t.clientY - s0.y;
+      if (Math.abs(dx2) > 60 && Math.abs(dx2) > Math.abs(dy2) * 1.4) { if (dx2 < 0) nextLine(); else prevLine(); }
+    };
+    return <>{createPortal(
+      <div className="lw-deck" role="dialog" aria-label="Learn with me">
+        <div className="lw-deck-top">
+          <button className="lw-deck-x" onClick={onClose} aria-label="Close">✕</button>
+          <span className="lw-deck-prog" aria-hidden="true"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - (done ? 0 : 1)) / total) * 100)}%` }} /></span>
+          <span className="lw-deck-count">{done ? `${total} / ${total}` : `${n} / ${total}`}</span>
+          {!done && lostBtn}
+          {!done && <button className="lw-icon" onClick={openChart} aria-label={chartTitle}>🗺</button>}
+        </div>
+        {done ? (
+          <div className="lw-deck-recap">
+            <span className="lw-deck-kicker">Section done</span>
+            <h3>{total} lines learned</h3>
+            <p className="lw-deck-sub">{Object.values(rates).filter((r) => r === 'got').length} you had right away · {Object.values(rates).filter((r) => r !== 'got').length} to look at again</p>
+            <ul>{learned.map((i) => { const r = rates[i] ?? (lineMark(refText, i) === 'shaky' ? 'not' : lineMark(refText, i) === 'got' ? 'got' : undefined); return <li key={i}><span className={`lw-deck-dot ${r === 'got' ? 'got' : r ? 'again' : ''}`}>{r === 'got' ? '✓' : r ? '↺' : ''}</span>Line {i}</li>; })}</ul>
+            <OneSentence refText={refText} total={total} />
+            <div className="lw-deck-actions">
+              {Object.entries(rates).some(([, r]) => r !== 'got') && <button className="ghost" onClick={() => { const first = Number(Object.entries(rates).find(([, r]) => r !== 'got')?.[0] ?? 1); setN(first); }}>Review the ones to look at again</button>}
+              {onNext && <button onClick={onNext}>Next section ›</button>}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="lw-deck-stack" aria-hidden="true"><span /><span /></div>
+            <article className={`lw-deck-card ${flip ? 'flipped' : ''}`} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+              {err ? <div className="muted lw-deck-pad">It couldn’t be prepared just now. <button className="linklike" onClick={() => setTick((k) => k + 1)}>Try again</button></div>
+                : !phrases.length ? <div className="muted lw-deck-pad"><span className="wait-dots"><span /><span /><span /></span> Preparing line {n}…</div>
+                : !flip ? (
+                  <>
+                    <div className="lw-deck-text"><div className="lw-he" dir="rtl">{lineHe}</div>{enLine && <div className="lw-en">{enLine}</div>}</div>
+                    <div className="lw-deck-body">
+                      {n === 1 && <Preview refText={refText} />}
+                      {lost && <LostBox refText={refText} n={n} onClose={() => setLost(false)} />}
+                      <QuestionBack refText={refText} n={n} />
+                      <FlowTag refText={refText} n={n} />
+                      {notes.map((p, i) => <p key={i} className="lw-deck-note" dir="auto">{p.before ? <b>{p.before.text} </b> : null}{p.note}</p>)}
+                      {q && <p className="lw-deck-q" dir="auto">{q}</p>}
+                    </div>
+                  </>
+                ) : (
+                  <div className="lw-deck-back">
+                    <span className="lw-deck-kicker">Your turn</span>
+                    {phrases.filter((p) => p.ask).map((p, i) => <Ask key={i} refText={refText} n={n} q={p.ask!} hint={p.hint} />)}
+                    {phrases.map((p, i) => <Deeper key={`d${i}`} refText={refText} n={n} k={i} ready={p.deep} />)}
+                    <LineEnd refText={refText} n={n} card={lineCard} text={lineHe} total={total} />
+                    <p className="lw-deck-sub">Did you have it?</p>
+                    <div className="lw-deck-rate"><button onClick={() => rate('not')}>Not yet</button><button onClick={() => rate('partly')}>Partly</button><button className="on" onClick={() => rate('got')}>Got it</button></div>
+                  </div>
+                )}
+            </article>
+            <div className="lw-deck-foot">
+              <button className="lw-deck-nav" onClick={prevLine} disabled={n === 1} aria-label="Previous card">‹</button>
+              <button className="lw-deck-flip" onClick={() => setFlip((v) => !v)} disabled={!phrases.length}>{flip ? 'Flip back' : 'Tap to flip'}</button>
+              <button className="lw-deck-nav go" onClick={nextLine} aria-label="Next card">›</button>
+            </div>
+            <div className="ai-note lw-deck-note-ai">Written by AI · AI makes mistakes · ask your rav</div>
+          </>
+        )}
+      </div>,
+      document.body,
+    )}{chart}</>;
+  }
+
+  // G · Mini bar, closed: one line at the bottom, like a music player.
+  if (mini && !miniOpen) {
+    const st = steps[shown - 1], p = st ? phrases[st.k] : undefined;
+    const line = done ? 'Done. Well learned!' : !p ? `Preparing line ${n}…` : (st?.part === 'before' && p.before ? p.before.text : p.ask || p.note || p.en || p.he);
+    return <>{createPortal(
+      <section className="lw-mini" aria-label="Learn with me">
+        <span className="lw-mini-prog" aria-hidden="true" style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} />
+        <button className="lw-mini-open" onClick={() => setMiniOpen(true)} aria-label="Open the guide">
+          <span className="lw-mini-where">{done ? 'DONE' : `LINE ${n} OF ${total}`}</span>
+          <span className="lw-mini-line" dir="auto">{line}</span>
+        </button>
+        {onVoice && <button className="lw-mini-btn" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
+        {!done && <button className="lw-mini-btn go" onClick={next} disabled={!phrases.length} aria-label="Next">›</button>}
+        <button className="lw-mini-btn" onClick={onClose} aria-label="Close">✕</button>
+      </section>,
+      document.body,
+    )}{chart}</>;
+  }
+
+  // E · Split screen tabs (and the Mini bar opened all the way, which shrinks back with ▾).
+  const tabs = split ? (
+    <div className="lw-tabs" role="tablist">
+      {([['explain', 'Explain'], ['ask', 'Ask me'], ['deep', 'Full depth'], ['src', 'Sources']] as const).map(([k, t]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t}</button>)}
+    </div>
+  ) : null;
+  const tabBody = split && tab !== 'explain' && phrases.length && !done ? (
+    tab === 'ask' ? <>{phrases.filter((p) => p.ask).map((p, i) => <Ask key={i} refText={refText} n={n} q={p.ask!} hint={p.hint} />)}{!phrases.some((p) => p.ask) && <p className="muted">No question on this line; say it over or answer the Gemara yourself:</p>}<LineEnd refText={refText} n={n} card={lineCard} text={lineHe} total={total} /></>
+      : tab === 'deep' ? <>{phrases.map((p, i) => <div key={i} className="lw-ph"><div className="lw-he" dir="rtl">{p.he}</div><Deeper refText={refText} n={n} k={i} ready={p.deep} /></div>)}</>
+      : <SayIt lineRef={`${refText}:${n}`} shown />
+  ) : null;
+
   return <>{createPortal(
-    <div className="lw-sheet" role="dialog" aria-label="Learn with me" style={{ height: `calc(${SIZES[size] * 100}dvh - ${drag}px)`, transition: drag ? 'none' : 'height .22s ease' }}>
+    <div className={`lw-sheet${split ? ' lw-split' : ''}${mini ? ' lw-minifull' : ''}`} role="dialog" aria-label="Learn with me" style={{ height: `calc(${SIZES[size] * 100}dvh - ${drag}px)`, transition: drag ? 'none' : 'height .22s ease' }}>
       <div className="lw-grab" aria-hidden="true" {...grab} />
       <div className="lw-head" {...grab}>
         <span className="lw-where">{done ? 'Done' : `Line ${n} of ${total}`}{typeof document !== 'undefined' && document.documentElement.dataset.lwtonename ? <small className="lw-tone">{document.documentElement.dataset.lwtonename}</small> : null}</span>
         <span className="lw-bar"><span style={{ width: `${Math.min(100, ((Math.min(n, total) - 1 + (steps.length ? shown / steps.length : 0)) / total) * 100)}%` }} /></span>
         {lostBtn}<button className="lw-icon" onClick={openChart} aria-label={chartTitle}>🗺</button>
         {onVoice && <button className="lw-icon" onClick={onVoice} aria-label="Learn by voice">🎙</button>}
+        {mini && <button className="lw-icon" onClick={() => setMiniOpen(false)} aria-label="Shrink to the bar">▾</button>}
         <button className="lw-icon" onClick={onClose} aria-label="Close">✕</button>
       </div>
-      <Road refText={refText} n={Math.min(n, total)} onOpen={openChart} />
+      {!split && <Road refText={refText} n={Math.min(n, total)} onOpen={openChart} />}
+      {tabs}
       <div className="lw-body" ref={body}>
-        {done ? (
+        {tabBody ? tabBody : done ? (
           <div className="lw-done">
             <p>Well learned! That’s the end of this {/^Mishnah /.test(refText) ? 'perek' : 'section'}.</p>
                   <OneSentence refText={refText} total={total} />

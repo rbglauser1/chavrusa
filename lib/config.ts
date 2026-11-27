@@ -532,7 +532,7 @@ export interface Settings {
   homeBg?: 'none' | 'kotel' | 'bm' | 'shelves' | 'candle' | 'yerushalayim' | 'own'; // Nov 18: a picture behind the Home screen (the Kosel)
   lwTone?: 'awake' | 'calm' | 'custom';
   lwView?: 'panel' | 'cards'; // Nov 21: Learn with me as a panel or as cards (no longer read: replaced by lwLook, Nov 26)
-  lwLook?: 'inline' | 'bubble' | 'panel' | 'cards'; // Nov 27: + bubble (design B: a speech bubble pointing at the line, one step at a time) // Nov 26: how Learn with me looks: in the text (default), a panel, or cards. A new key, so a choice saved under the old one doesn't hold back the new default
+  lwLook?: 'inline' | 'bubble' | 'panel' | 'cards' | 'deck' | 'split' | 'mini'; // Nov 27: + deck (C), split (E), mini bar (G) // Nov 27: + bubble (design B: a speech bubble pointing at the line, one step at a time) // Nov 26: how Learn with me looks: in the text (default), a panel, or cards. A new key, so a choice saved under the old one doesn't hold back the new default
   callFace?: 'off' | 'drawn' | 'photo' | 'partner' | 'mentor' | 'teacher' | 'young' | 'companion' | 'seasoned' | 'chassidish'; // Nov 22: the chavrusa's face in a voice call, its mouth moving with his voice (default drawn)
   lwDeepTogether?: boolean;
   ilBy?: 'phrase' | 'sentence'; // Nov 23: English layout, when the English is lined up with the Hebrew: by phrase or by whole sentence   // Nov 21: Learn with me's Go deeper written together with each line's cards (opens at once)
